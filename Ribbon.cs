@@ -695,7 +695,8 @@ namespace DataDebug
                                 }
                             }
                             total_delta = total_delta / (node.getParents().Count - 1);
-                            influences[influence_index] = total_delta / twin_count;
+                            total_delta = total_delta / twin_count;
+                            influences[influence_index] = total_delta;
                             influence_index++;
                             //MessageBox.Show(twin_cells.get_Address() + " Total delta = " + (total_delta * 100) + "%");
                             if (max_total_delta < total_delta)
