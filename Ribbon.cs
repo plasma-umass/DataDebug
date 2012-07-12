@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace DataDebug
 {
-    public partial class Ribbon1
+    public partial class Ribbon
     {
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -345,7 +345,6 @@ namespace DataDebug
                     foreach (Match match in matchedRanges)
                     {
                         formula = formula.Replace(match.Value, "");
-                        MessageBox.Show(formula);
                         string[] endCells = match.Value.Split(':');     //Split up each matched range into the start and end cells of the range
                         TreeNode range = null;
                         //Try to find the range in existing TreeNodes
@@ -526,7 +525,7 @@ namespace DataDebug
                 if (node.getWeight() > max_weight)
                     max_weight = node.getWeight();
             }
-            //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just formulas
+            //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
             List<double> starting_outputs = new List<double>(); //This will store all the output nodes at the start of the procedure for swapping values
             List<TreeNode> output_cells = new List<TreeNode>();
             //Store all the starting output values
@@ -539,79 +538,185 @@ namespace DataDebug
                 }
             }
 
-            //Procedure for swapping values within ranges
-            foreach (TreeNode node in nodes)
+            //Procedure for swapping values within ranges, one cell at a time
+            if (!checkBox2.Checked) //Checks if the option for only analyzing the selection is checked
             {
-                if (node.isRange())
+                foreach (TreeNode node in nodes)
                 {
-                    double[] influences = new double[node.getParents().Count];
-                    int influence_index = 0;
-                    double max_total_delta = 0;
-                    double min_total_delta = 0;
-                    //Swapping values
-                    foreach (TreeNode parent in node.getParents())
+                    //For every range node
+                    if (node.isRange())
                     {
-                        Excel.Range cell = activeWorksheet.get_Range(parent.getName());
-                        string formula = "";
-                        if (cell.HasFormula)
-                            formula = cell.Formula;
-                        double start_value = cell.Value;
-                        double total_delta = 0;
-                        double delta = 0;
-                        foreach (TreeNode sibling in node.getParents())
+                        double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell
+                        int influence_index = 0;        //Keeps track of the current position in the influences array
+                        double max_total_delta = 0;     //The maximum influence found (for normalizing)
+                        double min_total_delta = 0;     //The minimum influence found (for normalizing)
+                        //Swapping values; loop over all nodes in the range
+                        foreach (TreeNode parent in node.getParents())
                         {
-                            if (sibling.getName() == parent.getName())
+                            Excel.Range cell = activeWorksheet.get_Range(parent.getName());
+                            string formula = "";
+                            if (cell.HasFormula)
+                                formula = cell.Formula;
+                            double start_value = cell.Value;
+                            double total_delta = 0;
+                            double delta = 0;
+                            foreach (TreeNode sibling in node.getParents())
                             {
-                                continue;
+                                if (sibling.getName() == parent.getName())
+                                {
+                                    continue;
+                                }
+                                Excel.Range sibling_cell = activeWorksheet.get_Range(sibling.getName());
+                                cell.Value = sibling_cell.Value;
+                                int index = 0;
+                                delta = 0;
+                                foreach (TreeNode n in output_cells)
+                                {
+                                    delta = Math.Abs(starting_outputs[index] - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index];
+                                    total_delta = total_delta + delta;
+                                }
                             }
-                            Excel.Range sibling_cell = activeWorksheet.get_Range(sibling.getName());
-                            cell.Value = sibling_cell.Value;
-                            int index = 0;
-                            delta = 0;
-                            foreach (TreeNode n in output_cells)
+                            total_delta = total_delta / (node.getParents().Count - 1);
+                            influences[influence_index] = total_delta;
+                            influence_index++;
+                            MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");
+                            if (max_total_delta < total_delta)
                             {
-                                delta = Math.Abs(starting_outputs[index] - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index];
-                                total_delta = total_delta + delta;
-                                //MessageBox.Show("Substituting " + sibling.getName() 
-                                //  + "\nDelta = |" + starting_outputs[index] + " - " + activeWorksheet.get_Range(n.getName()).Value + "| / " + starting_outputs[index]
-                                //  + " = " + delta
-                                //  + "\nTotal Delta = " + total_delta);
+                                max_total_delta = total_delta;
+                            }
+                            if (min_total_delta > total_delta)
+                            {
+                                min_total_delta = total_delta;
+                            }
+                            cell.Value = start_value;
+                            if (formula != "")
+                                cell.Formula = formula;
+                            cell.Interior.Color = System.Drawing.Color.Beige;
+                        }
+                        for (int i = 0; i < node.getParents().Count; i++)
+                        {
+                            if (max_total_delta != 0)
+                            {
+                                influences[i] = (influences[i] - min_total_delta) / max_total_delta;
                             }
                         }
-                        total_delta = total_delta / (node.getParents().Count - 1);
-                        MessageBox.Show("Total delta: " + total_delta);
-                        influences[influence_index] = total_delta;
-                        influence_index++;
-                        MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");
-                        if (max_total_delta < total_delta)
+                        int indexer = 0;
+                        foreach (TreeNode parent in node.getParents())
                         {
-                            max_total_delta = total_delta;
+                            Excel.Range cell = activeWorksheet.get_Range(parent.getName());
+                            cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
+                            indexer++;
                         }
-                        if (min_total_delta > total_delta)
-                        {
-                            min_total_delta = total_delta;
-                        }
-                        cell.Value = start_value;
-                        if (formula != "")
-                            cell.Formula = formula;
-                        cell.Interior.Color = System.Drawing.Color.Beige;
-                    }
-                    for (int i = 0; i < node.getParents().Count; i++)
-                    {
-                        if (max_total_delta != 0)
-                        {
-                            influences[i] = (influences[i] - min_total_delta) / max_total_delta;
-                        }
-                    }
-                    int indexer = 0;
-                    foreach (TreeNode parent in node.getParents())
-                    {
-                        Excel.Range cell = activeWorksheet.get_Range(parent.getName());
-                        cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
-                        indexer++;
                     }
                 }
             }
+
+            //Procedure for swapping values within ranges, replacing all repeated values at once
+            if (checkBox2.Checked) //Checks if the option for only analyzing the selection is checked
+            {
+                foreach (TreeNode node in nodes)
+                {
+                    //For each range node, do the following:
+                    if (node.isRange())
+                    {
+                        double[] influences = new double[node.getParents().Count];  //Array to keep track of the influence values for every cell
+                        int influence_index = 0;        //Keeps track of the current position in the influences array
+                        double max_total_delta = 0;     //The maximum influence found (for normalizing)
+                        double min_total_delta = 0;     //The minimum influence found (for normalizing)
+                        //Swapping values; loop over all nodes in the range
+                        foreach (TreeNode parent in node.getParents())
+                        {
+                            String twin_cells_string = parent.getName();
+                            //Find any nodes with a matching value and keep track of them
+                            int twin_count = 1;     //This will keep track of the number of cells that have this exact value
+                            foreach (TreeNode twin in node.getParents())
+                            {
+                                if (twin.getName() == parent.getName())
+                                {
+                                    continue;
+                                }
+                                if (activeWorksheet.get_Range(twin.getName()).Value == activeWorksheet.get_Range(parent.getName()).Value)
+                                {
+                                    twin_cells_string = twin_cells_string + "," + twin.getName();
+                                    twin_count++;
+                                }
+                            }
+                            MessageBox.Show("Twin count: " + twin_count);
+                            Excel.Range twin_cells = activeWorksheet.get_Range(twin_cells_string);
+                            String[] formulas = new String[twin_count]; //Stores the formulas in the twin_cells
+                            int i = 0; //Counter for indexing within the formulas array
+                            foreach (Excel.Range cell in twin_cells)
+                            {
+                                if (cell.HasFormula)
+                                {
+                                    MessageBox.Show(cell.Formula);
+                                    formulas[i] = cell.Formula;
+                                }
+                                i++;
+                            }
+                            double start_value = activeWorksheet.get_Range(parent.getName()).Value;
+                            double total_delta = 0;
+                            double delta = 0;
+                            foreach (TreeNode sibling in node.getParents())
+                            {
+                                if (sibling.getName() == parent.getName())
+                                {
+                                    continue;
+                                }
+                                Excel.Range sibling_cell = activeWorksheet.get_Range(sibling.getName());
+                                twin_cells.Value = sibling_cell.Value;
+                                int index = 0;
+                                delta = 0;
+                                foreach (TreeNode n in output_cells)
+                                {
+                                    delta = Math.Abs(starting_outputs[index] - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index];
+                                    total_delta = total_delta + delta;
+                                    //MessageBox.Show("Substituting " + sibling.getName() 
+                                    //  + "\nDelta = |" + starting_outputs[index] + " - " + activeWorksheet.get_Range(n.getName()).Value + "| / " + starting_outputs[index]
+                                    //  + " = " + delta
+                                    //  + "\nTotal Delta = " + total_delta);
+                                }
+                            }
+                            total_delta = total_delta / (node.getParents().Count - 1);
+                            influences[influence_index] = total_delta / twin_count;
+                            influence_index++;
+                            MessageBox.Show(twin_cells.get_Address() + " Total delta = " + (total_delta * 100) + "%");
+                            if (max_total_delta < total_delta)
+                            {
+                                max_total_delta = total_delta;
+                            }
+                            if (min_total_delta > total_delta)
+                            {
+                                min_total_delta = total_delta;
+                            }
+                            twin_cells.Value = start_value;
+                            int j = 0;
+                            foreach (Excel.Range cell in twin_cells)
+                            {
+                                if (formulas[j] != null)
+                                    cell.Formula = formulas[j];
+                                j++;
+                            }
+                            twin_cells.Interior.Color = System.Drawing.Color.Beige;
+                        }
+                        for (int i = 0; i < node.getParents().Count; i++)
+                        {
+                            if (max_total_delta != 0)
+                            {
+                                influences[i] = (influences[i] - min_total_delta) / max_total_delta;
+                            }
+                        }
+                        int indexer = 0;
+                        foreach (TreeNode parent in node.getParents())
+                        {
+                            Excel.Range cell = activeWorksheet.get_Range(parent.getName());
+                            cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
+                            indexer++;
+                        }
+                    }
+                }
+            }
+
 
             //Print out text for GraphViz representation of the dependence graph
             string tree = "";
@@ -641,7 +746,7 @@ namespace DataDebug
         //Action for the "Derivatives" button
         private void button2_Click(object sender, RibbonControlEventArgs e)
         {
-            Worksheet activeWorksheet = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook.Worksheets[1]);
+            Excel.Worksheet activeWorksheet = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;  //Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveWorkbook.Worksheets[1]);
             Excel.Range selection = Globals.ThisAddIn.Application.Selection as Excel.Range;
 
             //If there is exactly one column in the selection
@@ -767,6 +872,67 @@ namespace DataDebug
                     }
                 }
             }
+        }
+
+        /*
+         * * * * * * * * STATISTICAL THINGS BEGIN HERE ;) * * * * * * * * *
+         */
+
+        //Dictionary stores the initial colors of all the cells so they can be restored by pressing the "Clear" button
+        private Dictionary<Excel.Range, System.Drawing.Color> startColors = new Dictionary<Excel.Range, System.Drawing.Color>();
+        
+        private void button3_Click(object sender, RibbonControlEventArgs e)
+        {
+            //Performs the Anderson-Darling test for normality
+            //Reject if AD > CV = 0.752 / (1 + 0.75/n + 2.25/(n^2) )
+            //AD = SUM[i=1 to n] (1-2i)/n * {ln(F0[z_i]) + ln(1-F0[Z_(n+1-i)]) } - n
+            // get user selection
+            Excel.Range selection = Globals.ThisAddIn.Application.Selection as Excel.Range;
+
+            // assume that the cells are normally distributed
+            Stats.NormalAD normalAD = new Stats.NormalAD(selection);
+        }
+
+        Dictionary<Excel.Range, System.Drawing.Color> outliers;
+        Boolean first_run = true;  // We only want to store the starting colors once, so this boolean is used for checking that
+        private void button4_Click(object sender, RibbonControlEventArgs e)
+        {
+            if (first_run == true)      //if this is the first time running the test, store the starting colors of all cells
+            {
+                foreach (Excel.Range cell in ((Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet).UsedRange)
+                {
+                    startColors.Add(cell, System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                }
+                first_run = false;      // Update the boolean value to remember that we have run the test once already
+            }
+
+            // get user selection
+            Excel.Range selection = Globals.ThisAddIn.Application.Selection as Excel.Range;
+
+            // assume that the cells are normally distributed
+            Stats.NormalDistribution norm_d = new Stats.NormalDistribution(selection);
+
+            // find outliers
+            outliers = norm_d.PeirceOutliers();
+
+            // color the cells pink
+            Stats.Utilities.ColorCellListByName(outliers, "pink");
+        }
+
+        private void button5_Click(object sender, RibbonControlEventArgs e)
+        {
+            //TODO need to revise the "Clear" button functionality, because if it is pressed after the "Analyze worksheet" button and cells are already colored, pressing "Clear" gives an error
+            //Restore original color to cells flagged as outliers
+            Stats.Utilities.RestoreColor(startColors);   
+        }
+
+        private void button6_Click(object sender, RibbonControlEventArgs e)
+        {
+            // get user selection
+            Excel.Range selection = Globals.ThisAddIn.Application.Selection as Excel.Range;
+
+            // assume that the cells are normally distributed
+            Stats.NormalKS normalKS = new Stats.NormalKS(selection);
         }
     }
 }
