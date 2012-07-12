@@ -424,7 +424,7 @@ namespace DataDebug
                 nodes.Add(n);
                 foreach (Excel.Series series in (Excel.SeriesCollection)chart.Chart.SeriesCollection(Type.Missing))
                 {
-                    MessageBox.Show(series.Formula);
+                    //MessageBox.Show(series.Formula);
                     string patternRange = @"(\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)";  //Regex for matching range references in formulas such as A1:A10, or $A$1:$A$10 etc.
                     string patternCell = @"(\$?[A-Z]+\$?[1-9]\d*)";        //Regex for matching single cell references such as A1 or $A$1, etc. 
                     string formula = series.Formula;  //The formula contained in the cell
@@ -533,9 +533,12 @@ namespace DataDebug
             {
                 if (!node.hasChildren() && !node.isChart())
                 {
-                    starting_outputs.Add(activeWorksheet.get_Range(node.getName()).Value);
                     output_cells.Add(node);
                 }
+            }
+            foreach (TreeNode n in output_cells)
+            {
+                starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value);
             }
 
             //Procedure for swapping values within ranges, one cell at a time
@@ -560,6 +563,7 @@ namespace DataDebug
                             double start_value = cell.Value;
                             double total_delta = 0;
                             double delta = 0;
+                            //Swapping loop - swap every sibling
                             foreach (TreeNode sibling in node.getParents())
                             {
                                 if (sibling.getName() == parent.getName())
@@ -573,18 +577,19 @@ namespace DataDebug
                                 foreach (TreeNode n in output_cells)
                                 {
                                     delta = Math.Abs(starting_outputs[index] - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index];
+                                    index++;
                                     total_delta = total_delta + delta;
                                 }
                             }
                             total_delta = total_delta / (node.getParents().Count - 1);
                             influences[influence_index] = total_delta;
                             influence_index++;
-                            MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");
+                            //MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");
                             if (max_total_delta < total_delta)
                             {
                                 max_total_delta = total_delta;
                             }
-                            if (min_total_delta > total_delta)
+                            if (min_total_delta > total_delta || min_total_delta == 0)
                             {
                                 min_total_delta = total_delta;
                             }
@@ -593,13 +598,24 @@ namespace DataDebug
                                 cell.Formula = formula;
                             cell.Interior.Color = System.Drawing.Color.Beige;
                         }
-                        for (int i = 0; i < node.getParents().Count; i++)
+                        int ind = 0;
+                        //MessageBox.Show("MIN DELTA: " + min_total_delta + "\nMAX DELTA: " + max_total_delta);
+                        foreach (TreeNode parent in node.getParents())
                         {
                             if (max_total_delta != 0)
                             {
-                                influences[i] = (influences[i] - min_total_delta) / max_total_delta;
+                                influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
+                                MessageBox.Show("Influence = " + influences[ind]);
                             }
+                            ind++;
                         }
+                        //for (int i = 0; i < node.getParents().Count; i++)
+                        //{
+                        //    if (max_total_delta != 0)
+                        //    {
+                        //        influences[i] = (influences[i] - min_total_delta) / max_total_delta;
+                        //    }
+                        //}
                         int indexer = 0;
                         foreach (TreeNode parent in node.getParents())
                         {
@@ -641,7 +657,7 @@ namespace DataDebug
                                     twin_count++;
                                 }
                             }
-                            MessageBox.Show("Twin count: " + twin_count);
+                            //MessageBox.Show("Twin count: " + twin_count);
                             Excel.Range twin_cells = activeWorksheet.get_Range(twin_cells_string);
                             String[] formulas = new String[twin_count]; //Stores the formulas in the twin_cells
                             int i = 0; //Counter for indexing within the formulas array
@@ -649,7 +665,7 @@ namespace DataDebug
                             {
                                 if (cell.HasFormula)
                                 {
-                                    MessageBox.Show(cell.Formula);
+                                    //MessageBox.Show(cell.Formula);
                                     formulas[i] = cell.Formula;
                                 }
                                 i++;
@@ -670,6 +686,7 @@ namespace DataDebug
                                 foreach (TreeNode n in output_cells)
                                 {
                                     delta = Math.Abs(starting_outputs[index] - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index];
+                                    index++;
                                     total_delta = total_delta + delta;
                                     //MessageBox.Show("Substituting " + sibling.getName() 
                                     //  + "\nDelta = |" + starting_outputs[index] + " - " + activeWorksheet.get_Range(n.getName()).Value + "| / " + starting_outputs[index]
@@ -680,12 +697,12 @@ namespace DataDebug
                             total_delta = total_delta / (node.getParents().Count - 1);
                             influences[influence_index] = total_delta / twin_count;
                             influence_index++;
-                            MessageBox.Show(twin_cells.get_Address() + " Total delta = " + (total_delta * 100) + "%");
+                            //MessageBox.Show(twin_cells.get_Address() + " Total delta = " + (total_delta * 100) + "%");
                             if (max_total_delta < total_delta)
                             {
                                 max_total_delta = total_delta;
                             }
-                            if (min_total_delta > total_delta)
+                            if (min_total_delta > total_delta || min_total_delta == 0)
                             {
                                 min_total_delta = total_delta;
                             }
@@ -699,13 +716,24 @@ namespace DataDebug
                             }
                             twin_cells.Interior.Color = System.Drawing.Color.Beige;
                         }
-                        for (int i = 0; i < node.getParents().Count; i++)
+                        int ind = 0;
+                        //MessageBox.Show("MIN DELTA: " + min_total_delta + "\nMAX DELTA: " + max_total_delta);
+                        foreach (TreeNode parent in node.getParents())
                         {
                             if (max_total_delta != 0)
                             {
-                                influences[i] = (influences[i] - min_total_delta) / max_total_delta;
+                                influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
+                                MessageBox.Show("Influence = " + influences[ind]);
                             }
+                            ind++;
                         }
+                        //for (int i = 0; i < node.getParents().Count; i++)
+                        //{
+                        //    if (max_total_delta != 0)
+                        //    {
+                        //        influences[i] = (influences[i] - min_total_delta) / max_total_delta;
+                        //    }
+                        //}
                         int indexer = 0;
                         foreach (TreeNode parent in node.getParents())
                         {

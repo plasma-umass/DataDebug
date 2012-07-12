@@ -48,14 +48,14 @@ namespace DataDebug
         public string toGVString(double max_weight)
         {
             string parents_string = "";
-            foreach (TreeNode node in parents)
+            foreach (TreeNode parent in parents)
             {
-                parents_string += "\n" + node.getName() + "->" + name;
+                parents_string += "\n" + parent.getName() + "->" + name;
             }
             string children_string = "";
-            foreach (TreeNode node in children)
+            foreach (TreeNode child in children)
             {
-                children_string += "\n" + name + "->" + node.getName();
+                children_string += "\n" + name + "->" + child.getName();
             }
             string weight_string = "\n" + name + "->iuc" + name + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + name + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + name + ";iuc" + name + "}";
 
