@@ -605,7 +605,7 @@ namespace DataDebug
                             if (max_total_delta != 0)
                             {
                                 influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
-                                MessageBox.Show("Influence = " + influences[ind]);
+                                //MessageBox.Show("Influence = " + influences[ind]);
                             }
                             ind++;
                         }
@@ -723,7 +723,7 @@ namespace DataDebug
                             if (max_total_delta != 0)
                             {
                                 influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
-                                MessageBox.Show("Influence = " + influences[ind]);
+                                //MessageBox.Show("Influence = " + influences[ind]);
                             }
                             ind++;
                         }
