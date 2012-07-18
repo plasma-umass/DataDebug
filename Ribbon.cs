@@ -509,7 +509,7 @@ namespace DataDebug
                 }
             }
 
-            //Propagate weights
+            //Propagate weights  -- static propagation in the dependence graph (no swapping of values)
             foreach (TreeNode node in nodes)
             {
                 if (!node.hasChildren())
@@ -526,33 +526,93 @@ namespace DataDebug
                     max_weight = node.getWeight();
             }
             //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
-            List<double> starting_outputs = new List<double>(); //This will store all the output nodes at the start of the procedure for swapping values
-            List<TreeNode> output_cells = new List<TreeNode>();
+
+            //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
+
+            List<double> starting_outputs = new List<double>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
+            List<TreeNode> output_cells = new List<TreeNode>(); //This will store all the output nodes at the start of the fuzzing procedure
             //Store all the starting output values
             foreach (TreeNode node in nodes)
             {
-                if (!node.hasChildren() && !node.isChart())
+                if (!node.hasChildren() && !node.isChart()) //If the node does not feed into any other nodes, and it is not a chart, then it is considered output
                 {
                     output_cells.Add(node);
+                }
+                //We also want to add any nodes that feed into charts, because they're essentially outputs. The chart is just a visual aid. 
+                //Nodes feeding into a chart will either be cell nodes or range nodes; for ranges, we should add every cell in the range to output_cells
+                //We also need to make sure we are not adding duplicates in this case
+                if (node.isChart())
+                {
+                    List<TreeNode> chart_parents = node.getParents();
+                    foreach (TreeNode chart_parent in chart_parents)
+                    {
+                        if (!chart_parent.isRange()) //If it is a single cell node
+                        {
+                            //Check for duplicate entries
+                            bool parent_already_added = false;
+                            foreach (TreeNode output_cell in output_cells)
+                            {
+                                if (chart_parent.getName() == output_cell.getName())
+                                    parent_already_added = true;
+                            }
+                            //If the chart parent is not on the list, add it
+                            if (!parent_already_added)
+                                output_cells.Add(chart_parent);
+                        }
+                        else if (chart_parent.isRange())
+                        {
+                            List<TreeNode> range_parents = chart_parent.getParents();
+                            foreach (TreeNode range_parent in range_parents)
+                            {
+                                //Check for duplicate entries
+                                bool parent_already_added = false;
+                                foreach (TreeNode output_cell in output_cells)
+                                {
+                                    if (range_parent.getName() == output_cell.getName())
+                                        parent_already_added = true;
+                                }
+                                //If the range parent is not on the list, add it
+                                if (!parent_already_added)
+                                    output_cells.Add(range_parent);
+                            }
+                        }
+
+                    }
                 }
             }
             foreach (TreeNode n in output_cells)
             {
+                Excel.Range cell = activeWorksheet.get_Range(n.getName());
+                cell.Interior.Color = System.Drawing.Color.Red;
+                MessageBox.Show(cell.Address + " is an output cell.");
                 starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value);
             }
 
             //Procedure for swapping values within ranges, one cell at a time
-            if (!checkBox2.Checked) //Checks if the option for only analyzing the selection is checked
+            if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
             {
                 foreach (TreeNode node in nodes)
                 {
+                    bool all_children_are_charts = true;
+                    if(node.isRange() && node.hasChildren())
+                    {
+                        //bool children_are_charts = false;
+                        foreach (TreeNode child in node.getChildren())
+                        {
+                            if (!child.isChart())
+                            {
+                                all_children_are_charts = false;
+                            }
+                        }
+                    }
+                    //MessageBox.Show(node.getName() + ": all_children_are_charts = " + all_children_are_charts);
                     //For every range node
-                    if (node.isRange())
+                    if (node.isRange() && !all_children_are_charts)
                     {
                         double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell
                         int influence_index = 0;        //Keeps track of the current position in the influences array
                         double max_total_delta = 0;     //The maximum influence found (for normalizing)
-                        double min_total_delta = 0;     //The minimum influence found (for normalizing)
+                        double min_total_delta = -1;     //The minimum influence found (for normalizing)
                         //Swapping values; loop over all nodes in the range
                         foreach (TreeNode parent in node.getParents())
                         {
@@ -589,7 +649,7 @@ namespace DataDebug
                             {
                                 max_total_delta = total_delta;
                             }
-                            if (min_total_delta > total_delta || min_total_delta == 0)
+                            if (min_total_delta > total_delta || min_total_delta == -1)
                             {
                                 min_total_delta = total_delta;
                             }
@@ -628,17 +688,29 @@ namespace DataDebug
             }
 
             //Procedure for swapping values within ranges, replacing all repeated values at once
-            if (checkBox2.Checked) //Checks if the option for only analyzing the selection is checked
+            if (checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
             {
                 foreach (TreeNode node in nodes)
                 {
+                    bool all_children_are_charts = true;
+                    if (node.isRange() && node.hasChildren())
+                    {
+                        //bool children_are_charts = false;
+                        foreach (TreeNode child in node.getChildren())
+                        {
+                            if (!child.isChart())
+                            {
+                                all_children_are_charts = false;
+                            }
+                        }
+                    }
                     //For each range node, do the following:
-                    if (node.isRange())
+                    if (node.isRange() && !all_children_are_charts)
                     {
                         double[] influences = new double[node.getParents().Count];  //Array to keep track of the influence values for every cell
                         int influence_index = 0;        //Keeps track of the current position in the influences array
                         double max_total_delta = 0;     //The maximum influence found (for normalizing)
-                        double min_total_delta = 0;     //The minimum influence found (for normalizing)
+                        double min_total_delta =-1;     //The minimum influence found (for normalizing)
                         //Swapping values; loop over all nodes in the range
                         foreach (TreeNode parent in node.getParents())
                         {
@@ -703,7 +775,7 @@ namespace DataDebug
                             {
                                 max_total_delta = total_delta;
                             }
-                            if (min_total_delta > total_delta || min_total_delta == 0)
+                            if (min_total_delta > total_delta || min_total_delta == -1)
                             {
                                 min_total_delta = total_delta;
                             }
