@@ -191,6 +191,7 @@
     <Compile Include="Ribbon.Designer.cs">
       <DependentUpon>Ribbon.cs</DependentUpon>
     </Compile>
+    <Compile Include="StartValue.cs" />
     <Compile Include="Stats\NormalAD.cs" />
     <Compile Include="Stats\NormalDistribution.cs" />
     <Compile Include="Stats\NormalKS.cs" />

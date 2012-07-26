@@ -294,10 +294,23 @@ namespace DataDebug
             if (checkBox1.Checked)
             {
                 analysisRange = Globals.ThisAddIn.Application.Selection as Excel.Range;
+                Excel.Range number_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers);
+                Excel.Range formula_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing);
+                analysisRange = Globals.ThisAddIn.Application.Union(number_cells, formula_cells, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
             }
             else
             {
-                analysisRange = activeWorksheet.UsedRange;
+                analysisRange = Globals.ThisAddIn.Application.Union(
+                                    activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers), //activeWorksheet.UsedRange;
+                                    activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing), Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
             }
             //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
             //This includes cells that contain constants and formulas
@@ -529,7 +542,7 @@ namespace DataDebug
 
             //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
 
-            List<double> starting_outputs = new List<double>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
+            List<StartValue> starting_outputs = new List<StartValue>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
             List<TreeNode> output_cells = new List<TreeNode>(); //This will store all the output nodes at the start of the fuzzing procedure
             //Store all the starting output values
             foreach (TreeNode node in nodes)
@@ -585,7 +598,18 @@ namespace DataDebug
                 Excel.Range cell = activeWorksheet.get_Range(n.getName());
                 cell.Interior.Color = System.Drawing.Color.Red;
                 MessageBox.Show(cell.Address + " is an output cell.");
-                starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value);
+                try
+                {
+                    double d = (double)activeWorksheet.get_Range(n.getName()).Value;
+                    StartValue sv = new StartValue(d);
+                    starting_outputs.Add(sv); //Try adding it as a number
+                }
+                catch
+                {
+                    string s = activeWorksheet.get_Range(n.getName()).Value;
+                    StartValue sv = new StartValue(s);
+                    starting_outputs.Add(sv); //starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value); //If it doesn't work, it must be a string output
+                }
             }
 
             //Procedure for swapping values within ranges, one cell at a time
@@ -620,7 +644,8 @@ namespace DataDebug
                             string formula = "";
                             if (cell.HasFormula)
                                 formula = cell.Formula;
-                            double start_value = cell.Value;
+                            //double start_value = cell.Value;
+                            StartValue start_value = new StartValue(cell.Value);
                             double total_delta = 0;
                             double delta = 0;
                             //Swapping loop - swap every sibling
@@ -636,7 +661,17 @@ namespace DataDebug
                                 delta = 0;
                                 foreach (TreeNode n in output_cells)
                                 {
-                                    delta = Math.Abs(starting_outputs[index] - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index];
+                                    if (starting_outputs[index].get_string() == null)
+                                    {
+                                        delta = Math.Abs(starting_outputs[index].get_double() - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index].get_double();
+                                    }
+                                    else
+                                    {
+                                        if (starting_outputs[index].get_string().Equals(activeWorksheet.get_Range(n.getName()).Value, StringComparison.Ordinal))
+                                            delta = 0;
+                                        else
+                                            delta = 1;
+                                    }
                                     index++;
                                     total_delta = total_delta + delta;
                                 }
@@ -653,7 +688,10 @@ namespace DataDebug
                             {
                                 min_total_delta = total_delta;
                             }
-                            cell.Value = start_value;
+                            if (start_value.get_string() == null)
+                                cell.Value = start_value.get_double();
+                            else
+                                cell.Value = start_value.get_string();
                             if (formula != "")
                                 cell.Formula = formula;
                             cell.Interior.Color = System.Drawing.Color.Beige;
