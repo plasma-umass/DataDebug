@@ -290,27 +290,92 @@ namespace DataDebug
         {
             Excel.Worksheet activeWorksheet = ((Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet);
             List<TreeNode> nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes
-            Excel.Range analysisRange; //This keeps track of the range to be analyzed - it is either the user's selection or the whole worksheet
+            Excel.Range analysisRange = null; //This keeps track of the range to be analyzed - it is either the user's selection or the whole worksheet
             if (checkBox1.Checked)
             {
                 analysisRange = Globals.ThisAddIn.Application.Selection as Excel.Range;
-                Excel.Range number_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers);
-                Excel.Range formula_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing);
-                analysisRange = Globals.ThisAddIn.Application.Union(number_cells, formula_cells, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                Excel.Range number_cells = null;
+                Excel.Range formula_cells = null;
+                try
+                {
+                    number_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers);
+                }
+                catch 
+                {
+                    try
+                    {
+                        number_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing);
+                    }
+                    catch {}
+                }
+                try
+                {
+                    formula_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing);
+                }
+                catch
+                {
+                    try
+                    {
+                        formula_cells = analysisRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers);
+                    }
+                    catch {}
+                }
+                try
+                {
+                    analysisRange = Globals.ThisAddIn.Application.Union(number_cells, formula_cells, Type.Missing,
+                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                }
+                catch
+                {
+                    MessageBox.Show("No cells to analyze.");
+                }
             }
             else
             {
-                analysisRange = Globals.ThisAddIn.Application.Union(
-                                    activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers), //activeWorksheet.UsedRange;
-                                    activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing), Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                    Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                analysisRange = Globals.ThisAddIn.Application.Selection as Excel.Range;
+                Excel.Range number_cells = null;
+                Excel.Range formula_cells = null;
+                try
+                {
+                    number_cells = activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers);
+                }
+                catch 
+                {
+                    try
+                    {
+                        number_cells = activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing);
+                    }
+                    catch {}
+                }
+                try
+                {
+                    formula_cells = activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing);
+                }
+                catch
+                {
+                    try
+                    {
+                        formula_cells = activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers);
+                    }
+                    catch {}
+                }
+                try
+                {
+                    analysisRange = Globals.ThisAddIn.Application.Union(
+                                        number_cells, //activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers), //activeWorksheet.UsedRange;
+                                        formula_cells, //activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing), 
+                                        Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                        Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                        Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+                                        Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                }
+                catch
+                {
+                    MessageBox.Show("No cells to analyze.");
+                }
             }
             //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
             //This includes cells that contain constants and formulas
@@ -667,7 +732,8 @@ namespace DataDebug
                                     }
                                     else
                                     {
-                                        if (starting_outputs[index].get_string().Equals(activeWorksheet.get_Range(n.getName()).Value, StringComparison.Ordinal))
+                                        //MessageBox.Show("Comparing " + starting_outputs[index].get_string() + " and " + activeWorksheet.get_Range(n.getName()).Value);
+                                        if (String.Equals(starting_outputs[index].get_string(), activeWorksheet.get_Range(n.getName()).Value, StringComparison.Ordinal))
                                             delta = 0;
                                         else
                                             delta = 1;
