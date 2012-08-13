@@ -498,7 +498,9 @@ namespace DataDebug
 
             foreach (Excel.ChartObject chart in (Excel.ChartObjects)activeWorksheet.ChartObjects(Type.Missing))
             {
-                TreeNode n = new TreeNode("Chart" + chart.Name.Replace(" ", ""));
+                //TODO The naming convention for TreeNode charts is kind of a hack; could fail if two charts have the same names when white spaces are removed - maybe add a random hash at the end
+                TreeNode n = new TreeNode(chart.Name);
+                n.setChart(true);
                 nodes.Add(n);
                 foreach (Excel.Series series in (Excel.SeriesCollection)chart.Chart.SeriesCollection(Type.Missing))
                 {
@@ -565,7 +567,7 @@ namespace DataDebug
                     MatchCollection matchedCells = Regex.Matches(formula, patternCell);  //matchedCells is a collection of all the cells that are referenced by the formula
                     foreach (Match m in matchedCells)
                     {
-                        //TODO Currently influences between different worksheets do not work; this should be fixed
+                        //TODO Currently dependencies between different worksheets do not work; this should be fixed
                         TreeNode input_cell = null;
                         //Find the node object for the current cell in the list of TreeNodes
                         foreach (TreeNode node in nodes)
@@ -612,10 +614,12 @@ namespace DataDebug
             //Store all the starting output values
             foreach (TreeNode node in nodes)
             {
-                if (!node.hasChildren() && !node.isChart()) //If the node does not feed into any other nodes, and it is not a chart, then it is considered output
+                //if (!node.hasChildren() && !node.isChart()) //If the node does not feed into any other nodes, and it is not a chart, then it is considered output
+                if (!node.hasChildren()) //Nodes that do not feed into any other nodes are considered output. 
                 {
                     output_cells.Add(node);
                 }
+                /**
                 //We also want to add any nodes that feed into charts, because they're essentially outputs. The chart is just a visual aid. 
                 //Nodes feeding into a chart will either be cell nodes or range nodes; for ranges, we should add every cell in the range to output_cells
                 //We also need to make sure we are not adding duplicates in this case
@@ -657,23 +661,44 @@ namespace DataDebug
 
                     }
                 }
+                **/
             }
             foreach (TreeNode n in output_cells)
             {
-                Excel.Range cell = activeWorksheet.get_Range(n.getName());
-                cell.Interior.Color = System.Drawing.Color.Red;
-                MessageBox.Show(cell.Address + " is an output cell.");
-                try
+                // If the TreeNode is a chart
+                if (n.isChart())
                 {
-                    double d = (double)activeWorksheet.get_Range(n.getName()).Value;
-                    StartValue sv = new StartValue(d);
-                    starting_outputs.Add(sv); //Try adding it as a number
+                    // Add a StartValue with the average of the range of inputs for each range of inputs
+                    MessageBox.Show(n.getName() + " is output.");
+                    double sum = 0.0;
+                    TreeNode parent_range = n.getParents()[0];
+                    foreach (TreeNode par in parent_range.getParents())
+                    {
+                        sum = sum + activeWorksheet.get_Range(par.getName()).Value;
+                    }
+                    double average = sum / parent_range.getParents().Count;
+                    StartValue sv = new StartValue(average);
+                    starting_outputs.Add(sv);
+
                 }
-                catch
+                // If the TreeNode is a cell
+                else 
                 {
-                    string s = activeWorksheet.get_Range(n.getName()).Value;
-                    StartValue sv = new StartValue(s);
-                    starting_outputs.Add(sv); //starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value); //If it doesn't work, it must be a string output
+                    Excel.Range cell = activeWorksheet.get_Range(n.getName());
+                    cell.Interior.Color = System.Drawing.Color.Red;
+                    MessageBox.Show(cell.Address + " is an output cell.");
+                    try
+                    {
+                        double d = (double)activeWorksheet.get_Range(n.getName()).Value;
+                        StartValue sv = new StartValue(d);
+                        starting_outputs.Add(sv); //Try adding it as a number
+                    }
+                    catch
+                    {
+                        string s = activeWorksheet.get_Range(n.getName()).Value;
+                        StartValue sv = new StartValue(s);
+                        starting_outputs.Add(sv); //starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value); //If it doesn't work, it must be a string output
+                    }
                 }
             }
 
@@ -696,6 +721,7 @@ namespace DataDebug
                     }
                     //MessageBox.Show(node.getName() + ": all_children_are_charts = " + all_children_are_charts);
                     //For every range node
+                    all_children_are_charts = false; 
                     if (node.isRange() && !all_children_are_charts)
                     {
                         double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell
@@ -728,7 +754,21 @@ namespace DataDebug
                                 {
                                     if (starting_outputs[index].get_string() == null)
                                     {
-                                        delta = Math.Abs(starting_outputs[index].get_double() - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index].get_double();
+                                        if (!n.isChart())
+                                        {
+                                            delta = Math.Abs(starting_outputs[index].get_double() - activeWorksheet.get_Range(n.getName()).Value) / starting_outputs[index].get_double();
+                                        }
+                                        else  // The node is a chart
+                                        {
+                                            double sum = 0.0;
+                                            TreeNode parent_range = n.getParents()[0];
+                                            foreach (TreeNode par in parent_range.getParents())
+                                            {
+                                                sum = sum + activeWorksheet.get_Range(par.getName()).Value;
+                                            }
+                                            double average = sum / parent_range.getParents().Count;
+                                            delta = Math.Abs(starting_outputs[index].get_double() - average) / starting_outputs[index].get_double(); ; 
+                                        }
                                     }
                                     else
                                     {

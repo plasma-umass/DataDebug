@@ -19,7 +19,7 @@ namespace DataDebug
         private List<TreeNode> children;    //these are the TreeNodes that the current cell feeds into
         private string name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>_to_<EndCell>; for charts it is "Chart<Name of chart>"
         private double weight;  //The weight of the node as computed by propagating values down the tree
-
+        private bool chart; 
         //Constructor method -- the string argument is used as the name of the node
         public TreeNode(string n)
         {
@@ -27,6 +27,7 @@ namespace DataDebug
             children = new List<TreeNode>();
             name = n;
             weight = 0.0;
+            chart = false;
         }
 
         public string toString()
@@ -50,16 +51,16 @@ namespace DataDebug
             string parents_string = "";
             foreach (TreeNode parent in parents)
             {
-                parents_string += "\n" + parent.getName() + "->" + name;
+                parents_string += "\n" + parent.getName().Replace(" ", "") + "->" + name.Replace(" ", "");
             }
             string children_string = "";
             foreach (TreeNode child in children)
             {
-                children_string += "\n" + name + "->" + child.getName();
+                children_string += "\n" + name.Replace(" ", "") + "->" + child.getName().Replace(" ", "");
             }
-            string weight_string = "\n" + name + "->iuc" + name + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + name + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + name + ";iuc" + name + "}";
+            string weight_string = "\n" + name.Replace(" ", "") + "->iuc" + name.Replace(" ", "") + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + name.Replace(" ", "") + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + name.Replace(" ", "") + ";iuc" + name.Replace(" ", "") + "}";
 
-            return ("\n" + name + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]" + weight_string + parents_string + children_string).Replace("$", "");
+            return ("\n" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]" + weight_string + parents_string + children_string).Replace("$", "");
             //fillcolor = \"green\"   \"0.000 " + weight + " 0.878\"
         }
 
@@ -142,10 +143,16 @@ namespace DataDebug
         //By convention, we add the string "Chart" to the beginning of the name of every Chart node
         public bool isChart()
         {
-            if (name.Contains("Chart"))
-                return true;
-            else
-                return false;
+            return chart;
+            //if (name.Contains("Chart"))
+            //    return true;
+            //else
+            //    return false;
+        }
+
+        public void setChart(bool value)
+        {
+            chart = value;
         }
 
         //Retuns the List<TreeNode> of children of this node
