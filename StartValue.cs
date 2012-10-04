@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DataDebug
 {
-    //This class is used for storing the starting values of output cells during the fuzzing procedure.
+    //This class is used for storing the starting values of cells during the fuzzing procedure.
     //Cells may contain numbers or strings, and we would like to be able to handle both. Thus we create a list of StartValue objects,
     //which can store either a number or a string.
     class StartValue

@@ -39,6 +39,7 @@
             this.tab1 = this.Factory.CreateRibbonTab();
             this.group1 = this.Factory.CreateRibbonGroup();
             this.button1 = this.Factory.CreateRibbonButton();
+            this.checkBox2 = this.Factory.CreateRibbonCheckBox();
             this.checkBox1 = this.Factory.CreateRibbonCheckBox();
             this.dropDown1 = this.Factory.CreateRibbonDropDown();
             this.separator1 = this.Factory.CreateRibbonSeparator();
@@ -48,7 +49,7 @@
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.checkBox2 = this.Factory.CreateRibbonCheckBox();
+            this.button7 = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -67,6 +68,7 @@
             this.group1.Items.Add(this.checkBox2);
             this.group1.Items.Add(this.checkBox1);
             this.group1.Items.Add(this.dropDown1);
+            this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.separator1);
             this.group1.Items.Add(this.button2);
             this.group1.Label = "Dependence Graph & Fuzzing";
@@ -77,6 +79,11 @@
             this.button1.Label = "Analyze Worksheet";
             this.button1.Name = "button1";
             this.button1.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button1_Click);
+            // 
+            // checkBox2
+            // 
+            this.checkBox2.Label = "Fuzz Repeated Values Simultaneously";
+            this.checkBox2.Name = "checkBox2";
             // 
             // checkBox1
             // 
@@ -135,10 +142,11 @@
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
-            // checkBox2
+            // button7
             // 
-            this.checkBox2.Label = "Fuzz Repeated Values Simultaneously";
-            this.checkBox2.Name = "checkBox2";
+            this.button7.Label = "button7";
+            this.button7.Name = "button7";
+            this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
             // Ribbon
             // 
@@ -170,6 +178,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button5;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button6;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox2;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton button7;
     }
 
     partial class ThisRibbonCollection
