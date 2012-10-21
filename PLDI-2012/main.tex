@@ -1,0 +1,126 @@
+\documentclass{sigplanconf}
+
+% The following \documentclass options may be useful:
+%
+% 10pt          To set in 10-point type instead of 9-point.
+% 11pt          To set in 11-point type instead of 9-point.
+% authoryear    To obtain author/year citation style instead of numeric.
+
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{subfigure}
+\usepackage{graphics}
+\usepackage{epsfig}
+\usepackage{bbding}
+\usepackage{color}
+\usepackage{url}
+\usepackage{xspace,amsthm,amsmath,amssymb,url,microtype,amsfonts,color}
+\usepackage{graphicx,subfigure}
+\usepackage{amscd,hyperref}
+\usepackage{enumitem}
+\usepackage{lstlang0}
+\usepackage{fancyvrb}
+
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\prob}[1]{\Pr\left[#1 \right ]}
+\newcommand{\expec}[1]{{\mathbb E}\left[#1 \right ]}
+\newcommand{\var}[1]{{\mathbb V}\left[#1 \right ]}
+\newcommand{\err}{{\mathcal E}}
+\newcommand{\comment}[1]{\marginpar{!!!}{[\emph{#1}]}}
+
+\DeclareMathOperator{\argmin}{argmin}
+\DeclareMathOperator{\coeff}{coeff}
+\DeclareMathOperator{\poi}{Poi}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{conjecture}{Conjecture}[section]
+\newtheorem{fact}{Fact}
+\newtheorem{problem}{Problem}
+\newtheorem{example}{Example}
+\newtheorem{claim}{Claim}
+
+\begin{document}
+
+\conferenceinfo{PLDI '13}{June 16--21, 2013, Seattle, Washington, USA}
+\copyrightyear{2013} 
+\copyrightdata{[to be supplied]} 
+
+% \titlebanner{banner above paper title}        % These are ignored unless
+% \preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\newcommand{\AutoMan}{{\scshape AutoMan}}
+\newcommand{\automan}{{\scshape AutoMan}}
+
+\title{Data Debugging}
+
+% \subtitle{Integrating Human and Silicon Computation}
+
+\authorinfo{\emph{authorship list omitted for anonymity}}
+
+%\authorinfo{Daniel W. Barowy\and Emery D. Berger\and Andrew McGregor}
+%           {Department of Computer Science \\
+%           University of Massachusetts, Amherst \\
+%           Amherst, MA  01003}
+%          {\{dbarowy,emery,mcgregor\}@cs.umass.edu}
+
+\maketitle
+
+\begin{abstract}
+\input{abstract}
+\end{abstract}
+
+%\category{CR-number}{subcategory}{third-level}
+
+%\terms
+
+%\keywords
+
+\section{Introduction}
+\input{introduction}
+
+\section{Background}
+\label{sec:background}
+\input{background}
+
+\section{Overview}
+\label{sec:overview}
+\input{overview}
+
+\section{Algorithm}
+\label{sec:algorithm}
+\input{algorithm}
+
+\section{Evaluation}
+\label{sec:evaluation}
+\input{evaluation}
+
+\section{Related Work}
+\label{sec:related}
+\input{related}
+
+\section{Future Work}
+\label{sec:future}
+\input{future_work}
+
+\section{Conclusion}
+\label{sec:conclusion}
+\input{conclusion}
+
+%\appendix
+%\section{Appendix Title}
+
+% This is the text of the appendix, if you need one.
+
+%\acks
+
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+
+\bibliography{ref}
+
+\end{document}

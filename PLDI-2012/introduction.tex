@@ -1,0 +1,28 @@
+Software bugs are a well-known problem, and substantial research
+effort has been expended developing tools which encourage the writing
+of correct programs.  However, most programs operate on data supplied
+by users, and even a perfectly good program would produce the wrong
+results if it is given incorrect input.  Error checking of inputs is
+generally limited to ensuring the correct data type and formatting as
+required by the program.  However, data is important and there should
+be better ways of checking its correctness.
+
+One could imagine a tool which automatically audits data, similar to
+the ones which check for typographical errors in text.  However,
+numerical data is much more unstructured than text.  There are no
+rules, such as grammar, governing how numerical data should look, and
+no predefined set of allowable values such as the set of words in a
+language.  There may, however, exist some ways of narrowing the scope
+of the problem to make it more manageable.
+
+If we look at how data is most commonly stored nowadays, we see that
+it is in spreadsheets, such as Excel files or databases, and this can
+provide some degree of structure for approaching the problem.  For
+that reason, we attempted to create a tool which would automatically
+detect numerical errors in spreadsheets.  We have developed a
+Microsoft Excel extension, or add-in, written in C\#, which uses
+cross-validation techniques and perturbation analysis to look for
+numerical values that appear suspicious.  Values that appear to be
+potential errors are highlighted proportionally to the likeliness that
+they are incorrect, as judged by our analysis -- the more likely a
+value is to be wrong, the brighter the highlighting.
