@@ -25,7 +25,7 @@ can be moved around without affecting the content.  The underlying
 logic and interrelationships between these components is what is
 important.  Therefore we can abstract away the visual layout of a
 spreadsheet and represent its structure as a dependence graph where
-the vertices will be cells, graphs, and other spreadsheet elements,
+the vertices will be cells, charts, and other spreadsheet elements,
 and the edges will represent the directed flow of information between
 the nodes.  [For instance, if the cell B1 contains the formula
  ``f(x)=A1+A2'', the dependence graph for that spreadsheet would
@@ -34,9 +34,55 @@ the nodes.  [For instance, if the cell B1 contains the formula
 [Figure 1]
 
 Constructing a dependence graph requires that we extract all
-dependencies between the elements of a spreadsheet.  We have to
-examine every component and see if it relies on any other piece of
-data in the spreadsheet.  For charts this is fairly easy because their
+dependencies between the elements of a spreadsheet, and in order to do 
+that we have to examine every component and determine if it relies 
+on any other piece of data in the spreadsheet.  Dependencies are most
+commonly manifested in formulas, in which case the cell containing the 
+formula is dependent on the cells that are arguments to the formula.  
+Dependencies can also be extracted from charts, where we can see that 
+a chart in the spreadsheet is dependent on all of its inputs.  Therefore 
+building a spreadsheet's dependence graph requires that we go through 
+all cells which contain formulas, and parse the formulas looking for 
+references to cells or ranges.  
+
+The standard convention for cell references in Excel is to use A1-style 
+coordinates, where 'A' designates the cell's column, and '1' designates 
+the row.  Columns are named in alphabetical fashion from A through Z, 
+after which follow columns AA, AB, AC, and so forth until AZ. Then come 
+columns BA, BB, BC, and so on.  The row coordinates are simply positive 
+integers.  There is also an alternative way for specifying cell 
+coordinates, called row-column notation, which has the form 
+R[integer i]C[integer j] -- simply referring to the cell in the i-th row 
+and j-th column.  Internally Excel uses the latter form, and so does our 
+parser.  Range references have the form [cell reference]:[cell reference].
+One additional intricacy in referencing cells and ranges is the use of 
+absolute versus relative coordinates.  Preceding a coordinate by the 
+'\$' symbol designates it as absolute.  This means that if the formula 
+were to be copied and pasted into another cell, that coordinate would not
+be changed, whereas otherwise Excel would automatically recompute it
+relative to the new location of the formula.  Therefore cell references
+may come in four different forms: A1, \$A1, A\$1, and \$A\$1.  The same is 
+true for the endpoints of range references.  
+
+Additionally, Excel allows users to reference cells and ranges in other 
+worksheets of the same file. This is done with the syntax 
+[worksheet name]![cell or range reference]. Since worksheet names may contain
+empty spaces and a collection of special characters, worksheet names may 
+need to be surrounded by single quotes.  For example, a cell may contain the 
+formula "='Worksheet 1'!\$A\1".
+
+Extracting cell and range references from a formula is accomplished by 
+using regular expressions for recognizing the different forms of references
+that may appear.  This is done starting with the most specific types of 
+references, removing any recognized string sequences from the formula, 
+and moving to the more general ones.  For instance, recognizing a range 
+reference is a more specific task than recognizing an individual cell
+reference, since cell references are components of range references.  Consider
+the formula "=SUM(A1:A5) + B1". If cell reference recognition were applied 
+before range recognition, we would extract the cells A1, A5, and B1, but instead
+we should have recognized the range A1:A5, and the cell B1. 
+
+For charts this is fairly easy because their
 inputs can be accessed through the API.  This is not the case with
 formulas, so references to other cells or ranges have to be extracted
 from the formula's text via parsing.  This is done through the use
