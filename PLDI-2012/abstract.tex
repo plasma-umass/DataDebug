@@ -2,16 +2,16 @@ Testing and static analysis tools can help root out bugs in programs,
 but not bugs in data. Checking data for errors is arguably as
 important as finding program errors, but lacks
 effective tool support. Currently, the only approach is manual
-inspection of data, one at a time. Because inspection is onerous and
+inspection of data. Because inspection is onerous and
 ineffective at scale, most data remains full of errors. CITE
 SPREADSHEET STUDY OF ERROR RATES.
 
 This paper introduces \emph{data debugging}, an approach that combines
 program analysis with data analysis to locate values that have an
-unusual effect on the final computation.  These values simultaneously
-provide valuable insights into the data and can reveal data
+unusual effect on the results of computations. These values
+simultaneously provide valuable insights into the data and can reveal
 errors.  Data debugging is particularly promising in the context of
-data-intensive programming environments where data and programs are
+data-intensive programming environments, where programs and data are
 interwined, such as databases (queries and stored procedures) and
 spreadsheets (formulas).
 
