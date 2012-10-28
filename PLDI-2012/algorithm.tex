@@ -69,7 +69,7 @@ worksheets of the same file. This is done with the syntax
 [worksheet name]![cell or range reference]. Since worksheet names may contain
 empty spaces and a collection of special characters, worksheet names may 
 need to be surrounded by single quotes.  For example, a cell may contain the 
-formula "='Worksheet 1'!\$A\1".
+formula % {this doesn't compile.}  "='Worksheet 1'!\$A\1".
 
 Extracting cell and range references from a formula is accomplished by 
 using regular expressions for recognizing the different forms of references
