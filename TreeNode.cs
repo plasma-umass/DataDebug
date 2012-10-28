@@ -21,6 +21,9 @@ namespace DataDebug
         private string worksheet;  //This keeps track of the worksheet where this cell/range/chart is located
         private double weight;  //The weight of the node as computed by propagating values down the tree
         private bool chart; 
+        private System.Drawing.Color originalColor;
+        //private int originalColor;  //For using ColorIndex property instead of Color property
+        private int colorBit = 0; 
         //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
         public TreeNode(string n, string ws)
         {
@@ -196,5 +199,25 @@ namespace DataDebug
         {
             worksheet = s;
         }
+
+        //Returns the original color of the cell as a System.Drawing.Color
+        public System.Drawing.Color getOriginalColor()
+        //public int getOriginalColor() //For using ColorIndex property instead of Color property
+        {
+            return originalColor;
+        }
+
+        //Sets the value of the original color of the cell as a System.Drawing.Color
+        public void setOriginalColor(System.Drawing.Color color)
+        //public void setOriginalColor(int color)   //For using ColorIndex property instead of Color property
+        {
+            //We only want to set the original color once
+            if (colorBit == 0)
+            {
+                colorBit = 1; 
+                originalColor = color;
+            }
+        }
+
     }
 }

@@ -42,6 +42,8 @@
             this.checkBox2 = this.Factory.CreateRibbonCheckBox();
             this.checkBox1 = this.Factory.CreateRibbonCheckBox();
             this.dropDown1 = this.Factory.CreateRibbonDropDown();
+            this.button7 = this.Factory.CreateRibbonButton();
+            this.button8 = this.Factory.CreateRibbonButton();
             this.separator1 = this.Factory.CreateRibbonSeparator();
             this.button2 = this.Factory.CreateRibbonButton();
             this.group2 = this.Factory.CreateRibbonGroup();
@@ -49,7 +51,6 @@
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.button7 = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -69,6 +70,7 @@
             this.group1.Items.Add(this.checkBox1);
             this.group1.Items.Add(this.dropDown1);
             this.group1.Items.Add(this.button7);
+            this.group1.Items.Add(this.button8);
             this.group1.Items.Add(this.separator1);
             this.group1.Items.Add(this.button2);
             this.group1.Label = "Dependence Graph & Fuzzing";
@@ -76,7 +78,7 @@
             // 
             // button1
             // 
-            this.button1.Label = "Analyze Worksheet";
+            this.button1.Label = "Analyze Document";
             this.button1.Name = "button1";
             this.button1.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button1_Click);
             // 
@@ -98,6 +100,18 @@
             this.dropDown1.Items.Add(ribbonDropDownItemImpl2);
             this.dropDown1.Label = "Data Layout";
             this.dropDown1.Name = "dropDown1";
+            // 
+            // button7
+            // 
+            this.button7.Label = "button7";
+            this.button7.Name = "button7";
+            this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
+            // 
+            // button8
+            // 
+            this.button8.Label = "Clear coloring";
+            this.button8.Name = "button8";
+            this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
             // 
             // separator1
             // 
@@ -142,12 +156,6 @@
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
-            // button7
-            // 
-            this.button7.Label = "button7";
-            this.button7.Name = "button7";
-            this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
-            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -179,6 +187,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button6;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button7;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton button8;
     }
 
     partial class ThisRibbonCollection

@@ -13,6 +13,8 @@ namespace DataDebug
 {
     public partial class Ribbon
     {
+        private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
+        List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
 
@@ -290,7 +292,7 @@ namespace DataDebug
         private void constructTree()
         {
             //Excel.Worksheet activeWorksheet = ((Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet);
-            List<TreeNode> nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
+            //List<TreeNode> nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
             Excel.Range analysisRange = null; //This keeps track of the range to be analyzed - it is either the user's selection or the whole workbook
             Excel.Range[] analysisRanges = new Excel.Range[Globals.ThisAddIn.Application.Worksheets.Count]; //This keeps track of the range to be analyzed in every worksheet of the workbook
             if (checkBox1.Checked) //if "Use selection" box is checked
@@ -631,7 +633,7 @@ namespace DataDebug
                                 //Find the node object for the current cell in the list of TreeNodes
                                 foreach (TreeNode node in nodes)
                                 {
-                                    if (node.getName().Replace("$", "") == match.Value.Replace("$", ""))
+                                    if (node.getName().Replace("$", "") == cell_coordinates.Replace("$", "") && node.getWorksheet() == ws_name)
                                     {
                                         input_cell = node;
                                     }
@@ -721,7 +723,7 @@ namespace DataDebug
                             //Find the node object for the current cell in the list of TreeNodes
                             foreach (TreeNode node in nodes)
                             {
-                                if (node.getName().Replace("$", "") == m.Value.Replace("$", ""))
+                                if (node.getName().Replace("$", "") == m.Value.Replace("$", "") && node.getWorksheet() == c.Worksheet.Name)
                                 {
                                     input_cell = node;
                                 }
@@ -729,6 +731,12 @@ namespace DataDebug
                                 {
                                     continue;
                                 }
+                            }
+                            //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                            if (input_cell == null)
+                            {
+                                input_cell = new TreeNode(m.Value.Replace("$", ""), c.Worksheet.Name);
+                                nodes.Add(input_cell);
                             }
 
                             //Update the dependencies
@@ -1034,7 +1042,7 @@ namespace DataDebug
                                         //Find the node object for the current cell in the list of TreeNodes
                                         foreach (TreeNode node in nodes)
                                         {
-                                            if (node.getName().Replace("$", "") == match.Value.Replace("$", ""))
+                                            if (node.getName().Replace("$", "") == cell_coordinates.Replace("$", "") && node.getWorksheet() == ws_name)
                                             {
                                                 input_cell = node;
                                             }
@@ -1124,7 +1132,7 @@ namespace DataDebug
                                     //Find the node object for the current cell in the list of TreeNodes
                                     foreach (TreeNode node in nodes)
                                     {
-                                        if (node.getName().Replace("$", "") == m.Value.Replace("$", ""))
+                                        if (node.getName().Replace("$", "") == m.Value.Replace("$", "") && node.getWorksheet() == c.Worksheet.Name)
                                         {
                                             input_cell = node;
                                         }
@@ -1133,7 +1141,12 @@ namespace DataDebug
                                             continue;
                                         }
                                     }
-
+                                    //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                                    if (input_cell == null)
+                                    {
+                                        input_cell = new TreeNode(m.Value.Replace("$", ""), c.Worksheet.Name);
+                                        nodes.Add(input_cell);
+                                    }
                                     //Update the dependencies
                                     formula_cell.addParent(input_cell);
                                     input_cell.addChild(formula_cell);
@@ -1165,7 +1178,6 @@ namespace DataDebug
                 nodes.Add(chart_node);
                 foreach (Excel.Series series in (Excel.SeriesCollection)chart.SeriesCollection(Type.Missing))
                 {
-                    //TODO - add worksheet recognition to this code
                     string formula = series.Formula;  //The formula contained in the cell
                     MatchCollection matchedRanges = null;
                     MatchCollection matchedCells = null;
@@ -1334,7 +1346,7 @@ namespace DataDebug
                             //Find the node object for the current cell in the list of TreeNodes
                             foreach (TreeNode node in nodes)
                             {
-                                if (node.getName().Replace("$", "") == match.Value.Replace("$", ""))
+                                if (node.getName().Replace("$", "") == cell_coordinates.Replace("$", "") && node.getWorksheet() == ws_name)
                                 {
                                     input_cell = node;
                                 }
@@ -1369,7 +1381,6 @@ namespace DataDebug
                     nodes.Add(chart_node);
                     foreach (Excel.Series series in (Excel.SeriesCollection)chart.Chart.SeriesCollection(Type.Missing))
                     {
-                        //TODO - add worksheet recognition to this code
                         string formula = series.Formula;  //The formula contained in the cell
                         MatchCollection matchedRanges = null;
                         MatchCollection matchedCells = null;
@@ -1464,6 +1475,8 @@ namespace DataDebug
                                     //MessageBox.Show("Created node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                     nodes.Add(range);
                                 }
+
+                                //Update the dependencies
                                 chart_node.addParent(range);
                                 range.addChild(chart_node);
                                 //Add each cell contained in the range to the dependencies
@@ -1538,7 +1551,7 @@ namespace DataDebug
                                 //Find the node object for the current cell in the list of TreeNodes
                                 foreach (TreeNode node in nodes)
                                 {
-                                    if (node.getName().Replace("$", "") == match.Value.Replace("$", ""))
+                                    if (node.getName().Replace("$", "") == cell_coordinates.Replace("$", "") && node.getWorksheet() == ws_name)
                                     {
                                         input_cell = node;
                                     }
@@ -1574,7 +1587,7 @@ namespace DataDebug
                             //Try to find the range in existing TreeNodes
                             foreach (TreeNode node in nodes)
                             {
-                                if (node.getName() == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""))
+                                if (node.getName() == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && node.getWorksheet() == worksheet.Name)
                                 {
                                     range = node;
                                 }
@@ -1586,10 +1599,11 @@ namespace DataDebug
                             //If it does not exist, create it
                             if (range == null)
                             {
-                                //TODO FIX WORKSHEET ARGUMENT
                                 range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), worksheet.Name);
                                 nodes.Add(range);
                             }
+
+                            //Update the dependencies
                             chart_node.addParent(range);
                             range.addChild(chart_node);
                             //Add each cell contained in the range to the dependencies
@@ -1599,7 +1613,7 @@ namespace DataDebug
                                 //Find the node object for the current cell in the list of TreeNodes
                                 foreach (TreeNode node in nodes)
                                 {
-                                    if (node.getName().Replace("$", "") == cellInRange.Address.Replace("$", ""))
+                                    if (node.getName().Replace("$", "") == cellInRange.Address.Replace("$", "") && node.getWorksheet() == worksheet.Name)
                                     {
                                         input_cell = node;
                                     }
@@ -1622,12 +1636,11 @@ namespace DataDebug
                         matchedCells = Regex.Matches(formula, patternCell);  //matchedCells is a collection of all the cells that are referenced by the formula
                         foreach (Match m in matchedCells)
                         {
-                            //TODO Currently dependencies between different worksheets do not work; this should be fixed
                             TreeNode input_cell = null;
                             //Find the node object for the current cell in the list of TreeNodes
                             foreach (TreeNode node in nodes)
                             {
-                                if (node.getName().Replace("$", "") == m.Value.Replace("$", ""))
+                                if (node.getName().Replace("$", "") == m.Value.Replace("$", "") && node.getWorksheet() == worksheet.Name)
                                 {
                                     input_cell = node;
                                 }
@@ -1635,6 +1648,12 @@ namespace DataDebug
                                 {
                                     continue;
                                 }
+                            }
+                            //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                            if (input_cell == null)
+                            {
+                                input_cell = new TreeNode(m.Value, worksheet.Name);
+                                nodes.Add(input_cell);
                             }
 
                             //Update the dependencies
@@ -1743,6 +1762,13 @@ namespace DataDebug
                 {
                     Excel.Worksheet nodeWorksheet = n.getWorksheetObject(); //This is be the worksheet where the node n is located
                     Excel.Range cell = nodeWorksheet.get_Range(n.getName());
+                    //n.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color)); 
+                    //Only store the original color on the first run of the tool
+                    //if (toolHasNotRun == false)
+                    //{
+                        //n.setOriginalColor(cell.Interior.ColorIndex);
+                    //    n.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                    //}
                     cell.Interior.Color = System.Drawing.Color.Red;
                     //MessageBox.Show(cell.Address + " is an output cell.");
                     try     //If the output is a number
@@ -1868,11 +1894,24 @@ namespace DataDebug
                                 min_total_delta = total_delta;
                             }
                             if (start_value.get_string() == null)
+                            {
                                 cell.Value = start_value.get_double();
+                            }
                             else
+                            {
                                 cell.Value = start_value.get_string();
+                            }
                             if (formula != "")
+                            {
                                 cell.Formula = formula;
+                            }
+                            //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                            //Only store the original color on the first run of the tool
+                            //if (toolHasNotRun == false)
+                            //{
+                                //parent.setOriginalColor(cell.Interior.ColorIndex);
+                            //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                            //}
                             cell.Interior.Color = System.Drawing.Color.Beige;
                         }
                         int ind = 0;
@@ -1897,6 +1936,14 @@ namespace DataDebug
                         foreach (TreeNode parent in node.getParents())
                         {
                             Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                            //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                            
+                            //Only store the original color on the first run of the tool
+                            //if (toolHasNotRun == false)
+                            //{
+                                //parent.setOriginalColor(cell.Interior.ColorIndex);
+                            //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                            //}
                             cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
                             indexer++;
                         }
@@ -1936,7 +1983,7 @@ namespace DataDebug
                             int twin_count = 1;     //This will keep track of the number of cells that have this exact value
                             foreach (TreeNode twin in node.getParents())
                             {
-                                if (twin.getName() == parent.getName())
+                                if (twin.getName() == parent.getName()) // if twin is the same cell as the current cell being examined, don't do anything
                                 {
                                     continue;
                                 }
@@ -1946,7 +1993,7 @@ namespace DataDebug
                                     twin_count++;
                                 }
                             }
-                            //MessageBox.Show("Twin count: " + twin_count);
+                            MessageBox.Show(twin_cells_string);
                             Excel.Range twin_cells = parent.getWorksheetObject().get_Range(twin_cells_string);
                             String[] formulas = new String[twin_count]; //Stores the formulas in the twin_cells
                             int i = 0; //Counter for indexing within the formulas array
@@ -2035,6 +2082,13 @@ namespace DataDebug
                         foreach (TreeNode parent in node.getParents())
                         {
                             Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                            //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                            //Only store the original color on the first run of the tool
+                            //if (toolHasNotRun == false)
+                            //{
+                                //parent.setOriginalColor(cell.Interior.ColorIndex);
+                            //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                            //}
                             cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
                             indexer++;
                         }
@@ -2054,11 +2108,34 @@ namespace DataDebug
             disp.ShowDialog();
         }
 
+        List<TreeNode> originalColorNodes;
         //Action for "Analyze Worksheet" button
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
             //IdentifyRanges();
-            constructTree();
+            //Construct a new tree every time the tool is run
+            nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
+            if (toolHasNotRun)
+            {
+                //Save starting colors 
+                originalColorNodes = new List<TreeNode>(); 
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    foreach (Excel.Range cell in worksheet.UsedRange)
+                    {
+                        TreeNode n = new TreeNode(cell.Address, cell.Worksheet.Name);  //Create a TreeNode for every cell with the name being the cell's address and set the node's worksheet appropriately
+                        //n.setOriginalColor(cell.Interior.ColorIndex);
+                        n.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                        originalColorNodes.Add(n);
+                    }
+                }
+                constructTree();
+                toolHasNotRun = false;
+            }
+            else
+            {
+                constructTree();
+            }
         }
 
         private void dropDown1_SelectionChanged(object sender, RibbonControlEventArgs e)
@@ -2306,6 +2383,24 @@ namespace DataDebug
                     }
                 }
             }
+        }
+
+        //Action for "Clear coloring" button
+        private void button8_Click(object sender, RibbonControlEventArgs e)
+        {
+            foreach (TreeNode node in originalColorNodes)
+            {
+                //If the node is just a cell, clear any coloring
+                if (!node.isChart() && !node.isRange())
+                {
+                    //MessageBox.Show(node.getName() + " " + node.getOriginalColor());
+                    //node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex = 0;
+                    //node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex = node.getOriginalColor();
+                    node.getWorksheetObject().get_Range(node.getName()).Interior.Color = node.getOriginalColor();
+                }
+            }
+            //After having cleared things we would like to be able to run the tool again. 
+            toolHasNotRun = true;
         }
     }
 }
