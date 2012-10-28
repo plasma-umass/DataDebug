@@ -1,21 +1,21 @@
 Testing and static analysis tools can help root out bugs in programs,
 but not bugs in data. Checking data for errors is arguably as
-important as finding program errors, but there currently exists no
+important as finding program errors, but lacks
 effective tool support. Currently, the only approach is manual
 inspection of data, one at a time. Because inspection is onerous and
 ineffective at scale, most data remains full of errors. CITE
 SPREADSHEET STUDY OF ERROR RATES.
 
-This paper introduces ``data debugging'', an approach that combines
+This paper introduces \emph{data debugging}, an approach that combines
 program analysis with data analysis to locate values that have an
-unusual effect on the final computation.  These values not only
-provide important insights into the data but also can reveal data
+unusual effect on the final computation.  These values simultaneously
+provide valuable insights into the data and can reveal data
 errors.  Data debugging is particularly promising in the context of
 data-intensive programming environments where data and programs are
-intermingled, like databases (queries and stored procedures) and
+interwined, such as databases (queries and stored procedures) and
 spreadsheets (formulas).
 
-We present the first data debugging tool, CheckCell, which operates on
+We present a data debugging tool, CheckCell, that targets
 spreadsheets. CheckCell builds a dependency graph of an entire
 spreadsheet, including formulas and charts, where the leaves are cells
 or ranges of cells. It then computes the influence of every cell by
@@ -23,7 +23,7 @@ systematically evaluating the impact of replacing it with any other
 item from the same range. Because data errors only matter when they
 have a significant impact, CheckCell highlights important values in
 shades of red proportional to their influence in the spreadsheet.  We
-performed a user study via to measure the effectiveness of using
+perform a user study to measure the effectiveness of using
 CheckCell to find injected errors in spreadsheets. CheckCell users
 were able to find errors with XX\% accuracy, while users without
 CheckCell were only able to achieve YY\% accuracy.
