@@ -44,7 +44,6 @@
             this.dropDown1 = this.Factory.CreateRibbonDropDown();
             this.button7 = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
-            this.separator1 = this.Factory.CreateRibbonSeparator();
             this.button2 = this.Factory.CreateRibbonButton();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
@@ -71,7 +70,6 @@
             this.group1.Items.Add(this.dropDown1);
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.button8);
-            this.group1.Items.Add(this.separator1);
             this.group1.Items.Add(this.button2);
             this.group1.Label = "Dependence Graph & Fuzzing";
             this.group1.Name = "group1";
@@ -91,6 +89,7 @@
             // 
             this.checkBox1.Label = "Use Selection";
             this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Visible = false;
             // 
             // dropDown1
             // 
@@ -100,11 +99,13 @@
             this.dropDown1.Items.Add(ribbonDropDownItemImpl2);
             this.dropDown1.Label = "Data Layout";
             this.dropDown1.Name = "dropDown1";
+            this.dropDown1.Visible = false;
             // 
             // button7
             // 
             this.button7.Label = "button7";
             this.button7.Name = "button7";
+            this.button7.Visible = false;
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
             // button8
@@ -113,14 +114,11 @@
             this.button8.Name = "button8";
             this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
             // 
-            // separator1
-            // 
-            this.separator1.Name = "separator1";
-            // 
             // button2
             // 
             this.button2.Label = "Derivatives";
             this.button2.Name = "button2";
+            this.button2.Visible = false;
             this.button2.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button2_Click);
             // 
             // group2
@@ -131,6 +129,7 @@
             this.group2.Items.Add(this.button6);
             this.group2.Label = "Statistics";
             this.group2.Name = "group2";
+            this.group2.Visible = false;
             // 
             // button3
             // 
@@ -177,7 +176,6 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox1;
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown1;
-        internal Microsoft.Office.Tools.Ribbon.RibbonSeparator separator1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button2;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group2;

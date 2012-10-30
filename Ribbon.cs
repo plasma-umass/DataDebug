@@ -1805,7 +1805,7 @@ namespace DataDebug
                     }
                     //For every range node
                     //all_children_are_charts = false; 
-                    if (node.isRange() && !all_children_are_charts)
+                    if (node.isRange())// && !all_children_are_charts)
                     {
                         double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
                         int influence_index = 0;        //Keeps track of the current position in the influences array
@@ -1842,7 +1842,7 @@ namespace DataDebug
                                         {
                                             if (starting_outputs[index].get_double() != 0)
                                             {
-                                                delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / starting_outputs[index].get_double();  //Compute the absolute change caused by the swap
+                                                delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / Math.Abs(starting_outputs[index].get_double());  //Compute the absolute change caused by the swap
                                             }
                                             else  //If the output's starting value is 0, do not divide by it, and just compute the absolute difference
                                             {
@@ -1860,7 +1860,7 @@ namespace DataDebug
                                             double average = sum / parent_range.getParents().Count;
                                             if (starting_outputs[index].get_double() != 0)
                                             {
-                                                delta = Math.Abs(starting_outputs[index].get_double() - average) / starting_outputs[index].get_double();
+                                                delta = Math.Abs(starting_outputs[index].get_double() - average) / Math.Abs(starting_outputs[index].get_double());
                                             }
                                             else
                                             {
@@ -1916,12 +1916,18 @@ namespace DataDebug
                         }
                         int ind = 0;
                         //MessageBox.Show("MIN DELTA: " + min_total_delta + "\nMAX DELTA: " + max_total_delta);
+                        //Normalize the influences based on the smallest and largest influence values. This way they are > 0 and < 1.
                         foreach (TreeNode parent in node.getParents())
                         {
                             if (max_total_delta != 0)
                             {
+                                if ((influences[ind] - min_total_delta) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
+                                {
+                                    MessageBox.Show("Error. Influence should not be greater than 1.");
+                                    MessageBox.Show("Influence = " + influences[ind]);
+                                    MessageBox.Show("(" + influences[ind] + " - " + min_total_delta + ") / " + max_total_delta);
+                                }
                                 influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
-                                //MessageBox.Show("Influence = " + influences[ind]);
                             }
                             ind++;
                         }
@@ -1993,7 +1999,7 @@ namespace DataDebug
                                     twin_count++;
                                 }
                             }
-                            MessageBox.Show(twin_cells_string);
+                            //MessageBox.Show(twin_cells_string);
                             Excel.Range twin_cells = parent.getWorksheetObject().get_Range(twin_cells_string);
                             String[] formulas = new String[twin_count]; //Stores the formulas in the twin_cells
                             int i = 0; //Counter for indexing within the formulas array
@@ -2023,7 +2029,7 @@ namespace DataDebug
                                 {
                                     if (starting_outputs[index].get_double() != 0)
                                     {
-                                        delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / starting_outputs[index].get_double();
+                                        delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / Math.Abs(starting_outputs[index].get_double());
                                     }
                                     else
                                     {
@@ -2112,6 +2118,11 @@ namespace DataDebug
         //Action for "Analyze Worksheet" button
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
+            //ProgressBar pb = new ProgressBar();
+            //pb.Style = ProgressBarStyle.Marquee;
+            //pb.MarqueeAnimationSpeed = 100;
+            //pb.Visible = true; 
+            //pb.Show();
             //IdentifyRanges();
             //Construct a new tree every time the tool is run
             nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
@@ -2360,26 +2371,26 @@ namespace DataDebug
                     foreach (Match match in matchedRanges)
                     {
                         formula = formula.Replace(match.Value, ""); //remove any identified matches so that they are not counted again later
-                        MessageBox.Show(match.Value);
+                        //MessageBox.Show(match.Value);
                     }
                     matchedRanges = Regex.Matches(formula, @"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)");  //A collection of all the range references in the formula; each item is a range reference such as A1:A10
                     foreach (Match match in matchedRanges)
                     {
                         formula = formula.Replace(match.Value, ""); //remove any identified matches so that they are not counted again later
-                        MessageBox.Show(match.Value);
+                        //MessageBox.Show(match.Value);
                     }
 
                     matchedRanges = Regex.Matches(formula, @"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*)");
                     foreach (Match match in matchedRanges)
                     {
                         formula = formula.Replace(match.Value, ""); //remove any identified matches so that they are not counted again later
-                        MessageBox.Show(match.Value);
+                        //MessageBox.Show(match.Value);
                     }
                     matchedRanges = Regex.Matches(formula, @"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*)");
                     foreach (Match match in matchedRanges)
                     {
                         formula = formula.Replace(match.Value, ""); //remove any identified matches so that they are not counted again later
-                        MessageBox.Show(match.Value);
+                        //MessageBox.Show(match.Value);
                     }
                 }
             }
