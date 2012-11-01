@@ -1,0 +1,1 @@
+* must note the homogeneity assumption for ranges (and somewhere, why we don't use VLOOKUP since it breaks the assumption that all cells in a range are semantically identical -- in VLOOKUP, the whole row must be treated atomically).
