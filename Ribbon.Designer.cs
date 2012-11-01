@@ -1,4 +1,4 @@
-﻿namespace DataDebug
+namespace DataDebug
 {
     partial class Ribbon : Microsoft.Office.Tools.Ribbon.RibbonBase
     {
@@ -45,11 +45,15 @@
             this.button7 = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
             this.button2 = this.Factory.CreateRibbonButton();
+            this.toggle_speed = this.Factory.CreateRibbonCheckBox();
+            this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
+            this.toggle_reporting = this.Factory.CreateRibbonCheckBox();
+            this.toggle_array_storage = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -71,6 +75,10 @@
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.button8);
             this.group1.Items.Add(this.button2);
+            this.group1.Items.Add(this.toggle_speed);
+            this.group1.Items.Add(this.toggle_compile_regex);
+            this.group1.Items.Add(this.toggle_reporting);
+            this.group1.Items.Add(this.toggle_array_storage);
             this.group1.Label = "Dependence Graph & Fuzzing";
             this.group1.Name = "group1";
             // 
@@ -105,7 +113,6 @@
             // 
             this.button7.Label = "button7";
             this.button7.Name = "button7";
-            this.button7.Visible = false;
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
             // button8
@@ -120,6 +127,16 @@
             this.button2.Name = "button2";
             this.button2.Visible = false;
             this.button2.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button2_Click);
+            // 
+            // toggle_speed
+            // 
+            this.toggle_speed.Label = "Toggle BLAZING SPEED Swapping Mode";
+            this.toggle_speed.Name = "toggle_speed";
+            // 
+            // toggle_compile_regex
+            // 
+            this.toggle_compile_regex.Label = "Compile Regular Expressions";
+            this.toggle_compile_regex.Name = "toggle_compile_regex";
             // 
             // group2
             // 
@@ -155,6 +172,16 @@
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
+            // toggle_reporting
+            // 
+            this.toggle_reporting.Label = "Report progress";
+            this.toggle_reporting.Name = "toggle_reporting";
+            // 
+            // toggle_array_storage
+            // 
+            this.toggle_array_storage.Label = "Enable Array Storage";
+            this.toggle_array_storage.Name = "toggle_array_storage";
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -186,6 +213,10 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button7;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button8;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_speed;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_reporting;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_array_storage;
     }
 
     partial class ThisRibbonCollection
