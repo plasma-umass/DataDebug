@@ -1,28 +1,82 @@
-Software bugs are a well-known problem, and substantial research
-effort has been expended developing tools which encourage the writing
-of correct programs.  However, most programs operate on data supplied
-by users, and even a perfectly good program would produce the wrong
-results if it is given incorrect input.  Error checking of inputs is
-generally limited to ensuring the correct data type and formatting as
-required by the program.  However, data is important and there should
-be better ways of checking its correctness.
+\textbf{Software bugs: well-studied, effective tools.}
+Decades of work on program errors. Verification tools, lightweight
+error detection, model checking. Testing. Assertions. Lots of ways to
+detect errors. Haven't eliminated errors, but gone a long way to
+finding them and reducing their impact.
 
-One could imagine a tool which automatically audits data, similar to
-the ones which check for typographical errors in text.  However,
-numerical data is much more unstructured than text.  There are no
-rules, such as grammar, governing how numerical data should look, and
-no predefined set of allowable values such as the set of words in a
-language.  There may, however, exist some ways of narrowing the scope
-of the problem to make it more manageable.
+\textbf{Data errors, not so much.}
+Even if a program is correct, the data it operates on may not be
+correct.  Few tools to help us find data errors, especially because
+the whole concept of a data error depends on a notion of ground truth
+that is generally absent (few ``data assertions''). No a priori way of
+knowing if the number '132' is correct or if it should have been
+'123'.
 
-If we look at how data is most commonly stored nowadays, we see that
-it is in spreadsheets, such as Excel files or databases, and this can
-provide some degree of structure for approaching the problem.  For
-that reason, we attempted to create a tool which would automatically
-detect numerical errors in spreadsheets.  We have developed a
-Microsoft Excel extension, or add-in, written in C\#, which uses
-cross-validation techniques and perturbation analysis to look for
-numerical values that appear suspicious.  Values that appear to be
-potential errors are highlighted proportionally to the likeliness that
-they are incorrect, as judged by our analysis -- the more likely a
-value is to be wrong, the brighter the highlighting.
+\textbf{Data errors really important in data-intensive programming environments.}
+Data errors (from data entry or corrupted data sources) are especially
+important in data-intensive programming environments.  Databases,
+spreadsheets, scientific computation (e.g., R). Places where data
+correctness is easily as important as program correctness.  In fact,
+the program is much smaller than the data, and the result produced by
+the computation (queries, formulas, charts, statistics) could easily
+end up being ruined by data errors.
+
+\textbf{Existing approaches don't really work.}
+Data auditing (a la code review) onerous, difficult to scale up to
+``big data'' (even the moderate sizes of data in spreadsheets are
+daunting). Statistical outlier detection (which we will hopefully
+evaluate and discard as a useful approach). Range checks, ``type
+mismatches'', data cleaning.
+
+\subsection*{Contributions:}
+
+This paper presents an approach to locating likely data errors that we
+call ``data debugging.'' (Maybe ``automated data auditing''?) Data
+debugging combines data analysis with dynamic and static program
+analysis, and works best in the context of a data-intensive
+programming environment like spreadsheets or databases, where data and
+programs (e.g., queries or formulas) are intertwined.
+
+Because it is not possible to know a priori whether a datum is
+erroneous or not, we reframe the problem as a statistical problem:
+does the presence of a given data element have an unusual impact on
+the computation or computations as a whole versus its absence? Data
+debugging highlights data where using that data changes the
+results dramatically versus using some other, randomly chosen data
+element in the same group.
+
+Data debugging provides insights into the data and the computation and
+can reveal errors. Intuitively, data that is wrong but has little
+impact on the final result is inconsequential. By constrast, data that
+has an unusually high impact on the final result is either a very
+important data element, so calling attention to it is useful for
+understanding, or it is erroneous.
+
+We present the first prototype tool for data debugging in the context
+of spreadsheets.  This system, called \checkcell{}, works as a plug-in
+for Microsoft Excel, though its principles are broadly
+applicable. \checkcell{} builds a dependency graph of the entire
+computation represented by a spreadsheet, where outputs and
+intermediate nodes include formulas and charts, and where data cells
+form the leaves. \checkcell{} then performs a statistical perturbation
+analysis of the effect of inclusion or exclusion of individual cells,
+measuring their impact on the spreadsheet's outputs by recalculation
+on the perturbed inputs. \checkcell{} employs kernel density
+estimation to evaluate which outputs are unusual and how unusual they
+are.  Cells containing these data are highlighted proportionally to
+their unusualness of their final effect: the more unusual they are,
+the brighter the highlighting.
+
+The current prototype of \checkcell{} is relatively efficient, taking
+less than a minute to run on large spreadsheets. We perform a user
+study to test our hypothesis that the data debugging approach is
+effective at locating errors. With \checkcell{}'s help, users were
+able to find XX\% of injected errors, while users without \checkcell{}
+were only able to find YY\% of errors.
+
+We have developed a Microsoft Excel extension, or add-in, written in
+C\#, which uses cross-validation techniques and perturbation analysis
+to look for numerical values that appear suspicious.  Values that
+appear to be potential errors are highlighted proportionally to the
+likeliness that they are incorrect, as judged by our analysis -- the
+more likely a value is to be wrong, the brighter the highlighting.
