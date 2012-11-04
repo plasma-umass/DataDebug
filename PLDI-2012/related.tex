@@ -1,56 +1,48 @@
-% THIS IS NOT A RELATED WORK SECTION.
+% The formula here is: discuss related work in one facet; end with a contrast with the current work.
 
-The most commonly used software for editing spreadsheets, Microsoft
-Excel, has close to no built-in error checking. Aside from some type
-verification, the user simply has to be careful in their work, which
-is frequently not the case~\cite{FIXME}. % [15].
+\paragraph{Data Cleaning.}
+Most past work on locating errors in data has focused on \emph{data
+cleaning} (also known as \emph{data scrubbing}
+and \emph{cleansing}~\cite{DBLP:journals/debu/RahmD00} in database
+systems. EXPLAIN WHAT THAT MEANS. Standard approaches include
+statistical outlier analysis~\cite{FIXME}, interpolation to fill in
+missing data (e.g., with averages)~\cite{FIXME}, and using
+cross-correlation with other tables to correct or locate
+errors~\cite{FIXME}. Section~\ref{FIXME} shows that statistical
+outlier analysis often produces unacceptably large numbers of false
+positives. None of these approaches leverage the interaction of data
+with programs that operate on them, as data debugging does.
+
+% SURVEY! http://www.dbis.informatik.hu-berlin.de/dbisold/research/bioinformatics/papers/data_cleansing.html
+
+Programmatic approaches: AJAX~\cite{Galhardas:2000:AED:342009.336568}
+expresses a data cleaning program as a DAG of transformations from
+input to output. Data streams (also language-based, essentially
+focused on smoothing, temporally and spatially~\cite{1617508}. Data
+Auditor by Golab et al\.~cite{Golab:2010:DAE:1920841.1921060}:
+requires rules and target relations entered by the programmer. By
+contrast, CheckCell (and the notion of data debugging in general)
+operates automatically by discovering data that have an unusual impact
+on program output.
+
+Interactive approaches: CITE Potter's Wheel (Raman and Hellerstein):
+interactive tool~\cite{Raman:2001:PWI:645927.672045}. Cite CrowdDB?
+
+\paragraph{Data Auditing.}
+Luebbers et al. VLDB 2003~\cite{Luebbers:2003:SDD:1315451.1315499}.
+
+\paragraph{Spreadsheet Errors.}
+Spreadsheets have been one of the most prominent computer applications
+since the creation of VisiCalc in 1979~\cite{FIXME}. The most widely
+used spreadsheet application today is Microsoft Excel~\cite{}. Excel
+indicates errors in formula entry like division by zero, a reference
+to a non-existient formula or cell, invalid numerical arguments, or
+accidental mixing of text and numbers.
+% http://office.microsoft.com/en-us/excel-help/find-and-correct-errors-in-formulas-HP010066255.aspx
+Excel can also check for inconsistency with adjacent formulas and other structural errors, which it
+highlights with a ``squiggly'' underline.
+% http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
+
+COVER PRE-EXISTING ERROR DETECTION STUFF LIKE THAT FROM Rothermel, Krishnamurthi, etc.
 
 Spreadsheet languages allow users to specify their own mechanisms for
-error checking, which can be effective if done properly. Users can
-define assertions with filters or IF statements making sure values
-contained in cells or regions fit certain criteria. Combined with the
-AVERAGE and STDEV (standard deviation) functions, one is able to
-remove the outliers in a range by checking if their values fall within
-x standard deviations from the average. Such approaches to error
-reduction are rarely put to use, however, and automatic auditing
-methods are desired.
-
-As a result of this necessity, significant efforts have been spent by
-researchers trying to address the issue of spreadsheet
-validity. However, the multitude of usage scenarios and the absence of
-any predefined structure in spreadsheets contribute greatly to the
-difficulty of this problem. Because users are free to arrange
-spreadsheet data in any way they please (vertically, horizontally, or
-in any arbitrary fashion), creating a tool that would work in the
-general case is a major undertaking. While per-company auditing
-solutions can be developed with relative ease because a standardized
-format can be agreed upon from the start, adopting such standards on a
-large scale is near impossible. Nevertheless there have been proposed
-general methodologies for spreadsheet organization~\cite{panko1998we}. % 10
- In the same
-way regular programming can be improved by paradigms such as
-object-orientation and modularity, spreadsheet development can also
-benefit from similar ideas. However, as is the case with other types
-of programming, following these principles typically reduces errors,
-but does not eliminate them altogether. Also, while they may help
-individuals learn how to manage spreadsheets in ways that will reduce
-the likelihood of errors, these strategies are not widely used and
-therefore do not provide any significant assistance in the creation of
-automatic auditing tools.  Some work has also gone into classifying
-the types of errors that may appear in spreadsheets. While this
-taxonomy is useful in pointing out the kinds of errors that may need
-to be addressed and how often they show up in practice, the ways in
-which they can be dealt with is not established~\cite{rajalingham2005revised}. % [12].
-
-Some semi-automatic tools have been created which require that users
-specify the range of cells they want to audit, and possibly include
-additional ranges to be used for reference~\cite{FIXME}. % 4
- While this is in fact
-a useful tool which is able to extract relationships between cells
-which may not necessarily be numeric, unassisted discovery of regions
-is the natural step forward towards automatic error detection~\cite{fisher2006scaling}. % [6].
-This is what our approach aims to achieve when dealing with
-numerical values.
-
-It is worth noting that errors in computational logic are close to
-impossible to pinpoint because one cannot know the user's intent.
