@@ -91,20 +91,24 @@ the final result is either very important or it is wrong. By
 contrast, data that is wrong but whose presence or absence has little
 impact on the final result does not merit special attention.
 
-This paper presents the first tool for data debugging that operates in
-the context of spreadsheets. This system, called \checkcell{}, works
-as a plug-in for Microsoft Excel, though its principles are broadly
-applicable. \checkcell{} can find errors in numerical and
-non-numerical data. \checkcell{} initially builds its dependency graph
+This paper presents \checkcell{}, the first tool for data debugging
+that operates in the context of spreadsheets, a programming domain
+that has recently seen renewed academic
+attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}. \checkcell{}
+is a C\# plug-in for Microsoft Excel, though its principles are
+broadly applicable. 
+
+\checkcell{} uses a statistical analysis guided by the dependency graph 
 of the entire computation represented by a spreadsheet, where outputs
 and intermediate nodes include formulas and charts, and where data
-cells and ranges of cells form the leaves. \checkcell{} then performs
-a statistical perturbation analysis of the effect of inclusion or
-exclusion of individual cells within each range, measuring their
-impact on the spreadsheet's outputs by recalculation on the perturbed
-inputs. \checkcell{} then ranks by influence all data whose effect
-crosses a threshold of unusualness. In the user
-interface, \checkcell{} colors the cells containing this data in
+cells and ranges of cells form the leaves. It measures the impact of
+replacing each cell with randomly chosen cells within the same range
+by observing the change in a resulting recalculation of the
+spreadsheet. This statistical approach corresponds to an approximation
+of exact significance testing~\cite{}, and allows \checkcell{} to find
+errors in distribution-free numeric and non-numeric data. \checkcell{}
+then ranks by impact all data whose effect crosses a threshold of
+unusualness. In the user interface, \checkcell{} colors these cells in
 shades proportionally to their impact: the more impact, the brighter
 the highlighting.
 
