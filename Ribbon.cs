@@ -2457,11 +2457,36 @@ namespace DataDebug
             
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             sw.Start();
+
+            //Grids for storing influences
+            double[][][] influences_grid = null;
+            double[][][] times_perturbed = null;
+            if (toggle_global_perturbation.Checked)
+            {
+                influences_grid = new double[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
+                times_perturbed = new double[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    influences_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count][];
+                    times_perturbed[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count][];
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        influences_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count];
+                        times_perturbed[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count];
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            influences_grid[worksheet.Index - 1][row][col] = 0.0;
+                            times_perturbed[worksheet.Index - 1][row][col] = 0.0;
+                        }
+                    }
+                }
+            }
+
             //Procedure for swapping values within ranges, one cell at a time
             if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
             {
                 List<TreeNode> swap_domain;
-                if (toggle_array_storage.Checked)
+                if (toggle_array_storage.Checked)  //if array storage is checked, range nodes are stored in the 'ranges' list, so those are the ones we will perturb.
                 {
                     swap_domain = ranges;
                 }
@@ -2469,8 +2494,14 @@ namespace DataDebug
                 {
                     swap_domain = nodes;
                 }
+
                 foreach (TreeNode node in swap_domain)
                 {
+                    //If this node is not a range, continue to the next node because no perturbations can be done on this node.
+                    if (!node.isRange())
+                    {
+                        continue;
+                    }
                     bool all_children_are_charts = true;  //We need to know if all children are charts because we can't compute a delta for a chart
                     if(node.isRange() && node.hasChildren())
                     {
@@ -2484,177 +2515,351 @@ namespace DataDebug
                         }
                     }
                     //For every range node
-                    //all_children_are_charts = false; 
-                    if (node.isRange())// && !all_children_are_charts)
+                    double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
+                    int influence_index = 0;        //Keeps track of the current position in the influences array
+                    double max_total_delta = 0;     //The maximum influence found (for normalizing)
+                    double min_total_delta = -1;     //The minimum influence found (for normalizing)
+                    double swaps_per_range = 20.0;
+                    //Swapping values; loop over all nodes in the range
+                    foreach (TreeNode parent in node.getParents())
                     {
-                        double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
-                        int influence_index = 0;        //Keeps track of the current position in the influences array
-                        double max_total_delta = 0;     //The maximum influence found (for normalizing)
-                        double min_total_delta = -1;     //The minimum influence found (for normalizing)
-                        double swaps_per_range = 20.0;
-                        //Swapping values; loop over all nodes in the range
-                        foreach (TreeNode parent in node.getParents())
+                        Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                        string formula = "";
+                        if (cell.HasFormula)
                         {
-                            Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
-                            string formula = "";
-                            if (cell.HasFormula)
+                            formula = cell.Formula;
+                        }
+                        StartValue start_value = new StartValue(cell.Value); //Store the initial value of this cell before swapping
+                        double total_delta = 0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
+                        double delta = 0;   // Stores the change in outputs caused by a single swap
+                        //Swapping loop - swap every sibling or a reduced number of siblings (approximately equal to swaps_per_range), for reduced complexity and runtime
+                        int number_neighbors_replaced = 0;
+                        Random rand = new Random();
+                        foreach (TreeNode sibling in node.getParents())
+                        {
+                            if (sibling.getName() == parent.getName() && sibling.getWorksheetObject() == parent.getWorksheetObject())
                             {
-                                formula = cell.Formula;
-                            }
-                            StartValue start_value = new StartValue(cell.Value); //Store the initial value of this cell before swapping
-                            double total_delta = 0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
-                            double delta = 0;   // Stores the change in outputs caused by a single swap
-                            //Swapping loop - swap every sibling or a reduced number of siblings (approximately equal to swaps_per_range), for reduced complexity and runtime
-                            int number_neighbors_replaced = 0;
-                            Random rand = new Random();
-                            foreach (TreeNode sibling in node.getParents())
-                            {
-                                if (sibling.getName() == parent.getName() && sibling.getWorksheetObject() == parent.getWorksheetObject())
-                                {
-                                    continue; // If this is the current cell, move on to the next cell
-                                }
-                                if (toggle_speed.Checked)
-                                {
-                                    if (rand.NextDouble() > (swaps_per_range / node.getParents().Count)) //only do ~swaps_per_range swaps per range
-                                    {
-                                        continue;
-                                    }
-                                    number_neighbors_replaced++;
-                                }
-                                Excel.Range sibling_cell = sibling.getWorksheetObject().get_Range(sibling.getName());
-                                cell.Value = sibling_cell.Value; //This is the swap -- we assign the value of the sibling cell to the value of our cell
-                                int index = 0;  //Index for knowing which output cell we are evaluating
-                                delta = 0;
-                                foreach (TreeNode n in output_cells)
-                                {
-                                    if (starting_outputs[index].get_string() == null) // If the output is not a string
-                                    {
-                                        if (!n.isChart())   //If the output is not a chart, it must be a number
-                                        {
-                                            if (starting_outputs[index].get_double() != 0)
-                                            {
-                                                delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / Math.Abs(starting_outputs[index].get_double());  //Compute the absolute change caused by the swap
-                                            }
-                                            else  //If the output's starting value is 0, do not divide by it, and just compute the absolute difference
-                                            {
-                                                delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
-                                            }
-                                        }
-                                        else  // The node is a chart
-                                        {
-                                            double sum = 0.0;
-                                            TreeNode parent_range = n.getParents()[0];
-                                            foreach (TreeNode par in parent_range.getParents())
-                                            {
-                                                sum = sum + par.getWorksheetObject().get_Range(par.getName()).Value;
-                                            }
-                                            double average = sum / parent_range.getParents().Count;
-                                            if (starting_outputs[index].get_double() != 0)
-                                            {
-                                                delta = Math.Abs(starting_outputs[index].get_double() - average) / Math.Abs(starting_outputs[index].get_double());
-                                            }
-                                            else
-                                            {
-                                                delta = Math.Abs(starting_outputs[index].get_double() - average);
-                                            }
-                                        }
-                                    }
-                                    else  // If the output is a string
-                                    {
-                                        //MessageBox.Show("Comparing " + starting_outputs[index].get_string() + " and " + activeWorksheet.get_Range(n.getName()).Value);
-                                        if (String.Equals(starting_outputs[index].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
-                                            delta = 0;
-                                        else
-                                            delta = 1;
-                                    }
-                                    index++;
-                                    total_delta = total_delta + delta;
-                                }
+                                continue; // If this is the current cell, move on to the next cell
                             }
                             if (toggle_speed.Checked)
                             {
-                                if (number_neighbors_replaced != 0)
+                                if (rand.NextDouble() > (swaps_per_range / node.getParents().Count)) //only do ~swaps_per_range swaps per range
                                 {
-                                    total_delta = total_delta / number_neighbors_replaced;
+                                    continue;
+                                }
+                                number_neighbors_replaced++;
+                                if (toggle_global_perturbation.Checked)
+                                {
+                                    times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
                                 }
                             }
                             else
                             {
-                                if (node.getParents().Count - 1 != 0)
+                                if (toggle_global_perturbation.Checked)
                                 {
-                                    total_delta = total_delta / (node.getParents().Count - 1); //We divide by the number of swaps to get an average per-swap delta: not really necessary since we then scale things based on the max_delta and min_delta; would be useful if the max_delta and min_delta were global for all the ranges
+                                    times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
                                 }
                             }
-                            //MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");
-                            influences[influence_index] = total_delta;
-                            influence_index++;
-                            if (max_total_delta < total_delta)
+
+                            Excel.Range sibling_cell = sibling.getWorksheetObject().get_Range(sibling.getName());
+                            cell.Value = sibling_cell.Value; //This is the swap -- we assign the value of the sibling cell to the value of our cell
+                            int index = 0;  //Index for knowing which output cell we are evaluating
+                            delta = 0;
+                            foreach (TreeNode n in output_cells)
                             {
-                                max_total_delta = total_delta;
+                                if (starting_outputs[index].get_string() == null) // If the output is not a string
+                                {
+                                    if (!n.isChart())   //If the output is not a chart, it must be a number
+                                    {
+                                        if (starting_outputs[index].get_double() != 0)
+                                        {
+                                            delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / Math.Abs(starting_outputs[index].get_double());  //Compute the absolute change caused by the swap
+                                        }
+                                        else  //If the output's starting value is 0, do not divide by it, and just compute the absolute difference
+                                        {
+                                            delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
+                                        }
+                                    }
+                                    else  // The node is a chart
+                                    {
+                                        double sum = 0.0;
+                                        TreeNode parent_range = n.getParents()[0];
+                                        foreach (TreeNode par in parent_range.getParents())
+                                        {
+                                            sum = sum + par.getWorksheetObject().get_Range(par.getName()).Value;
+                                        }
+                                        double average = sum / parent_range.getParents().Count;
+                                        if (starting_outputs[index].get_double() != 0)
+                                        {
+                                            delta = Math.Abs(starting_outputs[index].get_double() - average) / Math.Abs(starting_outputs[index].get_double());
+                                        }
+                                        else
+                                        {
+                                            delta = Math.Abs(starting_outputs[index].get_double() - average);
+                                        }
+                                    }
+                                }
+                                else  // If the output is a string
+                                {
+                                    //MessageBox.Show("Comparing " + starting_outputs[index].get_string() + " and " + activeWorksheet.get_Range(n.getName()).Value);
+                                    if (String.Equals(starting_outputs[index].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
+                                        delta = 0;
+                                    else
+                                        delta = 1;
+                                }
+                                index++;
+                                total_delta = total_delta + delta;
                             }
-                            if (min_total_delta > total_delta || min_total_delta == -1)
-                            {
-                                min_total_delta = total_delta;
-                            }
-                            if (start_value.get_string() == null)
-                            {
-                                cell.Value = start_value.get_double();
-                            }
-                            else
-                            {
-                                cell.Value = start_value.get_string();
-                            }
-                            if (formula != "")
-                            {
-                                cell.Formula = formula;
-                            }
-                            //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
-                            //Only store the original color on the first run of the tool
-                            //if (toolHasNotRun == false)
-                            //{
-                                //parent.setOriginalColor(cell.Interior.ColorIndex);
-                            //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
-                            //}
-                            cell.Interior.Color = System.Drawing.Color.Beige;
                         }
-                        int ind = 0;
-                        //MessageBox.Show("MIN DELTA: " + min_total_delta + "\nMAX DELTA: " + max_total_delta);
-                        //Normalize the influences based on the smallest and largest influence values. This way they are > 0 and < 1.
-                        foreach (TreeNode parent in node.getParents())
+                        
+                        if (toggle_global_perturbation.Checked)
                         {
-                            if (max_total_delta != 0)
-                            {
-                                if ((influences[ind] - min_total_delta) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
-                                {
-                                    MessageBox.Show("Error. Influence should not be greater than 1.");
-                                    MessageBox.Show("Influence = " + influences[ind]);
-                                    MessageBox.Show("(" + influences[ind] + " - " + min_total_delta + ") / " + max_total_delta);
-                                }
-                                influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
-                            }
-                            ind++;
+                            influences_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1] += total_delta;
                         }
-                        //for (int i = 0; i < node.getParents().Count; i++)
+
+                        if (toggle_speed.Checked)
+                        {
+                            if (number_neighbors_replaced != 0)
+                            {
+                                total_delta = total_delta / number_neighbors_replaced;
+                            }
+                        }
+                        else
+                        {
+                            if (node.getParents().Count - 1 != 0) //The range must have had at least 2 cells in it
+                            {
+                                total_delta = total_delta / (node.getParents().Count - 1); //We divide by the number of swaps to get an average per-swap delta: not really necessary since we then scale things based on the max_delta and min_delta; would be useful if the max_delta and min_delta were global for all the ranges
+                            }
+                        }
+                        //MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");                       
+                        influences[influence_index] = total_delta;
+                        influence_index++;
+                        if (max_total_delta < total_delta)
+                        {
+                            max_total_delta = total_delta;
+                        }
+                        if (min_total_delta > total_delta || min_total_delta == -1)
+                        {
+                            min_total_delta = total_delta;
+                        }
+                        if (start_value.get_string() == null)
+                        {
+                            cell.Value = start_value.get_double();
+                        }
+                        else
+                        {
+                            cell.Value = start_value.get_string();
+                        }
+                        if (formula != "")
+                        {
+                            cell.Formula = formula;
+                        }
+                        //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                        //Only store the original color on the first run of the tool
+                        //if (toolHasNotRun == false)
                         //{
-                        //    if (max_total_delta != 0)
-                        //    {
-                        //        influences[i] = (influences[i] - min_total_delta) / max_total_delta;
-                        //    }
+                            //parent.setOriginalColor(cell.Interior.ColorIndex);
+                        //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
                         //}
-                        int indexer = 0;
-                        foreach (TreeNode parent in node.getParents())
+                        cell.Interior.Color = System.Drawing.Color.Beige;
+                    }
+                    int ind = 0;
+                    //MessageBox.Show("MIN DELTA: " + min_total_delta + "\nMAX DELTA: " + max_total_delta);
+                    //Normalize the influences based on the smallest and largest influence values. This way they are > 0 and < 1.
+                    foreach (TreeNode parent in node.getParents())
+                    {
+                        if (max_total_delta != 0)
                         {
-                            Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
-                            //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
-                            
-                            //Only store the original color on the first run of the tool
-                            //if (toolHasNotRun == false)
-                            //{
+                            if ((influences[ind] - min_total_delta) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
+                            {
+                                MessageBox.Show("Error. Influence should not be greater than 1.");
+                                MessageBox.Show("Influence = " + influences[ind]);
+                                MessageBox.Show("(" + influences[ind] + " - " + min_total_delta + ") / " + max_total_delta);
+                            }
+                            influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
+                        }
+                        ind++;
+                    }
+
+                    //Color cells based on influence
+                    if (!toggle_global_perturbation.Checked)
+                    {
+                        if (toggle_analyze_outliers.Checked)
+                        {
+                            int index = 0;
+                            //Compute average influence
+                            double average_influence = 0.0;
+                            int denominator = node.getParents().Count;
+                            //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
+                            //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
+                            double total_influence = 0.0;
+                            foreach (TreeNode parent in node.getParents())
+                            {
+                                total_influence += influences[index];
+                            }
+                            average_influence = total_influence / denominator;
+                            //Compute the standard deviation
+                            double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
+                            foreach (TreeNode parent in node.getParents())
+                            {
+                                variance += (influences[index] - average_influence) * (influences[index] - average_influence) / denominator;
+                            }
+                            double standard_deviation = Math.Sqrt(variance);
+                            //Color cells that lie further than two standard deviations away from the mean
+                            foreach (TreeNode parent in node.getParents())
+                            {
+                                Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                                //If inluence is more than two standard deviations away from the mean, color that cell
+                                //TODO This doesnt seem to work like it should - only showing unusually influential cells (2 st. dev away from mean) when perturbing locally
+                                if (Math.Abs(influences[index] - average_influence) > 2 * standard_deviation)
+                                {
+                                    cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[index] * 255), 255, 255);
+                                }
+                                else
+                                {
+                                    cell.Interior.Color = System.Drawing.Color.White;
+                                }
+                                index++;
+                            }
+                        }
+                        if (!toggle_analyze_outliers.Checked)
+                        {
+                            int indexer = 0;
+                            foreach (TreeNode parent in node.getParents())
+                            {
+                                Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                                //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+
+                                //Only store the original color on the first run of the tool
+                                //if (toolHasNotRun == false)
+                                //{
                                 //parent.setOriginalColor(cell.Interior.ColorIndex);
-                            //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
-                            //}
-                            cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
-                            indexer++;
+                                //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                                //}
+                                cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
+                                indexer++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (toggle_global_perturbation.Checked)
+            {
+                //Divide each influence entry by the number of times perturbed to get a per-swap influence value.
+                //Also find global max influences by looping over influences_grid
+                double global_max_inf = 0.0;
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+                            {
+                                influences_grid[worksheet.Index - 1][row][col] = influences_grid[worksheet.Index - 1][row][col] / times_perturbed[worksheet.Index - 1][row][col];
+                            }
+                            if (influences_grid[worksheet.Index - 1][row][col] > global_max_inf)
+                            {
+                                global_max_inf = influences_grid[worksheet.Index - 1][row][col];
+                            }
+                        }
+                    }
+                }
+                //Normalize the influences based on the largest influence values. This way they are >= 0 and < 1.
+                //Color cells based on influence if global perturbation is checked
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            if (global_max_inf != 0.0)
+                            {
+                                influences_grid[worksheet.Index - 1][row][col] = influences_grid[worksheet.Index - 1][row][col] / global_max_inf;
+                            }
+                            //Find the cell that is stored in this grid entry
+                            Excel.Range cell = null;
+                            foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+                            {
+                                if (ws.Index == worksheet.Index)
+                                {
+                                    cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
+                                    break;
+                                }
+                            }
+                            if (!toggle_analyze_outliers.Checked) //if no further analysis to the influence is needed, color the cell
+                            {
+                                cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences_grid[worksheet.Index - 1][row][col] * 255), 255, 255);
+                            }
+                        }
+                    }
+                }
+                if (toggle_analyze_outliers.Checked)
+                {
+                    //Compute average influence
+                    double average_influence = 0.0;
+                    int denominator = 0;
+                    //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
+                    //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
+                    double total_influence = 0.0;
+                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                        {
+                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                            {
+                                total_influence += influences_grid[worksheet.Index - 1][row][col];
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+                                {
+                                    denominator++;
+                                }
+                            }
+                        }
+                    }
+                    average_influence = total_influence / denominator;
+                    //Compute the standard deviation
+                    double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
+                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                        {
+                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                            {
+                                variance += (influences_grid[worksheet.Index - 1][row][col] - average_influence) * (influences_grid[worksheet.Index - 1][row][col] - average_influence) / denominator;
+                            }
+                        }
+                    }
+                    double standard_deviation = Math.Sqrt(variance);
+                    //Color cells that lie further than two standard deviations away from the mean
+                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                        {
+                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                            {
+                                //Find the cell that is stored in this grid entry
+                                Excel.Range cell = null;
+                                //Finding the right worksheet has to be done this way because a worksheet's index is not the index in the collection Globals.ThisAddIn.Application.Worksheets 
+                                //-- this collection does not include chart sheets, but the index does
+                                foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+                                {
+                                    if (ws.Index == worksheet.Index)
+                                    {
+                                        cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
+                                        break;
+                                    }
+                                }
+                                //If inluence is more than two standard deviations away from the mean, color that cell
+                                if (Math.Abs(influences_grid[worksheet.Index - 1][row][col] - average_influence) > 2 * standard_deviation) 
+                                {
+                                    cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences_grid[worksheet.Index - 1][row][col] * 255), 255, 255);
+                                }
+                                else
+                                {
+                                    cell.Interior.Color = System.Drawing.Color.White;
+                                }
+                            }
                         }
                     }
                 }

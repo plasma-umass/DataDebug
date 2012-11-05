@@ -47,13 +47,15 @@ namespace DataDebug
             this.button2 = this.Factory.CreateRibbonButton();
             this.toggle_speed = this.Factory.CreateRibbonCheckBox();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
+            this.toggle_reporting = this.Factory.CreateRibbonCheckBox();
+            this.toggle_array_storage = this.Factory.CreateRibbonCheckBox();
+            this.toggle_global_perturbation = this.Factory.CreateRibbonCheckBox();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.toggle_reporting = this.Factory.CreateRibbonCheckBox();
-            this.toggle_array_storage = this.Factory.CreateRibbonCheckBox();
+            this.toggle_analyze_outliers = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -79,6 +81,8 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_compile_regex);
             this.group1.Items.Add(this.toggle_reporting);
             this.group1.Items.Add(this.toggle_array_storage);
+            this.group1.Items.Add(this.toggle_global_perturbation);
+            this.group1.Items.Add(this.toggle_analyze_outliers);
             this.group1.Label = "Dependence Graph & Fuzzing";
             this.group1.Name = "group1";
             // 
@@ -138,6 +142,21 @@ namespace DataDebug
             this.toggle_compile_regex.Label = "Compile Regular Expressions";
             this.toggle_compile_regex.Name = "toggle_compile_regex";
             // 
+            // toggle_reporting
+            // 
+            this.toggle_reporting.Label = "Report progress";
+            this.toggle_reporting.Name = "toggle_reporting";
+            // 
+            // toggle_array_storage
+            // 
+            this.toggle_array_storage.Label = "Enable Array Storage";
+            this.toggle_array_storage.Name = "toggle_array_storage";
+            // 
+            // toggle_global_perturbation
+            // 
+            this.toggle_global_perturbation.Label = "Global Perturbation";
+            this.toggle_global_perturbation.Name = "toggle_global_perturbation";
+            // 
             // group2
             // 
             this.group2.Items.Add(this.button3);
@@ -172,15 +191,10 @@ namespace DataDebug
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
-            // toggle_reporting
+            // toggle_analyze_outliers
             // 
-            this.toggle_reporting.Label = "Report progress";
-            this.toggle_reporting.Name = "toggle_reporting";
-            // 
-            // toggle_array_storage
-            // 
-            this.toggle_array_storage.Label = "Enable Array Storage";
-            this.toggle_array_storage.Name = "toggle_array_storage";
+            this.toggle_analyze_outliers.Label = "Highlight Important Outliers Only";
+            this.toggle_analyze_outliers.Name = "toggle_analyze_outliers";
             // 
             // Ribbon
             // 
@@ -217,6 +231,8 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_reporting;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_array_storage;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_global_perturbation;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_analyze_outliers;
     }
 
     partial class ThisRibbonCollection
