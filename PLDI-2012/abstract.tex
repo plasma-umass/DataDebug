@@ -7,13 +7,13 @@ support.
 % errors are common: for example, error rates in simple manual entry
 % tasks are typically XXX\%.
 This paper introduces \emph{data debugging}, an approach that combines
-program analysis with data analysis to locate input values that have
-an unusually large impact on the results of computations. These values
-simultaneously provide valuable insights into the data and can reveal
-errors.  Data debugging is particularly promising in the context of
-data-intensive programming environments like databases and
-spreadsheets, which intertwine data with programs (in the form of
-queries or formulas).
+program analysis with data analysis to locate data errors. Since it is
+impossible to know \emph{a priori} whether data are erroneous or not,
+data debugging does the next best thing: locating data where an error
+would have the most impact. Data debugging is particularly promising
+in the context of data-intensive programming environments like
+databases and spreadsheets, which intertwine data with programs (in
+the form of queries or formulas).
 
 We present a data debugging tool, \checkcell{}, that targets
 spreadsheets. \checkcell{} builds a dependency graph of an entire
