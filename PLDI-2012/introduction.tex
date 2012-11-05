@@ -15,7 +15,8 @@ code quality.
 However, a program is just one part of a computation. When its input
 has errors, the result of the computation is likely to not be
 correct. Data errors can arise in a number of ways, including mistakes
-in data entry or corrupted data sources.
+in data entry or corrupted data sources. Unlike programs, data cannot
+easily be checked for correctness.
 
 % \textbf{Data errors really important in data-intensive programming environments.}
 
@@ -39,26 +40,28 @@ dollars~\cite{FIXME}.
 
 % cite approximate computation stuff?
 
-By contrast with the proliferation of tools at our disposal to find
-program errors, few tools exist to help find data errors. Part of the
-problem is that, unlike program errors, it is more difficult to decide
-whether any given data element is an error or not. For example, the
-number '132' might be correct, or it could be a transposition error
-from '123'. However, manual data auditing is both onerous and
-difficult to scale up to even the moderate size of data in
-spreadsheets.
+By contrast with the proliferation of tools at a programmer's disposal
+to find program errors, few tools exist to help find data errors. Part
+of the problem is that, unlike program errors, it is more difficult to
+decide whether any given data element is an error or not. For example,
+the number \texttt{132} might be correct, or it could be a
+transposition error from \texttt{123}. More insidiously, a misplaced
+or omitted decimal place can change a data item by orders of
+magnitude. Unfortunately, manual data auditing to find this kind of
+mistake is both onerous and difficult to scale up to even the moderate
+size of data in spreadsheets.
 
 
 % \textbf{Existing approaches don't really work.}
 
-Existing approaches to finding data errors include statistical outlier
-detection and data cleaning. Outlier detection can be used to find
-errors only when the input data's distribution is known in advance
-(e.g., Gaussian). Automatically attempting to identify data
-distribution is error-prone and can give rise to an excessive number
-of false positives. Data cleaning primarily copes with errors in
-databases by relying on cross-validation with ground truth data, which
-may not exist.
+Existing approaches to finding data errors include
+statistical \emph{outlier detection} and \emph{data cleaning}. Outlier
+detection can be used to find errors only when the input data follows
+a known distribution (e.g., Gaussian). Automatic identification of
+data distributions is error-prone and can give rise to an excessive
+number of false positives. Data cleaning primarily copes with errors
+in databases via cross-validation with ground truth data, which may
+not exist.
 
 \subsection*{Contributions}
 
@@ -67,27 +70,30 @@ call \emph{data debugging}. Data debugging leverages the fact that in
 data-intensive programming environment like spreadsheets or databases,
 data and programs (e.g., queries or formulas) are intertwined.
 
+%, data debugging reframes the problem to find data
+%whose presence has an unusually large impact on the computation as a
+%whole.
+
 Data debugging works via a combination of data analysis with dynamic
-and static program analysis.  Since it is not possible to know \emph{a
-priori} whether data are erroneous or not, data debugging reframes the
-problem as a statistical question: does the presence of a given data
-element have an unusually large impact on the computation as a whole?
-Data debugging isolates data whose impact dramatically
-affects the final results of a computation by systematically measuring
-the effect of replacing a data item with random other items drawn from the
-same input set.
+and static program analysis to isolate data whose impact dramatically
+affects the final results of a computation. It does so by building a
+dependency graph of the program, and then systematically measures the
+effect of re-running the computation after replacing a data item with
+random other items drawn from the same input set.
 
 By calling attention to data that has an unusually large impact on the
 final computation, data debugging provides insights into both the data
-and the computation and can reveal errors. Intuitively, data that has
-an unusually high impact on the final result is either a very
-important data element or it is erroneous. By contrast, data that is
-wrong but whose presence or absence has little impact on the final
-result does not merit special attention.
+and the computation and can reveal errors. Since it is impossible to
+know \emph{a priori} whether data are erroneous or not, data debugging
+does the next best thing: locating data where an error would have the
+most impact. Intuitively, data that has an unusually high impact on
+the final result is either very important or it is erroneous. By
+contrast, data that is wrong but whose presence or absence has little
+impact on the final result does not merit special attention.
 
-We present the first tool for data debugging, in the context of
-spreadsheets. This system, called \checkcell{}, works as a plug-in for
-Microsoft Excel, though its principles are broadly
+This paper presents the first tool for data debugging, in the context
+of spreadsheets. This system, called \checkcell{}, works as a plug-in
+for Microsoft Excel, though its principles are broadly
 applicable. \checkcell{} builds a dependency graph of the entire
 computation represented by a spreadsheet, where outputs and
 intermediate nodes include formulas and charts, and where data cells
@@ -104,12 +110,11 @@ impact: the more impact, the brighter the highlighting.
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal. The current prototype is untuned
 but analysis time is generally low, taking less than a minute to run
-on spreadsheets containing thousands of cells. We perform a user study
-to test the hypothesis that data debugging's approach of identifying
-data with unusual impacts is effective at locating
-errors. With \checkcell{}'s help, users were able to find XX\% of
-injected errors, while users without \checkcell{} were only able to
-find YY\% of errors.
+on spreadsheets containing thousands of cells. A user study verifies
+the hypothesis that data debugging's approach of identifying data with
+unusual impacts is effective at locating errors. With \checkcell{}'s
+help, users were able to find XX\% of injected errors, while users
+without \checkcell{} were only able to find YY\% of errors.
 
 %We have developed a Microsoft Excel extension, or add-in, written in
 %C\#, which uses cross-validation techniques and perturbation analysis
