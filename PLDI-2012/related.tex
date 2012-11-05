@@ -1,32 +1,35 @@
 % The formula here is: discuss related work in one facet; end with a contrast with the current work.
 
 \paragraph{Data Cleaning.}
-Most past work on locating errors in data has focused on \emph{data
-cleaning} (also known as \emph{data scrubbing}
+Most past work on locating or removing errors in data has focused
+on \emph{data cleaning} (also known as \emph{data scrubbing}
 and \emph{cleansing}~\cite{DBLP:journals/debu/RahmD00} in database
-systems. EXPLAIN WHAT THAT MEANS. Standard approaches include
-statistical outlier analysis~\cite{FIXME}, interpolation to fill in
-missing data (e.g., with averages)~\cite{FIXME}, and using
-cross-correlation with other tables to correct or locate
-errors~\cite{FIXME}. Section~\ref{FIXME} shows that statistical
-outlier analysis often produces unacceptably large numbers of false
-positives. None of these approaches leverage the interaction of data
-with programs that operate on them, as data debugging does.
+systems. Standard approaches include statistical outlier
+analysis~\cite{FIXME}, interpolation to fill in missing data (e.g.,
+with averages)~\cite{FIXME}, and using cross-correlation with other
+tables to correct or locate errors~\cite{FIXME}. None of these
+approaches leverage the interaction of data with programs that operate
+on them, as data debugging does.
+
+% Section~\ref{FIXME} shows that statistical outlier analysis often produces unacceptably large numbers of false positives. 
 
 % SURVEY! http://www.dbis.informatik.hu-berlin.de/dbisold/research/bioinformatics/papers/data_cleansing.html
 
-Programmatic approaches: AJAX~\cite{Galhardas:2000:AED:342009.336568}
-expresses a data cleaning program as a DAG of transformations from
-input to output. Data streams (also language-based, essentially
-focused on smoothing, temporally and spatially~\cite{1617508}. Data
-Auditor by Golab et al\.~cite{Golab:2010:DAE:1920841.1921060}:
-requires rules and target relations entered by the programmer. By
-contrast, CheckCell (and the notion of data debugging in general)
-operates automatically by discovering data that have an unusual impact
-on program output.
-
-Interactive approaches: CITE Potter's Wheel (Raman and Hellerstein):
-interactive tool~\cite{Raman:2001:PWI:645927.672045}. Cite CrowdDB?
+A number of approaches have been developed that allow data cleaning to
+be expressed programmatically or applied interactively. AJAX expresses
+a data cleaning program as a DAG of transformations from input to
+output~\cite{Galhardas:2000:AED:342009.336568}. Data Auditor applies
+rules and target relations entered by the
+programmer~cite{Golab:2010:DAE:1920841.1921060}. A similar
+domain-specific approach has been employed for data streams, primarily
+aimed at smoothing the data temporally and isolating data
+spatially~\cite{1617508}. Raman and Hellerstein's Potter's Wheel is an
+interactive tool that allows users to visualize and apply data
+cleansing transformations~\cite{Raman:2001:PWI:645927.672045}. By
+contrast with this work, \checkcell{} and data debugging in general
+operate automatically by discovering data that have an unusually large
+impact on program output, although they do not attempt to correct data
+errors.
 
 \paragraph{Data Auditing.}
 Luebbers et al. VLDB 2003~\cite{Luebbers:2003:SDD:1315451.1315499}.
@@ -43,8 +46,8 @@ Excel can also check for inconsistency with adjacent formulas and other structur
 highlights with a ``squiggly'' underline.
 % http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
 
-COVER PRE-EXISTING ERROR DETECTION STUFF LIKE THAT FROM Rothermel,
-Krishnamurthi, etc.  Type system~\cite{DBLP:conf/kbse/AhmadAGK03}. Dataflow
+Pre-existing error-detection work: adding type
+systems~\cite{DBLP:conf/kbse/AhmadAGK03}. Dataflow
 testing~\cite{fisher2006scaling}. Other testing tools (Rothermel et
 al.\
 ~\cite{rothermel1998you,rothermel2001methodology,Carver:2006:EET:1159733.1159775}). XeLda:
@@ -52,7 +55,11 @@ checks if formulas process values with incorrect units or if derived
 units clash with unit
 annotations~\cite{Antoniu:2004:VUC:998675.999448}.  More type system
 stuff:~\cite{Erwig:2005:AGM:1062455.1062494}. Using labels and
-structural clues (especially unit-of-measurement errors)~\cite{Chambers:2010:RSL:1860134.1860346}.
+structural clues (especially unit-of-measurement
+errors)~\cite{Chambers:2010:RSL:1860134.1860346}. Much of this work is
+complementary and orthogonal to \checkcell{}, which works with
+standard, unannotated spreadsheets and focuses on unusual interactions of
+data with formulas.
 
 
-What is Jaffry et al\. ~\cite{DBLP:journals/corr/abs-0803-1748}?
+% What is Jaffry et al\. ~\cite{DBLP:journals/corr/abs-0803-1748}?
