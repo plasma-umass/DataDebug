@@ -65,7 +65,8 @@ namespace DataDebug
             }
             //string weight_string = "\n" + name.Replace(" ", "") + "->iuc" + name.Replace(" ", "") + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + name.Replace(" ", "") + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + name.Replace(" ", "") + ";iuc" + name.Replace(" ", "") + "}";
 
-            return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]"
+            //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]"
+            return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse]"
                 //+ weight_string 
                 + parents_string + children_string).Replace("$", "");
             //fillcolor = \"green\"   \"0.000 " + weight + " 0.878\"

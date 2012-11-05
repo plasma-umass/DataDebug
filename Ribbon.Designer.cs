@@ -139,6 +139,7 @@ namespace DataDebug
             // 
             // toggle_compile_regex
             // 
+            this.toggle_compile_regex.Checked = true;
             this.toggle_compile_regex.Label = "Compile Regular Expressions";
             this.toggle_compile_regex.Name = "toggle_compile_regex";
             // 
@@ -149,6 +150,7 @@ namespace DataDebug
             // 
             // toggle_array_storage
             // 
+            this.toggle_array_storage.Checked = true;
             this.toggle_array_storage.Label = "Enable Array Storage";
             this.toggle_array_storage.Name = "toggle_array_storage";
             // 
