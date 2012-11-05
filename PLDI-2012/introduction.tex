@@ -100,12 +100,11 @@ intermediate nodes include formulas and charts, and where data cells
 form the leaves. \checkcell{} then performs a statistical perturbation
 analysis of the effect of inclusion or exclusion of individual cells,
 measuring their impact on the spreadsheet's outputs by recalculation
-on the perturbed inputs. \checkcell{} employs kernel density
-estimation to evaluate which outputs are unusual and how unusual they
-are. The result is a ranking by influence of data whose effect crosses
-a threshold of unusualness. In the user interface, \checkcell{} colors
-the cells containing this data in shades proportionally to their
-impact: the more impact, the brighter the highlighting.
+on the perturbed inputs. \checkcell{} then ranks by influence all
+data whose effect crosses a threshold of unusualness. In the user
+interface, \checkcell{} colors the cells containing this data in
+shades proportionally to their impact: the more impact, the brighter
+the highlighting.
 
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal. The current prototype is untuned
