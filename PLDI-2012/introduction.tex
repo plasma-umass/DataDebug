@@ -76,7 +76,7 @@ data and programs (e.g., queries or formulas) are intertwined.
 
 Data debugging uses static and dynamic analysis to guide a statistical
 process that isolate data whose impact dramatically affects the final
-results of a computation. It first builds a dependency graph of
+results of a computation. It works by building a dependency graph of
 the program, and then systematically measures the effect of re-running
 the computation after replacing data items with other items drawn
 randomly from the same input set.
@@ -94,14 +94,16 @@ impact on the final result does not merit special attention.
 This paper presents the first tool for data debugging that operates in
 the context of spreadsheets. This system, called \checkcell{}, works
 as a plug-in for Microsoft Excel, though its principles are broadly
-applicable. \checkcell{} builds a dependency graph of the entire
-computation represented by a spreadsheet, where outputs and
-intermediate nodes include formulas and charts, and where data cells
-form the leaves. \checkcell{} then performs a statistical perturbation
-analysis of the effect of inclusion or exclusion of individual cells,
-measuring their impact on the spreadsheet's outputs by recalculation
-on the perturbed inputs. \checkcell{} then ranks by influence all
-data whose effect crosses a threshold of unusualness. In the user
+applicable. \checkcell{} can find errors in numerical and
+non-numerical data. \checkcell{} initially builds its dependency graph
+of the entire computation represented by a spreadsheet, where outputs
+and intermediate nodes include formulas and charts, and where data
+cells and ranges of cells form the leaves. \checkcell{} then performs
+a statistical perturbation analysis of the effect of inclusion or
+exclusion of individual cells within each range, measuring their
+impact on the spreadsheet's outputs by recalculation on the perturbed
+inputs. \checkcell{} then ranks by influence all data whose effect
+crosses a threshold of unusualness. In the user
 interface, \checkcell{} colors the cells containing this data in
 shades proportionally to their impact: the more impact, the brighter
 the highlighting.
