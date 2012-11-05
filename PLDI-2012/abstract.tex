@@ -1,29 +1,22 @@
 Testing and static analysis tools can help root out bugs in programs,
 but not bugs in data. Checking data for errors is arguably as
 important as finding program errors, but lacks effective tool
-support.
-%  Currently, the only approach is manual inspection of
-% data. Because inspection is onerous and ineffective at scale, data
-% errors are common: for example, error rates in simple manual entry
-% tasks are typically XXX\%.
-This paper introduces \emph{data debugging}, an approach that combines
-program analysis with data analysis to locate data errors. Since it is
-impossible to know \emph{a priori} whether data are erroneous or not,
-data debugging does the next best thing: locating data where an error
-would have the most impact. Data debugging is particularly promising
-in the context of data-intensive programming environments like
-databases and spreadsheets, which intertwine data with programs (in
-the form of queries or formulas).
+support. This paper introduces \emph{data debugging}, an approach that
+combines program analysis with data analysis to locate data
+errors. Since it is impossible to know \emph{a priori} whether data
+are erroneous or not, data debugging does the next best thing:
+locating data where an error would have the most impact. Data
+debugging is particularly promising in the context of data-intensive
+programming environments like databases and spreadsheets, which
+intertwine data with programs (in the form of queries or formulas).
 
-We present a data debugging tool, \checkcell{}, that targets
-spreadsheets. \checkcell{} builds a dependency graph of an entire
-spreadsheet, including formulas and charts, where the leaves are cells
-or ranges of cells. It then computes the influence of every cell by
-systematically evaluating the impact of replacing it with any other
-item from the same range. Because data errors only matter when they
-have a significant impact, \checkcell{} highlights important values in
-shades of red proportional to their influence in the spreadsheet.  We
-perform a user study to measure the effectiveness of using
-\checkcell{} to find injected errors in spreadsheets. \checkcell{} users
-were able to find errors with XX\% accuracy, while users without
-\checkcell{} were only able to achieve YY\% accuracy.
+Data debugging works by building a dependency graph of an entire
+computation. It then computes the impact of data on the computation
+by evaluating the average effect of replacing it with randomly-selected data
+from the same population. This paper presents an implementation of data
+debugging in an add-in tool for Microsoft Excel called \checkcell{}.
+\checkcell{} highlights values in shades of red proportional to their impact on the
+spreadsheet's computation, including charts and formulas. A user study
+verifies the effectiveness of using data debugging to find data
+errors. \checkcell{} users were able to find errors with XX\%
+accuracy, while users without were only able to achieve YY\% accuracy.
