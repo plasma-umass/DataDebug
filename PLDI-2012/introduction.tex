@@ -1,59 +1,90 @@
-\textbf{Software bugs: well-studied, effective tools.}
-Decades of work on program errors. Verification tools, lightweight
-error detection, model checking. Testing. Assertions. Lots of ways to
-detect errors. Haven't eliminated errors, but gone a long way to
-finding them and reducing their impact.
+% \textbf{Software bugs: well-studied, effective tools.}
+In many computational tasks, correctness is a primary concern. Most
+work in the programming language community over the past decades has
+focused on ways to discover whether the program performing the computation is
+correct. Techniques to reduce program errors range from
+testing~\cite{unittesting,fuzztesting} and runtime
+assertions~\cite{samanderansthing,others}, to dynamic and static
+analysis tools that can discover a wide range of
+bugs~\cite{valgrind,dawsonthing,otherpcmemberfoo}. Using these
+approaches and tools greatly increases the ability of programmers to
+find errors and reduce their impact, contributing to improving overall
+code quality.
 
-\textbf{Data errors, not so much.}
-Even if a program is correct, the data it operates on may not be
-correct.  Few tools to help us find data errors, especially because
-the whole concept of a data error depends on a notion of ground truth
-that is generally absent (few ``data assertions''). No a priori way of
-knowing if the number '132' is correct or if it should have been
-'123'.
+% Data errors, not so much.
+However, a program is just one part of a computation. When its input
+has errors, the result of the computation is likely to not be
+correct. Data errors can arise in a number of ways, including mistakes
+in data entry or corrupted data sources.
 
-\textbf{Data errors really important in data-intensive programming environments.}
-Data errors (from data entry or corrupted data sources) are especially
-important in data-intensive programming environments.  Databases,
-spreadsheets, scientific computation (e.g., R). Places where data
-correctness is easily as important as program correctness.  In fact,
-the program is much smaller than the data, and the result produced by
-the computation (queries, formulas, charts, statistics) could easily
-end up being ruined by data errors.
+% \textbf{Data errors really important in data-intensive programming environments.}
 
-\textbf{Existing approaches don't really work.}
-Data auditing (a la code review) onerous, difficult to scale up to
-``big data'' (even the moderate sizes of data in spreadsheets are
-daunting). Statistical outlier detection (which we will hopefully
-evaluate and discard as a useful approach). Range checks, ``type
-mismatches'', data cleaning.
+While data errors pose a threat to the correctness of any computation,
+they are especially problematic in data-intensive programming
+environments like databases, spreadsheets, and certain scientific
+computations (e.g., data analysis using R~\cite{FIXME}). In these settings,
+data correctness can be as important as program correctness (``garbage
+in, garbage out''). The results produced by the
+computations---queries, formulas, charts, and other analyses---can end
+up being rendered invalid by data errors. These errors can be costly:
+for example, spreadsheet errors have led to losses of millions of
+dollars~\cite{FIXME}.
 
-\subsection*{Contributions:}
+%%%%  Things to add in citations: %%%%
+% TransAlta took a $24 million charge -- copy and paste error
+% http://www.skillsportal.co.za/page/training/articles/512049-Spreadsheet-errors-can-be-a-major-cost-to-your-business#.UJbfX2l250s
+% http://www.flintshirechronicle.co.uk/flintshire-news/local-flintshire-news/2010/02/18/flintshire-county-council-school-cash-blunder-down-to-spreadsheet-error-51352-25856321/
+% http://binnenland.nieuws.nl/566978
+
+
+% cite approximate computation stuff?
+
+By contrast with the proliferation of tools at our disposal to find
+program errors, few tools exist to help find data errors. Part of the
+problem is that, unlike program errors, it is more difficult to decide
+whether any given data element is an error or not. For example, the
+number '132' might be correct, or it could be a transposition error
+from '123'. However, manual data auditing is both onerous and
+difficult to scale up to even the moderate size of data in
+spreadsheets.
+
+
+% \textbf{Existing approaches don't really work.}
+
+Existing approaches to finding data errors include statistical outlier
+detection, which can be used to find errors when a distribution is
+known in advance (e.g., Gaussian), but this is often not the
+case. Data cleaning primarily copes with errors in databases by
+relying on cross-validation with ground truth data, which may not
+exist.
+
+\subsection*{Contributions}
 
 This paper presents an approach to locating likely data errors that we
-call ``data debugging.'' (Maybe ``automated data auditing''?) Data
-debugging combines data analysis with dynamic and static program
-analysis, and works best in the context of a data-intensive
-programming environment like spreadsheets or databases, where data and
-programs (e.g., queries or formulas) are intertwined.
+call ``data debugging.'' Data debugging leverages the fact that in
+data-intensive programming environment like spreadsheets or databases,
+data and programs (e.g., queries or formulas) are intertwined.
 
-Because it is not possible to know a priori whether a datum is
-erroneous or not, we reframe the problem as a statistical problem:
-does the presence of a given data element have an unusual impact on
-the computation or computations as a whole versus its absence? Data
-debugging highlights data where using that data changes the
-results dramatically versus using some other, randomly chosen data
-element in the same group.
+Data debugging works via a combination of data analysis with dynamic
+and static program analysis.  Since it is not possible to know \emph{a
+priori} whether data are erroneous or not, data debugging reframes the
+problem as a statistical question: does the presence of a given data
+element have an unusually large impact on the computation as a whole?
+Data debugging isolates data whose impact dramatically
+affects the final results of a computation by systematically measuring
+the effect of replacing a data item with random other items drawn from the
+same input set.
 
-Data debugging provides insights into the data and the computation and
-can reveal errors. Intuitively, data that is wrong but has little
-impact on the final result is inconsequential. By constrast, data that
-has an unusually high impact on the final result is either a very
-important data element, so calling attention to it is useful for
-understanding, or it is erroneous.
+By calling attention to data that has an unusually large impact on the
+final computation, data debugging provides insights into both the data
+and the computation and can reveal errors. Intuitively, data that has
+an unusually high impact on the final result is either a very
+important data element or it is erroneous. By contrast, data that is
+wrong but whose presence or absence has little impact on the final
+result does not merit special attention.
 
-We present the first prototype tool for data debugging in the context
-of spreadsheets.  This system, called \checkcell{}, works as a plug-in
+We present the first tool for data debugging, in the context
+of spreadsheets. This system, called \checkcell{}, works as a plug-in
 for Microsoft Excel, though its principles are broadly
 applicable. \checkcell{} builds a dependency graph of the entire
 computation represented by a spreadsheet, where outputs and
@@ -67,16 +98,16 @@ are.  Cells containing these data are highlighted proportionally to
 their unusualness of their final effect: the more unusual they are,
 the brighter the highlighting.
 
-The current prototype of \checkcell{} is relatively efficient, taking
-less than a minute to run on large spreadsheets. We perform a user
-study to test our hypothesis that the data debugging approach is
-effective at locating errors. With \checkcell{}'s help, users were
-able to find XX\% of injected errors, while users without \checkcell{}
-were only able to find YY\% of errors.
+The current prototype of \checkcell{} is efficient, taking less than a
+minute to run on large spreadsheets. We perform a user study to test
+the hypothesis that data debugging's approach of identifying data with
+unusual impacts is effective at locating errors. With \checkcell{}'s
+help, users were able to find XX\% of injected errors, while users
+without \checkcell{} were only able to find YY\% of errors.
 
-We have developed a Microsoft Excel extension, or add-in, written in
-C\#, which uses cross-validation techniques and perturbation analysis
-to look for numerical values that appear suspicious.  Values that
-appear to be potential errors are highlighted proportionally to the
-likeliness that they are incorrect, as judged by our analysis -- the
-more likely a value is to be wrong, the brighter the highlighting.
+%We have developed a Microsoft Excel extension, or add-in, written in
+%C\#, which uses cross-validation techniques and perturbation analysis
+%to look for numerical values that appear suspicious.  Values that
+%appear to be potential errors are highlighted proportionally to the
+%likeliness that they are incorrect, as judged by our analysis -- the
+%more likely a value is to be wrong, the brighter the highlighting.
