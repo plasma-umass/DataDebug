@@ -2453,7 +2453,7 @@ namespace DataDebug
             TimeSpan tsTree = swTree.Elapsed;
             // Format and display the TimeSpan value. 
             string treeTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", tsTree.Hours, tsTree.Minutes, tsTree.Seconds, tsTree.Milliseconds / 10);
-            MessageBox.Show("Done building dependence graph.\nTime elapsed: " + treeTime);
+            //MessageBox.Show("Done building dependence graph.\nTime elapsed: " + treeTime);
             
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             sw.Start();
@@ -2527,6 +2527,7 @@ namespace DataDebug
                         string formula = "";
                         if (cell.HasFormula)
                         {
+                            //MessageBox.Show("Formula: " + cell.Formula);
                             formula = cell.Formula;
                         }
                         StartValue start_value = new StartValue(cell.Value); //Store the initial value of this cell before swapping
@@ -2670,13 +2671,13 @@ namespace DataDebug
                     {
                         if (max_total_delta != 0)
                         {
-                            if ((influences[ind] - min_total_delta) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
+                            if ((influences[ind]) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
                             {
                                 MessageBox.Show("Error. Influence should not be greater than 1.");
                                 MessageBox.Show("Influence = " + influences[ind]);
-                                MessageBox.Show("(" + influences[ind] + " - " + min_total_delta + ") / " + max_total_delta);
+                                MessageBox.Show("(" + influences[ind] + ") / " + max_total_delta);
                             }
-                            influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
+                            influences[ind] = (influences[ind]) / max_total_delta;
                         }
                         ind++;
                     }
@@ -2689,23 +2690,28 @@ namespace DataDebug
                             int index = 0;
                             //Compute average influence
                             double average_influence = 0.0;
-                            int denominator = node.getParents().Count;
+                            double denominator = (double)node.getParents().Count;
                             //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
                             //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
                             double total_influence = 0.0;
                             foreach (TreeNode parent in node.getParents())
                             {
+                                //MessageBox.Show("influence: " + influences[index]);
                                 total_influence += influences[index];
+                                index++;
                             }
                             average_influence = total_influence / denominator;
                             //Compute the standard deviation
                             double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
+                            index = 0;
                             foreach (TreeNode parent in node.getParents())
                             {
                                 variance += (influences[index] - average_influence) * (influences[index] - average_influence) / denominator;
+                                index++;
                             }
                             double standard_deviation = Math.Sqrt(variance);
                             //Color cells that lie further than two standard deviations away from the mean
+                            index = 0;
                             foreach (TreeNode parent in node.getParents())
                             {
                                 Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
@@ -2799,7 +2805,7 @@ namespace DataDebug
                 {
                     //Compute average influence
                     double average_influence = 0.0;
-                    int denominator = 0;
+                    double denominator = 0.0;
                     //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
                     //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
                     double total_influence = 0.0;
@@ -2809,9 +2815,9 @@ namespace DataDebug
                         {
                             for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
                             {
-                                total_influence += influences_grid[worksheet.Index - 1][row][col];
                                 if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
                                 {
+                                    total_influence += influences_grid[worksheet.Index - 1][row][col];
                                     denominator++;
                                 }
                             }
@@ -2826,11 +2832,14 @@ namespace DataDebug
                         {
                             for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
                             {
-                                variance += (influences_grid[worksheet.Index - 1][row][col] - average_influence) * (influences_grid[worksheet.Index - 1][row][col] - average_influence) / denominator;
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+                                {
+                                    variance += (influences_grid[worksheet.Index - 1][row][col] - average_influence) * (influences_grid[worksheet.Index - 1][row][col] - average_influence) / denominator;
+                                }
                             }
                         }
                     }
-                    double standard_deviation = Math.Sqrt(variance);
+                    double standard_deviation = Math.Sqrt(variance);                            
                     //Color cells that lie further than two standard deviations away from the mean
                     foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
                     {
@@ -3032,6 +3041,7 @@ namespace DataDebug
 
             //Print out text for GraphViz representation of the dependence graph
             string tree = "";
+            string ranges_text = "";
             if (toggle_array_storage.Checked)
             {
                 foreach (TreeNode[][] node_arr_arr in nodes_grid)
@@ -3050,6 +3060,10 @@ namespace DataDebug
                 foreach (TreeNode node in ranges)
                 {
                     tree += node.toGVString(0) + "\n"; //tree += node.toGVString(max_weight) + "\n";
+                    foreach (TreeNode parent in node.getParents())
+                    {
+                        ranges_text += parent.getWorksheetObject().Index + "," + parent.getName().Replace("$","") + "," + parent.getWorksheetObject().get_Range(parent.getName()).Value +"\n";
+                    }
                 }
             }
             else //toggle_array_storage not checked
@@ -3062,6 +3076,9 @@ namespace DataDebug
             Display disp = new Display();
             disp.textBox1.Text = "digraph g{" + tree + "}";
             disp.ShowDialog();
+            Display disp_ranges = new Display();
+            disp_ranges.textBox1.Text = ranges_text;
+            disp_ranges.ShowDialog();
         }
 
         List<TreeNode> originalColorNodes;
