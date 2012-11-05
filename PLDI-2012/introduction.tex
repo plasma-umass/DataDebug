@@ -52,11 +52,13 @@ spreadsheets.
 % \textbf{Existing approaches don't really work.}
 
 Existing approaches to finding data errors include statistical outlier
-detection, which can be used to find errors when a distribution is
-known in advance (e.g., Gaussian), but this is often not the
-case. Data cleaning primarily copes with errors in databases by
-relying on cross-validation with ground truth data, which may not
-exist.
+detection and data cleaning. Outlier detection can be used to find
+errors only when the input data's distribution is known in advance
+(e.g., Gaussian). Automatically attempting to identify data
+distribution is error-prone and can give rise to an excessive number
+of false positives. Data cleaning primarily copes with errors in
+databases by relying on cross-validation with ground truth data, which
+may not exist.
 
 \subsection*{Contributions}
 
@@ -83,9 +85,9 @@ important data element or it is erroneous. By contrast, data that is
 wrong but whose presence or absence has little impact on the final
 result does not merit special attention.
 
-We present the first tool for data debugging, in the context
-of spreadsheets. This system, called \checkcell{}, works as a plug-in
-for Microsoft Excel, though its principles are broadly
+We present the first tool for data debugging, in the context of
+spreadsheets. This system, called \checkcell{}, works as a plug-in for
+Microsoft Excel, though its principles are broadly
 applicable. \checkcell{} builds a dependency graph of the entire
 computation represented by a spreadsheet, where outputs and
 intermediate nodes include formulas and charts, and where data cells
@@ -94,16 +96,20 @@ analysis of the effect of inclusion or exclusion of individual cells,
 measuring their impact on the spreadsheet's outputs by recalculation
 on the perturbed inputs. \checkcell{} employs kernel density
 estimation to evaluate which outputs are unusual and how unusual they
-are.  Cells containing these data are highlighted proportionally to
-their unusualness of their final effect: the more unusual they are,
-the brighter the highlighting.
+are. The result is a ranking by influence of data whose effect crosses
+a threshold of unusualness. In the user interface, \checkcell{} colors
+the cells containing this data in shades proportionally to their
+impact: the more impact, the brighter the highlighting.
 
-The current prototype of \checkcell{} is efficient, taking less than a
-minute to run on large spreadsheets. We perform a user study to test
-the hypothesis that data debugging's approach of identifying data with
-unusual impacts is effective at locating errors. With \checkcell{}'s
-help, users were able to find XX\% of injected errors, while users
-without \checkcell{} were only able to find YY\% of errors.
+\checkcell{} is efficient: it operates in time linear in the number
+of data elements, which is optimal. The current prototype is untuned
+but analysis time is generally low, taking less than a minute to run
+on spreadsheets containing thousands of cells. We perform a user study
+to test the hypothesis that data debugging's approach of identifying
+data with unusual impacts is effective at locating
+errors. With \checkcell{}'s help, users were able to find XX\% of
+injected errors, while users without \checkcell{} were only able to
+find YY\% of errors.
 
 %We have developed a Microsoft Excel extension, or add-in, written in
 %C\#, which uses cross-validation techniques and perturbation analysis
