@@ -7,43 +7,47 @@ and \emph{cleansing}~\cite{DBLP:journals/debu/RahmD00}) in database
 systems. Standard approaches include statistical outlier
 analysis~\cite{FIXME}, interpolation to fill in missing data (e.g.,
 with averages)~\cite{FIXME}, and using cross-correlation with other
-tables to correct or locate errors~\cite{FIXME}. None of these
-approaches leverage the interaction of data with programs that operate
-on them, as data debugging does.
+tables to correct or locate errors~\cite{FIXME}.
 
 % Section~\ref{FIXME} shows that statistical outlier analysis often produces unacceptably large numbers of false positives. 
 
 % SURVEY! http://www.dbis.informatik.hu-berlin.de/dbisold/research/bioinformatics/papers/data_cleansing.html
 
 A number of approaches have been developed that allow data cleaning to
-be expressed programmatically or applied interactively. AJAX expresses
-a data cleaning program as a DAG of transformations from input to
+be expressed programmatically or applied interactively. Programmatic
+approaches include AJAX, which expresses a data cleaning program as a
+DAG of transformations from input to
 output~\cite{Galhardas:2000:AED:342009.336568}. Data Auditor applies
-rules and target relations entered by the
+rules and target relations entered by a
 programmer~\cite{Golab:2010:DAE:1920841.1921060}. A similar
-domain-specific approach has been employed for data streams, primarily
-aimed at smoothing the data temporally and isolating data
-spatially~\cite{1617508}. Raman and Hellerstein's Potter's Wheel is an
-interactive tool that allows users to visualize and apply data
-cleansing transformations~\cite{Raman:2001:PWI:645927.672045}. By
-contrast with this work, \checkcell{} and data debugging in general
-operate automatically by discovering data that have an unusually large
-impact on program output, although they do not attempt to correct data
-errors.
+domain-specific approach has been employed for data streams to smooth
+data temporally and isolate it spatially~\cite{1617508}. Potter's
+Wheel, by Raman and Hellerstein, is an interactive tool that lets
+users visualize and apply data cleansing
+transformations~\cite{Raman:2001:PWI:645927.672045}. 
+Luebbers et al. describe an interactive data mining approach based on
+machine learning that builds decision trees from databases. It marks
+deviations from derived logical rules (e.g., ``$\mbox{BRV} =
+404 \Rightarrow \mbox{GBM} = 901$'') as errors to be examined by a
+data quality engineer~\cite{Luebbers:2003:SDD:1315451.1315499}.
 
-\paragraph{Data Auditing.}
-Luebbers et al. VLDB 2003~\cite{Luebbers:2003:SDD:1315451.1315499}.
+Unlike these approaches, data debugging operates entirely
+automatically (without the need for programmer-supplied rules or
+latent logical relations in data) by measuring the interaction of data
+with the programs that operate on them.
+ 
 
 \paragraph{Spreadsheet Errors.}
 Spreadsheets have been one of the most prominent computer applications
-since the creation of VisiCalc in 1979~\cite{FIXME}. The most widely
-used spreadsheet application today is Microsoft Excel~\cite{}. Excel
-indicates errors in formula entry like division by zero, a reference
-to a non-existient formula or cell, invalid numerical arguments, or
-accidental mixing of text and numbers.
+since the creation of the first spreadsheet application, VisiCalc, in
+1979. The most widely used spreadsheet application today is Microsoft
+Excel. Excel provides rudimentary error detection including errors in
+formula entry like division by zero, a reference to a non-existient
+formula or cell, invalid numerical arguments, or accidental mixing of
+text and numbers.
 % http://office.microsoft.com/en-us/excel-help/find-and-correct-errors-in-formulas-HP010066255.aspx
-Excel can also check for inconsistency with adjacent formulas and other structural errors, which it
-highlights with a ``squiggly'' underline.
+Excel also checks for inconsistency with adjacent formulas and other
+structural errors, which it highlights with a ``squiggly'' underline. In addition, Excel provides a formula auditor, which lets spreadsheet view dependencies flowing into and out of a particular formula.
 % http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
 
 Pre-existing error-detection work: adding type
