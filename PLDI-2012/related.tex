@@ -1,9 +1,9 @@
 % The formula here is: discuss related work in one facet; end with a contrast with the current work.
 
 \paragraph{Statistical Outlier Rejection.}
-Given an unordered set of data, one way to discover erroneous values is by asking how likely a suspect value is to be representative of the other values in the distribution.  Numerous techniques exist, such as Peirce's criterion, Chauvenet's criterion, and Grubb's test for outliers.  A number of these techniques, including Peirce's test, originate from the earliest days of statistics, and were developed in order to make nautical measurements more robust.
+Given an unordered set of data, one way to discover erroneous values is by asking how likely a suspect value is to be representative of the other values in the distribution.  Numerous techniques exist, such as Peirce's criterion, Chauvenet's criterion, and Grubb's test for outliers~\cite{FIXME}.  A number of these techniques, including Peirce's test, originate from the earliest days of statistics, and were developed in order to make nautical measurements more robust.
 
-One difficulty immediately encountered when attempting to use an outlier rejection procedure is how to determine which data ``belong'' together.  In statistical terms, which spreadsheet cells belong to the same distribution?  Asking a user to annotate a set of values with its distribution is both onerous and error-prone.  \checkcell instead uses a statistical outlier test to determine whether a particular value's influence in a computation is unusual.
+One difficulty immediately encountered when attempting to use an outlier rejection procedure is how to determine which data ``belong'' together.  In statistical terms, which spreadsheet cells belong to the same distribution?  Asking a user to annotate a set of values with its distribution is both onerous and error-prone.  \checkcell instead uses a statistical outlier test (Peirce) to determine whether a particular value's influence in a computation is unusual.
 
 \paragraph{Data Cleaning.}
 Most past work on locating or removing errors in data has focused
