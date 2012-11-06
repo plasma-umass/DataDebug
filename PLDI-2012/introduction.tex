@@ -1,35 +1,37 @@
 % \textbf{Software bugs: well-studied, effective tools.}
 In many computational tasks, correctness is a primary concern. Most
 work in the programming language community over the past decades has
-focused on ways to discover whether the program performing the computation is
-correct. Techniques to reduce program errors range from
-testing~\cite{unittesting,fuzztesting} and runtime
-assertions~\cite{samanderansthing,others}, to dynamic and static
-analysis tools that can discover a wide range of
-bugs~\cite{valgrind,dawsonthing,otherpcmemberfoo}. Using these
-approaches and tools greatly increases the ability of programmers to
-find errors and reduce their impact, contributing to improving overall
-code quality.
+focused on ways to discover whether the program performing the
+computation is correct. Techniques to reduce program errors range from
+testing and runtime assertions, to dynamic and static analysis tools
+that can discover a wide range of bugs. Using these approaches and
+tools greatly increases the ability of programmers to find errors and
+reduce their impact, contributing to improving overall code quality.
+
+% ~\cite{unittesting,Miller:1990:ESR:96267.96279}
+% ~\cite{samanderansthing,others}
+% ~\cite{valgrind,dawsonthing,otherpcmemberfoo}
 
 % Data errors, not so much.
-However, a program is just one part of a computation. When its input
-has errors, the result of the computation is likely to not be
-correct. Data errors can arise in a number of ways, including mistakes
-in data entry or corrupted data sources. Unlike programs, data cannot
-easily be checked for correctness.
+However, a program is just one part of a computation. A computation
+consists of a program and its input. If the input contains errors, the
+result of the computation is likely to not be correct. Input data
+errors can arise in a number of ways, including mistakes in data entry
+or corrupted data sources. Unlike programs, data cannot easily be
+tested or analyzed for correctness.
 
 % \textbf{Data errors really important in data-intensive programming environments.}
 
 While data errors pose a threat to the correctness of any computation,
 they are especially problematic in data-intensive programming
 environments like databases, spreadsheets, and certain scientific
-computations (e.g., data analysis using R~\cite{FIXME}). In these settings,
+computations (e.g., data analysis using R~\cite{ihaka1996r}). In these settings,
 data correctness can be as important as program correctness (``garbage
 in, garbage out''). The results produced by the
 computations---queries, formulas, charts, and other analyses---can end
 up being rendered invalid by data errors. These errors can be costly:
 for example, spreadsheet errors have led to losses of millions of
-dollars~\cite{FIXME}.
+dollars. % ~\cite{FIXME}.
 
 %%%%  Things to add in citations: %%%%
 % TransAlta took a $24 million charge -- copy and paste error
@@ -104,13 +106,12 @@ and intermediate nodes include formulas and charts, and where data
 cells and ranges of cells form the leaves. It measures the impact of
 replacing each cell with randomly chosen cells within the same range
 by observing the change in a resulting recalculation of the
-spreadsheet. This statistical approach corresponds to an approximation
-of exact significance testing~\cite{}, and allows \checkcell{} to find
-errors in distribution-free numeric and non-numeric data. \checkcell{}
-then ranks by impact all data whose effect crosses a threshold of
-unusualness. In the user interface, \checkcell{} colors these cells in
-shades proportionally to their impact: the more impact, the brighter
-the highlighting.
+spreadsheet. This non-parametric statistical approach
+allows \checkcell{} to find errors in distribution-free numeric and
+non-numeric data. \checkcell{} then ranks by impact all data whose
+effect crosses a threshold of unusualness. In the user
+interface, \checkcell{} colors these cells in shades proportionally to
+their impact: the more impact, the brighter the highlighting.
 
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal. The current prototype is untuned
