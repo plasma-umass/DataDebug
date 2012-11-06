@@ -2,18 +2,16 @@ Testing and static analysis tools can help root out bugs in programs,
 but not bugs in data. Checking data for errors is arguably as
 important as finding program errors, but lacks effective tool
 support. This paper introduces \emph{data debugging}, an approach that
-combines program analysis with data analysis to locate data
-errors. Since it is impossible to know \emph{a priori} whether data
-are erroneous or not, data debugging does the next best thing:
-locating data where an error would have the most impact. Data
-debugging is particularly promising in the context of data-intensive
-programming environments like databases and spreadsheets, which
-intertwine data with programs (in the form of queries or formulas).
+combines dataflow dependence analysis with statistical analysis to
+locate likely data errors. Since it is impossible to know \emph{a
+priori} whether data are erroneous or not, data debugging does the
+next best thing: locating data where an error would have the most
+impact. Data debugging is particularly promising in the context of
+data-intensive programming environments like databases and
+spreadsheets, which intertwine data with programs (in the form of
+queries or formulas).
 
-Data debugging works by building a dependency graph of an entire
-computation. It then computes the impact of data on the computation
-by evaluating the average effect of replacing it with randomly-selected data
-from the same population. This paper presents an implementation of data
+This paper presents an implementation of data
 debugging in an add-in tool for Microsoft Excel called \checkcell{}.
 \checkcell{} highlights values in shades of red proportional to their impact on the
 spreadsheet's computation, including charts and formulas. A user study

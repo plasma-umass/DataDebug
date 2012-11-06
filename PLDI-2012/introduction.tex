@@ -50,8 +50,8 @@ the number \texttt{132} might be correct, or it could be a
 transposition error from \texttt{123}. More insidiously, a misplaced
 or omitted decimal point could change a data item by orders of
 magnitude. Unfortunately, manual data auditing to find this kind of
-mistake is both onerous and difficult to scale up to even the moderate
-size of data in spreadsheets.
+mistake is both onerous and difficult to scale up.
+% to even the moderate size of data in spreadsheets.
 
 
 % \textbf{Existing approaches don't really work.}
@@ -63,47 +63,42 @@ a known distribution (e.g., Gaussian). Automatic identification of
 data distributions is error-prone and can give rise to an excessive
 number of false positives. Data cleaning primarily copes with errors
 in databases via cross-validation with ground truth data, which may
-not exist.
+not be present.
 
 \subsection*{Contributions}
-
-This paper presents an approach to locating likely data errors that we
-call \emph{data debugging}. Data debugging leverages the fact that in
-data-intensive programming environment like spreadsheets or databases,
-data and programs (e.g., queries or formulas) are intertwined.
 
 %, data debugging reframes the problem to find data
 %whose presence has an unusually large impact on the computation as a
 %whole.
 
-Data debugging uses static and dynamic analysis to guide a statistical
-process that isolate data whose impact dramatically affects the final
-results of a computation. It works by building a dependency graph of
-the program, and then systematically measures the effect of re-running
-the computation after replacing data items with other items drawn
-randomly from the same input set.
+This paper presents \emph{data debugging}, an approach to locating
+likely data errors.  Data debugging combines dataflow dependence
+analysis and statistical analysis to isolate data with an
+unusually high impact on the final results of a computation.
 
-By calling attention to data that has an unusually large impact on the
-final computation, data debugging provides insights into both the data
-and the computation and can reveal errors. Since it is impossible to
-know \emph{a priori} whether data are erroneous or not, data debugging
-does the next best thing: locating data where an error would have the
-most impact. Intuitively, data that has an unusually high impact on
-the final result is either very important or it is wrong. By
-contrast, data that is wrong but whose presence or absence has little
-impact on the final result does not merit special attention.
+By calling attention to this data, data debugging can provide insights
+into both the data and the computation and reveal errors. Since it
+is impossible to know \emph{a priori} whether data are erroneous or
+not, data debugging does the next best thing: locating data where an
+error would have the most impact. Intuitively, data that has an
+inordinate impact on the final result is either very important or
+it is wrong. By contrast, data that is wrong but whose inclusion or
+exclusion has little impact on the final result does not merit special
+attention.
 
-This paper then presents a data debugging tool called \checkcell{}
-that operates in the context of spreadsheets, a programming domain
-that has recently seen renewed academic
-attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}. \checkcell{}
-is a C\# plug-in for Microsoft Excel, though its principles are
-broadly applicable. 
+We believe data debugging is broadly applicable, though it is
+especially well-suited for data-intensive programming environments
+like spreadsheets and databases, where data and programs (e.g.,
+queries or formulas) are intertwined. We present a data debugging tool
+for spreadsheets called \checkcell{}, a C\# add-in for Microsoft
+Excel. Spreadsheets are a programming domain that has recently seen
+renewed academic
+attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}.
 
-\checkcell{} uses a statistical analysis guided by the dependency graph 
-of the entire computation represented by a spreadsheet, where outputs
+\checkcell{} first builds a dataflow graph 
+of the entire computation that the spreadsheet represents, where outputs
 and intermediate nodes include formulas and charts, and where data
-cells and ranges of cells form the leaves. It measures the impact of
+cells and ranges of cells form the leaves. It then systematically measures the impact of
 replacing each cell with randomly chosen cells within the same range
 by observing the change in a resulting recalculation of the
 spreadsheet. This non-parametric statistical approach
@@ -121,6 +116,7 @@ the hypothesis that data debugging's approach of identifying data with
 unusual impacts is effective at locating errors. With \checkcell{}'s
 help, users were able to find XX\% of injected errors, while users
 without \checkcell{} were only able to find YY\% of errors.
+
 
 %We have developed a Microsoft Excel extension, or add-in, written in
 %C\#, which uses cross-validation techniques and perturbation analysis
