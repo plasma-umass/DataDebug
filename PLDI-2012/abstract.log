@@ -1,0 +1,22 @@
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (MiKTeX 2.9) (preloaded format=pdftex 2012.9.11)  4 NOV 2012 18:58
+entering extended mode
+**abstract.tex
+
+("C:\Users\Dimitar Gochev\Documents\Visual Studio 2010\Projects\datadebug\DataD
+ebug\PLDI-2012\abstract.tex"
+! Undefined control sequence.
+l.9 This paper introduces \emph
+                               {data debugging}, an approach that combines
+? 
+)
+*
+(Please type a command or say `\end')
+*\end
+[1{C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map}]<C:/Program Files/MiKTeX
+ 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+Output written on abstract.pdf (1 page, 21484 bytes).
+PDF statistics:
+ 10 PDF objects out of 1000 (max. 8388607)
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+
