@@ -47,9 +47,9 @@ with the programs that operate on them.
 
 \paragraph{Spreadsheet Errors.}
 Spreadsheets have been one of the most prominent computer applications
-since the creation of the first spreadsheet application, VisiCalc, in
-1979. The most widely used spreadsheet application today is Microsoft
-Excel. Excel provides rudimentary error detection including errors in
+since their creation in 1979.
+ The most widely used spreadsheet application today is Microsoft
+Excel. Excel includes rudimentary error detection including errors in
 formula entry like division by zero, a reference to a non-existient
 formula or cell, invalid numerical arguments, or accidental mixing of
 text and numbers.
@@ -58,20 +58,19 @@ Excel also checks for inconsistency with adjacent formulas and other
 structural errors, which it highlights with a ``squiggly'' underline. In addition, Excel provides a formula auditor, which lets spreadsheet view dependencies flowing into and out of a particular formula.
 % http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
 
-Pre-existing error-detection work: adding type
-systems~\cite{DBLP:conf/kbse/AhmadAGK03}. Dataflow
-testing~\cite{fisher2006scaling}. Other testing tools (Rothermel et
-al.\
-~\cite{rothermel1998you,rothermel2001methodology,Carver:2006:EET:1159733.1159775}). XeLda:
-checks if formulas process values with incorrect units or if derived
-units clash with unit
-annotations~\cite{Antoniu:2004:VUC:998675.999448}.  More type system
-stuff:~\cite{Erwig:2005:AGM:1062455.1062494}. Using labels and
+Past work on detecting errors in spreadsheets has focused on inferring
+units and relationships (has-a, is-a) from information like layout and
+headers~\cite{DBLP:conf/kbse/AhmadAGK03}. XeLda checks if formulas
+process values with incorrect units or if derived units clash with
+unit annotations~\cite{Antoniu:2004:VUC:998675.999448}.  More type
+system stuff:~\cite{Erwig:2005:AGM:1062455.1062494}. Using labels and
 structural clues (especially unit-of-measurement
-errors)~\cite{Chambers:2010:RSL:1860134.1860346}. Much of this work is
-complementary and orthogonal to \checkcell{}, which works with
-standard, unannotated spreadsheets and focuses on unusual interactions of
-data with formulas.
+errors)~\cite{Chambers:2010:RSL:1860134.1860346}. There also has been
+considerable work on testing tools for
+spreadsheets~\cite{fisher2006scaling,rothermel1998you,rothermel2001methodology,Carver:2006:EET:1159733.1159775}). Much
+of this work is complementary and orthogonal to \checkcell{}, which
+works with standard, unannotated spreadsheets and focuses on unusual
+interactions of data with formulas.
 
 
 % What is Jaffry et al\. ~\cite{DBLP:journals/corr/abs-0803-1748}?
