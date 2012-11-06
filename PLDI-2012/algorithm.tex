@@ -40,9 +40,7 @@ The erroneous cell (B3) changes the answer to the question ``Can I afford a fanc
 
 \subsection{Dependency Analysis}
 
-Given an unordered set of data, one way to attack the problem is by asking whether a suspect value is likely to be representative of the other values.  Numerous techniques exist, such as Peirce's criterion, Chauvenet's criterion, and Grubb's test for outliers.  All of these tests consider values of interest to be independent measurements of the same random variable, and the set of values is the variable's distribution.
 
-One difficulty immediately encountered when attempting to use one of these outlier identification techniques is how to determine which data ``belong'' together.  In statistical terms, which spreadsheet cells belong to the same distribution?  Asking a user to annotate a set of values with its distribution is both onerous and error-prone.
 
 Fortunately, the structure of spreadsheet calculations provides important information.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely inconsequential for our purposes.  Both forms of computation define functions and subroutines in terms of input and output and both forms have control flow structures such as \texttt{IF}/\texttt{ELSE}.  Microsoft Excel even includes abstraction functionality such as \texttt{VLOOKUP} and \texttt{HLOOKUP}.
 
