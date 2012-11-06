@@ -40,13 +40,13 @@ The erroneous cell (B3) changes the answer to the question ``Can I afford a fanc
 
 \subsection{Dependency Analysis}
 
-
-
-Fortunately, the structure of spreadsheet calculations provides important information.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely inconsequential for our purposes.  Both forms of computation define functions and subroutines in terms of input and output and both forms have control flow structures such as \texttt{IF}/\texttt{ELSE}.  Microsoft Excel even includes abstraction functionality such as \texttt{VLOOKUP} and \texttt{HLOOKUP}.
+The structure of spreadsheet calculations provides important information regarding which values should be removed.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely inconsequential for our purposes.  Both forms of computation define functions and subroutines in terms of input and output and both forms have control flow structures such as \texttt{IF}/\texttt{ELSE}.  Microsoft Excel even includes abstraction functionality such as \texttt{VLOOKUP} and \texttt{HLOOKUP}.
 
 The formula in cell B10 computes the sum total projected cost using the following formula: \texttt{=SUM(B2:B9)}.  Similarly, the formula in cell C10 computes the total actual costs: \texttt{=SUM(C2:C9)}.  Finally, the spreadsheet answers whether an expensive dinner is a good idea given the difference between projected cost and actual cost: \texttt{=IF(B10-C10 > 150, ``Yes'', ``No'')}.  The computation graph for this calculation can be seen in Figure~\ref{fig:ex_compgraph}.
 
-The computation graph 
+
+
+For the purposes of our analysis, we make a few assumptions.  We assume that values in the inputs of particular spreadsheet function are drawn from the same distribution.  
 
 \subsection{Influence Computation}
 
