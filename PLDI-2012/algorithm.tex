@@ -1,0 +1,56 @@
+\subsection{Motivating Example}
+
+Small input errors can have dramatic consequences in the correctness of certain computations.  A misplaced decimal point or an erroneously omitted or inserted digit can affect the accuracy of a calculation by an order of magnitude.  All of these errors are the result of a single typographical error.  When one considers the typical error rate for typographical errors INSERT CITE, any sufficiently large spreadsheet is guaranteed to contain at least one error.
+
+Figure~\ref{fig:personal_budget} is a typical spreadsheet to track one's personal expenses over the course of a month.  A simple calculation performed at the end of the month informs the user whether they can afford a luxury item, such as an expensive dinner.  The calculation answers ``yes'' if the user's monthly expenses were at least \$150 under budget.  However, this example contains a simple typographical error which results in the wrong answer.
+
+\begin{table}[htbp]
+  \centering
+  \caption{A sample spreadsheet showing a personal budget, with a decimal point typo.}
+    \begin{tabular}{|c|r|r|r|}
+    \hline
+    & \myalign{c|}{\bf{A}} & \myalign{c|}{\bf{B}} & \myalign{c|}{\bf{C}} \\
+    \hline
+    \bf{1} & MONTHLY BUDGET & Projected Cost & Actual Cost \\
+    \hline
+    \bf{2} & Rent & \$1150  & \$1150\\
+    \hline
+    \bf{3} & Phone & \$3675  & \$36.75 \\
+    \hline
+    \bf{4} & Gas \& Electricity & \$80    & \$87.23 \\
+    \hline
+    \bf{5} & Waste removal & \$11.25 & \$11.25 \\
+    \hline
+    \bf{6} & Groceries & \$200   & \$187.81 \\
+    \hline
+    \bf{7} & Car payment & \$225   & \$225 \\
+    \hline
+    \bf{8} & Gasoline & \$50    & \$62.3 \\
+    \hline
+    \bf{9} & Clothing & \$100   & \$59.99 \\
+    \hline
+    \bf{10} & Total & \$5491.25 & \$1820.33 \\
+    \hline
+    \bf{11} & Can I afford a fancy dinner? & Yes   &  \\
+    \hline
+    \end{tabular}%
+  \label{fig:personal_budget}%
+\end{table}%
+  
+The erroneous cell (B3) changes the answer to the question ``Can I afford a fancy dinner?''.  Even for users whose typographical error rate is low, the likelihood of making at least one such error increases as the spreadsheet grows in size.  Can automated analysis be of any assistance?
+
+\subsection{Dependency Analysis}
+
+Given an unordered set of data, one way to attack the problem is by asking whether a suspect value is likely to be representative of the other values.  Numerous techniques exist, such as Peirce's criterion, Chauvenet's criterion, and Grubb's test for outliers.  All of these tests consider values of interest to be independent measurements of the same random variable, and the set of values is the variable's distribution.
+
+One difficulty immediately encountered when attempting to use one of these outlier identification techniques is how to determine which data ``belong'' together.  In statistical terms, which spreadsheet cells belong to the same distribution?  Asking a user to annotate a set of values with its distribution is both onerous and error-prone.
+
+Fortunately, the structure of spreadsheet calculations provides important information.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely inconsequential for our purposes.  Both forms of computation define functions and subroutines in terms of input and output and both forms have control flow structures such as \texttt{IF}/\texttt{ELSE}.  Microsoft Excel even includes abstraction functionality such as \texttt{VLOOKUP} and \texttt{HLOOKUP}.
+
+The formula in cell B10 computes the sum total projected cost using the following formula: \texttt{=SUM(B2:B9)}.  Similarly, the formula in cell C10 computes the total actual costs: \texttt{=SUM(C2:C9)}.  Finally, the spreadsheet answers whether an expensive dinner is a good idea given the difference between projected cost and actual cost: \texttt{=IF(B10-C10 > 150, ``Yes'', ``No'')}.  The computation graph for this calculation can be seen in Figure~\ref{fig:ex_compgraph}.
+
+The computation graph 
+
+\subsection{Influence Computation}
+
+\subsection{Analysis}
