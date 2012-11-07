@@ -1,6 +1,6 @@
 \subsection{Motivating Example}
 
-Small input errors can have dramatic consequences in the correctness of certain computations.  A misplaced decimal point or an erroneously omitted or inserted digit can affect the accuracy of a calculation by an order of magnitude.  All of these errors are the result of a single typographical error.  When one considers the typical error rate for typographical errors INSERT CITE, any sufficiently large spreadsheet is guaranteed to contain at least one error.
+Small input errors can have dramatic consequences in the correctness of certain computations.  Misplaced decimal points and erroneously omitted or inserted digits can affect the accuracy of a calculation by an order of magnitude.  A mistyped digit can also have large effects if a calculation is sensitive to small changes.  All of these errors are the result of a single typographical error.  One study found that the average error typographical error rate to be as high as 24\% for user logins~\cite{Robinson:1998:CUV:2229220.2229465}.  Sufficiently large spreadsheets are nearly guaranteed to contain at least one error.
 
 Figure~\ref{fig:personal_budget} is a typical spreadsheet to track one's personal expenses over the course of a month.  A simple calculation performed at the end of the month informs the user whether they can afford a luxury item, such as an expensive dinner.  The calculation answers ``yes'' if the user's monthly expenses were at least \$150 under budget.  However, this example contains a simple typographical error which results in the wrong answer.
 
@@ -8,46 +8,55 @@ Figure~\ref{fig:personal_budget} is a typical spreadsheet to track one's persona
   \centering
     \begin{tabular}{|c|r|r|r|}
     \hline
-    & \myalign{c|}{\bf{A}} & \myalign{c|}{\bf{B}} & \myalign{c|}{\bf{C}} \\
+    & \myalign{c|}{\textsf{\bf{A}}} & \myalign{c|}{\textsf{\bf{B}}} & \myalign{c|}{\textsf{\bf{C}}} \\
     \hline
-    \textsf{\bf{1}} & \textsf{MONTHLY BUDGET} & \textsf{Projected Cost} & \textsf{Actual Cost} \\
+    \textsf{\textsf{\bf{1}}} & \textsf{MONTHLY BUDGET} & \textsf{Projected Cost} & \textsf{Actual Cost} \\
     \hline
-    \textsf{\bf{2}} & \textsf{Rent} & \textsf{\$1150}  & \textsf{\$1150} \\
+    \textsf{\textsf{\bf{2}}} & \textsf{Rent} & \textsf{\$1150}  & \textsf{\$1150} \\
     \hline
-    \textsf{\bf{3}} & \textsf{Phone} & \textsf{\$3675}  & \textsf{\$36.75} \\
+    \textsf{\textsf{\bf{3}}} & \textsf{Phone} & \textsf{\$3675}  & \textsf{\$36.75} \\
     \hline
-    \textsf{\bf{4}} & \textsf{Gas} \& \textsf{Electricity} & \textsf{\$80}    & \textsf{\$87.23} \\
+    \textsf{\textsf{\bf{4}}} & \textsf{Gas} \& \textsf{Electricity} & \textsf{\$80}    & \textsf{\$87.23} \\
     \hline
-    \textsf{\bf{5}} & \textsf{Waste removal} & \textsf{\$11.25} & \textsf{\$11.25} \\
+    \textsf{\textsf{\bf{5}}} & \textsf{Waste removal} & \textsf{\$11.25} & \textsf{\$11.25} \\
     \hline
-    \textsf{\bf{6}} & \textsf{Groceries} & \textsf{\$200}   & \textsf{\$187.81} \\
+    \textsf{\textsf{\bf{6}}} & \textsf{Groceries} & \textsf{\$200}   & \textsf{\$187.81} \\
     \hline
-    \textsf{\bf{7}} & \textsf{Car payment} & \textsf{\$225}   & \textsf{\$225} \\
+    \textsf{\textsf{\bf{7}}} & \textsf{Car payment} & \textsf{\$225}   & \textsf{\$225} \\
     \hline
-    \textsf{\bf{8}} & \textsf{Gasoline} & \textsf{\$50}    & \textsf{\$62.3} \\
+    \textsf{\textsf{\bf{8}}} & \textsf{Gasoline} & \textsf{\$50}    & \textsf{\$62.3} \\
     \hline
-    \textsf{\bf{9}} & \textsf{Clothing} & \textsf{\$100}   & \textsf{\$59.99} \\
+    \textsf{\textsf{\bf{9}}} & \textsf{Clothing} & \textsf{\$100}   & \textsf{\$59.99} \\
+    % \hline
+    % \textsf{\textsf{\bf{10}}} & \textsf{Total} & \textsf{\$5491.25} & \textsf{\$1820.33} \\
     \hline
-    \textsf{\bf{10}} & \textsf{Total} & \textsf{\$5491.25} & \textsf{\$1820.33} \\
-    \hline
-    \textsf{\bf{11}} & \textsf{Fancy dinner tonight?} & \textsf{Yes}   &  \\
+    \textsf{\textsf{\bf{10}}} & \textsf{Fancy dinner tonight?} & \textsf{Yes}   &  \\
     \hline
     \end{tabular}%
   \caption{A sample spreadsheet showing a personal budget, with a decimal point typo in cell \texttt{B3}.\label{fig:personal_budget}}
 \end{table}%
   
-The erroneous cell (B3) changes the answer to the question ``Can I afford a fancy dinner?''.  Even for users whose typographical error rate is low, the likelihood of making at least one such error increases as the spreadsheet grows in size.  Can automated analysis be of any assistance?
+The erroneous value in cell B3 changes the answer to the question ``Can I afford a fancy dinner?''.  Even for users whose typographical error rate is low, the likelihood of making at least one such error increases as the spreadsheet grows in size.  Can automated analysis be of any assistance?
 
 \subsection{Dependency Analysis}
 
-The structure of spreadsheet calculations provides important information regarding which values should be removed.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely inconsequential for our purposes.  Both forms of computation define functions and subroutines in terms of input and output and both forms have control flow structures such as \texttt{IF}/\texttt{ELSE}.  Microsoft Excel even includes abstraction functionality such as \texttt{VLOOKUP} and \texttt{HLOOKUP}.
+The formula in cell B10 computes whether an expensive dinner is a good idea given the difference between projected cost and actual cost: \texttt{=IF(SUM(B2:B9)-SUM(C2:C9) > 150, ``Yes'', ``No'')}.  Without knowing something about this domain \emph{a priori}, it is difficult to conclude that it might be an error.
 
-The formula in cell B10 computes the sum total projected cost using the following formula: \texttt{=SUM(B2:B9)}.  Similarly, the formula in cell C10 computes the total actual costs: \texttt{=SUM(C2:C9)}.  Finally, the spreadsheet answers whether an expensive dinner is a good idea given the difference between projected cost and actual cost: \texttt{=IF(B10-C10 > 150, ``Yes'', ``No'')}.  The computation graph for this calculation can be seen in Figure~\ref{fig:ex_compgraph}.
+Fortunately, the structure of spreadsheet calculations provides valuable information.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely superficial.  Both forms of computation possess functions with input, output, and conventional control flow structures.  As such, we can represent the dataflow graph of a spreadsheet in a manner similar to traditional programs.  Spreadsheet formulae in Microsoft Excel are pure, and there is no facility for looping constructs, thus the dataflow graph under consideration is a directed acyclic graph (DAG).
 
+% DWB: mention control-flow constructs? %
+A spreadsheet's dataflow graph helps \checkcell find a function's input distribution.  The dataflow graph for this calculation can be seen in Figure~\ref{fig:ex_compgraph}.  In the dataflow graph, inputs and outputs are represented as leaves in a DAG.  Intermediate nodes are functions.  Nearly all functions in Microsoft Excel take vectors as arguments.  \checkcell operates under the assumption that values in a vector are homogenous.  \checkcell additionally assumes that inputs are order-independent, however it does not need to assume that inputs are independent of each other.  Thus \checkcell is able to treat similar input values as samples of the same random variable.
 
+By definition, an ``error'' is a value which does not belong to a random variable's distribution.  Thus outlier detection techniques appear to be a useful statistical tool for determining errors in an input.  However, two new difficulties immediately arise: 1) values in spreadsheets are not necessarily numerical, and 2) outlier detection techniques make strong assumptions about the distribution of the inputs.  \checkcell makes no assumptions about the datatype of the inputs.  E.g., string inputs are amenable to analysis.  Furthermore, \checkcell's analysis is nonparametric, and thus values from any distribution are acceptable.
 
-For the purposes of our analysis, we make a few assumptions.  We assume that values in the inputs of particular spreadsheet function are drawn from the same distribution.  
+\subsection{Impact Computation}
 
-\subsection{Influence Computation}
+\checkcell reframes the problem of finding a statistical outlier to the problem of finding a value which has an unusual effect on a computation.  If an error occurs in a set of values, and the replacement of that value with the true value causes a dramatic change in the output of a function, the value is likely to be a bug.  In the absence of the true replacement value, which is unknown, \checkcell uses other values from the same distribution a a proxy.  Since the erroneous value, by definition, does not belong to the input distribution, its exclusion should have a statistically significant effect on the output distribution of the function.
 
-\subsection{Analysis}
+Every value in a function's input distribution are perturbed by swapping it with representatives from the same distribution.  Since \checkcell cannot know \emph{a priori} which values of the input distribution should be used as proxies, all possibilities need to be considered.  To reduce computational overhead, the system described in this paper uses a sampling technique to choose candidate values for swapping.  For small inputs (i.e., input distributions with fewer than 30 values), the procedure degenerates to an exact statistical procedure.  This technique is analyzed in detail in section~\ref{FIXME}.
+
+The output of systematic value perturbation is a vector of impact distributions, one distribution for each value.  \checkcell computes the average value of each of these impact distributions and poses the following question: which impact is an outlier?  By the central limit theorem (CLT), the distribution of average values converges to the normal distribution ~\cite{FIXME}.
+
+The CLT's convergence guarantee requires that the random variable under consideration be identically distributed.  Thus outlier rejection techniques, which are designed to find values which do not belong to a distribution, can be used to find the values which cause the average-impact distribution to deviate from normality.  \checkcell uses Peirce's criterion for outlier rejection to flag these values.  In contrast with other outlier rejection procedures, Peirce's criterion will execute until it has removed a sufficient number of values to restore normality to a distribution.  This means that \checkcell will find all values that have an unusual influence.
+
+It is informative to compare \checkcell's treatment of ``data bugs'' with the approaches for finding bugs in code.  Data races are notoriously difficult to find in multithreaded code, and many tools have been developed to find them~\cite{FIXME}.  However, tools which focus their efforts on finding all possible data races overwhelm programmers with their verbosity.  The important races to find are the ones that materially affect the output of a computation.  All other races are benign.  \checkcell operates under a similar principle, which is that data errors which affect the output of a computation are the ones that should be considered.
