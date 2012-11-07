@@ -15,19 +15,30 @@ reduce their impact, contributing to improving overall code quality.
 % Data errors, not so much.
 However, a program is just one part of a computation. A computation
 consists of a program and its input. If the input contains errors, the
-result of the computation is likely to not be correct. Input data
-errors can arise in a number of ways, including mistakes in data entry
-or corrupted data sources. Unlike programs, data cannot easily be
-tested or analyzed for correctness.
+result of the computation is likely to not be correct. Unlike
+programs, data cannot easily be tested or analyzed for correctness.
+
+Input data
+errors can arise in a number of ways~\cite{hellerstein2008quantitative}.
+
+\begin{itemize}
+
+\item {\bf Data entry errors}, including typographical errors and transcription errors from illegible text.
+
+\item {\bf Measurement errors}, when the data source itself, such as a network connection, a disk, or a sensor, is faulty or corrupted, or when the method of obtaining the data is faulty (e.g., miscalibration or misplacement of a sensor).
+
+\item {\bf Data integration errors}, where inconsistencies arise due to the mixing of different data, including unit of measurement mismatches.
+
+\end{itemize}
 
 % \textbf{Data errors really important in data-intensive programming environments.}
 
 While data errors pose a threat to the correctness of any computation,
 they are especially problematic in data-intensive programming
 environments like databases, spreadsheets, and certain scientific
-computations (e.g., data analysis using R~\cite{ihaka1996r}). In these settings,
-data correctness can be as important as program correctness (``garbage
-in, garbage out''). The results produced by the
+computations. In these
+settings, data correctness can be as important as program correctness
+(``garbage in, garbage out''). The results produced by the
 computations---queries, formulas, charts, and other analyses---can end
 up being rendered invalid by data errors. These errors can be costly:
 for example, spreadsheet errors have led to losses of millions of
@@ -88,9 +99,10 @@ attention.
 
 We believe data debugging is broadly applicable, though it is
 especially well-suited for data-intensive programming environments
-like spreadsheets and databases, where data and programs (e.g.,
-queries or formulas) are intertwined. We present a data debugging tool
-for spreadsheets called \checkcell{}, a C\# add-in for Microsoft
+like spreadsheets, databases, and interactive data analysis tools like
+R~\cite{ihaka1996r}, where data and programs (e.g., queries and
+formulas) are intertwined. We present a data debugging tool for
+spreadsheets called \checkcell{}, a C\# add-in for Microsoft
 Excel. Spreadsheets are a programming domain that has recently seen
 renewed academic
 attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}.
