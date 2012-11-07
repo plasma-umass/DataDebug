@@ -1,83 +1,63 @@
 digraph g{
-B2[shape = ellipse]
-B2->B2_to_B9
-
-C2[shape = ellipse]
-C2->C2_to_C9
-
 B3[shape = ellipse]
-B3->B2_to_B9
 
 C3[shape = ellipse]
-C3->C2_to_C9
 
 B4[shape = ellipse]
-B4->B2_to_B9
 
 C4[shape = ellipse]
-C4->C2_to_C9
 
 B5[shape = ellipse]
-B5->B2_to_B9
 
 C5[shape = ellipse]
-C5->C2_to_C9
 
 B6[shape = ellipse]
-B6->B2_to_B9
 
 C6[shape = ellipse]
-C6->C2_to_C9
 
 B7[shape = ellipse]
-B7->B2_to_B9
 
 C7[shape = ellipse]
-C7->C2_to_C9
 
 B8[shape = ellipse]
-B8->B2_to_B9
 
 C8[shape = ellipse]
-C8->C2_to_C9
 
 B9[shape = ellipse]
-B9->B2_to_B9
 
 C9[shape = ellipse]
-C9->C2_to_C9
 
 B10[shape = ellipse]
-B2_to_B9->B10
-B10->B11
 
 C10[shape = ellipse]
-C2_to_C9->C10
-C10->B11
 
 B11[shape = ellipse]
-B10->B11
-C10->B11
+B3_to_B10->B11
 
-C2_to_C9[shape = ellipse]
-C2->C2_to_C9
-C3->C2_to_C9
-C4->C2_to_C9
-C5->C2_to_C9
-C6->C2_to_C9
-C7->C2_to_C9
-C8->C2_to_C9
-C9->C2_to_C9
-C2_to_C9->C10
+C11[shape = ellipse]
+C3_to_C10->C11
 
-B2_to_B9[shape = ellipse]
-B2->B2_to_B9
-B3->B2_to_B9
-B4->B2_to_B9
-B5->B2_to_B9
-B6->B2_to_B9
-B7->B2_to_B9
-B8->B2_to_B9
-B9->B2_to_B9
-B2_to_B9->B10
+B12[shape = ellipse]
+B11->B12
+C11->B12
+
+C3_to_C10[shape = ellipse]
+C3->C3_to_C10
+C4->C3_to_C10
+C5->C3_to_C10
+C6->C3_to_C10
+C7->C3_to_C10
+C8->C3_to_C10
+C9->C3_to_C10
+C10->C3_to_C10
+
+B3_to_B10[shape = ellipse]
+B3->B3_to_B10
+B4->B3_to_B10
+B5->B3_to_B10
+B6->B3_to_B10
+B7->B3_to_B10
+B8->B3_to_B10
+B9->B3_to_B10
+B10->B3_to_B10
 }
