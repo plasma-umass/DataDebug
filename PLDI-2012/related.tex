@@ -27,17 +27,18 @@ domain-specific approach has been employed for data streams to smooth
 data temporally and isolate it spatially~\cite{1617508}. Potter's
 Wheel, by Raman and Hellerstein, is an interactive tool that lets
 users visualize and apply data cleansing
-transformations~\cite{Raman:2001:PWI:645927.672045}. 
-Luebbers et al. describe an interactive data mining approach based on
-machine learning that builds decision trees from databases. It marks
-deviations from derived logical rules (e.g., ``$\mbox{BRV} =
-404 \Rightarrow \mbox{GBM} = 901$'') as errors to be examined by a
-data quality engineer~\cite{Luebbers:2003:SDD:1315451.1315499}.
+transformations~\cite{Raman:2001:PWI:645927.672045}.  Luebbers et
+al. describe an interactive data mining approach based on machine
+learning that builds decision trees from databases. It derives logical
+rules (e.g., ``$\mbox{BRV} = 404 \Rightarrow \mbox{GBM} = 901$'') that
+hold for most of the database, and marks deviations as errors to be
+examined by a data quality
+engineer~\cite{Luebbers:2003:SDD:1315451.1315499}.
 
 Unlike these approaches, data debugging operates entirely
-automatically (without the need for programmer-supplied rules or
-latent logical relations in data) by measuring the interaction of data
-with the programs that operate on them.
+automatically, without the need for programmer-supplied rules.  Rather
+than searching for latent relationships in the data, it measures the
+interaction of data with the programs that operate on them.
  
 
 \paragraph{Spreadsheet Errors.}
