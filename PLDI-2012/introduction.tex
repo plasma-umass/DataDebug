@@ -69,12 +69,14 @@ mistake is both onerous and difficult to scale up.
 
 Existing approaches to finding data errors include
 statistical \emph{outlier detection} and \emph{data cleaning}. Outlier
-detection can be used to find errors only when the input data follows
-a known distribution (e.g., Gaussian). Automatic identification of
-data distributions is error-prone and can give rise to an excessive
-number of false positives. Data cleaning primarily copes with errors
-in databases via cross-validation with ground truth data, which may
-not be present.
+detection methods typically require a known distribution (e.g.,
+Gaussian). Automatic identification of data distributions is
+error-prone and can give rise to an excessive number of false
+positives. Non-parametric outlier detection methods that do not depend
+on known distributions lack statistical \emph{power}: they have a high
+probability of missing outliers. Data cleaning primarily copes with
+errors in databases via cross-validation with ground truth data, which
+may not be present.
 
 \subsection*{Contributions}
 
