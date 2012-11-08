@@ -1,6 +1,6 @@
 % \textbf{Software bugs: well-studied, effective tools.}
 In many computational tasks, correctness is a primary concern. Most
-work in the programming language community over the past decades has
+work in the programming language community has
 focused on ways to discover whether the program performing the
 computation is correct. Techniques to reduce program errors range from
 testing and runtime assertions, to dynamic and static analysis tools
@@ -19,7 +19,7 @@ result of the computation is likely to not be correct. Unlike
 programs, data cannot easily be tested or analyzed for correctness.
 
 Input data
-errors can arise in a number of ways~\cite{hellerstein2008quantitative}.
+errors can arise in a number of ways~\cite{hellerstein2008quantitative}:
 
 \begin{itemize}
 
@@ -42,7 +42,7 @@ settings, data correctness can be as important as program correctness
 computations---queries, formulas, charts, and other analyses---can end
 up being rendered invalid by data errors. These errors can be costly:
 for example, spreadsheet errors have led to losses of millions of
-dollars. % ~\cite{FIXME}.
+dollars~\cite{DBLP:journals/corr/abs-0803-2527,sakalerrors}.
 
 %%%%  Things to add in citations: %%%%
 % TransAlta took a $24 million charge -- copy and paste error
@@ -95,13 +95,12 @@ impossible to know \emph{a priori} whether data are erroneous or not,
 data debugging does the next best thing: \emph{locating data where an
 error would have the most impact}. Intuitively, data that has an
 inordinate impact on the final result is either very important or it
-is wrong. By contrast, data that is wrong but whose inclusion or
-exclusion has little impact on the final result does not merit special
-attention.
+is wrong. By contrast, wrong data whose presence has little impact on
+the final result does not merit special attention.
 
 We believe data debugging is broadly applicable, though it is
-especially well-suited for data-intensive programming environments
-like spreadsheets, databases, and interactive data analysis tools like
+especially well-suited for data-intensive programming settings
+like spreadsheets, databases, and environments like
 R~\cite{ihaka1996r}, where data and programs (e.g., queries and
 formulas) are intertwined.
 
