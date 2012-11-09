@@ -6,3 +6,5 @@ main.blg
 main.pdf
 *.out
 texput.log
+
+.DS_Store
