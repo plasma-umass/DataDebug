@@ -1,6 +1,76 @@
-Overview.
+This section provides an overview of how data debugging
+works. Section~\ref{sec:algorithm} describes the algorithms in full
+detail, and Section~\ref{sec:analysis} includes formal analysis of various
+aspects of data debugging, including asymptotic performance and
+statistical effectiveness.
 
-Explain spreadsheets.
+\paragraph{Dependence Analysis.}
+The first step in data debugging is to identify the relationship of
+data (inputs) to computations (outputs). For example, in a database
+management system, data inputs would be tuples (records) and computations would
+be queries. In a spreadsheet, inputs are data in cells, while
+computations are either terminal formulas (not used by other formulas)
+or charts.
 
-Briefly explain what has been done before to find errors?
+\paragraph{Impact Analysis.}
+The next step is to iterate through the data itself to test the impact
+of each data item on all computations. For each item, data debugging
+picks a random other item from the same ``distribution'', e.g.,
+another tuple in the same table, or another cell in the same range,
+and replaces the item being tested with the randomly-selected one.
+
+The computations are then recalculated using this new dataset. Changes
+in the computations are recorded as their \emph{impact scores} on each
+data item.  The impact score for a computation depends on whether the
+output is numeric or non-numeric. For numeric data, the impact score
+is the magnitude of change from the original value to the new value.
+For non-numeric data, the impact score is an \emph{indicator value}: 1
+if the result of the computation changed, and 0 if it did not.
+
+% Each data item maintains a separate impact score for every computation.
+
+This process is repeated some fixed number of times, accumulating the
+impact scores associated with each datum. To ensure a high level of
+statistical confidence, this number should be around 30. The impact
+score is then divided by the number of iterations, resulting in an
+average absolute deviation for each data item's impact.
+
+\paragraph{Impact Scoring.}
+Finally, the impacts of each data item are normalized by transforming
+them into absolute z-scores, where $|z|$ is the absolute distance of
+each item from the sample mean, divided by the sample standard
+deviation. Each data item's absolute z-scores are then averaged across
+all the outputs, and data debugging assigns that average as the
+\emph{overall impact score} of each data item. The overall impact
+score represents the average distance from the mean impact, in numbers
+of standard deviations. Note that this interpretation does not depend
+on normality assumptions about the data or its impact; in fact, using
+the normal distribution to rank impacts is conservative, as
+Section~\ref{sec:analysis} explains.
+
+Intuitively, data with large overall impact scores either have an
+extremely high impact on a small number of computations, or a high
+impact on a large number of computations. The overall impact score can
+be used both for ranking and for displaying the relative anomalousness
+of the impact of particular data items, e.g., by coloring such values
+in brighter colors corresponding to their distance from the mean. It
+also makes it straightforward to decide how many data to report. A
+standard approach, which we adopt here, is to stop reporting data once
+it falls below two standard deviations away from the mean,
+corresponding to more than a 95\% level of confidence that these are
+outliers.
+
+
+% ``score'' the impact by highlighting the values proportional to their z-score
+
+% we just need to report outliers in the impact. assuming the impacts
+% are normal is a conservative approach: the normal has 0 skewness
+% (skew = distribution around the mean -- normal is symmetric, so 0
+% skew) and low (either 0 or 3) kurtosis, depending on your definition
+% of kurtosis. Every non-normal distribution is by definition more skewed and most
+% distributions have a higher kurtosis (heavier tails), so we may
+% overmark outliers. We won't find outliers in distributions with
+% negative kurtosis, but those are super weird (no tails -- they drop
+% below the x-axis at some point on either side), so it's hard to
+% argue that they have outliers at all.
 
