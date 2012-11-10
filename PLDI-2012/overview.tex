@@ -15,17 +15,18 @@ or charts.
 \paragraph{Impact Analysis.}
 The next step is to iterate through the data itself to test the impact
 of each data item on all computations. For each item, data debugging
-picks a random other item from the same ``distribution'', e.g.,
-another tuple in the same table, or another cell in the same range,
-and replaces the item being tested with the randomly-selected one.
+repeatedly chooses a random other item from the same ``distribution'',
+e.g., another tuple in the same table, or another cell in the same
+range, and replaces the item being tested with the randomly-selected
+one.
 
 The computations are then recalculated using this new dataset. Changes
 in the computations are recorded as their \emph{impact scores} on each
 data item.  The impact score for a computation depends on whether the
 output is numeric or non-numeric. For numeric data, the impact score
-is the magnitude of change from the original value to the new value.
+is the normalized change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
-if the result of the computation changed, and 0 if it did not.
+if the result of the computation changed, and 0 if not.
 
 % Each data item maintains a separate impact score for every computation.
 
