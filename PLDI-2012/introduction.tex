@@ -57,11 +57,11 @@ By contrast with the proliferation of tools at a programmer's disposal
 to find program errors, few tools exist to help find data errors. Part
 of the problem is that, unlike program errors, it is more difficult to
 decide whether any given data element is an error or not. For example,
-the number \texttt{132} might be correct, or it could be a
-transposition error from \texttt{123}. More insidiously, a misplaced
-or omitted decimal point could change a data item by orders of
-magnitude. Unfortunately, manual data auditing to find this kind of
-mistake is both onerous and does not scale.
+the number \texttt{1234} might be correct, or it could be a
+typographical error when the correct value is \texttt{12.34}. Omitted
+or transposed digits or decimal points can change a data item by
+orders of magnitude. Unfortunately, manual data auditing to find this
+kind of mistake is both onerous and does not scale.
 % to even the moderate size of data in spreadsheets.
 
 
@@ -107,26 +107,23 @@ R~\cite{ihaka1996r}, where data and programs (e.g., queries and
 formulas) are intertwined.
 
 Data debugging works by first building a data dependence graph, and
-then systematically measuring the impact of replacing each data item
-with randomly chosen data from the same distribution (e.g., columns or
-ranges in databases or spreadsheets) and observing the changes in
-any computation that depends on that
-data. This non-parametric statistical approach allows data debugging
-to find errors in both numeric and non-numeric data, without any
-requirement that data follow any statistical distribution.
+then measuring the impact of replacing data items with randomly chosen
+data from the same distribution (e.g., columns or ranges in databases
+or spreadsheets) and observing the changes in any computation that
+depends on that data. This non-parametric statistical approach allows
+data debugging to find errors in both numeric and non-numeric data,
+without any requirement that data follow any statistical distribution.
 
 We present an instantiation of data debugging in the form
 of \checkcell{}, an add-in for Microsoft Excel. Spreadsheets are one
 of the most widely-used programming environments, and this domain has
 recently attracted renewed academic
 attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}.
-
-A user who wants to check for possible data errors
-invokes \checkcell{} by clicking on a button. \checkcell{} ranks by
-impact all data whose impact crosses a threshold of unusualness (above
-the 95\% confidence level).  In the user interface, \checkcell{}
-colors these cells in shades proportionally to their impact: the
-brighter a cell is highlighted, the greater impact it has.
+\checkcell{} ranks by impact all data whose
+impact crosses a threshold of unusualness (above the 95\% confidence
+level).  In the user interface, \checkcell{} colors these cells in
+shades proportionally to their impact: the brighter a cell is
+highlighted, the greater impact it has.
 
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal. The current prototype is untuned
