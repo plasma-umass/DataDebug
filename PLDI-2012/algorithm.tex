@@ -1,6 +1,6 @@
 \subsection{Motivating Example}
 
-Small input errors can have dramatic consequences in the correctness of certain computations.  Misplaced decimal points and erroneously omitted or inserted digits can affect the accuracy of a calculation by an order of magnitude.  A mistyped digit can also have large effects if a calculation is sensitive to small changes.  All of these errors are the result of a single typographical error.  One study found that the average error typographical error rate to be as high as 24\% for user logins~\cite{Robinson:1998:CUV:2229220.2229465}.  Sufficiently large spreadsheets are nearly guaranteed to contain at least one error.
+Small input errors can have dramatic consequences on the correctness of certain computations.  Misplaced decimal points and erroneously omitted or inserted digits can affect the accuracy of a calculation by an order of magnitude.  A mistyped digit can also have large effects if a calculation is sensitive to small changes.  All of these errors are the result of a single typographical error.  One study found that the average error typographical error rate is as high as 24\% for user logins~\cite{Robinson:1998:CUV:2229220.2229465}.  Sufficiently large spreadsheets are nearly guaranteed to contain at least one error.
 
 Figure~\ref{fig:personal_budget} is a typical spreadsheet to track one's personal expenses over the course of a month.  A simple calculation performed at the end of the month informs the user whether they can afford a luxury item, such as an expensive dinner.  The calculation answers ``yes'' if the user's monthly expenses were at least \$150 under budget.  However, this example contains a simple typographical error which results in the wrong answer.
 
@@ -36,11 +36,17 @@ Figure~\ref{fig:personal_budget} is a typical spreadsheet to track one's persona
   \caption{A sample spreadsheet showing a personal budget, with a decimal point typo in cell \texttt{B3}.\label{fig:personal_budget}}
 \end{table}%
   
-The erroneous value in cell B3 changes the answer to the question ``Can I afford a fancy dinner?''.  Even for users whose typographical error rate is low, the likelihood of making at least one such error increases as the spreadsheet grows in size.  Can automated analysis be of any assistance?
+The erroneous value in cell B3 changes the answer to the question ``Can I afford a fancy dinner?''.  Even for users whose typographical error rate is low, the likelihood of making at least one such error increases as the spreadsheet grows in size.
 
 \subsection{Dependency Analysis}
 
-The formula in cell B10 computes whether an expensive dinner is a good idea given the difference between projected cost and actual cost: \texttt{=IF(SUM(B2:B9)-SUM(C2:C9) > 150, ``Yes'', ``No'')}.  Without knowing something about this domain \emph{a priori}, it is difficult to conclude that it might be an error.
+The formula in cell B10 computes whether an expensive dinner is a good idea given the difference between projected cost and actual cost:
+
+\begin{centering}
+\texttt{=IF(SUM(B2:B9)-SUM(C2:C9) > 150, ``Yes'', ``No'')}
+\end{centering}
+
+Without knowing something about this domain \emph{a priori}, it is difficult to conclude that it might be an error.
 
 Fortunately, the structure of spreadsheet calculations provides valuable information.  While the spreadsheet model of computation appears to be quite different from traditional computer programs, these differences are largely superficial.  Both forms of computation possess functions with input, output, and conventional control flow structures.  As such, we can represent the dataflow graph of a spreadsheet in a manner similar to traditional programs.  Spreadsheet formulae in Microsoft Excel are pure, and there is no facility for looping constructs, thus the dataflow graph under consideration is a directed acyclic graph (DAG).
 
@@ -51,7 +57,7 @@ By definition, an ``error'' is a value which does not belong to a random variabl
 
 \subsection{Impact Computation}
 
-\checkcell{} reframes the problem of finding a statistical outlier to the problem of finding a value which has an unusual effect on a computation.  If an error occurs in a set of values, and the replacement of that value with the true value causes a dramatic change in the output of a function, the value is likely to be a bug.  In the absence of the true replacement value, which is unknown, \checkcell{} uses other values from the same distribution a a proxy.  Since the erroneous value, by definition, does not belong to the input distribution, its exclusion should have a statistically significant effect on the output distribution of the function.
+\checkcell{} reframes the problem of finding a statistical outlier to the problem of finding a value which has an unusual effect on a computation.  If an error occurs in a set of values, and the replacement of that value with the true value causes a dramatic change in the output of a function, the value is likely to be a bug.  In the absence of the true replacement value, which is unknown, \checkcell{} uses other values from the same distribution a proxy.  Since the erroneous value, by definition, does not belong to the input distribution, its exclusion should have a statistically significant effect on the output distribution of the function.
 
 Every value in a function's input distribution are perturbed by swapping it with representatives from the same distribution.  Since \checkcell{} cannot know \emph{a priori} which values of the input distribution should be used as proxies, all possibilities need to be considered.  To reduce computational overhead, the system described in this paper uses a sampling technique to choose candidate values for swapping.  For small inputs (i.e., input distributions with fewer than 30 values), the procedure degenerates to an exact statistical procedure.  This technique is analyzed in detail in section~\ref{FIXME}.
 
