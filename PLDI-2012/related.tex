@@ -33,10 +33,14 @@ learning that builds decision trees from databases. It derives logical
 rules (e.g., ``$\mbox{BRV} = 404 \Rightarrow \mbox{GBM} = 901$'') that
 hold for most of the database, and marks deviations as errors to be
 examined by a data quality
-engineer~\cite{Luebbers:2003:SDD:1315451.1315499}.
+engineer~\cite{Luebbers:2003:SDD:1315451.1315499}. Raz et al.\
+describe an approach aimed at arbitrary software that uses
+Daikon~\cite{ernst2007daikon} to infer invariants about numerical input data and then
+report discrepancies as ``semantic
+anomalies''~\cite{Raz:2002:SAD:581339.581378}.
 
 Unlike these approaches, data debugging operates entirely
-automatically, without the need for programmer-supplied rules.  Rather
+automatically, without the need for programmer-supplied rules or training.  Rather
 than searching for latent relationships in the data, it measures the
 interaction of data with the programs that operate on them.
  
