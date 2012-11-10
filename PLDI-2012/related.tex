@@ -7,7 +7,7 @@ and \emph{cleansing}) in database
 systems~\cite{DBLP:journals/debu/RahmD00,han2006data}. Standard
 approaches include statistical outlier analysis for removing noisy
 data~\cite{1583581}, interpolation to fill in missing data (e.g., with
-averages), and using cross-correlation with other tables to correct or
+averages), and using cross-correlation with other data sources to correct or
 locate errors~\cite{Hernandez:1995:MPL:223784.223807}.
 
 % Also: noise removal.
@@ -27,22 +27,21 @@ domain-specific approach has been employed for data streams to smooth
 data temporally and isolate it spatially~\cite{1617508}. Potter's
 Wheel, by Raman and Hellerstein, is an interactive tool that lets
 users visualize and apply data cleansing
-transformations~\cite{Raman:2001:PWI:645927.672045}.  Luebbers et
-al. describe an interactive data mining approach based on machine
-learning that builds decision trees from databases. It derives logical
-rules (e.g., ``$\mbox{BRV} = 404 \Rightarrow \mbox{GBM} = 901$'') that
-hold for most of the database, and marks deviations as errors to be
-examined by a data quality
-engineer~\cite{Luebbers:2003:SDD:1315451.1315499}. Raz et al.\
-describe an approach aimed at arbitrary software that uses
-Daikon~\cite{ernst2007daikon} to infer invariants about numerical input data and then
-report discrepancies as ``semantic
-anomalies''~\cite{Raz:2002:SAD:581339.581378}.
+transformations~\cite{Raman:2001:PWI:645927.672045}.
 
-Unlike these approaches, data debugging operates entirely
-automatically, without the need for programmer-supplied rules or training.  Rather
-than searching for latent relationships in the data, it measures the
-interaction of data with the programs that operate on them.
+To identify errors, Luebbers et al. describe an interactive data
+mining approach based on machine learning that builds decision trees
+from databases. It derives logical rules (e.g., ``$\mbox{BRV} =
+404 \Rightarrow \mbox{GBM} = 901$'') that hold for most of the
+database, and marks deviations as errors to be examined by a data
+quality engineer~\cite{Luebbers:2003:SDD:1315451.1315499}. Raz et al.\
+describe an approach aimed at arbitrary software that uses
+Daikon~\cite{ernst2007daikon} to infer invariants about numerical
+input data and then report discrepancies as ``semantic
+anomalies''~\cite{Raz:2002:SAD:581339.581378}.  Data debugging is
+orthogonal to these approaches: rather than searching for latent
+relationships in or across data, it measures the interaction of data with
+the programs that operate on them.
  
 
 \paragraph{Spreadsheet Errors.}
@@ -55,7 +54,7 @@ formula or cell, invalid numerical arguments, or accidental mixing of
 text and numbers.
 % http://office.microsoft.com/en-us/excel-help/find-and-correct-errors-in-formulas-HP010066255.aspx
 Excel also checks for inconsistency with adjacent formulas and other
-structural errors, which it highlights with a ``squiggly'' underline. In addition, Excel provides a formula auditor, which lets spreadsheet view dependencies flowing into and out of a particular formula.
+structural errors, which it highlights with a ``squiggly'' underline. In addition, Excel provides a formula auditor, which lets users view dependencies flowing into and out of particular formulas.
 % http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
 
 Past work on detecting errors in spreadsheets has focused on inferring
