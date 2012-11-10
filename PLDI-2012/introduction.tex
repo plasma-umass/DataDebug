@@ -58,10 +58,10 @@ to find program errors, few tools exist to help find data errors. Part
 of the problem is that, unlike program errors, it is more difficult to
 decide whether any given data element is an error or not. For example,
 the number \texttt{1234} might be correct, or it could be a
-typographical error when the correct value is \texttt{12.34}. Omitted
-or transposed digits or decimal points can change a data item by
-orders of magnitude. Unfortunately, manual data auditing to find this
-kind of mistake is both onerous and does not scale.
+typographical error when the correct value is \texttt{12.34}. Such errors
+can change data items by orders of magnitude. Unfortunately, manual data
+auditing to find this kind of mistake is both onerous and does not
+scale.
 % to even the moderate size of data in spreadsheets.
 
 
@@ -106,13 +106,14 @@ like spreadsheets, databases, and environments like
 R~\cite{ihaka1996r}, where data and programs (e.g., queries and
 formulas) are intertwined.
 
-Data debugging works by first building a data dependence graph, and
-then measuring the impact of replacing data items with randomly chosen
-data from the same distribution (e.g., columns or ranges in databases
-or spreadsheets) and observing the changes in any computation that
-depends on that data. This non-parametric statistical approach allows
-data debugging to find errors in both numeric and non-numeric data,
-without any requirement that data follow any statistical distribution.
+Data debugging works by first building a data dependence graph of the
+computations. It then measures data impact by replacing data items
+with randomly chosen data from the same distribution, such as columns
+in databases or ranges in spreadsheets, and observing the resulting
+changes in computations that depend on that data. This non-parametric
+approach allows data debugging to find errors in both numeric and
+non-numeric data, without any requirement that data follow any
+statistical distribution.
 
 We present an instantiation of data debugging in the form
 of \checkcell{}, an add-in for Microsoft Excel. Spreadsheets are one
