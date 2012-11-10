@@ -19,13 +19,13 @@ result of the computation is likely to not be correct. Unlike
 programs, data cannot easily be tested or analyzed for correctness.
 
 Input data
-errors can arise in a number of ways~\cite{hellerstein2008quantitative}:
+errors can arise in a variety of ways~\cite{hellerstein2008quantitative}:
 
 \begin{itemize}
 
 \item {\bf Data entry errors}, including typographical errors and transcription errors from illegible text.
 
-\item {\bf Measurement errors}, when the data source itself, such as a network connection, a disk, or a sensor, is faulty or corrupted, or when the method of obtaining the data is faulty (e.g., miscalibration or misplacement of a sensor).
+\item {\bf Measurement errors}, when the data source itself, such as a disk or a sensor, is faulty or corrupted, or when the method of obtaining the data is faulty (e.g., miscalibration).
 
 \item {\bf Data integration errors}, where inconsistencies arise due to the mixing of different data, including unit of measurement mismatches.
 
@@ -61,29 +61,31 @@ the number \texttt{132} might be correct, or it could be a
 transposition error from \texttt{123}. More insidiously, a misplaced
 or omitted decimal point could change a data item by orders of
 magnitude. Unfortunately, manual data auditing to find this kind of
-mistake is both onerous and difficult to scale up.
+mistake is both onerous and does not scale.
 % to even the moderate size of data in spreadsheets.
 
 
 % \textbf{Existing approaches don't really work.}
 
 Existing approaches to finding data errors include
-statistical \emph{outlier detection} and \emph{data cleaning}. Outlier
-detection methods typically require a known distribution (e.g.,
-Gaussian). Automatic identification of data distributions is
-error-prone and can give rise to an excessive number of false
-positives. Non-parametric outlier detection methods that do not depend
-on known distributions lack statistical \emph{power}: they have a high
-probability of missing outliers. Data cleaning primarily copes with
-errors in databases via cross-validation with ground truth data, which
-may not be present.
+\emph{data cleaning} and  \emph{statistical outlier detection}.
+Data cleaning primarily copes with errors in databases via
+cross-validation with ground truth data, which may not be
+present. Statistical outlier detection typically reports data as
+outliers based on their relationship to a given distribution (e.g.,
+Gaussian).  Automatic identification of data distributions is
+error-prone and can give rise to excessive false positives.
 
-\subsection*{Contributions}
+% Non-parametric outlier detection methods
+%like clustering and kernel density estimators known distributions lack
+%statistical \emph{power}: they have a high probability of missing
+%outliers.
 
 %, data debugging reframes the problem to find data
 %whose presence has an unusually large impact on the computation as a
 %whole.
 
+\paragraph{Contributions:}
 This paper presents \emph{data debugging}, an approach to locating
 likely data errors.  Data debugging combines dataflow dependence
 analysis and statistical analysis to isolate data with an
@@ -104,26 +106,27 @@ like spreadsheets, databases, and environments like
 R~\cite{ihaka1996r}, where data and programs (e.g., queries and
 formulas) are intertwined.
 
+Data debugging works by first building a data dependence graph, and
+then systematically measuring the impact of replacing each data item
+with randomly chosen data from the same distribution (e.g., columns or
+ranges in databases or spreadsheets) and observing the changes in
+any computation that depends on that
+data. This non-parametric statistical approach allows data debugging
+to find errors in both numeric and non-numeric data, without any
+requirement that data follow any statistical distribution.
+
 We present an instantiation of data debugging in the form
 of \checkcell{}, an add-in for Microsoft Excel. Spreadsheets are one
 of the most widely-used programming environments, and this domain has
 recently attracted renewed academic
 attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}.
 
-A user who wants to check for data errors can click on
-the \checkcell{} button. \checkcell{} builds a dataflow graph of the
-entire computation that the spreadsheet represents, where outputs and
-intermediate nodes include formulas and charts, and where data cells
-and ranges of cells form the leaves. It then systematically measures
-the impact of replacing each cell with randomly chosen cells within
-the same range by observing the change in a resulting recalculation of
-the spreadsheet. This non-parametric statistical approach
-allows \checkcell{} to find errors in distribution-free numeric and
-non-numeric data. \checkcell{} then ranks by impact all data whose
-effect crosses a threshold of unusualness (above the 95\% confidence
-level).  In the user interface, \checkcell{} colors these cells in
-shades proportionally to their impact: the brighter
-a cell is highlighted, the greater impact it has.
+A user who wants to check for possible data errors
+invokes \checkcell{} by clicking on a button. \checkcell{} ranks by
+impact all data whose impact crosses a threshold of unusualness (above
+the 95\% confidence level).  In the user interface, \checkcell{}
+colors these cells in shades proportionally to their impact: the
+brighter a cell is highlighted, the greater impact it has.
 
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal. The current prototype is untuned

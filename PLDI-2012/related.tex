@@ -77,15 +77,15 @@ robust. Widely-used approaches include Peirce's criterion, Chauvenet's
 criterion, and Grubb's test for
 outliers~\cite{barnett1994outliers}. All of these techniques require
 that data belong to a known distribution, primarily the normal
-(Gaussian). Unfortunately, input data does not always fit any
-statistical distribution. Non-parametric outlier detection methods,
-because of their lack of statistical power, have a high probability of
-missing outliers. In any case, identifying outliers
-leads to false positives when they do not materially contribute
-to the result of a computation (i.e., have no impact).
-\checkcell{} leverages the
-fact that its statistical sampling approach forces observed effects to
-follow a Gaussian distribution (as Section~\ref{sec:FIXME} explains),
-allowing it to use the Peirce outlier test to determine whether a
-particular value has an unusual impact on a computation.
+(Gaussian). Unfortunately, input data does not necessarily fit any
+statistical distribution. Moreover, identifying outliers leads to
+false positives when they do not materially contribute to the result
+of a computation (i.e., have no impact). By contrast, \checkcell{} only reports
+data items with a substantial impact on a computation.
+
+%\checkcell{} leverages the
+%fact that its statistical sampling approach forces observed effects to
+%follow a Gaussian distribution (as Section~\ref{sec:FIXME} explains),
+%allowing it to use the Peirce outlier test to determine whether a
+%particular value has an unusual impact on a computation.
 
