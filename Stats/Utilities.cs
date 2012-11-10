@@ -46,6 +46,8 @@ namespace DataDebug.Stats
                 cell.Key.Interior.Color = cell.Value;
             }
         }
+
+        //Error function (erf)
         public static double erf(double x)
         {
             //Save the sign of x
@@ -66,6 +68,12 @@ namespace DataDebug.Stats
             //double y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.Exp(-x*x);
 
             return sign * y;   //erf(-x) = -erf(x)
+        }
+
+        //Complementary error function (erfc)
+        public static double erfc(double x)
+        {
+            return (1.0 - erf(x));
         }
     }
 }

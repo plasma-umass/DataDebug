@@ -16,8 +16,10 @@ namespace DataDebug
         private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
         List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
         TreeNode[][][] nodes_grid;   //This is a multi-dimensional array of TreeNodes that will hold all the TreeNodes -- stores the dependence graph
-        List<TreeNode> ranges;
-        List<TreeNode> charts;
+        double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
+        double[][] min_max_delta_outputs; //This keeps the min and max delta for each output
+        List<TreeNode> ranges;  //This is a list of all the ranges we have identified
+        List<TreeNode> charts;  //This is a list of all the charts in the workbook
         private Regex[] regex_array;
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -913,29 +915,14 @@ namespace DataDebug
             }
             else  // if we are analyzing the entire workbook
             {
-                int i = 1;
-                int j = 1; 
                 foreach (Excel.Range worksheet_range in analysisRanges)
                 {
                     if (worksheet_range != null) //if the worksheet is not blank, analyze its contents
                     {
-                        if (toggle_reporting.Checked)
-                        {
-                            MessageBox.Show("Analyzing worksheet " + i);
-                            i++;
-                        }
                         foreach (Excel.Range c in worksheet_range)
                         {
                             if (c.HasFormula)
                             {
-                                if (toggle_reporting.Checked)
-                                {
-                                    if (j % 10 == 0)
-                                    {
-                                        MessageBox.Show("Analyzed 10 more formulas.");
-                                    }
-                                    j++;
-                                }
                                 TreeNode formula_cell = null;
                                 //Look for the node object for the current cell in the existing TreeNodes
                                 if (toggle_array_storage.Checked)
@@ -966,6 +953,8 @@ namespace DataDebug
                                 }
 
                                 string formula = c.Formula;  //The formula contained in the cell
+                                //find_references(formula_cell, formula);
+                                
                                 if (toggle_reporting.Checked)
                                 {
                                     MessageBox.Show(formula);
@@ -1694,7 +1683,7 @@ namespace DataDebug
                                     //Update the dependencies
                                     formula_cell.addParent(input_cell);
                                     input_cell.addChild(formula_cell);
-                                }
+                                } 
                             }
                         }
                     }
@@ -1730,6 +1719,8 @@ namespace DataDebug
                 foreach (Excel.Series series in (Excel.SeriesCollection)chart.SeriesCollection(Type.Missing))
                 {
                     string formula = series.Formula;  //The formula contained in the cell
+                    //find_references(chart_node, formula);
+                    
                     MatchCollection matchedRanges = null;
                     MatchCollection matchedCells = null;
                     int ws_index = 1;
@@ -2246,6 +2237,7 @@ namespace DataDebug
                         }
                     }
                     //In this case every reference to cells or ranges must explicitly state their worksheet, so no additional analysis is necessary
+                    
                 }
             }
             foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
@@ -2259,6 +2251,9 @@ namespace DataDebug
                     foreach (Excel.Series series in (Excel.SeriesCollection)chart.Chart.SeriesCollection(Type.Missing))
                     {
                         string formula = series.Formula;  //The formula contained in the cell
+                        //find_references(chart_node, formula);
+
+                        
                         MatchCollection matchedRanges = null;
                         MatchCollection matchedCells = null;
                         int ws_index = 1;
@@ -2656,6 +2651,7 @@ namespace DataDebug
                             chart_node.addParent(input_cell);
                             input_cell.addChild(chart_node);
                         }
+
                     }
                 }
             }
@@ -2791,7 +2787,7 @@ namespace DataDebug
                     //    n.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
                     //}
                     //Color final outputs of computation in red:
-                    //cell.Interior.Color = System.Drawing.Color.Red;
+                    cell.Interior.Color = System.Drawing.Color.Blue;
                     //MessageBox.Show(cell.Address + " is an output cell.");
                     try     //If the output is a number
                     {
@@ -2819,28 +2815,31 @@ namespace DataDebug
 
             //Grids for storing influences
             double[][][] influences_grid = null;
-            double[][][] times_perturbed = null;
-            if (toggle_global_perturbation.Checked)
-            {
+            int[][][] times_perturbed = null;
+            //if (toggle_global_perturbation.Checked)
+            //{
                 influences_grid = new double[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
-                times_perturbed = new double[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
+                times_perturbed = new int[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
                 foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
                 {
                     influences_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count][];
-                    times_perturbed[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count][];
+                    times_perturbed[worksheet.Index - 1] = new int[worksheet.UsedRange.Rows.Count][];
                     for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
                     {
                         influences_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count];
-                        times_perturbed[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count];
+                        times_perturbed[worksheet.Index - 1][row] = new int[worksheet.UsedRange.Columns.Count];
                         for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
                         {
                             influences_grid[worksheet.Index - 1][row][col] = 0.0;
-                            times_perturbed[worksheet.Index - 1][row][col] = 0.0;
+                            times_perturbed[worksheet.Index - 1][row][col] = 0;
                         }
                     }
                 }
+            //}
+            if (toggle_no_sceen_updating.Checked)
+            {
+                Globals.ThisAddIn.Application.ScreenUpdating = false;
             }
-
             //Procedure for swapping values within ranges, one cell at a time
             if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
             {
@@ -2852,6 +2851,39 @@ namespace DataDebug
                 else
                 {
                     swap_domain = nodes;
+                }
+
+                //Initialize min_max_delta_outputs
+                min_max_delta_outputs = new double[output_cells.Count][];
+                for (int i = 0; i < output_cells.Count; i++)
+                {
+                    min_max_delta_outputs[i] = new double[2];
+                    min_max_delta_outputs[i][0] = -1.0;
+                    min_max_delta_outputs[i][1] = 0.0;
+                }
+
+                //Initialize impacts_grid 
+                impacts_grid = new double[Globals.ThisAddIn.Application.Worksheets.Count][][][];
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    //MessageBox.Show("Dimensions: " + Globals.ThisAddIn.Application.Worksheets.Count + " x " +
+                    //worksheet.UsedRange.Rows.Count + " x " +
+                    //worksheet.UsedRange.Columns.Count + " x " +
+                    //output_cells.Count);
+                    impacts_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count][][];
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        impacts_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count][];
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            impacts_grid[worksheet.Index - 1][row][col] = new double[output_cells.Count];
+                            //MessageBox.Show("output cells count = " + output_cells.Count);
+                            for (int j = 0; j < output_cells.Count; j++)
+                            {
+                                impacts_grid[worksheet.Index - 1][row][col][j] = 0.0;
+                            }
+                        }
+                    }
                 }
 
                 foreach (TreeNode node in swap_domain)
@@ -2876,8 +2908,8 @@ namespace DataDebug
                     //For every range node
                     double[] influences = new double[node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
                     int influence_index = 0;        //Keeps track of the current position in the influences array
-                    double max_total_delta = 0;     //The maximum influence found (for normalizing)
-                    double min_total_delta = -1;     //The minimum influence found (for normalizing)
+                    //double max_total_delta = 0;     //The maximum influence found (for normalizing)
+                    //double min_total_delta = -1;     //The minimum influence found (for normalizing)
                     double swaps_per_range = 20.0;
                     //Swapping values; loop over all nodes in the range
                     foreach (TreeNode parent in node.getParents())
@@ -2890,8 +2922,8 @@ namespace DataDebug
                             formula = cell.Formula;
                         }
                         StartValue start_value = new StartValue(cell.Value); //Store the initial value of this cell before swapping
-                        double total_delta = 0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
-                        double delta = 0;   // Stores the change in outputs caused by a single swap
+                        double total_delta = 0.0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
+                        double delta = 0.0;   // Stores the change in outputs caused by a single swap
                         //Swapping loop - swap every sibling or a reduced number of siblings (approximately equal to swaps_per_range), for reduced complexity and runtime
                         int number_neighbors_replaced = 0;
                         Random rand = new Random();
@@ -2920,25 +2952,18 @@ namespace DataDebug
                                     times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
                                 }
                             }
-
+                            times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
                             Excel.Range sibling_cell = sibling.getWorksheetObject().get_Range(sibling.getName());
                             cell.Value = sibling_cell.Value; //This is the swap -- we assign the value of the sibling cell to the value of our cell
                             int index = 0;  //Index for knowing which output cell we are evaluating
-                            delta = 0;
+                            delta = 0.0;
                             foreach (TreeNode n in output_cells)
                             {
                                 if (starting_outputs[index].get_string() == null) // If the output is not a string
                                 {
                                     if (!n.isChart())   //If the output is not a chart, it must be a number
                                     {
-                                        if (starting_outputs[index].get_double() != 0)
-                                        {
-                                            delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value) / Math.Abs(starting_outputs[index].get_double());  //Compute the absolute change caused by the swap
-                                        }
-                                        else  //If the output's starting value is 0, do not divide by it, and just compute the absolute difference
-                                        {
-                                            delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
-                                        }
+                                        delta = Math.Abs(starting_outputs[index].get_double() - n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
                                     }
                                     else  // The node is a chart
                                     {
@@ -2949,59 +2974,75 @@ namespace DataDebug
                                             sum = sum + par.getWorksheetObject().get_Range(par.getName()).Value;
                                         }
                                         double average = sum / parent_range.getParents().Count;
-                                        if (starting_outputs[index].get_double() != 0)
-                                        {
-                                            delta = Math.Abs(starting_outputs[index].get_double() - average) / Math.Abs(starting_outputs[index].get_double());
-                                        }
-                                        else
-                                        {
-                                            delta = Math.Abs(starting_outputs[index].get_double() - average);
-                                        }
+                                        delta = Math.Abs(starting_outputs[index].get_double() - average);
                                     }
                                 }
                                 else  // If the output is a string
                                 {
                                     //MessageBox.Show("Comparing " + starting_outputs[index].get_string() + " and " + activeWorksheet.get_Range(n.getName()).Value);
                                     if (String.Equals(starting_outputs[index].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
-                                        delta = 0;
+                                    {
+                                        delta = 0.0;
+                                    }
                                     else
-                                        delta = 1;
+                                    {
+                                        delta = 1.0;
+                                    }
+                                }
+                                //Add to the impact of the cell for this output
+                                //MessageBox.Show("Cell R" + (cell.Row - 1) + "C" + (cell.Column - 1) + " has " + impacts_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][index] + "+" + delta + " impact on output " + index);
+                                impacts_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][index] += delta;
+                                //Compare the min/max values for this output to this delta
+                                if (min_max_delta_outputs[index][0] == -1.0)
+                                {
+                                    min_max_delta_outputs[index][0] = delta;
+                                }
+                                else
+                                {
+                                    if (min_max_delta_outputs[index][0] > delta)
+                                    {
+                                        min_max_delta_outputs[index][0] = delta;
+                                    }
+                                }
+                                if (min_max_delta_outputs[index][1] < delta)
+                                {
+                                    min_max_delta_outputs[index][1] = delta;
                                 }
                                 index++;
                                 total_delta = total_delta + delta;
                             }
                         }
                         
-                        if (toggle_global_perturbation.Checked)
-                        {
-                            influences_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1] += total_delta;
-                        }
+                        //if (toggle_global_perturbation.Checked)
+                        //{
+                        //    influences_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1] += total_delta;
+                        //}
 
-                        if (toggle_speed.Checked)
-                        {
-                            if (number_neighbors_replaced != 0)
-                            {
-                                total_delta = total_delta / number_neighbors_replaced;
-                            }
-                        }
-                        else
-                        {
-                            if (node.getParents().Count - 1 != 0) //The range must have had at least 2 cells in it
-                            {
-                                total_delta = total_delta / (node.getParents().Count - 1); //We divide by the number of swaps to get an average per-swap delta: not really necessary since we then scale things based on the max_delta and min_delta; would be useful if the max_delta and min_delta were global for all the ranges
-                            }
-                        }
+                        //if (toggle_speed.Checked)
+                        //{
+                        //    if (number_neighbors_replaced != 0)
+                        //    {
+                        //        total_delta = total_delta / number_neighbors_replaced;
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    if (node.getParents().Count - 1 != 0) //The range must have had at least 2 cells in it
+                        //    {
+                        //        total_delta = total_delta / (node.getParents().Count - 1); //We divide by the number of swaps to get an average per-swap delta: not really necessary since we then scale things based on the max_delta and min_delta; would be useful if the max_delta and min_delta were global for all the ranges
+                        //    }
+                        //}
                         //MessageBox.Show(cell.get_Address() + " Total delta = " + (total_delta * 100) + "%");                       
-                        influences[influence_index] = total_delta;
-                        influence_index++;
-                        if (max_total_delta < total_delta)
-                        {
-                            max_total_delta = total_delta;
-                        }
-                        if (min_total_delta > total_delta || min_total_delta == -1)
-                        {
-                            min_total_delta = total_delta;
-                        }
+                        //influences[influence_index] = total_delta;
+                        //influence_index++;
+                        //if (max_total_delta < total_delta)
+                        //{
+                        //    max_total_delta = total_delta;
+                        //}
+                        //if (min_total_delta > total_delta || min_total_delta == -1)
+                        //{
+                        //    min_total_delta = total_delta;
+                        //}
                         if (start_value.get_string() == null)
                         {
                             cell.Value = start_value.get_double();
@@ -3023,214 +3064,408 @@ namespace DataDebug
                         //}
                         cell.Interior.Color = System.Drawing.Color.Beige;
                     }
-                    int ind = 0;
+                    
+                    //int ind = 0;
                     //MessageBox.Show("MIN DELTA: " + min_total_delta + "\nMAX DELTA: " + max_total_delta);
                     //Normalize the influences based on the smallest and largest influence values. This way they are > 0 and < 1.
-                    foreach (TreeNode parent in node.getParents())
-                    {
-                        if (max_total_delta != 0)
-                        {
-                            if ((influences[ind] - min_total_delta) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
-                            {
-                                MessageBox.Show("Error. Influence should not be greater than 1.");
-                                MessageBox.Show("Influence = " + influences[ind]);
-                                MessageBox.Show("(" + influences[ind] + " - " +  min_total_delta +") / " + max_total_delta);
-                            }
-                            influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
-                        }
-                        ind++;
-                    }
+                    //foreach (TreeNode parent in node.getParents())
+                    //{
+                    //    if (max_total_delta != 0)
+                    //    {
+                    //        if ((influences[ind] - min_total_delta) / max_total_delta > 1) //MessageBox.Show("Influence = " + influences[ind]);
+                    //        {
+                    //            MessageBox.Show("Error. Influence should not be greater than 1.");
+                    //            MessageBox.Show("Influence = " + influences[ind]);
+                    //            MessageBox.Show("(" + influences[ind] + " - " +  min_total_delta +") / " + max_total_delta);
+                    //        }
+                    //        influences[ind] = (influences[ind] - min_total_delta) / max_total_delta;
+                    //    }
+                    //    ind++;
+                    //}
 
-                    //Color cells based on influence
-                    if (!toggle_global_perturbation.Checked)
-                    {
-                        if (toggle_analyze_outliers.Checked)
-                        {
-                            int index = 0;
-                            //Compute average influence
-                            double average_influence = 0.0;
-                            double denominator = (double)node.getParents().Count;
-                            //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
-                            //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
-                            double total_influence = 0.0;
-                            foreach (TreeNode parent in node.getParents())
-                            {
-                                //MessageBox.Show("influence: " + influences[index]);
-                                total_influence += influences[index];
-                                index++;
-                            }
-                            average_influence = total_influence / denominator;
-                            //Compute the standard deviation
-                            double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
-                            index = 0;
-                            foreach (TreeNode parent in node.getParents())
-                            {
-                                variance += (influences[index] - average_influence) * (influences[index] - average_influence) / denominator;
-                                index++;
-                            }
-                            double standard_deviation = Math.Sqrt(variance);
-                            //Color cells that lie further than two standard deviations away from the mean
-                            index = 0;
-                            foreach (TreeNode parent in node.getParents())
-                            {
-                                Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
-                                //If inluence is more than two standard deviations away from the mean, color that cell
-                                //TODO This doesnt seem to work like it should - only showing unusually influential cells (2 st. dev away from mean) when perturbing locally
-                                if (Math.Abs(influences[index] - average_influence) > 2 * standard_deviation)
-                                {
-                                    cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[index] * 255), 255, 255);
-                                }
-                                else
-                                {
-                                    cell.Interior.Color = System.Drawing.Color.White;
-                                }
-                                index++;
-                            }
-                        }
-                        if (!toggle_analyze_outliers.Checked)
-                        {
-                            int indexer = 0;
-                            foreach (TreeNode parent in node.getParents())
-                            {
-                                Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
-                                //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                    ////Color cells based on influence
+                    //if (!toggle_global_perturbation.Checked)
+                    //{
+                    //    if (toggle_analyze_outliers.Checked)
+                    //    {
+                    //        string cell1 = node.getName().Substring(0, node.getName().IndexOf("_"));
+                    //        string cell2 = node.getName().Substring(node.getName().LastIndexOf("_") + 1, 
+                    //                                                node.getName().Length - (node.getName().LastIndexOf("_") + 1));
+                    //        Excel.Range range = node.getWorksheetObject().get_Range(cell1, cell2);
+                    //        MessageBox.Show("Running Peirce on range " + node.getName());
+                    //        run_peirce(range);
+                    //        /**
+                    //        int index = 0;
+                    //        //Compute average influence
+                    //        double average_influence = 0.0;
+                    //        double denominator = (double)node.getParents().Count;
+                    //        //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
+                    //        //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
+                    //        double total_influence = 0.0;
+                    //        foreach (TreeNode parent in node.getParents())
+                    //        {
+                    //            //MessageBox.Show("influence: " + influences[index]);
+                    //            total_influence += influences[index];
+                    //            index++;
+                    //        }
+                    //        average_influence = total_influence / denominator;
+                    //        //Compute the standard deviation
+                    //        double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
+                    //        index = 0;
+                    //        foreach (TreeNode parent in node.getParents())
+                    //        {
+                    //            variance += (influences[index] - average_influence) * (influences[index] - average_influence) / denominator;
+                    //            index++;
+                    //        }
+                    //        double standard_deviation = Math.Sqrt(variance);
+                    //        //Color cells that lie further than two standard deviations away from the mean
+                    //        index = 0;
+                    //        foreach (TreeNode parent in node.getParents())
+                    //        {
+                    //            Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                    //            //If inluence is more than two standard deviations away from the mean, color that cell
+                    //            //TODO This doesnt seem to work like it should - only showing unusually influential cells (2 st. dev away from mean) when perturbing locally
+                    //            if (Math.Abs(influences[index] - average_influence) > 2 * standard_deviation)
+                    //            {
+                    //                cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[index] * 255), 255, 255);
+                    //            }
+                    //            else
+                    //            {
+                    //                cell.Interior.Color = System.Drawing.Color.White;
+                    //            }
+                    //            index++;
+                    //        }
+                    //         **/
+                    //    }
+                    //    if (!toggle_analyze_outliers.Checked)
+                    //    {
+                    //        int indexer = 0;
+                    //        foreach (TreeNode parent in node.getParents())
+                    //        {
+                    //            Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                    //            //parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
 
-                                //Only store the original color on the first run of the tool
-                                //if (toolHasNotRun == false)
-                                //{
-                                //parent.setOriginalColor(cell.Interior.ColorIndex);
-                                //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
-                                //}
-                                cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
-                                indexer++;
+                    //            //Only store the original color on the first run of the tool
+                    //            //if (toolHasNotRun == false)
+                    //            //{
+                    //            //parent.setOriginalColor(cell.Interior.ColorIndex);
+                    //            //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
+                    //            //}
+                    //            cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences[indexer] * 255), 255, 255);
+                    //            indexer++;
+                    //        }
+                    //    }
+                    //}
+                }
+                //Now normalize the entries in impacts_grid so that they reflect per-swap averages
+
+                int inputs_count = 0; 
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            for (int i = 0; i < output_cells.Count; i++)
+                            {
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                                {
+                                    inputs_count++;
+                                    //MessageBox.Show("Cell R" + (row + 1) + "C" + (col + 1) + " total impact: " + impacts_grid[worksheet.Index - 1][row][col][i]);
+                                }
+                             //   impacts_grid[worksheet.Index - 1][row][col][i] = impacts_grid[worksheet.Index - 1][row][col][i] / times_perturbed[worksheet.Index - 1][row][col];
+                             //   impacts_grid[worksheet.Index - 1][row][col][i] = impacts_grid[worksheet.Index - 1][row][col][i] - min_max_delta_outputs[i][0] / (min_max_delta_outputs[i][1] - min_max_delta_outputs[i][0]);
+                            //    MessageBox.Show("Cell R" + (row + 1) + "C" + (col + 1) + ": " + impacts_grid[worksheet.Index - 1][row][col][i] +
+                            //        "\nMin output: " + min_max_delta_outputs[i][0] +
+                            //        "\nMax output: " + min_max_delta_outputs[i][1]);
                             }
                         }
                     }
                 }
+
+                //Now for each output, compute the z-score of the impact of each input
+                for (int i = 0; i < output_cells.Count; i++)
+                {
+                    //Find the mean for the output
+                    double output_sum = 0.0;
+                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                        {
+                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                            {
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                                {
+                                    output_sum += impacts_grid[worksheet.Index - 1][row][col][i];
+                                }
+                            }
+                        }
+                    }
+
+                    double output_average = output_sum / (double)inputs_count;
+                    //Find the sample standard deviation for this output
+                    double distance_sum_sq = 0.0;
+                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                        {
+                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                            {
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                                {
+                                    distance_sum_sq += Math.Pow(output_average - impacts_grid[worksheet.Index - 1][row][col][i], 2);
+                                }
+                            }
+                        }
+                    }
+                    double variance = distance_sum_sq / (double)inputs_count;
+                    double std_dev = Math.Sqrt(variance);
+                    
+                    //Replace entries in impacts_grid with z-scores
+                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                        {
+                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                            {
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                                {
+                                    impacts_grid[worksheet.Index - 1][row][col][i] = Math.Abs((impacts_grid[worksheet.Index - 1][row][col][i] - output_average) / std_dev);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //Now we want to average the z-score of every input and store it
+                double[][][] average_z_scores = new double[Globals.ThisAddIn.Application.Worksheets.Count][][];
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    average_z_scores[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count][];
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        average_z_scores[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count];
+                    }
+                }
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            //If this cell has been perturbed, find it's average z-score
+                            double total_z_score = 0.0;
+                            if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                            {
+                                for (int i = 0; i < output_cells.Count; i++)
+                                {
+                                    total_z_score += impacts_grid[worksheet.Index - 1][row][col][i];
+                                }
+                            }
+                            average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / output_cells.Count);
+                        }
+                    }
+                }
+                
+                //Color the outliers:
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            if (average_z_scores[worksheet.Index - 1][row][col] > 2.0)
+                            {
+                                worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.Red;
+                            }
+                        }
+                    }
+                }
+                //Excel.Worksheet ws = Globals.ThisAddIn.Application.Worksheets[1];
+                //Excel.Worksheet out_ws = Globals.ThisAddIn.Application.Worksheets[3];
+                //for (int row = 0; row < ws.UsedRange.Rows.Count; row++)
+                //{
+                //    for (int col = 0; col < ws.UsedRange.Columns.Count; col++)
+                //    {
+                //        if (times_perturbed[ws.Index - 1][row][col] != 0)
+                //        {
+                //            for (int i = 0; i < output_cells.Count; i++)
+                //            {
+                //                MessageBox.Show("Worksheet " + ws.Name + ": Cell R" + (row + 1) + "C" + (col + 1) + ": " + impacts_grid[ws.Index - 1][row][col][i]);
+                //                out_ws.Cells[row + 1 * col + 1, 1].Value = "Row: " + (row + 1) + " Col: " + (col + 1);
+                //                out_ws.Cells[(row + 1) * (col + 1), i + 2].Value = impacts_grid[ws.Index - 1][row][col][i];
+                //            }
+                //        }
+                //    }
+                //}
             }
 
-            if (toggle_global_perturbation.Checked)
+            //if (toggle_global_perturbation.Checked)
+            //{
+            //    //Divide each influence entry by the number of times perturbed to get a per-swap influence value.
+            //    //Also find global max influences by looping over influences_grid
+            //    double global_max_inf = 0.0;
+            //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            //    {
+            //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+            //        {
+            //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+            //            {
+            //                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+            //                {
+            //                    influences_grid[worksheet.Index - 1][row][col] = influences_grid[worksheet.Index - 1][row][col] / times_perturbed[worksheet.Index - 1][row][col];
+            //                }
+            //                if (influences_grid[worksheet.Index - 1][row][col] > global_max_inf)
+            //                {
+            //                    global_max_inf = influences_grid[worksheet.Index - 1][row][col];
+            //                }
+            //            }
+            //        }
+            //    }
+            //    //Normalize the influences based on the largest influence values. This way they are >= 0 and < 1.
+            //    //Color cells based on influence if global perturbation is checked
+            //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            //    {
+            //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+            //        {
+            //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+            //            {
+            //                if (global_max_inf != 0.0)
+            //                {
+            //                    influences_grid[worksheet.Index - 1][row][col] = influences_grid[worksheet.Index - 1][row][col] / global_max_inf;
+            //                }
+            //                //Find the cell that is stored in this grid entry
+            //                Excel.Range cell = null;
+            //                foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+            //                {
+            //                    if (ws.Index == worksheet.Index)
+            //                    {
+            //                        cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
+            //                        break;
+            //                    }
+            //                }
+            //                if (!toggle_analyze_outliers.Checked) //if no further analysis to the influence is needed, color the cell
+            //                {
+            //                    cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences_grid[worksheet.Index - 1][row][col] * 255), 255, 255);
+            //                }
+            //            }
+            //        }
+            //    }
+            //    //if (toggle_analyze_outliers.Checked)
+            //    //{
+            //    //    Excel.Range range = null;
+            //    //    bool first = true;
+            //    //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            //    //    {
+            //    //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+            //    //        {
+            //    //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+            //    //            {
+            //    //                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+            //    //                {
+            //    //                    //Find the cell that is stored in this grid entry
+            //    //                    Excel.Range cell = null;
+            //    //                    //Finding the right worksheet has to be done this way because a worksheet's index is not the index in the collection Globals.ThisAddIn.Application.Worksheets 
+            //    //                    //-- this collection does not include chart sheets, but the index does
+            //    //                    foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+            //    //                    {
+            //    //                        if (ws.Index == worksheet.Index)
+            //    //                        {
+            //    //                            cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
+            //    //                            if (first)
+            //    //                            {
+            //    //                                range = cell;
+            //    //                                first = false;
+            //    //                            }
+            //    //                            break;
+            //    //                        }
+            //    //                    }
+            //    //                    range = Globals.ThisAddIn.Application.Union(range, cell, Type.Missing,
+            //    //                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+            //    //                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+            //    //                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+            //    //                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+            //    //                }
+            //    //            }
+            //    //        }
+            //    //    }
+            //    //    MessageBox.Show("Running Peirce on range " + range.Address);
+            //    //    run_peirce(range);
+            //    //    /**
+            //    //    //Compute average influence
+            //    //    double average_influence = 0.0;
+            //    //    double denominator = 0.0;
+            //    //    //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
+            //    //    //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
+            //    //    double total_influence = 0.0;
+            //    //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            //    //    {
+            //    //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+            //    //        {
+            //    //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+            //    //            {
+            //    //                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+            //    //                {
+            //    //                    total_influence += influences_grid[worksheet.Index - 1][row][col];
+            //    //                    denominator++;
+            //    //                }
+            //    //            }
+            //    //        }
+            //    //    }
+            //    //    average_influence = total_influence / denominator;
+            //    //    //Compute the standard deviation
+            //    //    double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
+            //    //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            //    //    {
+            //    //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+            //    //        {
+            //    //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+            //    //            {
+            //    //                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
+            //    //                {
+            //    //                    variance += (influences_grid[worksheet.Index - 1][row][col] - average_influence) * (influences_grid[worksheet.Index - 1][row][col] - average_influence) / denominator;
+            //    //                }
+            //    //            }
+            //    //        }
+            //    //    }
+            //    //    double standard_deviation = Math.Sqrt(variance);                            
+            //    //    //Color cells that lie further than two standard deviations away from the mean
+            //    //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            //    //    {
+            //    //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+            //    //        {
+            //    //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+            //    //            {
+            //    //                //Find the cell that is stored in this grid entry
+            //    //                Excel.Range cell = null;
+            //    //                //Finding the right worksheet has to be done this way because a worksheet's index is not the index in the collection Globals.ThisAddIn.Application.Worksheets 
+            //    //                //-- this collection does not include chart sheets, but the index does
+            //    //                foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+            //    //                {
+            //    //                    if (ws.Index == worksheet.Index)
+            //    //                    {
+            //    //                        cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
+            //    //                        break;
+            //    //                    }
+            //    //                }
+            //    //                //If inluence is more than two standard deviations away from the mean, color that cell
+            //    //                if (Math.Abs(influences_grid[worksheet.Index - 1][row][col] - average_influence) > 2 * standard_deviation) 
+            //    //                {
+            //    //                    cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences_grid[worksheet.Index - 1][row][col] * 255), 255, 255);
+            //    //                }
+            //    //                else
+            //    //                {
+            //    //                    cell.Interior.Color = System.Drawing.Color.White;
+            //    //                }
+            //    //            }
+            //    //        }
+            //    //    }
+            //    //    **/
+            //    //}
+            //}
+            if (toggle_no_sceen_updating.Checked)
             {
-                //Divide each influence entry by the number of times perturbed to get a per-swap influence value.
-                //Also find global max influences by looping over influences_grid
-                double global_max_inf = 0.0;
-                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                {
-                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
-                    {
-                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
-                        {
-                            if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
-                            {
-                                influences_grid[worksheet.Index - 1][row][col] = influences_grid[worksheet.Index - 1][row][col] / times_perturbed[worksheet.Index - 1][row][col];
-                            }
-                            if (influences_grid[worksheet.Index - 1][row][col] > global_max_inf)
-                            {
-                                global_max_inf = influences_grid[worksheet.Index - 1][row][col];
-                            }
-                        }
-                    }
-                }
-                //Normalize the influences based on the largest influence values. This way they are >= 0 and < 1.
-                //Color cells based on influence if global perturbation is checked
-                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                {
-                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
-                    {
-                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
-                        {
-                            if (global_max_inf != 0.0)
-                            {
-                                influences_grid[worksheet.Index - 1][row][col] = influences_grid[worksheet.Index - 1][row][col] / global_max_inf;
-                            }
-                            //Find the cell that is stored in this grid entry
-                            Excel.Range cell = null;
-                            foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
-                            {
-                                if (ws.Index == worksheet.Index)
-                                {
-                                    cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
-                                    break;
-                                }
-                            }
-                            if (!toggle_analyze_outliers.Checked) //if no further analysis to the influence is needed, color the cell
-                            {
-                                cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences_grid[worksheet.Index - 1][row][col] * 255), 255, 255);
-                            }
-                        }
-                    }
-                }
-                if (toggle_analyze_outliers.Checked)
-                {
-                    //Compute average influence
-                    double average_influence = 0.0;
-                    double denominator = 0.0;
-                    //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
-                    //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
-                    double total_influence = 0.0;
-                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                    {
-                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
-                        {
-                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
-                            {
-                                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
-                                {
-                                    total_influence += influences_grid[worksheet.Index - 1][row][col];
-                                    denominator++;
-                                }
-                            }
-                        }
-                    }
-                    average_influence = total_influence / denominator;
-                    //Compute the standard deviation
-                    double variance = 0.0;  //stores the sum of the suqared differences from the mean divided by the denominator
-                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                    {
-                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
-                        {
-                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
-                            {
-                                if (times_perturbed[worksheet.Index - 1][row][col] != 0.0)
-                                {
-                                    variance += (influences_grid[worksheet.Index - 1][row][col] - average_influence) * (influences_grid[worksheet.Index - 1][row][col] - average_influence) / denominator;
-                                }
-                            }
-                        }
-                    }
-                    double standard_deviation = Math.Sqrt(variance);                            
-                    //Color cells that lie further than two standard deviations away from the mean
-                    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                    {
-                        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
-                        {
-                            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
-                            {
-                                //Find the cell that is stored in this grid entry
-                                Excel.Range cell = null;
-                                //Finding the right worksheet has to be done this way because a worksheet's index is not the index in the collection Globals.ThisAddIn.Application.Worksheets 
-                                //-- this collection does not include chart sheets, but the index does
-                                foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
-                                {
-                                    if (ws.Index == worksheet.Index)
-                                    {
-                                        cell = ws.Cells[row + 1, col + 1]; //row and column are 1-indexed in ws.Cells
-                                        break;
-                                    }
-                                }
-                                //If inluence is more than two standard deviations away from the mean, color that cell
-                                if (Math.Abs(influences_grid[worksheet.Index - 1][row][col] - average_influence) > 2 * standard_deviation) 
-                                {
-                                    cell.Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - influences_grid[worksheet.Index - 1][row][col] * 255), 255, 255);
-                                }
-                                else
-                                {
-                                    cell.Interior.Color = System.Drawing.Color.White;
-                                }
-                            }
-                        }
-                    }
-                }
+                Globals.ThisAddIn.Application.ScreenUpdating = true;
             }
             sw.Stop();
             // Get the elapsed time as a TimeSpan value.
@@ -3802,6 +4037,937 @@ namespace DataDebug
         private void toggle_speed_Click(object sender, RibbonControlEventArgs e)
         {
 
+        }
+
+        private void peirce_button_Click(object sender, RibbonControlEventArgs e)
+        {
+            //run_peirce(Globals.ThisAddIn.Application.Selection as Excel.Range);
+            //get_peirce_cutoff((Globals.ThisAddIn.Application.Selection as Excel.Range).Cells.Count);
+            //HERE HERE
+            //MessageBox.Show("" + (Globals.ThisAddIn.Application.Selection as Excel.Range).Cells.Count);
+            /**
+            Excel.Range range = Globals.ThisAddIn.Application.Selection as Excel.Range;
+            int m = 1;
+            int k = 1;
+            int N = range.Rows.Count;
+            double precision1 = Math.Pow(10.0, -10.0);
+            double precision2 = Math.Pow(10.0, -16.0);
+            MessageBox.Show("" + N);
+            if (N - m - k <= 0)
+            {
+                MessageBox.Show("Cutoff undefined.");
+            }
+
+            double LnQN = k * Math.Log(k, Math.E) + (N - k) * (Math.Log(N - k, Math.E)) - N * Math.Log(N, Math.E);
+            double x = 1;
+            double oldx;
+            do
+            {
+                x = Math.Min(x, Math.Sqrt((N - m) / k) - precision1);
+
+                //R1(x) and R2(x)
+                double R1 = Math.Exp((x * x - 1) / 2) * DataDebug.Stats.Utilities.erfc(x / Math.Sqrt(2));
+                //MessageBox.Show("Argument: " + x / Math.Sqrt(2)
+                    //+ "\nERFC(Argument) = " + DataDebug.Stats.Utilities.erfc(x/Math.Sqrt(2)));
+                double R2 = Math.Exp( (LnQN - 0.5 * (N - k) * Math.Log((N - m - k * x * x) / (N - m - k), Math.E)) / k);
+
+                //R1'(x) and R2'(x)
+                double R1d = x * R1 - Math.Sqrt(2 / Math.PI / Math.Exp(1));
+                double R2d = x * (N - k) / (N - m - k * x * x) * R2;
+
+                oldx = x;
+                x = oldx - (R1 - R2) / (R1d - R2d);
+                //MessageBox.Show("x = " + x);
+            } while (Math.Abs(x - oldx) > N * 2 * precision2);
+            MessageBox.Show("Done: x = " + x);
+             **/
+        }
+
+        private double get_peirce_cutoff(int N, int m, int k)
+        {
+            double precision1 = Math.Pow(10.0, -10.0);
+            double precision2 = Math.Pow(10.0, -16.0);
+            if (N - m - k <= 0)
+            {
+                return 0; 
+            }
+
+            double LnQN = k * Math.Log(k, Math.E) + (N - k) * (Math.Log(N - k, Math.E)) - N * Math.Log(N, Math.E);
+            double x = 1;
+            double oldx;
+            int counter = 0; //keep track of how many iterations of newton's method have been done
+            do
+            {
+                counter++;
+                if (counter > 1000) {
+                    MessageBox.Show("Newton's method is taking too long for N = " + N + ", k = " + k + ", m = " + m + ".");
+                    if (k > 1)
+                    {
+                        //MessageBox.Show("Calculating approximate cutoff (average of adjacent cutoffs).");
+                        x = (get_peirce_cutoff(N, m, k - 1) + get_peirce_cutoff(N, m, k + 1)) / 2;
+                        return x;
+                    }
+                    else
+                    {
+                        return 0; 
+                    }
+                }
+
+                x = Math.Min(x, Math.Sqrt((N - m) / k) - precision1);
+
+                //R1(x) and R2(x)
+                double R1 = Math.Exp((x * x - 1) / 2) * DataDebug.Stats.Utilities.erfc(x / Math.Sqrt(2));
+                double R2 = Math.Exp((LnQN - 0.5 * (N - k) * Math.Log((N - m - k * x * x) / (N - m - k), Math.E)) / k);
+
+                //R1'(x) and R2'(x)
+                double R1d = x * R1 - Math.Sqrt(2 / Math.PI / Math.Exp(1));
+                double R2d = x * (N - k) / (N - m - k * x * x) * R2;
+
+                oldx = x;
+                x = oldx - (R1 - R2) / (R1d - R2d);
+            } while (Math.Abs(x - oldx) > N * 2 * precision2);
+            return x;
+        }
+
+        private void run_peirce(Excel.Range range)
+        {
+            //Get number of cells in range
+            int N = range.Cells.Count;
+            //Calculate mean
+            double sum = 0.0;
+            foreach (Excel.Range cell in range)
+            {
+                sum += cell.Value;
+            }
+            double mean = sum / N;
+
+            //Calculate sample standard deviation
+            double distance_sum_sq = 0;
+            foreach (Excel.Range cell in range)
+            {
+                distance_sum_sq += Math.Pow(mean - cell.Value, 2);
+            }
+            double variance = distance_sum_sq / N;
+            double std_dev = Math.Sqrt(variance);
+
+            //Assume case of one doubtful observation to start
+            int k = 1;
+            //We will have one measured quantity
+            int m = 1;
+            int count_rejected = 0; 
+            List<Excel.Range> outliers = new List<Excel.Range>();
+            do
+            {
+                count_rejected = 0;
+                //Obtain R corresponding to the number of measurements
+                double max_z_score = get_peirce_cutoff(N, m, k);
+                //If the Peirce cutoff is tiny, we are done
+                if (max_z_score == 0)
+                {
+                    break;
+                }
+                //Calculate maximum allowable difference from the mean
+                double max_difference_from_mean = max_z_score * std_dev;
+                
+                //Obtain |xi - mean| and look for outliers
+                foreach (Excel.Range cell in range)
+                {
+                    bool already_outlier = false;
+                    foreach (Excel.Range outlier in outliers)
+                    {
+                        if (outlier.Address.Equals(cell.Address))
+                        {
+                            already_outlier = true;
+                        }
+                    }
+                    if (already_outlier)
+                    {
+                        continue;
+                    }
+                    else 
+                    {
+                        if (Math.Abs(cell.Value - mean) > max_difference_from_mean)
+                        {
+                            //MessageBox.Show(cell.Address + " is an outlier.");
+                            cell.Interior.Color = System.Drawing.Color.Red;
+                            outliers.Add(cell);
+                            count_rejected++;
+                        }
+                    }
+                }
+                k = k + count_rejected;
+                //MessageBox.Show("Got here.");
+            } while (count_rejected > 0);
+        }
+
+        private List<double> run_peirce(double[] input_array)
+        {
+            //Get number of cells in range
+            int N = input_array.Length;
+            //Calculate mean
+            double sum = 0.0;
+            foreach (double d in input_array)
+            {
+                sum += d;
+            }
+            double mean = sum / N;
+
+            //Calculate sample standard deviation
+            double distance_sum_sq = 0;
+            foreach (double d in input_array)
+            {
+                distance_sum_sq += Math.Pow(mean - d, 2);
+            }
+            double variance = distance_sum_sq / N;
+            double std_dev = Math.Sqrt(variance);
+
+            //Assume case of one doubtful observation to start
+            int k = 1;
+            //We will have one measured quantity
+            int m = 1;
+            int count_rejected = 0;
+            List<double> outliers = new List<double>();
+            do
+            {
+                count_rejected = 0;
+                //Obtain R corresponding to the number of measurements
+                double max_z_score = get_peirce_cutoff(N, m, k);
+                //If the Peirce cutoff is tiny, we are done
+                if (max_z_score == 0)
+                {
+                    break;
+                }
+                //Calculate maximum allowable difference from the mean
+                double max_difference_from_mean = max_z_score * std_dev;
+
+                //Obtain |xi - mean| and look for outliers
+                foreach (double d in input_array)
+                {
+                    bool already_outlier = false;
+                    foreach (double outlier in outliers)
+                    {
+                        if (outlier == d)
+                        {
+                            already_outlier = true;
+                        }
+                    }
+                    if (already_outlier)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if (Math.Abs(d - mean) > max_difference_from_mean)
+                        {
+                            //MessageBox.Show(cell.Address + " is an outlier.");
+                            outliers.Add(d);
+                            count_rejected++;
+                        }
+                    }
+                }
+                k = k + count_rejected;
+                //MessageBox.Show("Got here.");
+            } while (count_rejected > 0);
+            return outliers;
+        }
+
+        private void find_references(TreeNode formula_node, string formula)
+        {
+            MatchCollection matchedRanges = null;
+            MatchCollection matchedCells = null;
+            int ws_index = 1;
+            foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+            {
+                string s = worksheet.Name;
+                string worksheet_name = s.Replace("+", @"\+").Replace("^", @"\^").Replace("$", @"\$").Replace(".", @"\."); //Escape certain characters in the regular expression
+                //First look for range references of the form 'worksheet_name'!A1:A10 in the formula (with quotation marks around the name)
+                if (toggle_compile_regex.Checked)
+                {
+                    matchedRanges = regex_array[4 * (ws_index - 1)].Matches(formula);
+                }
+                else
+                {
+                    matchedRanges = Regex.Matches(formula, @"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)");  //A collection of all the references in the formula to ranges in the particular worksheet; each item is a range reference of the form 'worksheet_name'!A1:A10
+                }
+                foreach (Match match in matchedRanges)
+                {
+                    formula = formula.Replace(match.Value, "");
+                    string ws_name = worksheet_name; // match.Value.Substring(1, match.Value.LastIndexOf("!") - 2); // Get the name of the worksheet being referenced
+                    string range_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1); //match.Value.Replace("'" + ws_name + "'!", "");
+                    string[] endCells = range_coordinates.Split(':');     //Split up each matched range into the start and end cells of the range
+                    TreeNode range = null;
+                    //Try to find the range in existing TreeNodes
+                    if (toggle_array_storage.Checked)
+                    {
+                        foreach (TreeNode n in ranges)
+                        {
+                            if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
+                            {
+                                //MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
+                                range = n;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        foreach (TreeNode n in nodes)
+                        {
+                            if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
+                            {
+                                //MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
+                                range = n;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    //If it was not found, create it
+                    if (range == null)
+                    {
+                        range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_name);
+                        //MessageBox.Show("Created range node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
+                        if (toggle_array_storage.Checked)
+                        {
+                            ranges.Add(range);
+                        }
+                        else //toggle_array_storage not checked
+                        {
+                            nodes.Add(range);
+                        }
+                    }
+                    formula_node.addParent(range);
+                    range.addChild(formula_node);
+                    //Add each cell contained in the range to the dependencies
+                    foreach (Excel.Range cellInRange in Globals.ThisAddIn.Application.Worksheets[ws_index].Range[endCells[0], endCells[1]])
+                    {
+                        TreeNode input_cell = null;
+                        //Find the node object for the current cell in the existing TreeNodes
+                        if (toggle_array_storage.Checked)
+                        {
+                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                            if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                            {
+                                //if a TreeNode exists for this cell already
+                                if (nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] != null)
+                                {
+                                    input_cell = nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1];
+                                }
+                            }
+                        }
+                        else  //toggle_array_storage not checked
+                        {
+                            foreach (TreeNode node in nodes)
+                            {
+                                if (node.getName().Replace("$", "") == cellInRange.Address.Replace("$", "") && node.getWorksheet() == cellInRange.Worksheet.Name)
+                                {
+                                    input_cell = node;
+                                }
+                                else
+                                    continue;
+                            }
+                        }
+                        //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                        if (input_cell == null)
+                        {
+                            input_cell = new TreeNode(cellInRange.Address, cellInRange.Worksheet.Name);
+                            if (toggle_array_storage.Checked)
+                            {
+                                //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                                if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                                {
+                                    nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] = input_cell;
+                                }
+                            }
+                            else  //toggle_array_storage not checked
+                            {
+                                nodes.Add(input_cell);
+                            }
+                        }
+
+                        //Update the dependencies
+                        range.addParent(input_cell);
+                        input_cell.addChild(range);
+                    }
+                }
+
+                //Next look for range references of the form worksheet_name!A1:A10 in the formula (no quotation marks around the name)
+                if (toggle_compile_regex.Checked)
+                {
+                    matchedRanges = regex_array[4 * (ws_index - 1) + 1].Matches(formula);
+                }
+                else
+                {
+                    matchedRanges = Regex.Matches(formula, @"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)");  //A collection of all the range references in the formula; each item is a range reference such as A1:A10
+                }
+                foreach (Match match in matchedRanges)
+                {
+                    formula = formula.Replace(match.Value, "");
+                    string ws_name = worksheet_name; // match.Value.Substring(0, match.Value.LastIndexOf("!")); // Get the name of the worksheet being referenced
+                    string range_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1);  //match.Value.Replace(ws_name + "!", "");
+                    string[] endCells = range_coordinates.Split(':');     //Split up each matched range into the start and end cells of the range
+                    TreeNode range = null;
+                    //Try to find the range in existing TreeNodes
+                    if (toggle_array_storage.Checked)
+                    {
+                        foreach (TreeNode n in ranges)
+                        {
+                            if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
+                            {
+                                //MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
+                                range = n;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        foreach (TreeNode n in nodes)
+                        {
+                            if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
+                            {
+                                //MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
+                                range = n;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    //If it does not exist, create it
+                    if (range == null)
+                    {
+                        range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_name);
+                        //MessageBox.Show("Created node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
+                        if (toggle_array_storage.Checked)
+                        {
+                            ranges.Add(range);
+                        }
+                        else //toggle_array_storage not checked
+                        {
+                            nodes.Add(range);
+                        }
+                    }
+                    formula_node.addParent(range);
+                    range.addChild(formula_node);
+                    //Add each cell contained in the range to the dependencies
+                    foreach (Excel.Range cellInRange in Globals.ThisAddIn.Application.Worksheets[ws_index].Range[endCells[0], endCells[1]])
+                    {
+                        TreeNode input_cell = null;
+                        //Find the node object for the current cell in the existing TreeNodes
+                        if (toggle_array_storage.Checked)
+                        {
+                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                            if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                            {
+                                //if a TreeNode exists for this cell already
+                                if (nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] != null)
+                                {
+                                    input_cell = nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1];
+                                }
+                            }
+                        }
+                        else  //toggle_array_storage not checked
+                        {
+                            foreach (TreeNode node in nodes)
+                            {
+                                if (node.getName().Replace("$", "") == cellInRange.Address.Replace("$", "") && node.getWorksheet() == cellInRange.Worksheet.Name)
+                                {
+                                    input_cell = node;
+                                }
+                                else
+                                    continue;
+                            }
+                        }
+                        //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                        if (input_cell == null)
+                        {
+                            input_cell = new TreeNode(cellInRange.Address, cellInRange.Worksheet.Name);
+                            if (toggle_array_storage.Checked)
+                            {
+                                //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                                if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                                {
+                                    nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] = input_cell;
+                                }
+                            }
+                            else  //toggle_array_storage not checked
+                            {
+                                nodes.Add(input_cell);
+                            }
+                        }
+
+                        //Update the dependencies
+                        range.addParent(input_cell);
+                        input_cell.addChild(range);
+                    }
+                }
+
+                // Now we look for references of the kind 'worksheet_name'!A1 (with quotation marks)
+                if (toggle_compile_regex.Checked)
+                {
+                    //Regex regex = new Regex(@"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
+                    //Regex regex = regex_array[ws_index + 2 - 1];
+                    matchedCells = regex_array[4 * (ws_index - 1) + 2].Matches(formula);
+                }
+                else
+                {
+                    matchedCells = Regex.Matches(formula, @"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*)"); //matchedCells is a collection of all the references in the formula to cells in the specific worksheet, where the reference has the form 'worksheet_name'!A1
+                }
+                foreach (Match match in matchedCells)
+                {
+                    formula = formula.Replace(match.Value, "");
+                    string ws_name = worksheet_name; // match.Value.Substring(1, match.Value.LastIndexOf("!") - 2); // Get the name of the worksheet being referenced
+                    string cell_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1);
+                    //Get the actual cell that is being referenced
+                    Excel.Range input = null;
+                    foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        //Find the worksheet object that the match belongs to
+                        if (ws.Name == ws_name)
+                        {
+                            input = ws.get_Range(cell_coordinates);
+                        }
+                    }
+                    TreeNode input_cell = null;
+                    //Find the node object for the current cell in the existing TreeNodes
+                    if (toggle_array_storage.Checked)
+                    {
+                        //Check if this cell's coordinates are within the bounds of the used range of its spreadsheet, otherwise there will be an index out of bounds error
+                        if (input.Column <= input.Worksheet.UsedRange.Columns.Count && input.Row <= input.Worksheet.UsedRange.Rows.Count)
+                        {
+                            //if a TreeNode exists for this cell already, use it
+                            if (nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] != null)
+                            {
+                                input_cell = nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1];
+                            }
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        foreach (TreeNode node in nodes)
+                        {
+                            if (node.getName().Replace("$", "") == cell_coordinates.Replace("$", "") && node.getWorksheet() == ws_name)
+                            {
+                                input_cell = node;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                    if (input_cell == null)
+                    {
+                        input_cell = new TreeNode(cell_coordinates.Replace("$", ""), ws_name);
+                        if (toggle_array_storage.Checked)
+                        {
+                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                            if (input.Column <= input.Worksheet.UsedRange.Columns.Count && input.Row <= input.Worksheet.UsedRange.Rows.Count)
+                            {
+                                nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] = input_cell;
+                            }
+                        }
+                        else //toggle_array_storage not checked
+                        {
+                            nodes.Add(input_cell);
+                        }
+                    }
+
+                    //Update the dependencies
+                    formula_node.addParent(input_cell);
+                    input_cell.addChild(formula_node);
+                }
+
+                //Lastly we look for references of the kind worksheet_name!A1 (without quotation marks)
+                if (toggle_compile_regex.Checked)
+                {
+                    matchedCells = regex_array[4 * (ws_index - 1) + 3].Matches(formula);
+                }
+                else
+                {
+                    matchedCells = Regex.Matches(formula, @"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*)");
+                }
+                foreach (Match match in matchedCells)
+                {
+                    formula = formula.Replace(match.Value, "");
+                    string ws_name = worksheet_name; //match.Value.Substring(0, match.Value.LastIndexOf("!")); // Get the name of the worksheet being referenced
+                    string cell_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1);
+                    //MessageBox.Show(formula_cell.getName() + " refers to the cell " + ws_name + "!" + cell_coordinates);
+                    //Get the actual cell that is being referenced
+                    Excel.Range input = null;
+                    foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
+                    {
+                        //Find the worksheet object that the match belongs to
+                        if (ws.Name == ws_name)
+                        {
+                            input = ws.get_Range(cell_coordinates);
+                        }
+                    }
+                    TreeNode input_cell = null;
+                    //Find the node object for the current cell in the existing TreeNodes
+                    if (toggle_array_storage.Checked)
+                    {
+                        //Check if this cell's coordinates are within the bounds of the used range of its spreadsheet, otherwise there will be an index out of bounds error
+                        if (input.Column <= input.Worksheet.UsedRange.Columns.Count && input.Row <= input.Worksheet.UsedRange.Rows.Count)
+                        {
+                            //if a TreeNode exists for this cell already, use it
+                            if (nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] != null)
+                            {
+                                input_cell = nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1];
+                            }
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        foreach (TreeNode node in nodes)
+                        {
+                            if (node.getName().Replace("$", "") == cell_coordinates.Replace("$", "") && node.getWorksheet().Equals(ws_name))
+                            {
+                                input_cell = node;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                    if (input_cell == null)
+                    {
+                        input_cell = new TreeNode(cell_coordinates.Replace("$", ""), ws_name);
+                        if (toggle_array_storage.Checked)
+                        {
+                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                            if (input.Column <= input.Worksheet.UsedRange.Columns.Count && input.Row <= input.Worksheet.UsedRange.Rows.Count)
+                            {
+                                nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] = input_cell;
+                            }
+                        }
+                        else //toggle_array_storage not checked
+                        {
+                            nodes.Add(input_cell);
+                        }
+                    }
+
+                    //Update the dependencies
+                    formula_node.addParent(input_cell);
+                    input_cell.addChild(formula_node);
+                }
+                ws_index++;
+            }
+
+            string patternRange = @"(\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)";  //Regex for matching range references in formulas such as A1:A10, or $A$1:$A$10 etc.
+            string patternCell = @"(\$?[A-Z]+\$?[1-9]\d*)";        //Regex for matching single cell references such as A1 or $A$1, etc. 
+
+            //First look for range references in the formula
+            if (toggle_compile_regex.Checked)
+            {
+                //Regex regex = new Regex(patternRange, RegexOptions.Compiled);
+                //Regex regex = regex_array[regex_array.Length - 2];
+                matchedRanges = regex_array[regex_array.Length - 2].Matches(formula);
+            }
+            else
+            {
+                matchedRanges = Regex.Matches(formula, patternRange);  //A collection of all the range references in the formula; each item is a range reference such as A1:A10
+            }
+            foreach (Match match in matchedRanges)
+            {
+                formula = formula.Replace(match.Value, "");
+                string[] endCells = match.Value.Split(':');     //Split up each matched range into the start and end cells of the range
+                TreeNode range = null;
+                //Try to find the range in existing TreeNodes
+                if (toggle_array_storage.Checked)
+                {
+                    foreach (TreeNode n in ranges)
+                    {
+                        if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == formula_node.getWorksheetObject().Name)
+                        {
+                            range = n;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                else //toggle_array_storage not checked
+                {
+                    foreach (TreeNode n in nodes)
+                    {
+                        if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == formula_node.getWorksheetObject().Name)
+                        {
+                            range = n;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                //If it does not exist, create it
+                if (range == null)
+                {
+                    //MessageBox.Show("Created range node:" + c.Worksheet.Name + "_" + endCells[0] + ":" + endCells[1]);
+                    range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), formula_node.getWorksheetObject().Name);
+                    if (toggle_array_storage.Checked)
+                    {
+                        ranges.Add(range);
+                    }
+                    else
+                    {
+                        nodes.Add(range);
+                    }
+                }
+                formula_node.addParent(range);
+                range.addChild(formula_node);
+                //Add each cell contained in the range to the dependencies
+                foreach (Excel.Range cellInRange in formula_node.getWorksheetObject().Range[endCells[0], endCells[1]])
+                {
+                    TreeNode input_cell = null;
+                    //Find the node object for the current cell in the existing TreeNodes
+                    //HERE HERE
+                    if (toggle_array_storage.Checked)
+                    {
+                        //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                        if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                        {
+                            //if a TreeNode exists for this cell already, use it
+                            if (nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] != null)
+                            {
+                                input_cell = nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1];
+                            }
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        foreach (TreeNode node in nodes)
+                        {
+                            if (node.getName().Replace("$", "") == cellInRange.Address.Replace("$", "") && node.getWorksheet() == cellInRange.Worksheet.Name)
+                            {
+                                input_cell = node;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                    if (input_cell == null)
+                    {
+                        input_cell = new TreeNode(cellInRange.Address, cellInRange.Worksheet.Name);
+                        if (toggle_array_storage.Checked)
+                        {
+                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                            if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                            {
+                                nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] = input_cell;
+                            }
+                        }
+                        else //toggle_array_storage not checked
+                        {
+                            nodes.Add(input_cell);
+                        }
+                    }
+
+                    //Update the dependencies
+                    range.addParent(input_cell);
+                    input_cell.addChild(range);
+                }
+            }
+
+            //Find any references to named ranges
+            //TODO -- this should probably be done in a better way - with a regular expression that will catch things like this:
+            //"+range_name", "-range_name", "*range_name", etc., because right now a range name may be part of the name of a 
+            //formula that is used. For instance a range could be named "s", and if the formula has the "sum" function in it, we will 
+            //falsely detect a reference to "s". This does not affect the correctness of the algorithm, because all we care about 
+            //from the dependence graph is identifying which cells are outputs, and identifying user-defined ranges
+            //and this type of error will not affect either one
+            foreach (Excel.Name named_range in Globals.ThisAddIn.Application.Names)
+            {
+                if (formula.Contains(named_range.Name))
+                {
+                    formula = formula.Replace(named_range.Name, "");
+                }
+                else
+                {
+                    continue;
+                }
+
+                string[] endCells = named_range.RefersToRange.Address.Split(':');     //Split up each named range into the start and end cells of the range
+                TreeNode range = null;
+                //Try to find the range in existing TreeNodes
+                if (toggle_array_storage.Checked)
+                {
+                    foreach (TreeNode n in ranges)
+                    {
+                        if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == named_range.RefersToRange.Worksheet.Name)
+                        {
+                            range = n;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                else //toggle_array_storage not checked
+                {
+                    foreach (TreeNode n in nodes)
+                    {
+                        if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == named_range.RefersToRange.Worksheet.Name)
+                        {
+                            range = n;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                //If it does not exist, create it
+                if (range == null)
+                {
+                    //MessageBox.Show("Created range node:" + c.Worksheet.Name + "_" + endCells[0] + ":" + endCells[1]);
+                    range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), named_range.RefersToRange.Worksheet.Name);
+                    if (toggle_array_storage.Checked)
+                    {
+                        ranges.Add(range);
+                    }
+                    else
+                    {
+                        nodes.Add(range);
+                    }
+                }
+                formula_node.addParent(range);
+                range.addChild(formula_node);
+                //Add each cell contained in the range to the dependencies
+                foreach (Excel.Range cellInRange in named_range.RefersToRange.Worksheet.Range[endCells[0], endCells[1]])
+                {
+                    TreeNode input_cell = null;
+                    //Find the node object for the current cell in the existing TreeNodes
+                    if (toggle_array_storage.Checked)
+                    {
+                        //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                        if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                        {
+                            //if a TreeNode exists for this cell already, use it
+                            if (nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] != null)
+                            {
+                                input_cell = nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1];
+                            }
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        foreach (TreeNode node in nodes)
+                        {
+                            if (node.getName().Replace("$", "") == cellInRange.Address.Replace("$", "") && node.getWorksheet() == cellInRange.Worksheet.Name)
+                            {
+                                input_cell = node;
+                            }
+                            else
+                                continue;
+                        }
+                    }
+                    //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                    if (input_cell == null)
+                    {
+                        input_cell = new TreeNode(cellInRange.Address, cellInRange.Worksheet.Name);
+                        if (toggle_array_storage.Checked)
+                        {
+                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                            if (cellInRange.Column <= cellInRange.Worksheet.UsedRange.Columns.Count && cellInRange.Row <= cellInRange.Worksheet.UsedRange.Rows.Count)
+                            {
+                                nodes_grid[cellInRange.Worksheet.Index - 1][cellInRange.Row - 1][cellInRange.Column - 1] = input_cell;
+                            }
+                        }
+                        else //toggle_array_storage not checked
+                        {
+                            nodes.Add(input_cell);
+                        }
+                    }
+
+                    //Update the dependencies
+                    range.addParent(input_cell);
+                    input_cell.addChild(range);
+                }
+            }
+
+            if (toggle_compile_regex.Checked)
+            {
+                //Regex regex = new Regex(patternCell, RegexOptions.Compiled);
+                //Regex regex = regex_array[regex_array.Length - 1];
+                matchedCells = regex_array[regex_array.Length - 1].Matches(formula);
+            }
+            else
+            {
+                matchedCells = Regex.Matches(formula, patternCell);  //matchedCells is a collection of all the cells that are referenced by the formula
+            }
+            foreach (Match m in matchedCells)
+            {
+                Excel.Range input = formula_node.getWorksheetObject().get_Range(m.Value);
+                TreeNode input_cell = null;
+                //MessageBox.Show(m.Value);
+                //Find the node object for the current cell in the existing TreeNodes
+                if (toggle_array_storage.Checked)
+                {
+                    //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                    if (input.Column <= input.Worksheet.UsedRange.Columns.Count && input.Row <= input.Worksheet.UsedRange.Rows.Count)
+                    {
+                        //if a TreeNode exists for this cell already, use it
+                        if (nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] != null)
+                        {
+                            input_cell = nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1];
+                        }
+                    }
+                }
+                else //toggle_array_storage not checked
+                {
+                    foreach (TreeNode node in nodes)
+                    {
+                        if (node.getName().Replace("$", "") == m.Value.Replace("$", "") && node.getWorksheet() == formula_node.getWorksheetObject().Name)
+                        {
+                            input_cell = node;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                if (input_cell == null)
+                {
+                    input_cell = new TreeNode(m.Value.Replace("$", ""), formula_node.getWorksheetObject().Name);
+                    if (toggle_array_storage.Checked)
+                    {
+                        //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                        if (input.Column <= input.Worksheet.UsedRange.Columns.Count && input.Row <= input.Worksheet.UsedRange.Rows.Count)
+                        {
+                            nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] = input_cell;
+                        }
+                    }
+                    else //toggle_array_storage not checked
+                    {
+                        nodes.Add(input_cell);
+                    }
+                }
+                //Update the dependencies
+                formula_node.addParent(input_cell);
+                input_cell.addChild(formula_node);
+            }
         }
     }
 }

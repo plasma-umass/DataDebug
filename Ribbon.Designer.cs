@@ -50,12 +50,14 @@ namespace DataDebug
             this.toggle_reporting = this.Factory.CreateRibbonCheckBox();
             this.toggle_array_storage = this.Factory.CreateRibbonCheckBox();
             this.toggle_global_perturbation = this.Factory.CreateRibbonCheckBox();
+            this.toggle_analyze_outliers = this.Factory.CreateRibbonCheckBox();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.toggle_analyze_outliers = this.Factory.CreateRibbonCheckBox();
+            this.toggle_no_sceen_updating = this.Factory.CreateRibbonCheckBox();
+            this.peirce_button = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -83,6 +85,8 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_array_storage);
             this.group1.Items.Add(this.toggle_global_perturbation);
             this.group1.Items.Add(this.toggle_analyze_outliers);
+            this.group1.Items.Add(this.toggle_no_sceen_updating);
+            this.group1.Items.Add(this.peirce_button);
             this.group1.Label = "Dependence Graph & Fuzzing";
             this.group1.Name = "group1";
             // 
@@ -159,6 +163,11 @@ namespace DataDebug
             this.toggle_global_perturbation.Label = "Global Perturbation";
             this.toggle_global_perturbation.Name = "toggle_global_perturbation";
             // 
+            // toggle_analyze_outliers
+            // 
+            this.toggle_analyze_outliers.Label = "Highlight Important Outliers Only";
+            this.toggle_analyze_outliers.Name = "toggle_analyze_outliers";
+            // 
             // group2
             // 
             this.group2.Items.Add(this.button3);
@@ -193,10 +202,16 @@ namespace DataDebug
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
-            // toggle_analyze_outliers
+            // toggle_no_sceen_updating
             // 
-            this.toggle_analyze_outliers.Label = "Highlight Important Outliers Only";
-            this.toggle_analyze_outliers.Name = "toggle_analyze_outliers";
+            this.toggle_no_sceen_updating.Label = "No Screen Updating During Swapping";
+            this.toggle_no_sceen_updating.Name = "toggle_no_sceen_updating";
+            // 
+            // peirce_button
+            // 
+            this.peirce_button.Label = "Peirce Criterion for selected range";
+            this.peirce_button.Name = "peirce_button";
+            this.peirce_button.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.peirce_button_Click);
             // 
             // Ribbon
             // 
@@ -235,6 +250,8 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_array_storage;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_global_perturbation;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_analyze_outliers;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_no_sceen_updating;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton peirce_button;
     }
 
     partial class ThisRibbonCollection
