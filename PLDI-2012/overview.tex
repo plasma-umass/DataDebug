@@ -1,8 +1,3 @@
-This section provides an overview of how data debugging
-works. Section~\ref{sec:algorithm} describes the algorithms in full
-detail, and Section~\ref{sec:analysis} includes formal analysis of various
-aspects of data debugging, including asymptotic performance and
-statistical effectiveness.
 
 \begin{table}[t!]
   \centering
@@ -33,24 +28,37 @@ statistical effectiveness.
     \textsf{\textsf{\bf{11}}} & \textsf{Fancy dinner tonight?} & \textsf{Yes}   &  \\
     \hline
     \end{tabular}%
-  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{fig:personal_budget}}
+  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{tab:personal_budget}}
 \end{table}%
+
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=1in]{dependence-graph}
+\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Table~\ref{tab:personal_budget}.\label{fig:dependence-graph}}
+\end{figure}
+
+This section provides an overview of how data debugging
+works. Section~\ref{sec:algorithm} describes the algorithms in full
+detail, and Section~\ref{sec:analysis} includes formal analysis of various
+aspects of data debugging, including asymptotic performance and
+statistical effectiveness.
 
 % in cell \texttt{B3}
 
 % the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
 
-Throughout this overview, we use a running example of a budget adapted
-from a sample template provided by Excel,
-shown in Figure~\ref{fig:personal_budget}. This spreadsheet tracks
-expected versus real spending on monthly expenses. The spreadsheet
-indicates whether the user can afford to splurge and go out to a fancy
+Throughout this section, we use a running example of a budget adapted
+from a sample template included with Excel, shown in
+Table~\ref{tab:personal_budget}. This spreadsheet tracks expected
+versus real spending on monthly expenses. The spreadsheet indicates
+whether the user can afford to splurge and go out to a fancy
 restaurant, which is when real spending is at least \$150 less than
 expected. However, this example contains an unfortunate typographical
 error that could lead the user to spend money that he or she does not
 actually have. Note that this spreadsheet has been substantially
-reduced from the original, so that finding this error manually would
-be substantially more difficult.
+reduced from the original, so that finding this error manually in the
+original spreadsheet would be substantially more difficult.
 
 \paragraph{Dependence Analysis.}
 The first step in data debugging is to identify the relationship of
@@ -59,9 +67,9 @@ management system, data inputs would be tuples (records) and computations would
 be queries. In a spreadsheet, inputs are data in cells, while
 computations are either charts or formulas that are not used by other formulas.
 
-Figure~\ref{fig:FIXME} shows the dependence graph that \checkcell{}
+Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
 extracts from this spreadsheet. The final formula, the only output in
-this spreadsheet, depends on two formulas, which depend on two
+this spreadsheet (shown in black), depends on two formulas, which depend on two
 disjoint data ranges.
 
 \paragraph{Impact Analysis.}
@@ -80,7 +88,7 @@ is the normalized change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
-For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
+For the spreadsheet in Table~\ref{tab:personal_budget}, \checkcell{}
 starts with cell \texttt{B2}. It chooses a random item from the same
 range, for example, cell \texttt{B5}. Replacing \texttt{B2}
 with \texttt{B5} results in a new sum, \$4352.50. Since this sum does
@@ -106,27 +114,27 @@ average absolute deviation for each data item's impact.
 Finally, the impacts of each data item are normalized by transforming
 them into absolute z-scores, where $|z|$ is the absolute distance of
 each item from the sample mean, divided by the sample standard
-deviation. Each data item's absolute z-scores are then averaged across
-all the outputs, and data debugging assigns that average as the
-\emph{overall impact score} of each data item. The overall impact
-score represents the average distance from the mean impact, in numbers
-of standard deviations. Note that this interpretation does not depend
-on normality assumptions about the data or its impact; in fact, using
-the normal distribution to rank impacts is conservative, as
+deviation. This \emph{normalized impact score} represents the distance
+from the mean impact, in numbers of standard deviations. A standard
+approach, which we adopt here, is to only report data whose impact is
+at least two standard deviations away from the mean, corresponding to
+more than a 95\% level of confidence that these are outliers.  Note
+that this interpretation does not depend on normality assumptions
+about the data or its impact; in fact, using the normal distribution
+to discover anomalous impacts is conservative, as
 Section~\ref{sec:analysis} explains.
 
-Intuitively, data with large overall impact scores either have an
-extremely high impact on a small number of computations, or a high
-impact on a large number of computations. The overall impact score can
-be used both for ranking and for displaying the relative anomalousness
-of the impact of particular data items, e.g., by coloring such values
-in brighter colors corresponding to their distance from the mean. It
-also makes it straightforward to decide how many data to report. A
-standard approach, which we adopt here, is to stop reporting data once
-it falls below two standard deviations away from the mean,
-corresponding to more than a 95\% level of confidence that these are
-outliers.
+Each data item's non-zero absolute z-scores are then averaged across
+all the outputs, and data debugging assigns that average as
+the \emph{overall impact score} of each data item.  Intuitively, data
+with large overall impact scores either have an extremely high impact
+on a small number of computations, or a high impact on a large number
+of computations. The overall impact score is used both for ranking and
+for displaying the relative anomalousness of the impact of particular
+data items, e.g., by coloring such values in brighter colors
+corresponding to their distance from the mean.
 
+FIX ME here's where we show outliers for this part.
 
 % ``score'' the impact by highlighting the values proportional to their z-score
 
