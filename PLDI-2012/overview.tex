@@ -4,13 +4,65 @@ detail, and Section~\ref{sec:analysis} includes formal analysis of various
 aspects of data debugging, including asymptotic performance and
 statistical effectiveness.
 
+\begin{table}[t!]
+  \centering
+    \begin{tabular}{|c|r|r|r|}
+    \hline
+    & \myalign{c|}{\textsf{\bf{A}}} & \myalign{c|}{\textsf{\bf{B}}} & \myalign{c|}{\textsf{\bf{C}}} \\
+    \hline
+    \textsf{\textsf{\bf{1}}} & \textsf{MONTHLY BUDGET} & \textsf{Projected Cost} & \textsf{Actual Cost} \\
+    \hline
+    \textsf{\textsf{\bf{2}}} & \textsf{Rent} & \textsf{\$1150}  & \textsf{\$1150} \\
+    \hline
+    \textsf{\textsf{\bf{3}}} & \textsf{Phone} & \textsf{\$3675}  & \textsf{\$36.75} \\
+    \hline
+    \textsf{\textsf{\bf{4}}} & \textsf{Gas} \& \textsf{Electricity} & \textsf{\$80}    & \textsf{\$87.23} \\
+    \hline
+    \textsf{\textsf{\bf{5}}} & \textsf{Waste removal} & \textsf{\$11.25} & \textsf{\$11.25} \\
+    \hline
+    \textsf{\textsf{\bf{6}}} & \textsf{Groceries} & \textsf{\$200}   & \textsf{\$187.81} \\
+    \hline
+    \textsf{\textsf{\bf{7}}} & \textsf{Car payment} & \textsf{\$225}   & \textsf{\$225} \\
+    \hline
+    \textsf{\textsf{\bf{8}}} & \textsf{Gasoline} & \textsf{\$50}    & \textsf{\$62.3} \\
+    \hline
+    \textsf{\textsf{\bf{9}}} & \textsf{Clothing} & \textsf{\$100}   & \textsf{\$59.99} \\
+    \hline
+    \textsf{\textsf{\bf{10}}} & \textsf{Total} & \textsf{\$5491.25} & \textsf{\$1820.33} \\
+    \hline
+    \textsf{\textsf{\bf{11}}} & \textsf{Fancy dinner tonight?} & \textsf{Yes}   &  \\
+    \hline
+    \end{tabular}%
+  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{fig:personal_budget}}
+\end{table}%
+
+% in cell \texttt{B3}
+
+% the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
+
+Throughout this overview, we use a running example of a budget adapted
+from a sample template provided by Excel,
+shown in Figure~\ref{fig:personal_budget}. This spreadsheet tracks
+expected versus real spending on monthly expenses. The spreadsheet
+indicates whether the user can afford to splurge and go out to a fancy
+restaurant, which is when real spending is at least \$150 less than
+expected. However, this example contains an unfortunate typographical
+error that could lead the user to spend money that he or she does not
+actually have. Note that this spreadsheet has been substantially
+reduced from the original, so that finding this error manually would
+be substantially more difficult.
+
 \paragraph{Dependence Analysis.}
 The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs). For example, in a database
 management system, data inputs would be tuples (records) and computations would
 be queries. In a spreadsheet, inputs are data in cells, while
-computations are either terminal formulas (not used by other formulas)
-or charts.
+computations are either charts or formulas that are not used by other formulas.
+
+Figure~\ref{fig:FIXME} shows the dependence graph that \checkcell{}
+extracts from this spreadsheet. The final formula, the only output in
+this spreadsheet, depends on two formulas, which depend on two
+disjoint data ranges.
 
 \paragraph{Impact Analysis.}
 The next step is to iterate through the data itself to test the impact
@@ -28,11 +80,25 @@ is the normalized change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
+For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
+starts with cell \texttt{B2}. It chooses a random item from the same
+range, for example, cell \texttt{B5}. Replacing \texttt{B2}
+with \texttt{B5} results in a new sum, \$4352.50. Since this sum does
+not change the \texttt{Yes} answer in the formula, the impact score
+for cell \texttt{B2} remains 0.
+
+However, the same procedure for cell \texttt{B3} is likely to have a
+different effect.  For example, replacing \texttt{B3}
+with \texttt{B8} yields a sum of \$1866.25. The difference
+between this sum and actual spending has now dropped below \$150,
+triggering a change in the result to \texttt{No}. \checkcell{} then
+adds 1 to cell \texttt{B3}'s impact score.
+
 % Each data item maintains a separate impact score for every computation.
 
-This process is repeated some fixed number of times, accumulating the
-impact scores associated with each datum. To ensure a high level of
-statistical confidence, this number should be around 30. The impact
+To ensure a high degree of statistical confidence in the impact score,
+this process is repeated a fixed number of times (at least 30),
+accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of iterations, resulting in an
 average absolute deviation for each data item's impact.
 
