@@ -1,20 +1,25 @@
 In future work, we plan to explore applying data debugging to other
-domains, including database management systems and scientific
-computing environments, especially R. Both domains will require
-tailoring of the existing algorithms to their particular context. For
-databases, we plan to treat as computations both stored procedures as
-well as cached queries. While it is straightforward to apply data
-debugging to databases when the queries have no side effects, handling
-queries that do modify the database will take some care in order to
-avoid an excessive performance penalty due to copying.  Similarly,
-data debugging will likely need to take into account features of the R
-language in order to work effectively. Finally, we are interested in
-exploring the effectiveness of data debugging in conventional programming
-language settings.
+domains, including database management systems, Hadoop (map-reduce)
+tasks, and scientific computing environments, especially R. We expect
+all of these domains will require some tailoring of the existing
+algorithms to their particular context. For databases, we plan to
+treat as computations both stored procedures and cached queries. While
+it is straightforward to apply data debugging to databases when
+queries have no side effects, handling queries that do modify the
+database will take some care in order to avoid an excessive
+performance penalty due to copying. A similar performance concern
+arises with Hadoop, where the key computation is the relatively costly
+reduction step. Data debugging will also likely need to take into
+account features of the R language in order to work effectively in
+that context. Finally, we are interested in exploring the
+effectiveness of data debugging in conventional programming language
+settings.
 
 We also plan to explore other ways of ranking impacts. Our current
 approach looks for outliers assuming a normal distribution; this
 approach is conservative, as Section~\ref{sec:analysis} explains. We
-are particularly interested in exploring non-parametric approaches
-like kernel density estimators, which can fit arbitrary distributions
-and potentially reduce the risk of false positives.
+are particularly interested in exploring the trade-off between using a
+normal distribution and non-parametric approaches like kernel
+density estimators, which can fit arbitrary distributions and
+potentially reduce the risk of false positives (at the risk of
+increasing the risk of false negatives).
