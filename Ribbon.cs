@@ -288,6 +288,26 @@ namespace DataDebug
             }
         }
 
+        /**
+         * This is a recursive method for propagating the weights down the nodes in the tree
+         * All outputs have weight 1. Their n children have weight 1/n, and so forth. 
+         */
+        private void propagateWeightUp(TreeNode node, double weight_passed_up)
+        {
+            if (!node.hasChildren())
+            {
+                return;
+            }
+            else
+            {
+                foreach (TreeNode child in node.getChildren())
+                {
+                    child.setWeight(child.getWeight() + weight_passed_up);
+                    propagateWeightUp(child, 1.0);
+                }
+            }
+        }
+
         /*
          * This method constructs the dependency graph from the worksheet.
          * It analyzes formulas and looks for references to cells or ranges of cells.
@@ -2656,15 +2676,29 @@ namespace DataDebug
                 }
             }
             //Propagate weights  -- static propagation in the dependence graph (no swapping of values)
-            //foreach (TreeNode node in nodes)
-            //{
-              //  if (!node.hasChildren())
-               // {
-                 //   node.setWeight(1.0);  //Set the weight of all output nodes (and charts) to 1.0 to start
-                    //Now we propagate proportional weights to all of this node's inputs
-                 //   propagateWeight(node, 1.0);
-                //}
-            //}
+            foreach (TreeNode[][] node_arr_arr in nodes_grid)
+            {
+                if (node_arr_arr != null)
+                {
+                    foreach (TreeNode[] node_arr in node_arr_arr)
+                    {
+                        foreach (TreeNode node in node_arr)
+                        {
+                            if (node != null)
+                            {
+                                if (!node.hasParents()) //hasChildren())
+                                {
+                                    node.setWeight(1.0);  //Set the weight of all output nodes (and charts) to 1.0 to start
+                                    //Now we propagate proportional weights to all of this node's inputs
+                                    //propagateWeight(node, 1.0);
+                                    propagateWeightUp(node, 1.0);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             //double max_weight = 0.0;  //Keep track of the max weight for normalizing later (used for coloring cells based on weight)
             //foreach (TreeNode node in nodes)
             //{
@@ -2878,9 +2912,9 @@ namespace DataDebug
                         {
                             impacts_grid[worksheet.Index - 1][row][col] = new double[output_cells.Count];
                             //MessageBox.Show("output cells count = " + output_cells.Count);
-                            for (int j = 0; j < output_cells.Count; j++)
+                            for (int i = 0; i < output_cells.Count; i++)
                             {
-                                impacts_grid[worksheet.Index - 1][row][col][j] = 0.0;
+                                impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
                             }
                         }
                     }
@@ -3158,8 +3192,8 @@ namespace DataDebug
                     //}
                 }
                 //Now normalize the entries in impacts_grid so that they reflect per-swap averages
-
                 int inputs_count = 0; 
+                //Find the number of input cells
                 foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
                 {
                     for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
@@ -3255,19 +3289,50 @@ namespace DataDebug
                         {
                             //If this cell has been perturbed, find it's average z-score
                             double total_z_score = 0.0;
+                            double total_output_weight = 0.0;
                             if (times_perturbed[worksheet.Index - 1][row][col] != 0)
                             {
                                 for (int i = 0; i < output_cells.Count; i++)
                                 {
-                                    total_z_score += impacts_grid[worksheet.Index - 1][row][col][i];
+                                    if (toggle_weighted_average.Checked)
+                                    {
+                                        total_z_score += impacts_grid[worksheet.Index - 1][row][col][i] * output_cells[i].getWeight();
+                                        total_output_weight += output_cells[i].getWeight();
+                                    }
+                                    else
+                                    {
+                                        total_z_score += impacts_grid[worksheet.Index - 1][row][col][i];
+                                    }
                                 }
                             }
-                            average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / output_cells.Count);
+                            if(toggle_weighted_average.Checked) 
+                            {
+                                average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / total_output_weight);
+                            }
+                            else 
+                            {
+                                average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / output_cells.Count);
+                            }
                         }
                     }
                 }
                 
                 //Color the outliers:
+                //Find max z-score
+                double max_z_score = 0.0;
+                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                {
+                    for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                    {
+                        for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                        {
+                            if (average_z_scores[worksheet.Index - 1][row][col] > max_z_score)
+                            {
+                                max_z_score = average_z_scores[worksheet.Index - 1][row][col]; 
+                            }
+                        }
+                    }
+                }
                 foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
                 {
                     for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
@@ -3276,11 +3341,12 @@ namespace DataDebug
                         {
                             if (average_z_scores[worksheet.Index - 1][row][col] > 2.0)
                             {
-                                worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.Red;
+                                worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_z_score) * 255), 255, 255);
                             }
                         }
                     }
                 }
+                
                 //Excel.Worksheet ws = Globals.ThisAddIn.Application.Worksheets[1];
                 //Excel.Worksheet out_ws = Globals.ThisAddIn.Application.Worksheets[3];
                 //for (int row = 0; row < ws.UsedRange.Rows.Count; row++)
