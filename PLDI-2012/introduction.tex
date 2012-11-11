@@ -114,17 +114,20 @@ like spreadsheets, databases, and environments like
 R~\cite{ihaka1996r}, where data and programs (e.g., queries and
 formulas) are intertwined.
 
-We present an instantiation of data debugging in the form
+This paper presents the first data debugging tool in the form
 of \checkcell{}, an add-in for Microsoft Excel. Spreadsheets are one
 of the most widely-used programming environments, and this domain has
 recently attracted renewed academic
 attention~\cite{DBLP:conf/popl/Gulwani11,DBLP:conf/pldi/HarrisG11,Singh:2012:LSS:2212351.2212356}.
+In addition, spreadsheet errors are a well known risk and have led to
+significant monetary losses in the past, making them an excellent
+first target for data debugging.
+
 \checkcell{} ranks by impact all data whose
 impact crosses a threshold of unusualness (above the 95\% confidence
 level).  In the user interface, \checkcell{} ranks these cells by coloring them in
 shades proportionally to their impact: the brighter a cell is
 highlighted, the greater impact it has.
-
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal (see
 Sections~\ref{sec:algorithm} and \ref{sec:analysis}). The current prototype is untuned
