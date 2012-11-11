@@ -32,12 +32,6 @@
 \end{table}%
 
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=1in]{dependence-graph}
-\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Table~\ref{tab:personal_budget}.\label{fig:dependence-graph}}
-\end{figure}
-
 This section provides an overview of how data debugging
 works. Section~\ref{sec:algorithm} describes the algorithms in full
 detail, and Section~\ref{sec:analysis} includes formal analysis of various
@@ -67,6 +61,12 @@ management system, data inputs would be tuples (records) and computations would
 be queries. In a spreadsheet, inputs are data in cells, while
 computations are either charts or formulas that are not used by other formulas.
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=1.75in]{dependence-graph}
+\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Table~\ref{tab:personal_budget}.\label{fig:dependence-graph}}
+\end{figure}
+ 
 Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
 extracts from this spreadsheet. The final formula, the only output in
 this spreadsheet (shown in black), depends on two formulas, which depend on two
