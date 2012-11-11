@@ -34,6 +34,13 @@ namespace DataDebug
             double_value = d;
         }
 
+        //Constructor which takes a decimal as a parameter, initializing double_value to the double parameter
+        public StartValue(decimal d)
+        {
+            string_value = null;
+            double_value = (double)d;
+        }
+
         //Getter method for the string_value field
         public string get_string()
         {

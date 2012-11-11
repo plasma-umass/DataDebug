@@ -51,14 +51,14 @@ namespace DataDebug
             this.toggle_array_storage = this.Factory.CreateRibbonCheckBox();
             this.toggle_global_perturbation = this.Factory.CreateRibbonCheckBox();
             this.toggle_analyze_outliers = this.Factory.CreateRibbonCheckBox();
+            this.toggle_no_sceen_updating = this.Factory.CreateRibbonCheckBox();
+            this.peirce_button = this.Factory.CreateRibbonButton();
+            this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.toggle_no_sceen_updating = this.Factory.CreateRibbonCheckBox();
-            this.peirce_button = this.Factory.CreateRibbonButton();
-            this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -102,6 +102,7 @@ namespace DataDebug
             // 
             this.checkBox2.Label = "Fuzz Repeated Values Simultaneously";
             this.checkBox2.Name = "checkBox2";
+            this.checkBox2.Visible = false;
             // 
             // checkBox1
             // 
@@ -123,12 +124,14 @@ namespace DataDebug
             // 
             this.button7.Label = "button7";
             this.button7.Name = "button7";
+            this.button7.Visible = false;
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
             // button8
             // 
             this.button8.Label = "Clear coloring";
             this.button8.Name = "button8";
+            this.button8.Visible = false;
             this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
             // 
             // button2
@@ -140,35 +143,62 @@ namespace DataDebug
             // 
             // toggle_speed
             // 
+            this.toggle_speed.Checked = true;
             this.toggle_speed.Label = "Toggle BLAZING SPEED Swapping Mode";
             this.toggle_speed.Name = "toggle_speed";
+            this.toggle_speed.Visible = false;
             // 
             // toggle_compile_regex
             // 
             this.toggle_compile_regex.Checked = true;
             this.toggle_compile_regex.Label = "Compile Regular Expressions";
             this.toggle_compile_regex.Name = "toggle_compile_regex";
+            this.toggle_compile_regex.Visible = false;
             // 
             // toggle_reporting
             // 
             this.toggle_reporting.Label = "Report progress";
             this.toggle_reporting.Name = "toggle_reporting";
+            this.toggle_reporting.Visible = false;
             // 
             // toggle_array_storage
             // 
             this.toggle_array_storage.Checked = true;
             this.toggle_array_storage.Label = "Enable Array Storage";
             this.toggle_array_storage.Name = "toggle_array_storage";
+            this.toggle_array_storage.Visible = false;
             // 
             // toggle_global_perturbation
             // 
             this.toggle_global_perturbation.Label = "Global Perturbation";
             this.toggle_global_perturbation.Name = "toggle_global_perturbation";
+            this.toggle_global_perturbation.Visible = false;
             // 
             // toggle_analyze_outliers
             // 
             this.toggle_analyze_outliers.Label = "Highlight Important Outliers Only";
             this.toggle_analyze_outliers.Name = "toggle_analyze_outliers";
+            this.toggle_analyze_outliers.Visible = false;
+            // 
+            // toggle_no_sceen_updating
+            // 
+            this.toggle_no_sceen_updating.Checked = true;
+            this.toggle_no_sceen_updating.Label = "No Screen Updating During Swapping";
+            this.toggle_no_sceen_updating.Name = "toggle_no_sceen_updating";
+            this.toggle_no_sceen_updating.Visible = false;
+            // 
+            // peirce_button
+            // 
+            this.peirce_button.Label = "Peirce Criterion for selected range";
+            this.peirce_button.Name = "peirce_button";
+            this.peirce_button.Visible = false;
+            this.peirce_button.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.peirce_button_Click);
+            // 
+            // toggle_weighted_average
+            // 
+            this.toggle_weighted_average.Label = "Look for outliers in weighted average z-score";
+            this.toggle_weighted_average.Name = "toggle_weighted_average";
+            this.toggle_weighted_average.Visible = false;
             // 
             // group2
             // 
@@ -203,22 +233,6 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
-            // 
-            // toggle_no_sceen_updating
-            // 
-            this.toggle_no_sceen_updating.Label = "No Screen Updating During Swapping";
-            this.toggle_no_sceen_updating.Name = "toggle_no_sceen_updating";
-            // 
-            // peirce_button
-            // 
-            this.peirce_button.Label = "Peirce Criterion for selected range";
-            this.peirce_button.Name = "peirce_button";
-            this.peirce_button.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.peirce_button_Click);
-            // 
-            // toggle_weighted_average
-            // 
-            this.toggle_weighted_average.Label = "Weighted Average";
-            this.toggle_weighted_average.Name = "toggle_weighted_average";
             // 
             // Ribbon
             // 
