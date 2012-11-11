@@ -89,7 +89,7 @@ error-prone and can give rise to excessive false positives.
 This paper presents \emph{\bf data debugging}, an approach to locating
 likely data errors. Since it is impossible to know \emph{a priori}
 whether data are erroneous or not, data debugging does the next best
-thing: \emph{locating data where an error would have the most
+thing: \emph{locating data where errors would have the most
 impact}. Intuitively, data that has an inordinate impact on the final
 result is either very important or it is wrong. By contrast, wrong
 data whose presence has little impact on the final result does not
@@ -128,12 +128,14 @@ highlighted, the greater impact it has.
 \checkcell{} is efficient: it operates in time linear in the number
 of data elements, which is optimal (see
 Sections~\ref{sec:algorithm} and \ref{sec:analysis}). The current prototype is untuned
-but analysis time is generally low, taking less than a minute to run
-on spreadsheets containing thousands of cells. A user study verifies
-the hypothesis that data debugging's approach of identifying data with
-unusual impacts is effective at locating errors. With \checkcell{}'s
-help, users were able to find XX\% of injected errors, while users
-without \checkcell{} were only able to find YY\% of errors.
+but analysis time is generally low, taking seconds to run
+on spreadsheets containing thousands of cells. We verify \checkcell{}'s effectiveness
+at finding and ranking injected errors in a suite of real spreadsheets.
+%A user study verifies
+%the hypothesis that data debugging's approach of identifying data with
+%unusual impacts is effective at locating errors. With \checkcell{}'s
+%help, users were able to find XX\% of injected errors, while users
+%without \checkcell{} were only able to find YY\% of errors.
 
 
 %We have developed a Microsoft Excel extension, or add-in, written in
