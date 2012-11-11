@@ -25,3 +25,48 @@ Cite Feller. Limitations: threshold functions.
 \item {\bf Outputs that change data type.}
 \item {\bf Macros / side-effects.}
 \end{itemize}
+
+\subsection{Impact Outlier Analysis}
+
+Once all impact scores have been computed, only those data whose
+impacts cross some threshold of anomalousness should be
+reported. \checkcell{} behaves as if the impact scores fit a normal
+distribution, and only reports those data whose scores place them more
+than two standard deviations away from the mean. In a normal
+distribution, that is just under 0.05\% of the population; in other
+words, this corresponds to a 95\% confidence level that these are
+anomalies.
+
+The use of a normal distribution is conservative, in that it can only
+over-report anomalies. This fact derives from two special
+characteristics of the normal distribution: its low \emph{skewness}
+and \emph{kurtosis}.
+
+The normal distribution has zero skewness, where
+skew is the distribution around the mean; in other words, it is
+perfectly symmetric. Any non-normal distribution by definition has a
+greater number of points either to the left or to the right of the
+mean. By choosing outliers from the tails of the normal, \checkcell{}
+also includes the skewed tails of any other distribution.
+
+In addition, the normal has either low (3) or zero kurtosis, depending
+on the definition of kurtosis, which indicates the heaviness of the
+tail. Counting outliers from the perspective of the normal
+distribution is also conservative, because it includes all
+distributions with heavier tails. Distributions with negative kurtosis
+actually have finite \emph{support}, meaning that their tails
+eventually become zero, dropping into the x-axis at some point on
+either side. It is difficult to argue that these distributions have
+any outliers at all, by virtue of the fact that they have extremely
+small tails.
+
+% we just need to report outliers in the impact. assuming the impacts
+% are normal is a conservative approach: the normal has 0 skewness
+% (skew = distribution around the mean -- normal is symmetric, so 0
+% skew) and low (either 0 or 3) kurtosis, depending on your definition
+% of kurtosis. Every non-normal distribution is by definition more skewed and most
+% distributions have a higher kurtosis (heavier tails), so we may
+% overmark outliers. We won't find outliers in distributions with
+% negative kurtosis, but those are super weird (no tails -- they drop
+% below the x-axis at some point on either side), so it's hard to
+% argue that they have outliers at all.
