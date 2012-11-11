@@ -56,17 +56,17 @@ namespace DataDebug
             string parents_string = "";
             foreach (TreeNode parent in parents)
             {
-                parents_string += "\n" + parent.getWorksheet().Replace(" ","") + "_" + parent.getName().Replace(" ", "") + "->" + worksheet.Replace(" ","") + "_" + name.Replace(" ", "");
+                parents_string += "\n" + parent.getWorksheet().Replace(" ", "") + "_" + parent.getName().Replace(" ", "") + "_weight_" + parent.getWeight() + "->" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight;
             }
-            string children_string = "";
-            foreach (TreeNode child in children)
-            {
-                children_string += "\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "->" + child.getWorksheet().Replace(" ", "") + "_" + child.getName().Replace(" ", "");
-            }
-            //string weight_string = "\n" + name.Replace(" ", "") + "->iuc" + name.Replace(" ", "") + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + name.Replace(" ", "") + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + name.Replace(" ", "") + ";iuc" + name.Replace(" ", "") + "}";
+            //string children_string = "";
+            //foreach (TreeNode child in children)
+            //{
+            //    children_string += "\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight:" + weight + "->" + child.getWorksheet().Replace(" ", "") + "_" + child.getName().Replace(" ", "") + "_weight:" + weight;
+            //}
+            //string weight_string = "\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "->iuc" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + ";iuc" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "}";
 
             //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]"
-            return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse]"
+            return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight + "[shape = ellipse]"
                 //+ weight_string 
                 + parents_string).Replace("$", "");
             //fillcolor = \"green\"   \"0.000 " + weight + " 0.878\"

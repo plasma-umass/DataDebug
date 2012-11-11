@@ -58,6 +58,7 @@ namespace DataDebug
             this.button6 = this.Factory.CreateRibbonButton();
             this.toggle_no_sceen_updating = this.Factory.CreateRibbonCheckBox();
             this.peirce_button = this.Factory.CreateRibbonButton();
+            this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -87,6 +88,7 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_analyze_outliers);
             this.group1.Items.Add(this.toggle_no_sceen_updating);
             this.group1.Items.Add(this.peirce_button);
+            this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Label = "Dependence Graph & Fuzzing";
             this.group1.Name = "group1";
             // 
@@ -213,6 +215,11 @@ namespace DataDebug
             this.peirce_button.Name = "peirce_button";
             this.peirce_button.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.peirce_button_Click);
             // 
+            // toggle_weighted_average
+            // 
+            this.toggle_weighted_average.Label = "Weighted Average";
+            this.toggle_weighted_average.Name = "toggle_weighted_average";
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -252,6 +259,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_analyze_outliers;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_no_sceen_updating;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton peirce_button;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
     }
 
     partial class ThisRibbonCollection
