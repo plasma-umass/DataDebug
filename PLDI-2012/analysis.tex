@@ -43,28 +43,33 @@ words, this corresponds to a 95\% confidence level that these are
 anomalies.
 
 In the absence of knowledge of the distribution of impact scores, using
-the normal distribution is the most conservative approach. That is, it
-reports no false negatives, at the risk of introducing some false
+the normal distribution is in general a conservative approach. That is, it
+is likely to report few false negatives, at the risk of introducing some false
 positives. This fact derives from two particular characteristics of the
 normal distribution: its low \emph{skewness} and \emph{kurtosis}.
 
 The normal distribution has zero skewness, where skew is the
 distribution around the mean; in other words, it is perfectly
-symmetric. Any non-normal distribution by definition has a greater
+symmetric. Any asymmetric distribution by definition has a greater
 number of points either to the left or to the right of the mean. By
 choosing outliers from the tails of the normal, \checkcell{} also
 includes the skewed tails of any other distribution.
 
-In addition, the normal has either low (3) or zero kurtosis, which
-indicates the heaviness of the tail (the choice of zero or 3 depends
-on which definition of kurtosis one uses). Counting outliers from the
-perspective of the normal distribution is also conservative, because
-it includes all distributions with heavier tails. Distributions with
-negative kurtosis actually have finite \emph{support}, meaning that
-their tails eventually become zero, dropping into the x-axis at some
-point on either side. It is difficult to argue that these
-distributions have any outliers at all, by virtue of the fact that
-they have extremely small tails.
+In addition, the normal has either low or zero kurtosis, which
+indicates the peakedness of the curve and heaviness of the tail;
+whether the normal has a kurtosis of 0 or 3 depends on the definition
+of kurtosis. Counting outliers from the perspective of the normal
+distribution is generally conservative, because it includes all
+distributions with heavier tails (those with positive
+kurtosis). Because distributions with negative kurtosis generally have
+small tails, they also tend to have few outliers by definition. Thus,
+failing to report outliers for distributions with negative kurtosis is
+generally safe.
+
+One exception worth noting and a limitation of this approach is
+symmetric bimodal distributions, where the outlier values are not only
+in the tail but also centered around the mean. Using the normal as a
+reference would not uncover such outliers.
 
 % we just need to report outliers in the impact. assuming the impacts
 % are normal is a conservative approach: the normal has 0 skewness
