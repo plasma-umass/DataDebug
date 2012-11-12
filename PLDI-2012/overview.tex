@@ -125,11 +125,11 @@ to discover anomalous impacts is conservative, as
 Section~\ref{sec:analysis} explains.
 
 Each data item's non-zero absolute z-scores are then averaged across
-all the outputs, and data debugging assigns that average as
-the \emph{overall impact score} of each data item.  Intuitively, data
-with large overall impact scores either have an extremely high impact
-on a small number of computations, or a high impact on a large number
-of computations. The overall impact score is used both for ranking and
+all the outputs, and data debugging assigns that average as the
+\emph{overall impact score} of each data item. Intuitively, data with
+large overall impact scores either have an extremely high impact on a
+small number of computations, or a high impact on many
+computations. The overall impact score is used both for ranking and
 for displaying the relative anomalousness of the impact of particular
 data items, e.g., by coloring such values in brighter colors
 corresponding to their distance from the mean.
