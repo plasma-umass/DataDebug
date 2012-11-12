@@ -97,3 +97,8 @@ if VERBOSE
     print "\n"
   end
 end
+
+puts "BEGIN FUZZ OUTPUT:"
+numeric_errors.each do |e|
+  puts "\"#{e[:fuzz_id]}\", \"#{e[:fuzz_date]}\", \"#{e[:fuzz_code]}\", \"#{e[:fuzz_name]}\", \"#{e[:fuzz_unit]}\""
+end
