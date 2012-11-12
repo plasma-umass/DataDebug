@@ -1,4 +1,10 @@
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3in]{overview-example}
+  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{fig:personal_budget}}
+\end{figure}
 
+\punt{
 \begin{table}[t!]
   \centering
     \begin{tabular}{|c|r|r|r|}
@@ -28,9 +34,9 @@
     \textsf{\textsf{\bf{11}}} & \textsf{Fancy dinner tonight?} & \textsf{Yes}   &  \\
     \hline
     \end{tabular}%
-  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{tab:personal_budget}}
+  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error.\label{tab:personal_budget}}
 \end{table}%
-
+}
 
 This section provides an overview of how data debugging
 works. Section~\ref{sec:algorithm} describes the algorithms in full
@@ -44,7 +50,7 @@ statistical effectiveness.
 
 Throughout this section, we use a running example of a budget adapted
 from a sample template included with Excel, shown in
-Table~\ref{tab:personal_budget}. This spreadsheet tracks expected
+Figure~\ref{fig:personal_budget}. This spreadsheet tracks expected
 versus real spending on monthly expenses. The spreadsheet indicates
 whether the user can afford to splurge and go out to a fancy
 restaurant, which is when real spending is at least \$150 less than
@@ -63,14 +69,21 @@ computations are either charts or formulas that are not used by other formulas.
 
 \begin{figure}[!t]
 \centering
+\includegraphics[width=3in]{overview-example-highlighted}
+  \caption{The same spreadsheet, with the error highlighted by \checkcell{} as the value with the most impact on the computation.\label{fig:personal_budget_highlighted}}
+\end{figure}
+
+\begin{figure}[!b]
+\centering
 \includegraphics[width=1.75in]{dependence-graph}
-\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Table~\ref{tab:personal_budget}.\label{fig:dependence-graph}}
+\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Figure~\ref{fig:personal_budget}.\label{fig:dependence-graph}}
 \end{figure}
  
 Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
 extracts from this spreadsheet. The final formula, the only output in
 this spreadsheet (shown in black), depends on two formulas, which depend on two
 disjoint data ranges.
+
 
 \paragraph{Impact Analysis.}
 The next step is to iterate through the data itself to test the impact
@@ -88,7 +101,7 @@ is the normalized change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
-For the spreadsheet in Table~\ref{tab:personal_budget}, \checkcell{}
+For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
 starts with cell \texttt{B2}. It chooses a random item from the same
 range, for example, cell \texttt{B5}. Replacing \texttt{B2}
 with \texttt{B5} results in a new sum, \$4352.50. Since this sum does
@@ -134,7 +147,9 @@ for displaying the relative anomalousness of the impact of particular
 data items, e.g., by coloring such values in brighter colors
 corresponding to their distance from the mean.
 
-FIX ME here's where we show outliers for this part.
+Figure~\ref{fig:personal_budget_highlighted} shows the effect of
+running \checkcell{}, which identifies cell \texttt{B3} as the one
+that has the most impact on the spreadsheet.
 
 % ``score'' the impact by highlighting the values proportional to their z-score
 
