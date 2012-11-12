@@ -102,18 +102,18 @@ For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
 For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
-starts with cell \texttt{B2}. It chooses a random item from the same
-range, for example, cell \texttt{B5}. Replacing \texttt{B2}
-with \texttt{B5} results in a new sum, \$4352.50. Since this sum does
+starts with cell \texttt{B3}. It chooses a random item from the same
+range, for example, cell \texttt{B6}. Replacing \texttt{B3}
+with \texttt{B6} results in a new sum, \$4352.50. Since this sum does
 not change the \texttt{Yes} answer in the formula, the impact score
-for cell \texttt{B2} remains 0.
+for cell \texttt{B3} remains 0.
 
-However, the same procedure for cell \texttt{B3} is likely to have a
-different effect.  For example, replacing \texttt{B3}
-with \texttt{B8} yields a sum of \$1866.25. The difference
+However, the same procedure for cell \texttt{B4} is likely to have a
+different effect.  For example, replacing \texttt{B4}
+with \texttt{B9} yields a sum of \$1866.25. The difference
 between this sum and actual spending has now dropped below \$150,
 triggering a change in the result to \texttt{No}. \checkcell{} then
-adds 1 to cell \texttt{B3}'s impact score.
+adds 1 to cell \texttt{B4}'s impact score.
 
 % Each data item maintains a separate impact score for every computation.
 
@@ -148,7 +148,7 @@ data items, e.g., by coloring such values in brighter colors
 corresponding to their distance from the mean.
 
 Figure~\ref{fig:personal_budget_highlighted} shows the effect of
-running \checkcell{}, which identifies cell \texttt{B3} as the one
+running \checkcell{}, which identifies cell \texttt{B4} as the one
 that has the most impact on the spreadsheet.
 
 % ``score'' the impact by highlighting the values proportional to their z-score
