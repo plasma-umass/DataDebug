@@ -47,17 +47,19 @@ asymptotic performance and statistical effectiveness.
 
 % the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
 
-Throughout this section, we use a running example of a budget adapted
-from a sample template included with Excel, shown in
-Figure~\ref{fig:personal_budget}. This spreadsheet tracks expected
-versus real spending on monthly expenses. The spreadsheet indicates
-whether the user can afford to splurge and go out to a fancy
-restaurant, which is when real spending is at least \$150 less than
-expected. However, this example contains an unfortunate typographical
-error that could lead the user to spend money that he or she does not
-actually have. Note that this spreadsheet has been substantially
-reduced from the original, so that finding this error manually in the
-original spreadsheet would be substantially more difficult.
+Throughout this section, we illustrate these algorithms with a running
+example of a budget shown in Figure~\ref{fig:personal_budget}, which
+is a reduced version of a sample template included with Microsoft Excel. This
+spreadsheet tracks expected versus real spending on monthly
+expenses. The spreadsheet indicates whether the user can afford to
+splurge and go out to a fancy restaurant, which is when real spending
+is at least \$150 less than expected. However, this example contains
+an unfortunate typographical error that could lead the user to spend
+money that he or she does not actually have.
+
+% In this case, the error is relatively easy to find, but 
+%finding this error manually in the original spreadsheet would be
+%substantially more difficult.
 
 \paragraph{Dependence Analysis.}
 The first step in data debugging is to identify the relationship of
@@ -120,7 +122,11 @@ To ensure a high degree of statistical confidence in the impact score,
 this process is repeated a fixed number of times (at least 30),
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of iterations, resulting in an
-average absolute deviation for each data item's impact.
+average absolute deviation for each data item's
+impact. Section~\ref{sec:asymptotic_analysis} shows that the runtime
+efficiency of this approach is asymptotically optimal, and
+Section~\ref{sec:sampling_effectiveness} explains why it is nearly as
+effective as checking each item's impact exhaustively.
 
 \paragraph{Impact Scoring.}
 Finally, the impacts of each data item are normalized by transforming
@@ -134,7 +140,7 @@ more than a 95\% level of confidence that these are outliers.  Note
 that this interpretation does not depend on normality assumptions
 about the data or its impact; in fact, using the normal distribution
 to discover anomalous impacts is conservative, as
-Section~\ref{sec:analysis} explains.
+Section~\ref{sec:outlier_analysis} explains.
 
 Each data item's non-zero absolute z-scores are then averaged across
 all the outputs, and data debugging assigns that average as the
