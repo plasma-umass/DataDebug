@@ -18,12 +18,12 @@ spreadsheets, the number of inputs equals the number of data items,
 but in other contexts like databases, inputs correspond to fields, so
 $i \ll n$. Since each formula and data item must be examined at least
 once to compute the dependence graph and to measure impact,
-respectively, runtime for data debugging must be at least
+respectively, runtime for data debugging must be 
 $\Omega(n+f)$.
 
 The cost of building the dependence graph varies depending on the
 structure of the computation. It has a worst-case runtime of
-$O((if)^2)$), quadratic in the total number of inputs and formulas,
+$O((i*f)^2)$), quadratic in the total number of inputs and formulas,
 because it is theoretically possible for each formula to depend on
 every input and other formula. However, this kind of pathological
 structure is atypical. Dependence graphs normally form a tree or a
@@ -35,15 +35,96 @@ Impact analysis dominates the costs of constructing the dependence
 graph and ranking impacts, since it requires recalculation of the
 computations affected by changes in the data.
 
-The impact analysis phase runs in $\Theta(n)$ time; that is, it is
-asymptotically optimal with respect to the number of
-recalculations. The impact analysis for each item requires a fixed
-number of random selections of other items in the same range. Each
-item thus triggers a constant number of recalculations, so the total
-number of recalculations is linear in the number of data items.
+A naive implementation of impact analysis that checked the impact of
+each data item by systematically replacing it with every other item in
+the same range would require $O(n^2)$ time. Worse, each of these
+iterations requires potentially costly recalculations. Such an
+approach would make data debugging unusable in practice.
+ 
+By using a fixed number of random selections, data debugging keeps the
+total number of recalculations to $\Theta(n)$, linear in the number of
+data items, which is optimal. Section~\ref{sec:sampling_effectiveness}
+explains why this strategy approximates the effect of a complete
+examination of other inputs, while minimizing execution time.
 
+Finally, ranking impacts involves only two linear passes over the
+impacts to compute absolute z-scores, so it also operates in (optimal)
+linear time in the number of impacts.
 
 \subsection{Sampling Effectiveness}
+\label{sec:sampling_effectiveness}
+
+A complete strategy for measuring the impact of any data item $i$ is to
+systematically measure the impact of replacing it with every other
+item $j$ in the same range:
+
+\begin{equation}
+\mbox{impact}_i = \frac{\sum_{j \neq i}^{N}{|\mbox{result}_i-\mbox{result}_j|}}{N}
+\end{equation}
+
+\noindent
+This approach, as mentioned above, would take $O(n^2)$ time and so is
+inefficient for large data sets.
+
+Instead, data debugging uses a sampling-based strategy that chooses a
+fixed number of samples $K$ (e.g., $K = 30$), with replacement, from
+the data range:
+
+\begin{equation}
+\mbox{estimated\_impact}_i = \frac{\sum_{j \in \{\mbox{sample}\}}^{N}{|\mbox{result}_i-\mbox{result}_j|}}{K}
+\end{equation}
+
+\noindent
+There are two cases where this procedure could fail; below, we bound their likelihood.
+
+\begin{itemize}
+\item \textbf{False negatives.} The item under consideration has a
+  large actual impact, but the sampling procedure repeatedly
+  chooses other items with similarly anomalous impacts, so the item under
+  consideration appears to have no impact (the anomalous values cancel out).
+\item \textbf{False positives.} The item under consideration does
+  not have an significant impact, but the sampling procedure
+  repeatedly chooses items that have a large impact. Now, the item
+  under consideration appears to have an anomalous impact, though it actually does not.
+\end{itemize}
+
+In both cases, the key is to ensure that the estimated impact does not
+repeatedly sample data items with high impact. We state our theorem informally:
+
+\begin{theorem}
+The estimated impact is a close approximation to the actual impact, because it minimizes the risk of false positives and false negatives.
+\end{theorem}
+
+Data debuggging considers a data item to have a high actual impact
+only when that impact is at least two standard deviations from the
+mean impact in that range. Because we assume a normal distribution of
+impacts (see below), the number of items with such impact is by
+definition less than 5\%.
+
+One can thus view the sampling procedure as a series of Bernoulli
+trials, repeatedly flipping a biased coin with a probability $p =
+0.05$ of choosing a value whose impact is anomalous (heads) and a
+probability $q = 0.95$ of choosing a value with a non-anomalous impact
+(tails). For $n$ coin flips and probability $p$ of heads, the expected
+number of times that the sampling procedure will choose an anomalous
+value is just $np$, or 1.5.
+
+Because the Poisson distribution is an excellent approximation as long
+as $n$ is at least 20 and $p$ is no more than $0.05$, it is convenient
+to use it to bound the likelihood of choosing a larger number of
+high-impact values than $x$, where $x > 1.5$ and $\lambda = np$:
+
+\begin{equation}
+Pr[X \geq x] \leq \frac{e^{-\lambda}(e \lambda)^x}{x^x}
+\end{equation}
+
+We can use this equation to show that it is highly unlikely that the
+sampling procedure would accidentally choose a large number of
+high-impact values. For example, the probability of choosing one-third
+of the high-impact values from a sample of size $K = 30$ is less than
+$3/100,000$. Therefore, the estimated impact computed by sampling is
+nearly as effective (reducing both false positives and false
+negatives) as computing the actual impact.
 
 \punt{
 \paragraph{Normal distribution of impacts.}
