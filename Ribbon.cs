@@ -26,6 +26,66 @@ namespace DataDebug
 
         }
 
+        public static System.Drawing.Color ColorFromAhsb(int a, float h, float s, float b)
+        {
+            if (0 == s)
+            {
+                return System.Drawing.Color.FromArgb(a, Convert.ToInt32(b * 255),
+                  Convert.ToInt32(b * 255), Convert.ToInt32(b * 255));
+            }
+
+            float fMax, fMid, fMin;
+            int iSextant, iMax, iMid, iMin;
+
+            if (0.5 < b)
+            {
+                fMax = b - (b * s) + s;
+                fMin = b + (b * s) - s;
+            }
+            else
+            {
+                fMax = b + (b * s);
+                fMin = b - (b * s);
+            }
+
+            iSextant = (int)Math.Floor(h / 60f);
+            if (300f <= h)
+            {
+                h -= 360f;
+            }
+            h /= 60f;
+            h -= 2f * (float)Math.Floor(((iSextant + 1f) % 6f) / 2f);
+            if (0 == iSextant % 2)
+            {
+                fMid = h * (fMax - fMin) + fMin;
+            }
+            else
+            {
+                fMid = fMin - h * (fMax - fMin);
+            }
+
+            iMax = Convert.ToInt32(fMax * 255);
+            iMid = Convert.ToInt32(fMid * 255);
+            iMin = Convert.ToInt32(fMin * 255);
+
+            switch (iSextant)
+            {
+                case 1:
+                    return System.Drawing.Color.FromArgb(a, iMid, iMax, iMin);
+                case 2:
+                    return System.Drawing.Color.FromArgb(a, iMin, iMax, iMid);
+                case 3:
+                    return System.Drawing.Color.FromArgb(a, iMin, iMid, iMax);
+                case 4:
+                    return System.Drawing.Color.FromArgb(a, iMid, iMin, iMax);
+                case 5:
+                    return System.Drawing.Color.FromArgb(a, iMax, iMin, iMid);
+                default:
+                    return System.Drawing.Color.FromArgb(a, iMax, iMid, iMin);
+            }
+        }
+
+
         /*
          * This method tries to break the worksheet apart into the composing ranges of cells. For now it only colors the ranges it identifies so that they can be seen visually.
          * If we decide to move forward with this approach, the identified ranges will be stored and analyzed afterward.
@@ -2972,7 +3032,10 @@ namespace DataDebug
                     int influence_index = 0;        //Keeps track of the current position in the influences array
                     //double max_total_delta = 0;     //The maximum influence found (for normalizing)
                     //double min_total_delta = -1;     //The minimum influence found (for normalizing)
-                    double swaps_per_range = 30.0;
+                    int swaps_per_range = 30;
+                    int number_neighbors_replaced = 0;
+                    Random rand = new Random();
+                    int current_index = 0; 
                     //Swapping values; loop over all nodes in the range
                     foreach (TreeNode parent in node.getParents())
                     {
@@ -2980,6 +3043,23 @@ namespace DataDebug
                         {
                             continue;
                         }
+                        
+                        //Generate 30 indices for swapping with siblings
+                        //string indices_string = "Current index: " + current_index + "\nRandom indices to swap: ";
+                        int[] indices = new int[swaps_per_range];
+                        int indices_pointer = 0;
+                        int random_index = 0;
+                        for (int i = 0; i < swaps_per_range; i++)
+                        {
+                            do {
+                                random_index = rand.Next(node.getParents().Count);
+                            } while (random_index == current_index);
+                            indices[indices_pointer] = random_index;
+                            //indices_string += " " + random_index;
+                            indices_pointer++;
+                        }
+                        //MessageBox.Show(indices_string);
+
                         Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
                         string formula = "";
                         if (cell.HasFormula)
@@ -2991,33 +3071,34 @@ namespace DataDebug
                         double total_delta = 0.0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
                         double delta = 0.0;   // Stores the change in outputs caused by a single swap
                         //Swapping loop - swap every sibling or a reduced number of siblings (approximately equal to swaps_per_range), for reduced complexity and runtime
-                        int number_neighbors_replaced = 0;
-                        Random rand = new Random();
-                        foreach (TreeNode sibling in node.getParents())
+                        //foreach (TreeNode sibling in node.getParents())
+                        foreach (int sibling_index in indices)
                         {
+                            //MessageBox.Show("Swapping " + current_index + " with sibling " + sibling_index);
+                            TreeNode sibling = node.getParents()[sibling_index];
                             if (sibling.getName() == parent.getName() && sibling.getWorksheetObject() == parent.getWorksheetObject())
                             {
-                                continue; // If this is the current cell, move on to the next cell
+                                continue; // If this is the current cell, move on to the next cell -- this should never happen because the sibling index should never equal the current index
                             }
-                            if (toggle_speed.Checked)
-                            {
-                                if (rand.NextDouble() > (swaps_per_range / node.getParents().Count)) //only do ~swaps_per_range swaps per range
-                                {
-                                    continue;
-                                }
-                                number_neighbors_replaced++;
-                                if (toggle_global_perturbation.Checked)
-                                {
-                                    times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
-                                }
-                            }
-                            else
-                            {
-                                if (toggle_global_perturbation.Checked)
-                                {
-                                    times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
-                                }
-                            }
+                            //if (toggle_speed.Checked)
+                            //{
+                            //    if (rand.NextDouble() > (swaps_per_range / node.getParents().Count)) //only do ~swaps_per_range swaps per range
+                            //    {
+                            //        continue;
+                            //    }
+                            //    number_neighbors_replaced++;
+                            //    if (toggle_global_perturbation.Checked)
+                            //    {
+                            //        times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
+                            //    }
+                            //}
+                            //else
+                            //{
+                            //    if (toggle_global_perturbation.Checked)
+                            //    {
+                            //        times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
+                            //    }
+                            //}
                             times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
                             Excel.Range sibling_cell = sibling.getWorksheetObject().get_Range(sibling.getName());
                             cell.Value = sibling_cell.Value; //This is the swap -- we assign the value of the sibling cell to the value of our cell
@@ -3129,6 +3210,7 @@ namespace DataDebug
                         //    parent.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
                         //}
                         //cell.Interior.Color = System.Drawing.Color.Beige;
+                        current_index++;
                     }
                     
                     //int ind = 0;
@@ -3272,10 +3354,16 @@ namespace DataDebug
                             }
                         }
                     }
+                    //if (non_zero_entries == 0)
+                    //    MessageBox.Show("non-zero-entries = 0");
+                    double output_average = 0.0;
+                    if (non_zero_entries != 0)
+                    {
+                        output_average = output_sum / (double)non_zero_entries;
+                    }
 
-                    double output_average = output_sum / (double)non_zero_entries;
                     //Find the sample standard deviation for this output
-                    double distance_sum_sq = 0.0;
+                    double variance = 0.0;
                     foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
                     {
                         for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
@@ -3284,12 +3372,15 @@ namespace DataDebug
                             {
                                 if (times_perturbed[worksheet.Index - 1][row][col] != 0)
                                 {
-                                    distance_sum_sq += Math.Pow(output_average - impacts_grid[worksheet.Index - 1][row][col][i], 2);
+                                    if (impacts_grid[worksheet.Index - 1][row][col][i] != 0.0)
+                                    {
+                                        variance += Math.Pow(output_average - impacts_grid[worksheet.Index - 1][row][col][i], 2) / (double)non_zero_entries;
+                                    }
                                 }
                             }
                         }
                     }
-                    double variance = distance_sum_sq / (double)non_zero_entries;
+                    //MessageBox.Show("distance sum sq " + distance_sum_sq);
                     double std_dev = Math.Sqrt(variance);
                     
                     //Replace entries in impacts_grid with z-scores
@@ -3299,9 +3390,16 @@ namespace DataDebug
                         {
                             for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
                             {
-                                if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                                if (times_perturbed[worksheet.Index - 1][row][col] != 0 && impacts_grid[worksheet.Index - 1][row][col][i] != 0)
                                 {
-                                    impacts_grid[worksheet.Index - 1][row][col][i] = Math.Abs((impacts_grid[worksheet.Index - 1][row][col][i] - output_average) / std_dev);
+                                    if (std_dev != 0.0)
+                                    {
+                                        impacts_grid[worksheet.Index - 1][row][col][i] = Math.Abs((impacts_grid[worksheet.Index - 1][row][col][i] - output_average) / std_dev);
+                                    }
+                                    else
+                                    {
+                                        //MessageBox.Show("Standard deviation is 0.");
+                                    }
                                 }
                             }
                         }
@@ -3331,20 +3429,22 @@ namespace DataDebug
                             {
                                 for (int i = 0; i < output_cells.Count; i++)
                                 {
-                                    //if (toggle_weighted_average.Checked)
-                                    //{
+                                    total_output_weight += output_cells[i].getWeight();
+                                    if (impacts_grid[worksheet.Index - 1][row][col][i] != 0)
+                                    {
                                         total_z_score += impacts_grid[worksheet.Index - 1][row][col][i] * output_cells[i].getWeight();
-                                        total_output_weight += output_cells[i].getWeight();
-                                    //}
-                                    //else
-                                    //{
-                                    //    total_z_score += impacts_grid[worksheet.Index - 1][row][col][i];
-                                    //}
+                                        //MessageBox.Show("output weight " + output_cells[i].getWeight());
+                                    }
+                                }
+                                if (total_output_weight != 0.0)
+                                {
+                                    average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / total_output_weight);
+                                    //MessageBox.Show("average z-score: " + (total_z_score / total_output_weight));
                                 }
                             }
                             //if(toggle_weighted_average.Checked) 
                             //{
-                                average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / total_output_weight);
+                            //    average_z_scores[worksheet.Index - 1][row][col] = (total_z_score / total_output_weight);
                             //}
                             //else 
                             //{
@@ -3353,6 +3453,35 @@ namespace DataDebug
                         }
                     }
                 }
+                //string impacts_table = "Output: \t\t\t\t\t\t";
+                //for (int i = 0; i < output_cells.Count; i++)
+                //{
+                //    impacts_table += "" + (i + 1) + "\t\t\t\t\t\t";
+                //}
+                //impacts_table += "W. Avg. Z-Score:\n";
+                //foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
+                //{
+                //    for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
+                //    {
+                //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
+                //        {
+                //            //If this cell has been perturbed, find it's average z-score
+                //            if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                //            {
+                //                impacts_table += worksheet.Name + " R" + (row + 1) + "C" + (col + 1) + ":\t\t\t\t\t";
+                //                for (int i = 0; i < output_cells.Count; i++)
+                //                {
+                //                    impacts_table += impacts_grid[worksheet.Index - 1][row][col][i] + "\t\t\t\t\t\t";
+                //                }
+                //                impacts_table += average_z_scores[worksheet.Index - 1][row][col] + "\n";
+                //            }
+                //        }
+                //    }
+                //}
+
+                //Display impacts_table_display = new Display();
+                //impacts_table_display.textBox1.Text = impacts_table;
+                //impacts_table_display.ShowDialog();
 
                 if (!toggle_weighted_average.Checked)
                 {
@@ -3368,19 +3497,34 @@ namespace DataDebug
                                 {
                                     if (times_perturbed[worksheet.Index - 1][row][col] != 0)
                                     {
-                                        if (impacts_grid[worksheet.Index - 1][row][col][i] > 2)
+                                        if (impacts_grid[worksheet.Index - 1][row][col][i] > 2.0)
                                         {
+                                            //MessageBox.Show(worksheet.Name + ":R" + (row + 1) + "C" + (col + 1) + " is an outlier with respect to output " + (i + 1) + " with a z-score of " + impacts_grid[worksheet.Index - 1][row][col][i]);
                                             int[] outlier = new int[3];
                                             outlier[0] = worksheet.Index - 1;
                                             outlier[1] = row;
                                             outlier[2] = col;
                                             outliers.Add(outlier);
+                                            //worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.Red;
+                                            //return;
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                    
+                    //for (int row = 0; row < Globals.ThisAddIn.Application.Worksheets[1].UsedRange.Rows.Count; row++)
+                    //{
+                    //    for (int col = 0; col < Globals.ThisAddIn.Application.Worksheets[1].UsedRange.Columns.Count; col++)
+                    //    {
+                    //        if (times_perturbed[0][row][col] != 0)
+                    //        {
+                    //            Globals.ThisAddIn.Application.Worksheets[3].Cells[row+1, col+1].Value = impacts_grid[0][row][col][0];
+                    //            Globals.ThisAddIn.Application.Worksheets[3].Cells[row+1, col + 3].Value = impacts_grid[0][row][col][1];
+                    //        }
+                    //    }
+                    //}
 
                     //Find the highest weighted average z-score among the outliers
                     double max_weighted_z_score = 0.0;
@@ -3409,6 +3553,8 @@ namespace DataDebug
                         }
                         worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
                     }
+
+
                 }
                 else //if (toggle_weighted_average.Checked)
                 {
@@ -3819,7 +3965,7 @@ namespace DataDebug
             //        tree += node.toGVString(0) + "\n"; //tree += node.toGVString(max_weight) + "\n";
             //        foreach (TreeNode parent in node.getParents())
             //        {
-            //            ranges_text += parent.getWorksheetObject().Index + "," + parent.getName().Replace("$","") + "," + parent.getWorksheetObject().get_Range(parent.getName()).Value +"\n";
+            //            ranges_text += parent.getWorksheetObject().Index + "," + parent.getName().Replace("$", "") + "," + parent.getWorksheetObject().get_Range(parent.getName()).Value + "\n";
             //        }
             //    }
             //}
