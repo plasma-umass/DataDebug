@@ -128,12 +128,25 @@ impact crosses a threshold of unusualness (above the 95\% confidence
 level).  In the user interface, \checkcell{} ranks these cells by coloring them in
 shades proportionally to their impact: the brighter a cell is
 highlighted, the greater impact it has.
-\checkcell{} is efficient: it operates in time linear in the number
-of data elements, which is optimal (see
-Sections~\ref{sec:algorithm} and \ref{sec:analysis}). The current prototype is untuned
-but analysis time is generally low, taking seconds to run
-on spreadsheets containing thousands of cells. We verify \checkcell{}'s effectiveness
-at finding and ranking injected errors in a suite of real spreadsheets.
+\checkcell{} is empirically and analytically efficient and effective, as we show in Sections~\ref{sec:analysis} and~\ref{sec:evaluation}. The current prototype is untuned but
+analysis time is generally low, taking seconds to run on spreadsheets
+containing thousands of cells. We verify \checkcell{}'s effectiveness
+at finding and ranking injected errors in a suite of real
+spreadsheets.
+
+\section*{Outline}
+
+The remainder of this paper is organized as
+follows. Section~\ref{sec:related} discusses related
+work. Section~\ref{sec:overview} describes the algorithms that data
+debugging employs. Section~\ref{sec:analysis} derives analytical
+results that demonstrate data debugging's runtime efficiency and
+effectiveness. Section~\ref{sec:evaluation} presents an empirical
+evaluation of data debugging in the form of \checkcell{}, measuring
+its runtime performance and its effectiveness at finding
+errors. Section~\ref{sec:future} describes directions for future work,
+and Section~\ref{sec:conclusion} concludes.
+
 %A user study verifies
 %the hypothesis that data debugging's approach of identifying data with
 %unusual impacts is effective at locating errors. With \checkcell{}'s
