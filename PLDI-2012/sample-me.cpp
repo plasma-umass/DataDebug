@@ -9,7 +9,7 @@ using namespace std;
 const int NUMRANGES = 50;
 
 // How many entries are in a "range".
-const int NUMENTRIES = 100;
+const int NUMENTRIES = 50;
 
 // How many samples do we take of a range.
 const int Samples = 30;
@@ -28,6 +28,14 @@ CLASS sumFunc (vector<CLASS> arr, int N) {
     sum += arr[i];
   }
   return sum;
+#if 0
+  if ((long) sum % 2 == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+  //return sum / (CLASS) N;
+#endif
 }
 
 // Recalculate the "spreadsheet".
@@ -37,7 +45,7 @@ CLASS recalc() {
   for (int i = 0; i < NUMRANGES; i++) {
     sum += sumFunc<CLASS>(data[i], NUMENTRIES);
   }
-  return sum;
+  return sum / NUMRANGES;
 }
 
 
@@ -130,27 +138,42 @@ main()
   }
 #endif
 
-  // Normalize the impacts.
+  // Normalize the impacts by converting them into z-scores.
+  // First, compute the means.
+  float mean[NUMRANGES];
   for (int k = 0; k < NUMRANGES; k++) {
-    float minImpact = impact[k][0];
-    float maxImpact = impact[k][0];
+    mean[k] = 0;
     for (int i = 1; i < NUMENTRIES; i++) {
-      if (impact[k][i] < minImpact) {
-	minImpact = impact[k][i];
-      }
-      if (impact[k][i] > maxImpact) {
-	maxImpact = impact[k][i];
-      }
+      mean[k] += impact[k][i];
     }
-    for (int i = 0; i < NUMENTRIES; i++) {
-      impact[k][i] = (impact[k][i] - minImpact) / (maxImpact - minImpact);
+    mean[k] /= NUMENTRIES;
+  }
+
+  // Now, the standard deviations.
+  float stddev[NUMRANGES];
+  for (int k = 0; k < NUMRANGES; k++) {
+    stddev[k] = 0;
+    for (int i = 1; i < NUMENTRIES; i++) {
+      float diff = impact[k][i] - mean[k];
+      stddev[k] += diff * diff;
+    }
+    stddev[k] /= NUMENTRIES;
+    stddev[k] = sqrt(stddev[k]);
+  }
+
+  // Now normalize.
+  for (int k = 0; k < NUMRANGES; k++) {
+    for (int i = 1; i < NUMENTRIES; i++) {
+      impact[k][i] = fabs(impact[k][i] - mean[k]) / stddev[k];
     }
   }
   
   for (int k = 0; k < NUMRANGES; k++) {
+    float v = 0;
     for (int i = 0; i < NUMENTRIES; i++) {
-      cout << impact[k][i] << endl;
+      v += impact[k][i];
     }
+    cout << v / NUMENTRIES << endl;
     //    cout << "..." << endl;
     //    cout << endl;
   }
