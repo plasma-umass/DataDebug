@@ -27,7 +27,13 @@ CLASS sumFunc (vector<CLASS> arr, int N) {
   for (int i = 0; i < N; i++) {
     sum += arr[i];
   }
-  return sum;
+  if (sum < N/4) {
+    //    cout << "WWOWOWO" << endl;
+    return 0;
+  } else {
+    //    cout << "XXXXXX" << endl;
+    return sum;
+  }
 #if 0
   if ((long) sum % 2 == 0) {
     return 1;
@@ -164,7 +170,11 @@ main()
   // Now normalize.
   for (int k = 0; k < NUMRANGES; k++) {
     for (int i = 1; i < NUMENTRIES; i++) {
-      impact[k][i] = fabs(impact[k][i] - mean[k]) / stddev[k];
+      if (stddev[k] == 0) {
+	impact[k][i] = 0;
+      } else {
+	impact[k][i] = fabs(impact[k][i] - mean[k]) / stddev[k];
+      }
     }
   }
   
