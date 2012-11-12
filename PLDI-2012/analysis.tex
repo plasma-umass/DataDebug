@@ -3,18 +3,55 @@
 % compare false positives (we have non-anomaly but by bad luck, we exchange with anomalous impacts),
 % and false negatives (we have an anomaly but by bad luck, we exchange with anomalous impacts).
 
-Analysis to come.
+This section presents an analysis of several aspects of data
+debugging: its asymptotic runtime, the effectiveness of its sampling
+approach to measure impact, and a justification of the use of the
+normal distribution to score and select outliers from the impacts.
 
+\subsection{Asymptotic Analysis}
+
+Data debugging operates in several phases: computing the dependence
+graph, performing impact analysis, and then ranking impacts. Runtime
+depends on the following parameters: the number of data items ($n$),
+the number of formulas ($f$), and the number of inputs ($i$). In
+spreadsheets, the number of inputs equals the number of data items,
+but in other contexts like databases, inputs correspond to fields, so
+$i \ll n$. Since each formula and data item must be examined at least
+once to compute the dependence graph and to measure impact,
+respectively, runtime for data debugging must be at least
+$\Omega(n+f)$.
+
+The cost of building the dependence graph varies depending on the
+structure of the computation. It has a worst-case runtime of
+$O((if)^2)$), quadratic in the total number of inputs and formulas,
+because it is theoretically possible for each formula to depend on
+every input and other formula. However, this kind of pathological
+structure is atypical. Dependence graphs normally form a tree or a
+forest of trees. In this case, the cost of constructing the dependence
+graph becomes linear in the number of inputs and formulas, or
+$O(i+f)$.
+
+Impact analysis dominates the costs of constructing the dependence
+graph and ranking impacts, since it requires recalculation of the
+computations affected by changes in the data.
+
+The impact analysis phase runs in $\Theta(n)$ time; that is, it is
+asymptotically optimal with respect to the number of
+recalculations. The impact analysis for each item requires a fixed
+number of random selections of other items in the same range. Each
+item thus triggers a constant number of recalculations, so the total
+number of recalculations is linear in the number of data items.
+
+
+\subsection{Sampling Effectiveness}
+
+\punt{
 \paragraph{Normal distribution of impacts.}
 
 Justifies use of trimming (only reporting things that are two standard
 deviations)--high confidence that they are outliers.  Average change,
 independent (random), same distribution (don't exclude same cell
 swap). Use 30 samples.
-
-\paragraph{Asymptotic analysis.}
-
-Cost to construct dependence graph, cost to perform sampling. (Suspend redraw?)
 
 \paragraph{Probability of missing important data.}
 
@@ -30,6 +67,8 @@ Cite Feller. Limitations: threshold functions.
 \item {\bf Outputs that change data type.}
 \item {\bf Macros / side-effects.}
 \end{itemize}
+}
+
 
 \subsection{Impact Outlier Analysis}
 
