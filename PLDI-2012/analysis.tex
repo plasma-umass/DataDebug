@@ -9,6 +9,7 @@ approach to measure impact, and a justification of the use of the
 normal distribution to score and select outliers from the impacts.
 
 \subsection{Asymptotic Analysis}
+\label{sec:asymptotic_analysis}
 
 Data debugging operates in several phases: computing the dependence
 graph, performing impact analysis, and then ranking impacts. Runtime
@@ -64,11 +65,12 @@ item $j$ in the same range:
 
 \noindent
 This approach, as mentioned above, would take $O(n^2)$ time and so is
-inefficient for large data sets.
+inefficient for large data sets, though it is reasonable to do for
+small ones.
 
-Instead, data debugging uses a sampling-based strategy that chooses a
-fixed number of samples $K$ (e.g., $K = 30$), with replacement, from
-the data range:
+Data debugging employs a more efficient sampling-based strategy for
+large data sets that randomly chooses (with replacement) a fixed
+number of samples $K$ (e.g., $K = 30$).
 
 \begin{equation}
 \mbox{estimated\_impact}_i = \frac{\sum_{j \in \{\mbox{sample}\}}^{N}{|\mbox{result}_i-\mbox{result}_j|}}{K}
@@ -83,7 +85,7 @@ There are two cases where this procedure could fail; below, we bound their likel
   chooses other items with similarly anomalous impacts, so the item under
   consideration appears to have no impact (the anomalous values cancel out).
 \item \textbf{False positives.} The item under consideration does
-  not have an significant impact, but the sampling procedure
+  not have a significant impact, but the sampling procedure
   repeatedly chooses items that have a large impact. Now, the item
   under consideration appears to have an anomalous impact, though it actually does not.
 \end{itemize}
@@ -92,7 +94,7 @@ In both cases, the key is to ensure that the estimated impact does not
 repeatedly sample data items with high impact. We state our theorem informally:
 
 \begin{theorem}
-The estimated impact is a close approximation to the actual impact, because it minimizes the risk of false positives and false negatives.
+Using the estimated impact closely approximates using the actual impact because it minimizes the risk of false positives and false negatives.
 \end{theorem}
 
 Data debuggging considers a data item to have a high actual impact
@@ -152,6 +154,7 @@ Cite Feller. Limitations: threshold functions.
 
 
 \subsection{Impact Outlier Analysis}
+\label{sec:outlier_analysis}
 
 Once all impact scores have been computed, only those data whose
 impacts cross some threshold of anomalousness should be
@@ -179,7 +182,7 @@ In addition, the normal has either low or zero kurtosis, which
 indicates the peakedness of the curve and heaviness of the tail;
 whether the normal has a kurtosis of 0 or 3 depends on the definition
 of kurtosis. Counting outliers from the perspective of the normal
-distribution is generally conservative, because it includes all
+distribution is generally conservative, since it includes all
 distributions with heavier tails (those with positive
 kurtosis). Because distributions with negative kurtosis generally have
 small tails, they also tend to have few outliers by definition. Thus,
