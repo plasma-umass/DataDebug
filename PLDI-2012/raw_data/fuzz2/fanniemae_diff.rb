@@ -140,8 +140,8 @@ unless NODATA
       print_color(e[:fails_input21] && COLORIZE, e[:true_input21])
       print_color(e[:fails_input22] && COLORIZE, e[:true_input22])
       print_color(e[:fails_input26] && COLORIZE, e[:true_input26])
+      print " => ".red
     end
-    print " => ".red
     print_color(e[:fails_input12] && COLORIZE, e[:fuzz_input12])
     print_color(e[:fails_input13] && COLORIZE, e[:fuzz_input13])
     print_color(e[:fails_input14] && COLORIZE, e[:fuzz_input14])
