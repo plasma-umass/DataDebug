@@ -23,3 +23,11 @@ normal distribution and non-parametric approaches like kernel
 density estimators, which can fit arbitrary distributions and
 potentially reduce the risk of false positives (at the risk of
 increasing the risk of false negatives).
+
+While \checkcell{}'s speed is reasonable, we are interested in
+developing a version that incrementally updates its impacts
+on-the-fly. This version would run in the background and detect high
+impact data as they are entered, much like modern text entry
+underlines misspelled words. We believe that having automatic
+detection of possible data errors on all the time greatly reduces
+the risk of data errors.
