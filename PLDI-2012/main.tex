@@ -15,6 +15,7 @@
 % 11pt          To set in 11-point type instead of 9-point.
 % authoryear    To obtain author/year citation style instead of numeric.
 
+\usepackage[T1]{fontenc}
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{subfigure}
@@ -93,23 +94,23 @@
 \section{Introduction}
 \input{introduction}
 
-\section{Overview}
-\label{sec:overview}
-\input{overview}
-
 \section{Related Work}
 \label{sec:related}
 \input{related}
+
+\section{Data Debugging: Algorithms}
+\label{sec:overview}
+\input{overview}
 
 %\section{Background}
 %\label{sec:background}
 %\input{background}
 
-\section{Algorithm}
-\label{sec:algorithm}
-\input{algorithm}
+%\section{Algorithm}
+%\label{sec:algorithm}
+%\input{algorithm}
 
-\section{Analysis}
+\section{Data Debugging: Analysis}
 \label{sec:analysis}
 \input{analysis}
 

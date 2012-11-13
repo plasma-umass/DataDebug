@@ -55,13 +55,13 @@ dollars~\cite{DBLP:journals/corr/abs-0803-2527,sakalerrors}.
 
 By contrast with the proliferation of tools at a programmer's disposal
 to find program errors, few tools exist to help find data errors. Part
-of the problem is that, unlike program errors, it is more difficult to
-decide whether any given data element is an error or not. For example,
-the number \texttt{1234} might be correct, or the
-correct value might be \texttt{12.34}. Typographical errors 
-can change data items by orders of magnitude. Unfortunately, finding this kind of mistake via manual data
-auditing is both onerous and does not
-scale.
+of the problem is that it can be difficult to decide whether any given
+data element is an error or not. For example, the number \texttt{1234}
+might be correct, or the correct value might
+be \texttt{12.34}. Typographical errors can change data items by
+orders of magnitude. Unfortunately, finding this kind of mistake via
+manual data auditing is both onerous and unscalable.
+
 % to even the moderate size of data in spreadsheets.
 
 
@@ -99,14 +99,14 @@ impact on the results of a computation.
 
 Data debugging works by first building a data dependence graph of the
 computations. It then measures data impact by replacing data items
-with randomly chosen data from the same distribution, such as columns
+with randomly chosen data from the same group, such as columns
 in databases or ranges in spreadsheets, and observing the resulting
 changes in computations that depend on that data. This non-parametric
 approach allows data debugging to find errors in both numeric and
 non-numeric data, without any requirement that data follow any
 statistical distribution.
 
-By calling attention to data with high impacts, data
+By calling attention to data with high impact, data
 debugging can provide insights into both the data and the computation
 and reveal errors. We believe data debugging is broadly applicable, though it is
 especially well-suited for data-intensive programming settings
@@ -128,12 +128,25 @@ impact crosses a threshold of unusualness (above the 95\% confidence
 level).  In the user interface, \checkcell{} ranks these cells by coloring them in
 shades proportionally to their impact: the brighter a cell is
 highlighted, the greater impact it has.
-\checkcell{} is efficient: it operates in time linear in the number
-of data elements, which is optimal (see
-Sections~\ref{sec:algorithm} and \ref{sec:analysis}). The current prototype is untuned
-but analysis time is generally low, taking seconds to run
-on spreadsheets containing thousands of cells. We verify \checkcell{}'s effectiveness
-at finding and ranking injected errors in a suite of real spreadsheets.
+\checkcell{} is empirically and analytically efficient and effective, as we show in Sections~\ref{sec:analysis} and~\ref{sec:evaluation}. The current prototype is untuned but
+analysis time is generally low, taking seconds to run on spreadsheets
+containing thousands of cells. We verify \checkcell{}'s effectiveness
+at finding and ranking injected errors in a suite of real
+spreadsheets.
+
+\section*{Outline}
+
+The remainder of this paper is organized as
+follows. Section~\ref{sec:related} discusses related
+work. Section~\ref{sec:overview} describes the algorithms that data
+debugging employs. Section~\ref{sec:analysis} derives analytical
+results that demonstrate data debugging's runtime efficiency and
+effectiveness. Section~\ref{sec:evaluation} presents an empirical
+evaluation of data debugging in the form of \checkcell{}, measuring
+its runtime performance and its effectiveness at finding
+errors. Section~\ref{sec:future} describes directions for future work,
+and Section~\ref{sec:conclusion} concludes.
+
 %A user study verifies
 %the hypothesis that data debugging's approach of identifying data with
 %unusual impacts is effective at locating errors. With \checkcell{}'s

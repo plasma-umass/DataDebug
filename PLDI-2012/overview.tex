@@ -1,4 +1,10 @@
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3in]{overview-example}
+  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{fig:personal_budget}}
+\end{figure}
 
+\punt{
 \begin{table}[t!]
   \centering
     \begin{tabular}{|c|r|r|r|}
@@ -28,49 +34,70 @@
     \textsf{\textsf{\bf{11}}} & \textsf{Fancy dinner tonight?} & \textsf{Yes}   &  \\
     \hline
     \end{tabular}%
-  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{tab:personal_budget}}
+  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error.\label{tab:personal_budget}}
 \end{table}%
+}
 
-
-This section provides an overview of how data debugging
-works. Section~\ref{sec:algorithm} describes the algorithms in full
-detail, and Section~\ref{sec:analysis} includes formal analysis of various
-aspects of data debugging, including asymptotic performance and
-statistical effectiveness.
+This section describes in detail the algorithms that data debugging
+employs. Section~\ref{sec:analysis} includes formal analysis of various
+aspects of the data debugging algorithms described here, including
+asymptotic performance and statistical effectiveness.
 
 % in cell \texttt{B3}
 
 % the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
 
-Throughout this section, we use a running example of a budget adapted
-from a sample template included with Excel, shown in
-Table~\ref{tab:personal_budget}. This spreadsheet tracks expected
-versus real spending on monthly expenses. The spreadsheet indicates
-whether the user can afford to splurge and go out to a fancy
-restaurant, which is when real spending is at least \$150 less than
-expected. However, this example contains an unfortunate typographical
-error that could lead the user to spend money that he or she does not
-actually have. Note that this spreadsheet has been substantially
-reduced from the original, so that finding this error manually in the
-original spreadsheet would be substantially more difficult.
+Throughout this section, we illustrate these algorithms with a running
+example of a budget shown in Figure~\ref{fig:personal_budget}, which
+is a reduced version of a sample template included with Microsoft Excel. This
+spreadsheet tracks expected versus real spending on monthly
+expenses. The spreadsheet indicates whether the user can afford to
+splurge and go out to a fancy restaurant, which is when real spending
+is at least \$150 less than expected. However, this example contains
+an unfortunate typographical error that could lead the user to spend
+money that he or she does not actually have.
+
+% In this case, the error is relatively easy to find, but 
+%finding this error manually in the original spreadsheet would be
+%substantially more difficult.
 
 \paragraph{Dependence Analysis.}
 The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs). For example, in a database
-management system, data inputs would be tuples (records) and computations would
-be queries. In a spreadsheet, inputs are data in cells, while
-computations are either charts or formulas that are not used by other formulas.
+management system, data inputs would be tuples (records) and
+computations would be queries.
+
+In a spreadsheet, inputs are data in cells, while computations are
+either charts or formulas that are not used by other formulas.
+\checkcell{} uses techniques similar to past work to identify
+dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
+support for charts.
+
+Charts are often a key ``result'' of a spreadsheet computation, so it
+is important to detect data that triggers dramatic changes in
+charts. To handle charts, \checkcell{} treats them as if they were
+formulas that compute the average over their inputs. A data value that
+significantly alters the average will thus be considered to have a
+large impact on the graph. Any similar summary statistic like standard
+deviation would also be suitable.
 
 \begin{figure}[!t]
 \centering
+\includegraphics[width=3in]{overview-example-highlighted}
+  \caption{The same spreadsheet, with the error highlighted by \checkcell{} as the value with the most impact on the computation.\label{fig:personal_budget_highlighted}}
+\end{figure}
+
+\begin{figure}[!b]
+\centering
 \includegraphics[width=1.75in]{dependence-graph}
-\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Table~\ref{tab:personal_budget}.\label{fig:dependence-graph}}
+\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Figure~\ref{fig:personal_budget}.\label{fig:dependence-graph}}
 \end{figure}
  
 Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
 extracts from this spreadsheet. The final formula, the only output in
 this spreadsheet (shown in black), depends on two formulas, which depend on two
 disjoint data ranges.
+
 
 \paragraph{Impact Analysis.}
 The next step is to iterate through the data itself to test the impact
@@ -88,19 +115,19 @@ is the normalized change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
-For the spreadsheet in Table~\ref{tab:personal_budget}, \checkcell{}
-starts with cell \texttt{B2}. It chooses a random item from the same
-range, for example, cell \texttt{B5}. Replacing \texttt{B2}
-with \texttt{B5} results in a new sum, \$4352.50. Since this sum does
+For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
+starts with cell \texttt{B3}. It chooses a random item from the same
+range, for example, cell \texttt{B6}. Replacing \texttt{B3}
+with \texttt{B6} results in a new sum, \$4352.50. Since this sum does
 not change the \texttt{Yes} answer in the formula, the impact score
-for cell \texttt{B2} remains 0.
+for cell \texttt{B3} remains 0.
 
-However, the same procedure for cell \texttt{B3} is likely to have a
-different effect.  For example, replacing \texttt{B3}
-with \texttt{B8} yields a sum of \$1866.25. The difference
+However, the same procedure for cell \texttt{B4} is likely to have a
+different effect.  For example, replacing \texttt{B4}
+with \texttt{B9} yields a sum of \$1866.25. The difference
 between this sum and actual spending has now dropped below \$150,
 triggering a change in the result to \texttt{No}. \checkcell{} then
-adds 1 to cell \texttt{B3}'s impact score.
+adds 1 to cell \texttt{B4}'s impact score.
 
 % Each data item maintains a separate impact score for every computation.
 
@@ -108,7 +135,11 @@ To ensure a high degree of statistical confidence in the impact score,
 this process is repeated a fixed number of times (at least 30),
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of iterations, resulting in an
-average absolute deviation for each data item's impact.
+average absolute deviation for each data item's
+impact. Section~\ref{sec:asymptotic_analysis} shows that the runtime
+efficiency of this approach is asymptotically optimal, and
+Section~\ref{sec:sampling_effectiveness} explains why it is nearly as
+effective as checking each item's impact exhaustively.
 
 \paragraph{Impact Scoring.}
 Finally, the impacts of each data item are normalized by transforming
@@ -122,7 +153,7 @@ more than a 95\% level of confidence that these are outliers.  Note
 that this interpretation does not depend on normality assumptions
 about the data or its impact; in fact, using the normal distribution
 to discover anomalous impacts is conservative, as
-Section~\ref{sec:analysis} explains.
+Section~\ref{sec:outlier_analysis} explains.
 
 Each data item's non-zero absolute z-scores are then averaged across
 all the outputs, and data debugging assigns that average as the
@@ -134,7 +165,9 @@ for displaying the relative anomalousness of the impact of particular
 data items, e.g., by coloring such values in brighter colors
 corresponding to their distance from the mean.
 
-FIX ME here's where we show outliers for this part.
+Figure~\ref{fig:personal_budget_highlighted} shows the effect of
+running \checkcell{}, which in this case identifies cell \texttt{B4}
+as the only one with a significant impact on the spreadsheet.
 
 % ``score'' the impact by highlighting the values proportional to their z-score
 

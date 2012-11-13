@@ -1,15 +1,140 @@
-Analysis to come.
+% anomaly issue: we want to compare the effect of making 30 (K) random choices to 
+% systematic exploration of the space (as in, Sum_{j != i}{|effect(a_j)-effect(a_i)} / N).
+% compare false positives (we have non-anomaly but by bad luck, we exchange with anomalous impacts),
+% and false negatives (we have an anomaly but by bad luck, we exchange with anomalous impacts).
 
+This section presents an analysis of several aspects of data
+debugging: its asymptotic runtime, the effectiveness of its sampling
+approach to measure impact, and a justification of the use of the
+normal distribution to score and select outliers from the impacts.
+
+\subsection{Asymptotic Analysis}
+\label{sec:asymptotic_analysis}
+
+Data debugging operates in several phases: computing the dependence
+graph, performing impact analysis, and then ranking impacts. Runtime
+depends on the following parameters: the number of data items ($n$),
+the number of formulas ($f$), and the number of inputs ($i$). In
+spreadsheets, the number of inputs equals the number of data items,
+but in other contexts like databases, inputs correspond to fields, so
+$i \ll n$. Since each formula and data item must be examined at least
+once to compute the dependence graph and to measure impact,
+respectively, runtime for data debugging must be 
+$\Omega(n+f)$.
+
+The cost of building the dependence graph varies depending on the
+structure of the computation. It has a worst-case runtime of
+$O((i*f)^2)$), quadratic in the total number of inputs and formulas,
+because it is theoretically possible for each formula to depend on
+every input and other formula. However, this kind of pathological
+structure is atypical. Dependence graphs normally form a tree or a
+forest of trees. In this case, the cost of constructing the dependence
+graph becomes linear in the number of inputs and formulas, or
+$O(i+f)$.
+
+Impact analysis dominates the costs of constructing the dependence
+graph and ranking impacts, since it requires recalculation of the
+computations affected by changes in the data.
+
+A naive implementation of impact analysis that checked the impact of
+each data item by systematically replacing it with every other item in
+the same range would require $O(n^2)$ time. Worse, each of these
+iterations requires potentially costly recalculations. Such an
+approach would make data debugging unusable in practice.
+ 
+By using a fixed number of random selections, data debugging keeps the
+total number of recalculations to $\Theta(n)$, linear in the number of
+data items, which is optimal. Section~\ref{sec:sampling_effectiveness}
+explains why this strategy approximates the effect of a complete
+examination of other inputs, while minimizing execution time.
+
+Finally, ranking impacts involves only two linear passes over the
+impacts to compute absolute z-scores, so it also operates in (optimal)
+linear time in the number of impacts.
+
+\subsection{Sampling Effectiveness}
+\label{sec:sampling_effectiveness}
+
+A complete strategy for measuring the impact of any data item $i$ is to
+systematically measure the impact of replacing it with every other
+item $j$ in the same range:
+
+\begin{equation}
+\mbox{impact}_i = \frac{\sum_{j \neq i}^{N}{|\mbox{result}_i-\mbox{result}_j|}}{N}
+\end{equation}
+
+\noindent
+This approach, as mentioned above, would take $O(n^2)$ time and so is
+inefficient for large data sets, though it is reasonable to do for
+small ones.
+
+Data debugging employs a more efficient sampling-based strategy for
+large data sets that randomly chooses (with replacement) a fixed
+number of samples $K$ (e.g., $K = 30$).
+
+\begin{equation}
+\mbox{estimated\_impact}_i = \frac{\sum_{j \in \{\mbox{sample}\}}^{N}{|\mbox{result}_i-\mbox{result}_j|}}{K}
+\end{equation}
+
+\noindent
+There are two cases where this procedure could fail; below, we bound their likelihood.
+
+\begin{itemize}
+\item \textbf{False negatives.} The item under consideration has a
+  large actual impact, but the sampling procedure repeatedly
+  chooses other items with similarly anomalous impacts, so the item under
+  consideration appears to have no impact (the anomalous values cancel out).
+\item \textbf{False positives.} The item under consideration does
+  not have a significant impact, but the sampling procedure
+  repeatedly chooses items that have a large impact. Now, the item
+  under consideration appears to have an anomalous impact, though it actually does not.
+\end{itemize}
+
+In both cases, the key is to ensure that the estimated impact does not
+repeatedly sample data items with high impact. We state our theorem informally:
+
+\begin{theorem}
+Using the estimated impact closely approximates using the actual impact because it minimizes the risk of false positives and false negatives.
+\end{theorem}
+
+Data debuggging considers a data item to have a high actual impact
+only when that impact is at least two standard deviations from the
+mean impact in that range. Because we assume a normal distribution of
+impacts (see below), the number of items with such impact is by
+definition less than 5\%.
+
+One can thus view the sampling procedure as a series of Bernoulli
+trials, repeatedly flipping a biased coin with a probability $p =
+0.05$ of choosing a value whose impact is anomalous (heads) and a
+probability $q = 0.95$ of choosing a value with a non-anomalous impact
+(tails). For $n$ coin flips and probability $p$ of heads, the expected
+number of times that the sampling procedure will choose an anomalous
+value is just $np$, or 1.5.
+
+Because the Poisson distribution is an excellent approximation as long
+as $n$ is at least 20 and $p$ is no more than $0.05$, it is convenient
+to use it to bound the likelihood of choosing a larger number of
+high-impact values than $x$, where $x > 1.5$ and $\lambda = np$:
+
+\begin{equation}
+Pr[X \geq x] \leq \frac{e^{-\lambda}(e \lambda)^x}{x^x}
+\end{equation}
+
+We can use this equation to show that it is highly unlikely that the
+sampling procedure would accidentally choose a large number of
+high-impact values. For example, the probability of choosing one-third
+of the high-impact values from a sample of size $K = 30$ is less than
+$3/100,000$. Therefore, the estimated impact computed by sampling is
+nearly as effective (reducing both false positives and false
+negatives) as computing the actual impact.
+
+\punt{
 \paragraph{Normal distribution of impacts.}
 
 Justifies use of trimming (only reporting things that are two standard
 deviations)--high confidence that they are outliers.  Average change,
 independent (random), same distribution (don't exclude same cell
 swap). Use 30 samples.
-
-\paragraph{Asymptotic analysis.}
-
-Cost to construct dependence graph, cost to perform sampling. (Suspend redraw?)
 
 \paragraph{Probability of missing important data.}
 
@@ -25,8 +150,11 @@ Cite Feller. Limitations: threshold functions.
 \item {\bf Outputs that change data type.}
 \item {\bf Macros / side-effects.}
 \end{itemize}
+}
+
 
 \subsection{Impact Outlier Analysis}
+\label{sec:outlier_analysis}
 
 Once all impact scores have been computed, only those data whose
 impacts cross some threshold of anomalousness should be
@@ -38,28 +166,33 @@ words, this corresponds to a 95\% confidence level that these are
 anomalies.
 
 In the absence of knowledge of the distribution of impact scores, using
-the normal distribution is the most conservative approach. That is, it
-reports no false negatives, at the risk of introducing some false
+the normal distribution is in general a conservative approach. That is, it
+is likely to report few false negatives, at the risk of introducing some false
 positives. This fact derives from two particular characteristics of the
 normal distribution: its low \emph{skewness} and \emph{kurtosis}.
 
 The normal distribution has zero skewness, where skew is the
 distribution around the mean; in other words, it is perfectly
-symmetric. Any non-normal distribution by definition has a greater
+symmetric. Any asymmetric distribution by definition has a greater
 number of points either to the left or to the right of the mean. By
 choosing outliers from the tails of the normal, \checkcell{} also
 includes the skewed tails of any other distribution.
 
-In addition, the normal has either low (3) or zero kurtosis, which
-indicates the heaviness of the tail (the choice of zero or 3 depends
-on which definition of kurtosis one uses). Counting outliers from the
-perspective of the normal distribution is also conservative, because
-it includes all distributions with heavier tails. Distributions with
-negative kurtosis actually have finite \emph{support}, meaning that
-their tails eventually become zero, dropping into the x-axis at some
-point on either side. It is difficult to argue that these
-distributions have any outliers at all, by virtue of the fact that
-they have extremely small tails.
+In addition, the normal has either low or zero kurtosis, which
+indicates the peakedness of the curve and heaviness of the tail;
+whether the normal has a kurtosis of 0 or 3 depends on the definition
+of kurtosis. Counting outliers from the perspective of the normal
+distribution is generally conservative, since it includes all
+distributions with heavier tails (those with positive
+kurtosis). Because distributions with negative kurtosis generally have
+small tails, they also tend to have few outliers by definition. Thus,
+failing to report outliers for distributions with negative kurtosis is
+generally safe.
+
+One exception worth noting and a limitation of this approach is
+symmetric bimodal distributions, where the outlier values are not only
+in the tail but also centered around the mean. Using the normal as a
+reference would not uncover such outliers.
 
 % we just need to report outliers in the impact. assuming the impacts
 % are normal is a conservative approach: the normal has 0 skewness
