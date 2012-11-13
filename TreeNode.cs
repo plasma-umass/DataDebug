@@ -20,7 +20,8 @@ namespace DataDebug
         private string name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>_to_<EndCell>; for charts it is "Chart<Name of chart>"
         private string worksheet;  //This keeps track of the worksheet where this cell/range/chart is located
         private double weight;  //The weight of the node as computed by propagating values down the tree
-        private bool chart; 
+        private bool chart;
+        private bool is_formula; //this indicates whether this node is a formula
         private System.Drawing.Color originalColor;
         //private int originalColor;  //For using ColorIndex property instead of Color property
         private int colorBit = 0; 
@@ -33,6 +34,7 @@ namespace DataDebug
             worksheet = ws;
             weight = 0.0;
             chart = false;
+            is_formula = false;
         }
 
         public string toString()
@@ -217,6 +219,23 @@ namespace DataDebug
             {
                 colorBit = 1; 
                 originalColor = color;
+            }
+        }
+
+        public void setIsFormula()
+        {
+            is_formula = true;
+        }
+
+        public bool isFormula()
+        {
+            if (is_formula == true)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
