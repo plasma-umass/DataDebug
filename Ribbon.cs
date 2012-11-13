@@ -399,6 +399,8 @@ namespace DataDebug
          */
         private void constructTree()
         {
+            input_cells_in_computation_count = 0;
+            formula_cells_count = 0;
             System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
             System.Diagnostics.Stopwatch tree_building_stopwatch = new System.Diagnostics.Stopwatch();
             System.Diagnostics.Stopwatch swapping_stopwatch = new System.Diagnostics.Stopwatch();
@@ -2934,9 +2936,12 @@ namespace DataDebug
                     }
                     catch   //If the output is a string
                     {
-                        string s = nodeWorksheet.get_Range(n.getName()).Value;
-                        StartValue sv = new StartValue(s);
-                        starting_outputs.Add(sv); //starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value); //If it doesn't work, it must be a string output
+                        //if (!nodeWorksheet.get_Range(n.getName()).Value is DateTime)
+                        //{
+                            string s = (string)nodeWorksheet.get_Range(n.getName()).Value.ToString();
+                            StartValue sv = new StartValue(s);
+                            starting_outputs.Add(sv); //starting_outputs.Add(activeWorksheet.get_Range(n.getName()).Value); //If it doesn't work, it must be a string output
+                        //}
                     }
                 }
             }
