@@ -4,11 +4,10 @@
 % and false negatives (we have an anomaly but by bad luck, we exchange with anomalous impacts).
 
 This section presents an analysis of several aspects of data
-debugging: its asymptotic runtime, the effectiveness of its sampling
-approach to measure impact, and a justification of the use of the
-normal distribution to score and select outliers from the impacts.
+debugging: its asymptotic runtime, its sampling
+approach to measure impact, and its scoring to perform impact outlier analysis.
 
-\subsection{Asymptotic Analysis}
+\subsection{Asymptotic Runtime}
 \label{sec:asymptotic_analysis}
 
 Data debugging operates in several phases: computing the dependence
@@ -43,8 +42,8 @@ iterations requires potentially costly recalculations. Such an
 approach would make data debugging unusable in practice.
  
 By using a fixed number of random selections, data debugging keeps the
-total number of recalculations to $\Theta(n)$, linear in the number of
-data items, which is optimal. Section~\ref{sec:sampling_effectiveness}
+total number of recalculations to $O(n)$, linear in the number of
+data items. Any strategy that visits each data item at least once takes $O(n)$ time, so this bound is tight. Section~\ref{sec:sampling_effectiveness}
 explains why this strategy approximates the effect of a complete
 examination of other inputs, while minimizing execution time.
 
@@ -77,7 +76,7 @@ number of samples $K$ (e.g., $K = 30$).
 \end{equation}
 
 \noindent
-There are two cases where this procedure could fail; below, we bound their likelihood.
+There are two cases where this procedure fails; below, we bound their likelihood.
 
 \begin{itemize}
 \item \textbf{False negatives.} The item under consideration has a
@@ -91,17 +90,21 @@ There are two cases where this procedure could fail; below, we bound their likel
 \end{itemize}
 
 In both cases, the key is to ensure that the estimated impact does not
-repeatedly sample data items with high impact. We state our theorem informally:
+repeatedly sample data items with high impact:
 
 \begin{theorem}
-Using the estimated impact closely approximates using the actual impact because it minimizes the risk of false positives and false negatives.
+When the impact distribution is approximately normal, the estimated impact closely approximates the actual impact because it minimizes the risk of false positives and false negatives.
 \end{theorem}
+
+Impacts are not guaranteed to follow a normal distribution, because we
+allow for arbitrary computations.  However, when computations include
+averages, as is often the case in spreadsheets, the impact scores will
+follow the normal by virtue of the Central Limit Theorem.
 
 Data debuggging considers a data item to have a high actual impact
 only when that impact is at least two standard deviations from the
-mean impact in that range. Because we assume a normal distribution of
-impacts (see below), the number of items with such impact is by
-definition less than 5\%.
+mean impact in that range. When impacts follow a normal distribution,
+the number of items with unusual impact will be less than 5\%.
 
 One can thus view the sampling procedure as a series of Bernoulli
 trials, repeatedly flipping a biased coin with a probability $p =
@@ -166,7 +169,7 @@ words, this corresponds to a 95\% confidence level that these are
 anomalies.
 
 In the absence of knowledge of the distribution of impact scores, using
-the normal distribution is in general a conservative approach. That is, it
+the normal distribution is a conservative approach. That is, it
 is likely to report few false negatives, at the risk of introducing some false
 positives. This fact derives from two particular characteristics of the
 normal distribution: its low \emph{skewness} and \emph{kurtosis}.
@@ -176,7 +179,7 @@ distribution around the mean; in other words, it is perfectly
 symmetric. Any asymmetric distribution by definition has a greater
 number of points either to the left or to the right of the mean. By
 choosing outliers from the tails of the normal, \checkcell{} also
-includes the skewed tails of any other distribution.
+includes one of the skewed tails of any asymmetric distribution.
 
 In addition, the normal has either low or zero kurtosis, which
 indicates the peakedness of the curve and heaviness of the tail;
@@ -185,12 +188,12 @@ of kurtosis. Counting outliers from the perspective of the normal
 distribution is generally conservative, since it includes all
 distributions with heavier tails (those with positive
 kurtosis). Because distributions with negative kurtosis generally have
-small tails, they also tend to have few outliers by definition. Thus,
+small tails, they also tend to have few outliers, by definition. Thus,
 failing to report outliers for distributions with negative kurtosis is
-generally safe.
+usually safe.
 
 One exception worth noting and a limitation of this approach is
-symmetric bimodal distributions, where the outlier values are not only
+symmetric multimodal distributions, where the outlier values are not only
 in the tail but also centered around the mean. Using the normal as a
 reference would not uncover such outliers.
 

@@ -63,10 +63,7 @@ money that he or she does not actually have.
 
 \paragraph{Dependence Analysis.}
 The first step in data debugging is to identify the relationship of
-data (inputs) to computations (outputs). For example, in a database
-management system, data inputs would be tuples (records) and
-computations would be queries.
-
+data (inputs) to computations (outputs).
 In a spreadsheet, inputs are data in cells, while computations are
 either charts or formulas that are not used by other formulas.
 \checkcell{} uses techniques similar to past work to identify
@@ -77,9 +74,8 @@ Charts are often a key ``result'' of a spreadsheet computation, so it
 is important to detect data that triggers dramatic changes in
 charts. To handle charts, \checkcell{} treats them as if they were
 formulas that compute the average over their inputs. A data value that
-significantly alters the average will thus be considered to have a
-large impact on the graph. Any similar summary statistic like standard
-deviation would also be suitable.
+significantly alters the average is considered to have an
+unusual impact on the chart.
 
 \begin{figure}[!t]
 \centering
@@ -111,7 +107,7 @@ The computations are then recalculated using this new dataset. Changes
 in the computations are recorded as their \emph{impact scores} on each
 data item.  The impact score for a computation depends on whether the
 output is numeric or non-numeric. For numeric data, the impact score
-is the normalized change to the original value.
+is the absolute change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
@@ -131,35 +127,32 @@ adds 1 to cell \texttt{B4}'s impact score.
 
 % Each data item maintains a separate impact score for every computation.
 
-To ensure a high degree of statistical confidence in the impact score,
+To minimize sampling error,
 this process is repeated a fixed number of times (at least 30),
 accumulating the impact scores associated with each datum. The impact
-score is then divided by the number of iterations, resulting in an
-average absolute deviation for each data item's
-impact. Section~\ref{sec:asymptotic_analysis} shows that the runtime
+score is then divided by the number of iterations. Section~\ref{sec:asymptotic_analysis} shows that the runtime
 efficiency of this approach is asymptotically optimal, and
 Section~\ref{sec:sampling_effectiveness} explains why it is nearly as
 effective as checking each item's impact exhaustively.
 
 \paragraph{Impact Scoring.}
 Finally, the impacts of each data item are normalized by transforming
-them into absolute z-scores, where $|z|$ is the absolute distance of
+them into a test statistic $z$, the absolute distance of
 each item from the sample mean, divided by the sample standard
 deviation. This \emph{normalized impact score} represents the distance
 from the mean impact, in numbers of standard deviations. A standard
 approach, which we adopt here, is to only report data whose impact is
-at least two standard deviations away from the mean, corresponding to
-more than a 95\% level of confidence that these are outliers.  Note
+at least two standard deviations away from the mean.  Note
 that this interpretation does not depend on normality assumptions
 about the data or its impact; in fact, using the normal distribution
 to discover anomalous impacts is conservative, as
 Section~\ref{sec:outlier_analysis} explains.
 
-Each data item's non-zero absolute z-scores are then averaged across
+Each data item's normalized impact scores are then averaged across
 all the outputs, and data debugging assigns that average as the
 \emph{overall impact score} of each data item. Intuitively, data with
-large overall impact scores either have an extremely high impact on a
-small number of computations, or a high impact on many
+large overall impact scores either have an extremely unusual impact on a
+small number of computations, or an unusual impact on many
 computations. The overall impact score is used both for ranking and
 for displaying the relative anomalousness of the impact of particular
 data items, e.g., by coloring such values in brighter colors
@@ -167,7 +160,7 @@ corresponding to their distance from the mean.
 
 Figure~\ref{fig:personal_budget_highlighted} shows the effect of
 running \checkcell{}, which in this case identifies cell \texttt{B4}
-as the only one with a significant impact on the spreadsheet.
+as the only one with an unusual impact on the spreadsheet.
 
 % ``score'' the impact by highlighting the values proportional to their z-score
 

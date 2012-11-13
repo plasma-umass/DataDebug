@@ -1,4 +1,67 @@
-\subsection{Benchmarks}
+We evaluate \checkcell{} across two dimensions: its runtime efficiency
+and its effectiveness at finding errors.
+
+Our experimental platform is a 13'' MacBook Air equipped 4GB of RAM
+and an Intel Core i5-2557M processor running at 1.70GHz. The operating
+system is Windows 7 Professional (SP1), which executes non-virtualized
+(via Bootcamp). \checkcell{} was compiled using Microsoft Visual C\#
+2010, and runs as an add-in in Microsoft Excel 2010.
+
+\subsection{Execution Time}
+
+To measure the runtime of \checkcell{}, we run it on a random subset
+of 30 spreadsheets drawn from those spreadsheets in the EUSES
+spreadsheet corpus~\cite{Fisher:2005:ESC:1082983.1083242} that contain
+formulas.  Table~\ref{tab:spreadsheet_characteristics} includes
+characteristics of these spreadsheets, ordered by the number of
+formulas each contains. We report the raw number of cells containing
+data and the number of these involved in computations; in the latter,
+a cell that is involved in two computations is counted twice.
+
+\begin{table}[t!]
+  \centering
+    \begin{tabular}{l|rrr}
+      \textsf{\bf{Spreadsheet}} & \textsf{\bf{Formulas}} & \textsf{\bf{Cells}} & \textsf{\bf{Cells}} \\
+                                &                        & \textsf{\bf{(Raw)}} & \textsf{\bf{(Computed)}} \\
+    \hline
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
+    \hline
+    \end{tabular}%
+  \caption{Characteristics of the benchmark suite of spreadsheets evaluated here.\label{tab:spreadsheet_characteristics}}
+\end{table}
+
+% Info about the benchmarks.
+
+% \subsection{Benchmarks}
 
 \subsection{Case Studies}
 
