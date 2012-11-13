@@ -1,19 +1,22 @@
 In future work, we plan to explore applying data debugging to other
-domains, including database management systems, Hadoop/MapReduce
-tasks~\cite{dean2008mapreduce,hadoop}, and scientific computing environments, especially R. We expect
-all of these domains will require some tailoring of the existing
-algorithms to their particular context. For databases, we plan to
-treat as computations both stored procedures and cached queries. While
-it is straightforward to apply data debugging to databases when
-queries have no side effects, handling queries that do modify the
-database will take some care in order to avoid an excessive
-performance penalty due to copying. A similar performance concern
-arises with Hadoop, where the key computation is the relatively costly
-reduction step. Data debugging will also likely need to take into
-account features of the R language in order to work effectively in
-that context. Finally, we are interested in exploring the
-effectiveness of data debugging in conventional programming language
-settings.
+domains, including Hadoop/MapReduce tasks~\cite{dean2008mapreduce,hadoop}, scientific
+computing environments like R, and database management systems (especially those with
+support for ``what-if'' queries~\cite{Balmin:2000:HQO:645926.672016}).
+
+We expect all of these domains will require some tailoring of the
+existing algorithms to their particular context. For databases, we
+plan to treat as computations both stored procedures and cached
+queries. While it is straightforward to apply data debugging to
+databases when queries have no side effects, handling queries that do
+modify the database will take some care in order to avoid an excessive
+performance penalty due to copying.
+
+A similar performance concern arises with Hadoop, where the key
+computation is the relatively costly reduction step. Data debugging
+will also likely need to take into account features of the R language
+in order to work effectively in that context. Finally, we are
+interested in exploring the effectiveness of data debugging in
+conventional programming language settings.
 
 We also plan to explore other ways of ranking impacts. Our current
 approach looks for outliers assuming a normal distribution; this
