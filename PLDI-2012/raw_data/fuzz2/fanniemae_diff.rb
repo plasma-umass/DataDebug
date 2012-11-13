@@ -128,30 +128,30 @@ puts "Error Rate: " + (errors.size.to_f / count.to_f * 100).to_s + "%"
 
 unless NODATA
   errors.each do |e|
-    print "\"#{e[:true_col]}\","
-    print_color(e[:fails_input12] && COLORIZE, e[:true_input12])
-    print_color(e[:fails_input13] && COLORIZE, e[:true_input13])
-    print_color(e[:fails_input14] && COLORIZE, e[:true_input14])
-    print_color(e[:fails_input15] && COLORIZE, e[:true_input15])
-    print_color(e[:fails_input16] && COLORIZE, e[:true_input16])
-    print_color(e[:fails_input18] && COLORIZE, e[:true_input18])
-    print_color(e[:fails_input19] && COLORIZE, e[:true_input19])
-    print_color(e[:fails_input21] && COLORIZE, e[:true_input21])
-    print_color(e[:fails_input22] && COLORIZE, e[:true_input22])
-    print_color(e[:fails_input26] && COLORIZE, e[:true_input26])
     if COLORIZE
-      print " => ".red
-      print_color(e[:fails_input12] && COLORIZE, e[:fuzz_input12])
-      print_color(e[:fails_input13] && COLORIZE, e[:fuzz_input13])
-      print_color(e[:fails_input14] && COLORIZE, e[:fuzz_input14])
-      print_color(e[:fails_input15] && COLORIZE, e[:fuzz_input15])
-      print_color(e[:fails_input16] && COLORIZE, e[:fuzz_input16])
-      print_color(e[:fails_input18] && COLORIZE, e[:fuzz_input18])
-      print_color(e[:fails_input19] && COLORIZE, e[:fuzz_input19])
-      print_color(e[:fails_input21] && COLORIZE, e[:fuzz_input21])
-      print_color(e[:fails_input22] && COLORIZE, e[:fuzz_input22])
-      print_color(e[:fails_input26] && COLORIZE, e[:fuzz_input26])
+      print "\"#{e[:true_col]}\","
+      print_color(e[:fails_input12] && COLORIZE, e[:true_input12])
+      print_color(e[:fails_input13] && COLORIZE, e[:true_input13])
+      print_color(e[:fails_input14] && COLORIZE, e[:true_input14])
+      print_color(e[:fails_input15] && COLORIZE, e[:true_input15])
+      print_color(e[:fails_input16] && COLORIZE, e[:true_input16])
+      print_color(e[:fails_input18] && COLORIZE, e[:true_input18])
+      print_color(e[:fails_input19] && COLORIZE, e[:true_input19])
+      print_color(e[:fails_input21] && COLORIZE, e[:true_input21])
+      print_color(e[:fails_input22] && COLORIZE, e[:true_input22])
+      print_color(e[:fails_input26] && COLORIZE, e[:true_input26])
     end
+    print " => ".red
+    print_color(e[:fails_input12] && COLORIZE, e[:fuzz_input12])
+    print_color(e[:fails_input13] && COLORIZE, e[:fuzz_input13])
+    print_color(e[:fails_input14] && COLORIZE, e[:fuzz_input14])
+    print_color(e[:fails_input15] && COLORIZE, e[:fuzz_input15])
+    print_color(e[:fails_input16] && COLORIZE, e[:fuzz_input16])
+    print_color(e[:fails_input18] && COLORIZE, e[:fuzz_input18])
+    print_color(e[:fails_input19] && COLORIZE, e[:fuzz_input19])
+    print_color(e[:fails_input21] && COLORIZE, e[:fuzz_input21])
+    print_color(e[:fails_input22] && COLORIZE, e[:fuzz_input22])
+    print_color(e[:fails_input26] && COLORIZE, e[:fuzz_input26])
     print "\n"
   end
 end
