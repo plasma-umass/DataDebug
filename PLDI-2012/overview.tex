@@ -64,9 +64,22 @@ money that he or she does not actually have.
 \paragraph{Dependence Analysis.}
 The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs). For example, in a database
-management system, data inputs would be tuples (records) and computations would
-be queries. In a spreadsheet, inputs are data in cells, while
-computations are either charts or formulas that are not used by other formulas.
+management system, data inputs would be tuples (records) and
+computations would be queries.
+
+In a spreadsheet, inputs are data in cells, while computations are
+either charts or formulas that are not used by other formulas.
+\checkcell{} uses techniques similar to past work to identify
+dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
+support for charts.
+
+Charts are often a key ``result'' of a spreadsheet computation, so it
+is important to detect data that triggers dramatic changes in
+charts. To handle charts, \checkcell{} treats them as if they were
+formulas that compute the average over their inputs. A data value that
+significantly alters the average will thus be considered to have a
+large impact on the graph. Any similar summary statistic like standard
+deviation would also be suitable.
 
 \begin{figure}[!t]
 \centering
