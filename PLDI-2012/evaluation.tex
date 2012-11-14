@@ -66,6 +66,12 @@ computations is counted twice.
 
 \begin{figure*}[!t]
 \centering
+\includegraphics[width=7in]{intresults_tree}
+  \caption{A dataflow graph for the \texttt{intresults} spreadsheet.  The highly-connected clique in the center causes the impact analysis to dominate \checkcell{}'s runtime. \label{fig:intresults_tree}}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
 \includegraphics[width=5.5in]{execution_time_graph}
   \caption{\checkcell{} execution time. For most of the spreadsheets, \checkcell{} completes its analysis in under 9 seconds; for all but two, it completes in under three minutes (see Section~\ref{sec:execution_time}).\label{fig:execution_time_graph}}
 \end{figure*}
