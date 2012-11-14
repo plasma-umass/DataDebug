@@ -1,5 +1,8 @@
 #!/usr/local/bin/ruby
 
+## NOTE: input21 should never have been fuzzed: it's a formula.
+##       It is therefore excluded from the error test below.
+
 require "rubygems"
 require "csv"
 require "colorize"
@@ -84,7 +87,7 @@ CSV.foreach(FUZZDATA) do |row|
   fails_input22 = true if true_input22 != fuzz_input22
   fails_input26 = true if true_input26 != fuzz_input26
   
-  if fails_input12 || fails_input13 || fails_input14 || fails_input15 || fails_input16 || fails_input18 || fails_input19 || fails_input21 || fails_input22 || fails_input26
+  if fails_input12 || fails_input13 || fails_input14 || fails_input15 || fails_input16 || fails_input18 || fails_input19 || fails_input22 || fails_input26
     error_r = { :true_col => true_col,
                 :true_input12 => true_input12,
                 :true_input13 => true_input13,
