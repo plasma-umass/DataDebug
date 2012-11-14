@@ -12,7 +12,7 @@ def print_color(colorize, val)
 end
 
 if ARGV[0] == nil
-  puts "Usage:\truby fanniemae_diff.rb [colorized?] [just stats?]"
+  puts "Usage:\truby fanniemae_diff.rb [colorized?] [just stats?] [max relative error?]"
   puts "\tE.g, ruby fanniemae_diff.rb true false"
   exit(1)
 elsif ARGV[0].downcase == "true"
@@ -25,6 +25,11 @@ if ARGV[1].nil? || ARGV[1].downcase == "false"
   NODATA = false
 else
   NODATA = true
+end
+if ARGV[2].nil? || ARGV[2].downcase == "false"
+  RELERR = false
+else
+  RELERR = true
 end
 
 FUZZDATA = "2012-11-13-mturk_fanniemae_fuzz.csv"
@@ -132,7 +137,7 @@ puts "Error Rate: " + (errors.size.to_f / count.to_f * 100).to_s + "%"
 count = 0
 unless NODATA
   errors.each do |e|
-    next if e[:fuzz_input12].empty? || e[:fuzz_input13].empty? || e[:fuzz_input14].empty? || e[:fuzz_input15].empty? || e[:fuzz_input16].empty? || e[:fuzz_input19].empty? || e[:fuzz_input22].empty? || e[:fuzz_input21].empty?
+    next if e[:fuzz_input12].empty? || e[:fuzz_input13].empty? || e[:fuzz_input14].empty? || e[:fuzz_input15].empty? || e[:fuzz_input16].empty? || e[:fuzz_input19].empty? || e[:fuzz_input22].empty? || e[:fuzz_input26].empty?
     print "#{count}: "
     if COLORIZE
       print "\"#{e[:true_col]}\","
@@ -160,6 +165,68 @@ unless NODATA
     print_color(e[:fails_input22] && COLORIZE, e[:fuzz_input22])
     print_color(e[:fails_input26] && COLORIZE, e[:fuzz_input26])
     print "\n"
+    count += 1
+  end
+end
+
+def mag_err(tval, fval)
+  ((fval.to_f - tval.to_f) / tval.to_f).abs
+end
+
+count = 0
+if RELERR
+  errors.each do |e|
+    next if e[:fuzz_input12].empty? || e[:fuzz_input13].empty? || e[:fuzz_input14].empty? || e[:fuzz_input15].empty? || e[:fuzz_input16].empty? || e[:fuzz_input19].empty? || e[:fuzz_input22].empty? || e[:fuzz_input26].empty?
+    max = 0
+    if e[:fails_input12]
+      mag = mag_err(e[:true_input12].to_f,e[:fuzz_input12].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input13]
+      mag = mag_err(e[:true_input13].to_f,e[:fuzz_input13].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input14]
+      mag = mag_err(e[:true_input14].to_f,e[:fuzz_input14].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input15]
+      mag = mag_err(e[:true_input15].to_f,e[:fuzz_input15].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input16]
+      mag = mag_err(e[:true_input16].to_f,e[:fuzz_input16].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input19]
+      mag = mag_err(e[:true_input19].to_f,e[:fuzz_input19].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input22]
+      mag = mag_err(e[:true_input22].to_f,e[:fuzz_input22].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    if e[:fails_input26]
+      mag = mag_err(e[:true_input26].to_f,e[:fuzz_input26].to_f)
+      if mag > max
+        max = mag
+      end
+    end
+    puts count.to_s + ": maximum % change in absolute error = " + mag.to_s
     count += 1
   end
 end
