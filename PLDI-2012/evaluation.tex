@@ -12,17 +12,36 @@ system is Windows 7 Professional (SP1), which executes non-virtualized
 To measure the runtime of \checkcell{}, we run it on a random subset
 of 30 spreadsheets drawn from those spreadsheets in the EUSES
 spreadsheet corpus~\cite{Fisher:2005:ESC:1082983.1083242} that contain
-formulas.  Table~\ref{tab:spreadsheet_characteristics} includes
+formulas.
+
+Table~\ref{tab:spreadsheet_characteristics} includes
 characteristics of these spreadsheets, ordered by the number of
-formulas each contains. We report the raw number of cells containing
-data and the number of these involved in computations; in the latter,
-a cell that is involved in two computations is counted twice.
+formulas each contains. The raw number of cells is the number of cells
+that participate in any computation; the weighted number of cells is
+the number of cells weighted by the number of times each cell is used
+in a computation. For example, a cell that is involved in two
+computations is counted twice.
+
+Figure~\ref{fig:datadebug_runtime} reports the performance of data
+debugging across our spreadsheet suite, ordered by the weighted number
+of cells.
+
+As our analysis in Section~\ref{sec:asymptotic_analysis} predicts, the
+cost of \checkcell{} is dominated by impact analysis, which is in turn
+dependent on the weighted number of cells.
+
+For almost all of the spreadsheets, \checkcell{} takes less than 15
+seconds to complete its analysis. In only FIXME cases, \checkcell{}
+takes more than a minute; the longest runtime we observe is for the
+spreadsheet FIXME, which required FIXME minutes to run.
+
+This outlier FIXME....
 
 \begin{table}[t!]
   \centering
     \begin{tabular}{l|rrr}
       \textsf{\bf{Spreadsheet}} & \textsf{\bf{Formulas}} & \textsf{\bf{Cells}} & \textsf{\bf{Cells}} \\
-                                &                        & \textsf{\bf{(Raw)}} & \textsf{\bf{(Computed)}} \\
+                                &                        & \textsf{\bf{(Raw)}} & \textsf{\bf{(Weighted)}} \\
     \hline
     \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
     \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
@@ -56,16 +75,38 @@ a cell that is involved in two computations is counted twice.
     \textsf{Foo} & \textsf{1} & \textsf{5}  & \textsf{20} \\
     \hline
     \end{tabular}%
-  \caption{Characteristics of the benchmark suite of spreadsheets evaluated here.\label{tab:spreadsheet_characteristics}}
+  \caption{Characteristics of the benchmark suite of spreadsheets, a random sample from a repository of spreadsheets. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells counts each cell by the number of formulas that depend on it.\label{tab:spreadsheet_characteristics}}
 \end{table}
 
 % Info about the benchmarks.
 
 % \subsection{Benchmarks}
 
-\subsection{Case Studies}
+%\subsection{Case Studies}
 
-\paragraph{9-Grades}
+% \paragraph{9-Grades}
 
-\subsection{Human-Generated Errors}
+\subsection{User Study}
 
+We perform a user study to evaluate \checkcell{}'s efficacy at finding
+actual human errors. We collect these errors by hiring workers to
+perform data entry tasks via Amazon's Mechanical Turk, a popular
+crowdsourcing platform.
+
+Our ground truth data was drawn from \texttt{3q2000.xls},
+a spreadsheet from the EUSES repository that contains
+selected financial information from Fannie Mae. We saved the data as
+a comma-separated value file (.csv). Mechanical Turk workers were then paid
+3 cents to enter 10 of these values at a time into a web form
+designed to look like a spreadsheet. To prevent copying and pasting,
+we generate an image containing the comma-separated values.  Each
+worker had the opportunity to perform up to seven data entry tasks.
+
+In all, we collected 200 responses from 46 distinct users. Out of
+these responses, 14 had omitted data and 50 contained errors, for an
+overall error rate of 35\%.
+
+We then inserted this erroneous data back into the spreadsheet and
+ran \checkcell{} to see whether it found any of these errors. Recall
+that \checkcell{} cannot find any errors that do not have an unusual
+impact on any of the calculations.
