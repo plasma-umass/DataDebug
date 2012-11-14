@@ -29,6 +29,15 @@ namespace DataDebug
         int raw_input_cells_in_computation_count = 0; 
         int formula_cells_count = 0;
         private Regex[] regex_array;
+        System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
+        string stats_text = "";
+        //System.Diagnostics.Stopwatch tree_building_stopwatch = new System.Diagnostics.Stopwatch();
+        //System.Diagnostics.Stopwatch swapping_stopwatch;
+        //System.Diagnostics.Stopwatch z_score_stopwatch;
+        //System.Diagnostics.Stopwatch average_z_score_stopwatch;
+        //System.Diagnostics.Stopwatch outlier_detection_stopwatch;
+        //System.Diagnostics.Stopwatch outlier_coloring_stopwatch;
+
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
 
@@ -400,21 +409,23 @@ namespace DataDebug
          */
         private void constructTree()
         {
+            TimeSpan impact_scoring_timespan = global_stopwatch.Elapsed;
+            TimeSpan swapping_timespan = global_stopwatch.Elapsed;
             input_cells_in_computation_count = 0;
             raw_input_cells_in_computation_count = 0;
             formula_cells_count = 0;
-            System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
-            System.Diagnostics.Stopwatch tree_building_stopwatch = new System.Diagnostics.Stopwatch();
-            System.Diagnostics.Stopwatch swapping_stopwatch = new System.Diagnostics.Stopwatch();
-            System.Diagnostics.Stopwatch z_score_stopwatch = new System.Diagnostics.Stopwatch();
-            System.Diagnostics.Stopwatch average_z_score_stopwatch = new System.Diagnostics.Stopwatch();
-            System.Diagnostics.Stopwatch outlier_detection_stopwatch = new System.Diagnostics.Stopwatch();
-            System.Diagnostics.Stopwatch outlier_coloring_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch tree_building_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch swapping_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch impact_scoring_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch average_z_score_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch outlier_detection_stopwatch = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch outlier_coloring_stopwatch = new System.Diagnostics.Stopwatch();
 
-            global_stopwatch.Start();
+            //global_stopwatch.Start();
 
             //tree_building_stopwatch = new System.Diagnostics.Stopwatch();
-            tree_building_stopwatch.Start();
+            //tree_building_stopwatch.Start();
             //Excel.Worksheet activeWorksheet = ((Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet);
             //List<TreeNode> nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
             Excel.Range analysisRange = null; //This keeps track of the range to be analyzed - it is either the user's selection or the whole workbook
@@ -3065,10 +3076,10 @@ namespace DataDebug
                 }
             }
 
-            tree_building_stopwatch.Stop();
-            
+            //tree_building_stopwatch.Stop();
+            TimeSpan tree_building_timespan = global_stopwatch.Elapsed;
             //swapping_stopwatch = new System.Diagnostics.Stopwatch();
-            swapping_stopwatch.Start();
+            //swapping_stopwatch.Start();
 
             //Grids for storing influences
             double[][][] influences_grid = null;
@@ -3565,8 +3576,8 @@ namespace DataDebug
                 }
 
                 //Stop timing swapping procedure:
-                swapping_stopwatch.Stop();
-
+                //swapping_stopwatch.Stop();
+                swapping_timespan = global_stopwatch.Elapsed;
                 //Now normalize the entries in impacts_grid so that they reflect per-swap averages
                 //int inputs_count = 0; 
                 ////Find the number of input cells
@@ -3594,7 +3605,7 @@ namespace DataDebug
                 //}
 
                 //z_score_stopwatch = new System.Diagnostics.Stopwatch();
-                z_score_stopwatch.Start();
+                //impact_scoring_stopwatch.Start();
 
                 //Now for each output, compute the z-score of the impact of each input
                 for (int i = 0; i < output_cells.Count; i++)
@@ -3715,10 +3726,10 @@ namespace DataDebug
                         }
                     }
                 }
-                z_score_stopwatch.Stop();
+                //z_score_stopwatch.Stop();
 
                 //average_z_score_stopwatch = new System.Diagnostics.Stopwatch();
-                average_z_score_stopwatch.Start();
+                //average_z_score_stopwatch.Start();
 
                 //Repopulate impacts_grid with the z-scores from reachable_impacts_grid_array
                 foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
@@ -3793,7 +3804,7 @@ namespace DataDebug
                         }
                     }
                 }
-                average_z_score_stopwatch.Stop();
+                //average_z_score_stopwatch.Stop();
                 //string impacts_table = "Output: \t\t\t\t\t\t";
                 //for (int i = 0; i < output_cells.Count; i++)
                 //{
@@ -3838,7 +3849,7 @@ namespace DataDebug
                 if (!toggle_weighted_average.Checked)
                 {
                     //outlier_detection_stopwatch = new System.Diagnostics.Stopwatch();
-                    outlier_detection_stopwatch.Start();
+                    //outlier_detection_stopwatch.Start();
                     //Look for outliers:
                     List<int[]> outliers = new List<int[]>();
                     //for (int i = 0; i < output_cells.Count; i++)
@@ -3889,7 +3900,7 @@ namespace DataDebug
                             }
                         }
                     }
-                    outlier_detection_stopwatch.Stop();
+                    //outlier_detection_stopwatch.Stop();
                     
                     //for (int row = 0; row < Globals.ThisAddIn.Application.Worksheets[1].UsedRange.Rows.Count; row++)
                     //{
@@ -3904,7 +3915,7 @@ namespace DataDebug
                     //}
 
                     //outlier_coloring_stopwatch = new System.Diagnostics.Stopwatch();
-                    outlier_coloring_stopwatch.Start();
+                    //outlier_coloring_stopwatch.Start();
                     //Find the highest weighted average z-score among the outliers
                     double max_weighted_z_score = 0.0;
                     int[][] outliers_array = outliers.ToArray();
@@ -3932,8 +3943,9 @@ namespace DataDebug
                         }
                         worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
                     }
-                    outlier_coloring_stopwatch.Stop();
-
+                    //outlier_coloring_stopwatch.Stop();
+                    //impact_scoring_stopwatch.Stop();
+                    //impact_scoring_timespan = global_stopwatch.Elapsed;
                 }
                 else //if (toggle_weighted_average.Checked)
                 {
@@ -3986,6 +3998,7 @@ namespace DataDebug
                     //    }
                     //}
                 }
+                impact_scoring_timespan = global_stopwatch.Elapsed;
             }
 
             //if (toggle_global_perturbation.Checked)
@@ -4156,33 +4169,33 @@ namespace DataDebug
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
             }
 
-            global_stopwatch.Stop();
+            //global_stopwatch.Stop();
             // Get the elapsed time from tree_building_stopwatch as a TimeSpan value.
-            TimeSpan tree_building_timespan = tree_building_stopwatch.Elapsed;
-            TimeSpan swapping_timespan = swapping_stopwatch.Elapsed;
-            TimeSpan z_score_timespan = z_score_stopwatch.Elapsed;
-            TimeSpan average_z_score_timespan = average_z_score_stopwatch.Elapsed;
-            TimeSpan outlier_detection_timespan = outlier_detection_stopwatch.Elapsed;
-            TimeSpan outlier_coloring_timespan = outlier_coloring_stopwatch.Elapsed;
+            //TimeSpan tree_building_timespan = tree_building_stopwatch.Elapsed;
+            //TimeSpan swapping_timespan = swapping_stopwatch.Elapsed;
+            //TimeSpan impact_scoring_timespan = impact_scoring_stopwatch.Elapsed;
+            //TimeSpan average_z_score_timespan = average_z_score_stopwatch.Elapsed;
+            //TimeSpan outlier_detection_timespan = outlier_detection_stopwatch.Elapsed;
+            //TimeSpan outlier_coloring_timespan = outlier_coloring_stopwatch.Elapsed;
             // Format and display the TimeSpan value. 
             string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
-            string swapping_time = swapping_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", swapping_timespan.Minutes, swapping_timespan.Seconds, swapping_timespan.Milliseconds / 10);
-            string z_score_time = z_score_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", z_score_timespan.Minutes, z_score_timespan.Seconds, z_score_timespan.Milliseconds / 10);
-            string average_z_score_time = average_z_score_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", average_z_score_timespan.Minutes, average_z_score_timespan.Seconds, average_z_score_timespan.Milliseconds / 10);
-            string outlier_detection_time = outlier_detection_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", outlier_detection_timespan.Minutes, outlier_detection_timespan.Seconds, outlier_detection_timespan.Milliseconds / 10);
-            string outlier_coloring_time = outlier_coloring_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", outlier_coloring_timespan.Minutes, outlier_coloring_timespan.Seconds, outlier_coloring_timespan.Milliseconds / 10);
+            string swapping_time = (swapping_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", swapping_timespan.Minutes, swapping_timespan.Seconds, swapping_timespan.Milliseconds / 10);
+            string impact_scoring_time = (impact_scoring_timespan.TotalSeconds - swapping_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", z_score_timespan.Minutes, z_score_timespan.Seconds, z_score_timespan.Milliseconds / 10);
+            //string average_z_score_time = average_z_score_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", average_z_score_timespan.Minutes, average_z_score_timespan.Seconds, average_z_score_timespan.Milliseconds / 10);
+            //string outlier_detection_time = outlier_detection_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", outlier_detection_timespan.Minutes, outlier_detection_timespan.Seconds, outlier_detection_timespan.Milliseconds / 10);
+            //string outlier_coloring_time = outlier_coloring_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", outlier_coloring_timespan.Minutes, outlier_coloring_timespan.Seconds, outlier_coloring_timespan.Milliseconds / 10);
             //MessageBox.Show("Done building dependence graph.\nTime elapsed: " + treeTime);
-            
+            global_stopwatch.Stop();
             // Get the elapsed time as a TimeSpan value.
             TimeSpan global_timespan = global_stopwatch.Elapsed;
             //string global_time = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", global_timespan.Hours, global_timespan.Minutes, global_timespan.Seconds, global_timespan.Milliseconds / 10);
-            string global_time = (tree_building_timespan.TotalSeconds + swapping_timespan.TotalSeconds + z_score_timespan.TotalSeconds + average_z_score_timespan.TotalSeconds + outlier_detection_timespan.TotalSeconds + outlier_coloring_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}",
+            string global_time = global_timespan.TotalSeconds + ""; //(tree_building_timespan.TotalSeconds + swapping_timespan.TotalSeconds + z_score_timespan.TotalSeconds + average_z_score_timespan.TotalSeconds + outlier_detection_timespan.TotalSeconds + outlier_coloring_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}",
             //    tree_building_timespan.Minutes + swapping_timespan.Minutes + z_score_timespan.Minutes + average_z_score_timespan.Minutes + outlier_detection_timespan.Minutes + outlier_coloring_timespan.Minutes,
             //    tree_building_timespan.Seconds + swapping_timespan.Seconds + z_score_timespan.Seconds + average_z_score_timespan.Seconds + outlier_detection_timespan.Seconds + outlier_coloring_timespan.Seconds,  
             //    (tree_building_timespan.Milliseconds + swapping_timespan.Milliseconds + z_score_timespan.Milliseconds + average_z_score_timespan.Milliseconds + outlier_detection_timespan.Milliseconds + outlier_coloring_timespan.Milliseconds) / 10);
             
             Display timeDisplay = new Display();
-            timeDisplay.textBox1.Text = "" //"Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\tOutlier Detection (s):\tOutlier Coloring (s):\n"
+            stats_text += "" //"Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\tOutlier Detection (s):\tOutlier Coloring (s):\n"
                 //"Formula cells:\t" + formula_cells_count + "\n"
                 //+ "Number of input cells involved in computations:\t" + input_cells_in_computation_count
                 //+ "\nExecution times (seconds): "
@@ -4193,9 +4206,10 @@ namespace DataDebug
                 + global_time + "\t"
                 + tree_building_time + "\t"
                 + swapping_time + "\t"
-                + (z_score_time + average_z_score_time) + "\t"
-                + outlier_detection_time + "\t"
-                + outlier_coloring_time;
+                + impact_scoring_time;
+                //+ (z_score_time + average_z_score_time) + "\t"
+                //+ outlier_detection_time + "\t"
+                //+ outlier_coloring_time;
 //                + "\nTotal execution time: " + global_time + ":\n"
 //                + "\tTree construction time: " + tree_building_time + "\n"
 //                + "\tSwapping time: " + swapping_time + "\n"
@@ -4203,6 +4217,7 @@ namespace DataDebug
 //                + "\tWeighted average z-score calculation time: " + average_z_score_time + "\n"
 //                + "\tOutlier detection time: " + outlier_detection_time + "\n"
 //                + "\tOutlier coloring time: " + outlier_coloring_time + "\n";
+            timeDisplay.textBox1.Text = stats_text;
             timeDisplay.ShowDialog();
 
             //Procedure for swapping values within ranges, replacing all repeated values at once
@@ -4407,6 +4422,10 @@ namespace DataDebug
         //Action for "Analyze Worksheet" button
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
+            global_stopwatch.Reset();
+            global_stopwatch.Start();
+            //tree_building_stopwatch.Start();
+            stats_text = "";
             //ProgressBar pb = new ProgressBar();
             //pb.Style = ProgressBarStyle.Marquee;
             //pb.MarqueeAnimationSpeed = 100;
@@ -4477,6 +4496,7 @@ namespace DataDebug
             {
                 constructTree();
             }
+            //global_stopwatch.Stop();
         }
 
         private void dropDown1_SelectionChanged(object sender, RibbonControlEventArgs e)
