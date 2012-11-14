@@ -106,6 +106,14 @@ For 11 of the 52 erroneous inputs (21\%), \checkcell{} correctly marks the
 cell with the error, verifying our hypothesis that locating data with
 unusual impact also finds errors.
 
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=5in]{images/mturk_fuzz_task}
+  \caption{The page presented to Mechanical Turk workers to perform data entry tasks in order to collect actual human data entry errors (see Section~\ref{sec:user_study}).\label{fig:mturk_task}}
+\end{figure*}
+
+
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=5in]{images/fannie_mae_outlier}
@@ -164,9 +172,3 @@ have any unusual impact on the spreadsheet's results.
     \end{tabular}%
   \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells weighs each cell by the number of formulas that depend on it.\label{tab:spreadsheet_characteristics}}
 \end{table}
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=5in]{images/mturk_fuzz_task}
-  \caption{The page presented to Mechanical Turk workers to perform data entry tasks in order to collect actual human data entry errors (see Section~\ref{sec:user_study}).\label{fig:mturk_task}}
-\end{figure*}
