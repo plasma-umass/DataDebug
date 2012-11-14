@@ -59,6 +59,7 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
+            this.button9 = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -89,6 +90,7 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_no_sceen_updating);
             this.group1.Items.Add(this.peirce_button);
             this.group1.Items.Add(this.toggle_weighted_average);
+            this.group1.Items.Add(this.button9);
             this.group1.Label = "Dependence Graph & Fuzzing";
             this.group1.Name = "group1";
             // 
@@ -234,6 +236,12 @@ namespace DataDebug
             this.button6.Name = "button6";
             this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
+            // button9
+            // 
+            this.button9.Label = "button9";
+            this.button9.Name = "button9";
+            this.button9.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button9_Click);
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -274,6 +282,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_no_sceen_updating;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton peirce_button;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton button9;
     }
 
     partial class ThisRibbonCollection
