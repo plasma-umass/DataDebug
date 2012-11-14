@@ -1,0 +1,31 @@
+\small{Benchmark:} & \small{Number of formulas:} & \small{Raw inputs count:} & \small{Inputs to computations:} \\ 
+\small{3660\%20schedule\%20S2003} & \small{31} & \small{1} & \small{0} \\ 
+\small{ReqComp} & \small{54} & \small{162} & \small{0} \\ 
+\small{Inventory\_Control} & \small{33} & \small{21} & \small{0} \\ 
+\small{RMRanker95} & \small{79} & \small{54} & \small{11} \\ 
+\small{Logistikkostnader} & \small{73} & \small{29} & \small{26} \\ 
+\small{HMWK112403} & \small{36} & \small{41} & \small{27} \\ 
+\small{30day} & \small{125} & \small{92} & \small{30} \\ 
+\small{2002fairreport} & \small{3} & \small{39} & \small{39} \\ 
+\small{9620040303160820} & \small{42} & \small{81} & \small{81} \\ 
+\small{Inventory\%20errors} & \small{100} & \small{129} & \small{90} \\ 
+\small{grades} & \small{227} & \small{661} & \small{96} \\ 
+\small{expenses\_ans} & \small{57} & \small{60} & \small{120} \\ 
+\small{grades2002} & \small{61} & \small{143} & \small{123} \\ 
+\small{csDept-PayrollTimecardEntry} & \small{68} & \small{204} & \small{124} \\ 
+\small{Example\_3} & \small{71} & \small{130} & \small{127} \\ 
+\small{lmc\_financial} & \small{72} & \small{148} & \small{142} \\ 
+\small{104r} & \small{22} & \small{146} & \small{144} \\ 
+\small{TRAIL\%20INVENTORY\%20N\#A850A} & \small{2} & \small{156} & \small{156} \\ 
+\small{Grades-6\_excerpt} & \small{106} & \small{168} & \small{168} \\ 
+\small{intresults} & \small{1066} & \small{3158} & \small{239} \\ 
+\small{OakProducts} & \small{69} & \small{271} & \small{242} \\ 
+\small{am\_skandia\_fin\_supple\#A80EE} & \small{56} & \small{272} & \small{268} \\ 
+\small{E04\_AppE\_Census\_Database\_50} & \small{42} & \small{300} & \small{300} \\ 
+\small{pfi-anxa} & \small{5} & \small{310} & \small{310} \\ 
+\small{q\%20exhibit54-OEA} & \small{797} & \small{1160} & \small{365} \\ 
+\small{econ424-fall2003-publ\#A8A23} & \small{93} & \small{517} & \small{384} \\ 
+\small{Grades\_EEE481\&581} & \small{177} & \small{757} & \small{756} \\ 
+\small{gpa\_calculator} & \small{80} & \small{80} & \small{819} \\ 
+\small{s446gradessp04} & \small{335} & \small{1369} & \small{1247} \\ 
+\small{NEW} & \small{2626} & \small{2574} & \small{2403} \\ 
