@@ -66,7 +66,7 @@ manual data auditing is onerous, unscalable, and error-prone.
 
 Existing approaches to finding data errors include
 \emph{data cleaning} and  \emph{statistical outlier detection}.
-Data cleaning primarily copes with errors in databases via
+Data cleaning primarily copes with errors via
 cross-validation with ground truth data, which may not be
 present. Statistical outlier detection typically reports data as
 outliers based on their relationship to a given distribution (e.g.,
@@ -86,30 +86,28 @@ error-prone and can give rise to excessive false positives.
 This paper presents \emph{\bf data debugging}, an approach to locating
 likely data errors. Since it is impossible to know \emph{a priori}
 whether data are erroneous or not, data debugging does the next best
-thing: \emph{locating data where errors would have an unsual
-impact}. Intuitively, data that has an inordinate impact on the final
-result is either very important or it is wrong. By contrast, wrong
-data whose presence has no unusual effect on the final result does not
+thing: \emph{locating data that has an unusual
+impact on the computation}. Intuitively, data that has an inordinate impact on the final
+result is either very important, or it is wrong. By contrast, wrong
+data whose presence has no particularly unusual effect on the final result does not
 merit special attention.  Data debugging combines data dependence
 analysis and statistical analysis to find and rank data based on the unusualness of its
 impact on the results of a computation.
 
 Data debugging works by first building a data dependence graph of the
 computations. It then measures data impact by replacing data items
-with randomly chosen data from the same group, such as columns
-in databases or ranges in spreadsheets, and observing the resulting
-changes in computations that depend on that data. This non-parametric
-approach allows data debugging to find errors in both numeric and
-non-numeric data, without any requirement that data follow any particular
-statistical distribution.
+with data chosen from the same group (e.g., a range in a spreadsheet
+formula) and observing the resulting changes in computations that
+depend on that data. This non-parametric approach allows data
+debugging to find errors in both numeric and non-numeric data, without
+any requirement that data follow any particular statistical
+distribution.
 
-By calling attention to data with unusual impact, data
-debugging can provide insights into both the data and the computation
-and reveal errors. We believe data debugging is broadly applicable, though it is
-especially well-suited for data-intensive programming settings
-like spreadsheets, databases, and environments like
-R~\cite{ihaka1996r}, where data and programs (e.g., queries and
-formulas) are intertwined.
+By calling attention to data with unusual impact, data debugging can
+provide insights into both the data and the computation and reveal
+errors. We believe data debugging is broadly applicable, though it is
+especially well-suited for data-intensive programming that intertwine
+data and programs (e.g., with queries and formulas).
 
 This paper presents the first data debugging tool in the form
 of \checkcell{}, an add-in for Microsoft Excel. Spreadsheets are one
