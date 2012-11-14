@@ -2,24 +2,22 @@ library("VGAM")
 library("ggplot2")
 
 rwigner <- function(n, r) {
-    gen1 <- function(r) {
-        while(TRUE) {
-            x = runif(1, -r, r)[1]
-            y = sqrt(r^2-x^2)
-            if(runif(1)[1] <= y) {
-                return(x)
-            }
+    result = rep(NA, n)
+    i = 1
+    while(i <= n) {
+        x = runif(1, -r, r)[1]
+        y = sqrt(r^2-x^2)
+        p = runif(1)[1]
+        if(p <= y) {
+            result[i] = x
+            i = i + 1
         }
     }
     
-    result = c()
-    while(length(result) < n) {
-        result = c(result, gen1(r))
-    }
     return(result)
 }
 
-samples = 100000
+samples = 1000000
 
 skewnormal = rsnorm(n=samples,location=0,shape=-10,scale=1 )
 skewnormal <- (skewnormal - mean(skewnormal)) / sd(skewnormal)
