@@ -2,7 +2,7 @@
 \begin{table*}[!t]
   \centering \begin{tabular}{l|rrr||r|rrr}
  \small{\bf{Spreadsheet}} & \small{\bf{Formulas}} & \small{\bf{Cells}} & \small{\bf{Cells}} & \small{\bf{Runtime}} & \small{\bf{Dep.}} & \small{\bf{Impact}}   & \small{\bf{Impact}} \\
- & & {\small{\it{raw}}} & {\small{\it{weighted}}} & \small{\it{total (s)}} & \small{\bf{Analysis}} & \small{\bf{Scoring}} \\
+ & & {\small{\it{raw}}} & {\small{\it{weighted}}} & \small{\it{total (s)}} & \small{\bf{Analysis}} & \small{\bf{Analysis}} & \small{\bf{Scoring}} \\
 \hline
 \small{3660 schedule S2003} & \small{31} & \small{1} & \small{0} & \small{1.54} & \small{0.73} & \small{0.44} & \small{0.34} \\ 
 \small{ReqComp} & \small{54} & \small{162} & \small{0} & \small{1.95} & \small{0.95} & \small{0.52} & \small{0.44} \\ 
@@ -35,7 +35,7 @@
 \small{s446gradessp04} & \small{335} & \small{1369} & \small{1247} & \small{129.36} & \small{9.76} & \small{113.29} & \small{6.27} \\ 
 \small{NEW} & \small{2626} & \small{2574} & \small{2403} & \small{683.32} & \small{115.75} & \small{440.30} & \small{127.23} \\ 
     \end{tabular}%
-  \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells weighs each cell by the number of formulas that depend on it. A breakdown of \checkcell{} execution times appears on the right side (in seconds).\label{tab:spreadsheet_characteristics}}
+  \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells weighs each cell by the number of formulas that depend on it. A breakdown of \checkcell{} execution times (in seconds) appears on the right side.\label{tab:spreadsheet_characteristics}}
 \end{table*}
 
 We evaluate \checkcell{} across two dimensions: its execution time,
@@ -51,16 +51,17 @@ system is Windows 7 Professional (SP1), which executes non-virtualized
 \label{sec:execution_time}
 
 To measure the runtime of \checkcell{}, we run it on a random subset
-of 30 spreadsheets drawn from those spreadsheets in the EUSES
-spreadsheet corpus~\cite{Fisher:2005:ESC:1082983.1083242} that contain
+of 30 spreadsheets drawn from the EUSES
+corpus~\cite{Fisher:2005:ESC:1082983.1083242}, excluding those that do not contain
 formulas.
 
-Table~\ref{tab:spreadsheet_characteristics} includes
-characteristics of these spreadsheets, ordered by the number of
-formulas each contains. The raw number of cells is the number of cells
-that participate in any computation; the weighted number of cells is
-the number of cells weighted by the number of times each cell is used
-in a computation. For example, a cell that is involved in two
+Table~\ref{tab:spreadsheet_characteristics} includes characteristics
+of these spreadsheets, ordered by the number of formulas each
+contains. We include two columns that count the number of cells in
+different ways. \emph{Cells (raw)} indicates the total number of cells
+that participate in any computation. \emph{Cells (weighted)} indicates
+the total number of cells, weighted by the number of times each cell
+is used in a computation. For example, a cell that is involved in two
 computations is counted twice.
 
 \begin{figure*}[!t]
@@ -83,12 +84,12 @@ predicts, the cost of \checkcell{} is generally proportional to the
 cost of the impact analysis, which is in turn dependent on the
 weighted number of cells.
 
-The two outlier spreadsheets have by far the largest number of formulas
-(1,066 and 2,626), and the latter also has the largest number of
-weighted cells (2,403). Their relatively high execution time is
-attributable to the fact that cost of impact analysis increases as the
-number of formulas increases, since the Excel recalculation engine
-must do more work per item tested.
+The spreadsheets that require the most execution time both have by far
+the largest number of formulas (1,066 and 2,626), and the latter also
+has the largest number of weighted cells (2,403). Their relatively
+high execution time is attributable to the fact that cost of impact
+analysis increases as the number of formulas increases, since the
+Excel recalculation engine must do more work per item tested.
 
 \paragraph{Summary:} For nearly every spreadsheet
  examined, \checkcell{}'s runtime is under three minutes; we believe
@@ -102,7 +103,7 @@ must do more work per item tested.
 
 % \paragraph{9-Grades}
 
-\subsection{User Study}
+\subsection{Error Detection}
 \label{sec:user_study}
 
 While \checkcell{} can be used across the EUSES suite, looking for
@@ -111,26 +112,26 @@ what the ground truth is. To evaluate \checkcell{}'s efficacy at
 finding actual errors, we need errors and ground truth to compare it
 against.
 
-We designed an experiment that allows us to observe real errors
-produced by people and use \checkcell{} to find them. This experiment
-consists of a user study. We collect human errors by hiring workers to
-perform data entry tasks (entering known data) via Amazon's Mechanical
-Turk, a popular crowdsourcing platform. and then check their results
-with \checkcell{}.
+Rather than artificially inject errors, we designed an experiment that
+allows us to observe real errors produced by people and use
+\checkcell{} to find them. We collect human errors by hiring workers
+to perform data entry tasks (entering known data) via Amazon's
+Mechanical Turk, a popular crowdsourcing platform, and then check
+their results with \checkcell{}.
 
-Our ground truth data was drawn from \texttt{3q2000.xls}, a
+Our ground truth data is drawn from \texttt{3q2000.xls}, a
 spreadsheet from the EUSES repository that contains selected financial
-information from Fannie Mae. We saved the data as a comma-separated
-value file (.csv). Mechanical Turk workers were then paid 3 cents to
+information from Fannie Mae. We save the data as a comma-separated
+value file (.csv). Mechanical Turk workers were paid 3 cents to
 enter 10 of these numerical values at a time into a web form designed to look
 like a spreadsheet, shown in Figure~\ref{fig:mturk_task}. To prevent
 copying and pasting, we generate an image containing the
-comma-separated values.  Each worker had the opportunity to perform up
+comma-separated values. Each worker had the opportunity to perform up
 to seven different tasks.
 
 In all, we collected 200 responses from 46 distinct users. Out of
 these responses, 14 had omitted data and 52 contained errors, for an
-overall error rate of 33\%. We classified the errors as follows:
+overall error rate of 33\%. The errors can be classified into the following categories:
 
 \begin{itemize}
 \item \textbf{Sign omission}, where a negative sign was dropped
