@@ -7,6 +7,18 @@ system is Windows 7 Professional (SP1), which executes non-virtualized
 (via Bootcamp). \checkcell{} was compiled using Microsoft Visual C\#
 2010, and runs as an add-in in Microsoft Excel 2010.
 
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=6.5in]{execution_time_graph}
+  \caption{\checkcell{} execution time. For more than half of the spreadsheets, \checkcell{} completes its analysis in under 6 seconds; for all but two, it completes in under three minutes (see Section~\ref{sec:execution_time}).\label{fig:execution_time_graph}}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=6.5in]{images/mturk_fuzz_task}
+  \caption{The page presented to Mechanical Turk workers to perform data entry tasks in order to collect actual human data entry errors (see Section~\ref{sec:user_study}).\label{fig:mturk_task}}
+\end{figure*}
+
 \subsection{Execution Time}
 \label{sec:execution_time}
 
@@ -23,20 +35,66 @@ the number of cells weighted by the number of times each cell is used
 in a computation. For example, a cell that is involved in two
 computations is counted twice.
 
-Figure~\ref{fig:datadebug_runtime} reports the performance of data
+Figure~\ref{fig:execution_time_graph} reports the performance of data
 debugging across our spreadsheet suite, ordered by the weighted number
 of cells.
 
-As our analysis in Section~\ref{sec:asymptotic_analysis} predicts, the
-cost of \checkcell{} is dominated by impact analysis, which is in turn
-dependent on the weighted number of cells.
+For 18 of the 30 spreadsheets, \checkcell{} takes 6 seconds or less to
+complete. Its runtime is less than three minutes for all but two of
+the spreadsheets: \texttt{intresults} and \texttt{NEW}, which take 314
+seconds and 562 seconds, respectively. The average runtime over all
+spreadsheets is 47 seconds; the average execution time without the two
+outliers is 23 seconds. As our analysis in
+Section~\ref{sec:asymptotic_analysis} predicts, the cost
+of \checkcell{} is generally proportional to the cost of the impact
+analysis, which is in turn dependent on the weighted number of cells.
 
-For almost all of the spreadsheets, \checkcell{} takes less than 15
-seconds to complete its analysis. In only FIXME cases, \checkcell{}
-takes more than a minute; the longest runtime we observe is for the
-spreadsheet FIXME, which required FIXME minutes to run.
+The two outlier spreadsheets have by far the largest number of formulas
+(1,066 and 2,626), and the latter also has the largest number of
+weighted cells (2,403). Their relatively high execution time is
+attributable to the fact that cost of impact analysis increases as the
+number of formulas increases, since the Excel recalculation engine
+must do more work per item tested.
 
-This outlier FIXME....
+\paragraph{Summary:} For nearly every spreadsheet
+ examined, \checkcell{}'s runtime is under three minutes; we believe
+ this overhead is acceptable for an error detection tool.
+
+% Info about the benchmarks.
+
+% \subsection{Benchmarks}
+
+%\subsection{Case Studies}
+
+% \paragraph{9-Grades}
+
+\subsection{User Study}
+\label{sec:user_study}
+
+We perform a user study to evaluate \checkcell{}'s efficacy at finding
+actual human errors. We collect these errors by hiring workers to
+perform data entry tasks via Amazon's Mechanical Turk, a popular
+crowdsourcing platform.
+
+Our ground truth data was drawn from \texttt{3q2000.xls}, a
+spreadsheet from the EUSES repository that contains selected financial
+information from Fannie Mae. We saved the data as a comma-separated
+value file (.csv). Mechanical Turk workers were then paid 3 cents to
+enter 10 of these values at a time into a web form designed to look
+like a spreadsheet, shown in Figure~\ref{fig:mturk_task}. To prevent
+copying and pasting, we generate an image containing the
+comma-separated values.  Each worker had the opportunity to perform up
+to seven data entry tasks.
+
+In all, we collected 200 responses from 46 distinct users. Out of
+these responses, 14 had omitted data and 50 contained errors, for an
+overall error rate of 35\%.
+
+We then inserted this erroneous data back into the spreadsheet and
+ran \checkcell{} to see whether it found any of these errors. Recall
+that \checkcell{} cannot find any errors that do not have an unusual
+impact on any of the calculations.
+
 
 \begin{table}[t!]
   \centering
@@ -78,46 +136,3 @@ This outlier FIXME....
     \end{tabular}%
   \caption{The benchmark suite of spreadsheets (a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}), ordered by weighted number of cells. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells weighs each cell by the number of formulas that depend on it.\label{tab:spreadsheet_characteristics}}
 \end{table}
-
-% Info about the benchmarks.
-
-% \subsection{Benchmarks}
-
-%\subsection{Case Studies}
-
-% \paragraph{9-Grades}
-
-\subsection{User Study}
-\label{sec:user_study}
-
-We perform a user study to evaluate \checkcell{}'s efficacy at finding
-actual human errors. We collect these errors by hiring workers to
-perform data entry tasks via Amazon's Mechanical Turk, a popular
-crowdsourcing platform.
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=6.5in]{images/mturk_fuzz_task}
-  \caption{The page presented to Mechanical Turk workers to perform data entry tasks in order to collect actual human data entry errors (see Section~\ref{sec:user_study}).\label{fig:mturk_task}}
-\end{figure*}
-
-
-
-Our ground truth data was drawn from \texttt{3q2000.xls}, a
-spreadsheet from the EUSES repository that contains selected financial
-information from Fannie Mae. We saved the data as a comma-separated
-value file (.csv). Mechanical Turk workers were then paid 3 cents to
-enter 10 of these values at a time into a web form designed to look
-like a spreadsheet, shown in Figure~\ref{fig:mturk_task}. To prevent
-copying and pasting, we generate an image containing the
-comma-separated values.  Each worker had the opportunity to perform up
-to seven data entry tasks.
-
-In all, we collected 200 responses from 46 distinct users. Out of
-these responses, 14 had omitted data and 50 contained errors, for an
-overall error rate of 35\%.
-
-We then inserted this erroneous data back into the spreadsheet and
-ran \checkcell{} to see whether it found any of these errors. Recall
-that \checkcell{} cannot find any errors that do not have an unusual
-impact on any of the calculations.
