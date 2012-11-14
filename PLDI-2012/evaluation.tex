@@ -26,18 +26,18 @@ computations is counted twice.
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=5in]{execution_time_graph}
-  \caption{\checkcell{} execution time. For more than half of the spreadsheets, \checkcell{} completes its analysis in under 6 seconds; for all but two, it completes in under three minutes (see Section~\ref{sec:execution_time}).\label{fig:execution_time_graph}}
+  \caption{\checkcell{} execution time. For most of the spreadsheets, \checkcell{} completes its analysis in under 9 seconds; for all but two, it completes in under three minutes (see Section~\ref{sec:execution_time}).\label{fig:execution_time_graph}}
 \end{figure*}
  
 Figure~\ref{fig:execution_time_graph} reports the performance of data
 debugging across our spreadsheet suite, ordered by the weighted number
 of cells.
 
-For 18 of the 30 spreadsheets, \checkcell{} takes 6 seconds or less to
+For 19 of the 30 spreadsheets, \checkcell{} takes 9 seconds or less to
 complete. Its runtime is less than three minutes for all but two of
-the spreadsheets: \texttt{intresults} and \texttt{NEW}, which take 314
-seconds and 562 seconds, respectively. The average runtime over all
-spreadsheets is 47 seconds; without the two outliers, it is 23
+the spreadsheets: \texttt{intresults} and \texttt{NEW}, which take 318
+seconds and 683 seconds, respectively. The average runtime over all
+spreadsheets is 61 seconds; without the two outliers, it is 29
 seconds. As our analysis in Section~\ref{sec:asymptotic_analysis}
 predicts, the cost of \checkcell{} is generally proportional to the
 cost of the impact analysis, which is in turn dependent on the
