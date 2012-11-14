@@ -4,11 +4,10 @@
 % and false negatives (we have an anomaly but by bad luck, we exchange with anomalous impacts).
 
 This section presents an analysis of several aspects of data
-debugging: its asymptotic runtime, the effectiveness of its sampling
-approach to measure impact, and a justification of the use of the
-normal distribution to score and select outliers from the impacts.
+debugging: its asymptotic runtime, its sampling
+approach to measure impact, and its scoring to perform impact outlier analysis.
 
-\subsection{Asymptotic Analysis}
+\subsection{Asymptotic Runtime}
 \label{sec:asymptotic_analysis}
 
 Data debugging operates in several phases: computing the dependence
@@ -39,12 +38,15 @@ computations affected by changes in the data.
 A naive implementation of impact analysis that checked the impact of
 each data item by systematically replacing it with every other item in
 the same range would require $O(n^2)$ time. Worse, each of these
-iterations requires potentially costly recalculations. Such an
-approach would make data debugging unusable in practice.
+iterations requires potentially costly recalculations. For large
+ranges, such an approach would make data debugging unusable in
+practice.
  
-By using a fixed number of random selections, data debugging keeps the
-total number of recalculations to $\Theta(n)$, linear in the number of
-data items, which is optimal. Section~\ref{sec:sampling_effectiveness}
+By using a fixed number of random selections once the range
+exceeds a threshold size, data debugging keeps the total number of
+recalculations to $O(n)$, linear in the number of data items. Any
+strategy that visits each data item at least once takes $O(n)$ time,
+so this bound is tight. Section~\ref{sec:sampling_effectiveness}
 explains why this strategy approximates the effect of a complete
 examination of other inputs, while minimizing execution time.
 
@@ -68,16 +70,16 @@ This approach, as mentioned above, would take $O(n^2)$ time and so is
 inefficient for large data sets, though it is reasonable to do for
 small ones.
 
-Data debugging employs a more efficient sampling-based strategy for
-large data sets that randomly chooses (with replacement) a fixed
-number of samples $K$ (e.g., $K = 30$).
+For large data sets, data debugging employs a sampling-based strategy
+that randomly chooses (with replacement) a fixed number of samples $K$
+(e.g., $K = 30$).
 
 \begin{equation}
 \mbox{estimated\_impact}_i = \frac{\sum_{j \in \{\mbox{sample}\}}^{N}{|\mbox{result}_i-\mbox{result}_j|}}{K}
 \end{equation}
 
 \noindent
-There are two cases where this procedure could fail; below, we bound their likelihood.
+There are two cases where using the estimated impact will have a different effect than using the actual impact, and our goal is to show that we bound the likelihood of this happening.
 
 \begin{itemize}
 \item \textbf{False negatives.} The item under consideration has a
@@ -91,17 +93,21 @@ There are two cases where this procedure could fail; below, we bound their likel
 \end{itemize}
 
 In both cases, the key is to ensure that the estimated impact does not
-repeatedly sample data items with high impact. We state our theorem informally:
+repeatedly sample data items with unusual impact:
 
 \begin{theorem}
-Using the estimated impact closely approximates using the actual impact because it minimizes the risk of false positives and false negatives.
+When the percentage of values with unusual impacts is low, the estimated impact closely approximates the actual impact because it minimizes the risk of false positives and false negatives.
 \end{theorem}
 
-Data debuggging considers a data item to have a high actual impact
-only when that impact is at least two standard deviations from the
-mean impact in that range. Because we assume a normal distribution of
-impacts (see below), the number of items with such impact is by
-definition less than 5\%.
+Data debuggging considers a data item to have an unusual impact
+when that impact is at least two standard deviations away from the mean
+impact in that range. When impacts follow a normal distribution, the
+number of items with unusual impact will be less than 5\%. Of course,
+impacts will not necessarily be normally distributed, although they
+will be when the computations include averages (by virtue of the
+Central Limit Theorem). Nonetheless, as long as the tails of the impact
+distribution comprise a small fraction of the total, the theorem
+holds, as we explain below.
 
 One can thus view the sampling procedure as a series of Bernoulli
 trials, repeatedly flipping a biased coin with a probability $p =
@@ -114,7 +120,7 @@ value is just $np$, or 1.5.
 Because the Poisson distribution is an excellent approximation as long
 as $n$ is at least 20 and $p$ is no more than $0.05$, it is convenient
 to use it to bound the likelihood of choosing a larger number of
-high-impact values than $x$, where $x > 1.5$ and $\lambda = np$:
+high-impact values than $x$, where $x > \lambda$ and $\lambda = np$:
 
 \begin{equation}
 Pr[X \geq x] \leq \frac{e^{-\lambda}(e \lambda)^x}{x^x}
@@ -122,9 +128,11 @@ Pr[X \geq x] \leq \frac{e^{-\lambda}(e \lambda)^x}{x^x}
 
 We can use this equation to show that it is highly unlikely that the
 sampling procedure would accidentally choose a large number of
-high-impact values. For example, the probability of choosing one-third
-of the high-impact values from a sample of size $K = 30$ is less than
-$3/100,000$. Therefore, the estimated impact computed by sampling is
+unusually-impactful values. For example, the probability of choosing
+one-third of those values from a sample of size $K = 30$ is less than
+$3/100,000$.
+
+Therefore, the estimated impact computed by sampling is
 nearly as effective (reducing both false positives and false
 negatives) as computing the actual impact.
 
@@ -166,7 +174,7 @@ words, this corresponds to a 95\% confidence level that these are
 anomalies.
 
 In the absence of knowledge of the distribution of impact scores, using
-the normal distribution is in general a conservative approach. That is, it
+the normal distribution is a conservative approach. That is, it
 is likely to report few false negatives, at the risk of introducing some false
 positives. This fact derives from two particular characteristics of the
 normal distribution: its low \emph{skewness} and \emph{kurtosis}.
@@ -176,7 +184,7 @@ distribution around the mean; in other words, it is perfectly
 symmetric. Any asymmetric distribution by definition has a greater
 number of points either to the left or to the right of the mean. By
 choosing outliers from the tails of the normal, \checkcell{} also
-includes the skewed tails of any other distribution.
+includes one of the skewed tails of any asymmetric distribution.
 
 In addition, the normal has either low or zero kurtosis, which
 indicates the peakedness of the curve and heaviness of the tail;
@@ -185,12 +193,12 @@ of kurtosis. Counting outliers from the perspective of the normal
 distribution is generally conservative, since it includes all
 distributions with heavier tails (those with positive
 kurtosis). Because distributions with negative kurtosis generally have
-small tails, they also tend to have few outliers by definition. Thus,
+small tails, they also tend to have few outliers, by definition. Thus,
 failing to report outliers for distributions with negative kurtosis is
-generally safe.
+usually safe.
 
 One exception worth noting and a limitation of this approach is
-symmetric bimodal distributions, where the outlier values are not only
+symmetric multimodal distributions, where the outlier values are not only
 in the tail but also centered around the mean. Using the normal as a
 reference would not uncover such outliers.
 
