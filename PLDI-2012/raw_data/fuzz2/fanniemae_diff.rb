@@ -87,7 +87,7 @@ CSV.foreach(FUZZDATA) do |row|
   fails_input22 = true if true_input22 != fuzz_input22
   fails_input26 = true if true_input26 != fuzz_input26
   
-  if fails_input12 || fails_input13 || fails_input14 || fails_input15 || fails_input16 || fails_input18 || fails_input19 || fails_input22 || fails_input26
+  if fails_input12 || fails_input13 || fails_input14 || fails_input15 || fails_input16 || fails_input19 || fails_input22 || fails_input26
     error_r = { :true_col => true_col,
                 :true_input12 => true_input12,
                 :true_input13 => true_input13,
@@ -132,6 +132,7 @@ puts "Error Rate: " + (errors.size.to_f / count.to_f * 100).to_s + "%"
 count = 0
 unless NODATA
   errors.each do |e|
+    next if e[:fuzz_input12].empty? || e[:fuzz_input13].empty? || e[:fuzz_input14].empty? || e[:fuzz_input15].empty? || e[:fuzz_input16].empty? || e[:fuzz_input19].empty? || e[:fuzz_input22].empty? || e[:fuzz_input21].empty?
     print "#{count}: "
     if COLORIZE
       print "\"#{e[:true_col]}\","
@@ -159,6 +160,6 @@ unless NODATA
     print_color(e[:fails_input22] && COLORIZE, e[:fuzz_input22])
     print_color(e[:fails_input26] && COLORIZE, e[:fuzz_input26])
     print "\n"
+    count += 1
   end
-  count += 1
 end
