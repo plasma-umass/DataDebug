@@ -129,8 +129,10 @@ puts "Total Rows: " + count.to_s
 puts "Total Errors: " + errors.size.to_s
 puts "Error Rate: " + (errors.size.to_f / count.to_f * 100).to_s + "%"
 
+count = 0
 unless NODATA
   errors.each do |e|
+    print "#{count}: "
     if COLORIZE
       print "\"#{e[:true_col]}\","
       print_color(e[:fails_input12] && COLORIZE, e[:true_input12])
@@ -158,4 +160,5 @@ unless NODATA
     print_color(e[:fails_input26] && COLORIZE, e[:fuzz_input26])
     print "\n"
   end
+  count += 1
 end
