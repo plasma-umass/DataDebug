@@ -61,7 +61,8 @@ money that he or she does not actually have.
 %finding this error manually in the original spreadsheet would be
 %substantially more difficult.
 
-\paragraph{Dependence Analysis.}
+\subsection{Dependence Analysis}
+
 The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs).
 In a spreadsheet, inputs are data in cells, while computations are
@@ -89,12 +90,18 @@ this spreadsheet (shown in black), depends on two formulas, which depend on two
 disjoint data ranges.
 
 
-\paragraph{Impact Analysis.}
+\subsection{Impact Analysis}
+
 The next step is to iterate through the data itself to test the impact
 of each data item on all computations. For each item, data debugging
 repeatedly chooses another item from the same ``distribution'', e.g.,
 another tuple in the same table, or another cell in the same range,
-and replaces the item being tested with the selected one.
+and replaces the item being tested with the selected one. 
+
+The selection process is exhaustive for small ranges (less than 30
+elements); that is, for each item, impact analysis tests the effect of
+replacing it with every other item in the range. For larger ranges, we
+employ random sampling.
 
 The computations are then recalculated using this new dataset. Changes
 in the computations are recorded as their \emph{impact scores} on each
@@ -126,11 +133,8 @@ adds 1 to cell \texttt{B4}'s impact score.
 
 % Each data item maintains a separate impact score for every computation.
 
-The selection process is exhaustive for small ranges (less than 30
-elements); that is, for each item, impact analysis tests the effect of
-replacing it with every other item in the range. For larger ranges, we
-employ random sampling.  To minimize sampling error, random
-selection is repeated a fixed number of times (at least 30),
+To minimize sampling error, random
+selection (for large ranges) is repeated a fixed number of times (at least 30),
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of
 iterations. Section~\ref{sec:asymptotic_analysis} shows that the
@@ -138,8 +142,9 @@ runtime efficiency of this approach is asymptotically optimal, and
 Section~\ref{sec:sampling_effectiveness} explains why sampling can be nearly as
 effective as checking each item's impact exhaustively.
 
-\paragraph{Impact Scoring.}
-Finally, the impacts of each data item are normalized by transforming
+\subsection{Impact Scoring}
+
+In the final phase, the impacts of each data item are normalized by transforming
 them into a test statistic computed as the absolute distance of
 each item from the sample mean, divided by the sample standard
 deviation. This \emph{normalized impact score} represents the distance
