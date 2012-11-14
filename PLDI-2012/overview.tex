@@ -79,16 +79,10 @@ unusual impact on the chart.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=3in]{overview-example-highlighted}
-  \caption{The same spreadsheet, with the error highlighted by \checkcell{} as the value with the most impact on the computation.\label{fig:personal_budget_highlighted}}
-\end{figure}
-
-\begin{figure}[!b]
-\centering
 \includegraphics[width=1.75in]{dependence-graph}
 \caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Figure~\ref{fig:personal_budget}.\label{fig:dependence-graph}}
 \end{figure}
- 
+
 Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
 extracts from this spreadsheet. The final formula, the only output in
 this spreadsheet (shown in black), depends on two formulas, which depend on two
@@ -110,6 +104,12 @@ is the absolute change to the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3in]{overview-example-highlighted}
+  \caption{The same spreadsheet, with the error highlighted by \checkcell{} as the value with the most unusual impact on the computation.\label{fig:personal_budget_highlighted}}
+\end{figure}
+
 For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
 starts with cell \texttt{B3}. It chooses an item from the same
 range, for example, cell \texttt{B6}. Replacing \texttt{B3}
@@ -129,7 +129,7 @@ adds 1 to cell \texttt{B4}'s impact score.
 The selection process is exhaustive for small ranges (less than 30
 elements); that is, for each item, impact analysis tests the effect of
 replacing it with every other item in the range. For larger ranges, we
-employ random sampling to.  To minimize sampling error, random
+employ random sampling.  To minimize sampling error, random
 selection is repeated a fixed number of times (at least 30),
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of
@@ -140,16 +140,14 @@ effective as checking each item's impact exhaustively.
 
 \paragraph{Impact Scoring.}
 Finally, the impacts of each data item are normalized by transforming
-them into a test statistic $z$, the absolute distance of
+them into a test statistic computed as the absolute distance of
 each item from the sample mean, divided by the sample standard
 deviation. This \emph{normalized impact score} represents the distance
 from the mean impact, in numbers of standard deviations. A standard
 approach, which we adopt here, is to only report data whose impact is
 at least two standard deviations away from the mean.  Note
 that this interpretation does not depend on normality assumptions
-about the data or its impact; in fact, using the normal distribution
-to discover anomalous impacts is conservative, as
-Section~\ref{sec:outlier_analysis} explains.
+about the data or its impact (see Section~\ref{sec:analysis}).
 
 Each data item's normalized impact scores are then averaged across
 all the outputs, and data debugging assigns that average as the
