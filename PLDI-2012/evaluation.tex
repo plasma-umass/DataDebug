@@ -5,7 +5,7 @@
 \end{figure*}
  
 
-\begin{table*}[!t]
+\begin{table*}[!b]
   \centering \begin{tabular}{l|rrr||r|rrr}
  \small{\bf{Spreadsheet}} & \small{\bf{Formulas}} & \small{\bf{Cells}} & \small{\bf{Cells}} & \small{\bf{Runtime}} & \small{\bf{Dep.}} & \small{\bf{Impact}}   & \small{\bf{Impact}} \\
  & & {\small{\it{raw}}} & {\small{\it{weighted}}} & \small{\it{total (s)}} & \small{\bf{Analysis}} & \small{\bf{Analysis}} & \small{\bf{Scoring}} \\
@@ -70,13 +70,6 @@ the total number of cells, weighted by the number of times each cell
 is used in a computation. For example, a cell that is involved in two
 computations is counted twice.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=7in]{intresults_tree}
-  \caption{A dataflow graph for the \texttt{intresults} spreadsheet, one of the benchmarks with an unusually high runtime.  The highly-connected clique in the center causes the impact analysis to dominate \checkcell{}'s computation time since a change in a single cell may require the recomputation of a large number of values. \label{fig:intresults_tree}}
-\end{figure*}
-
- 
 Figure~\ref{fig:execution_time_graph} reports the performance of data
 debugging across our spreadsheet suite, ordered by the weighted number
 of cells. Table~\ref{tab:spreadsheet_characteristics} includes the full data.
@@ -96,7 +89,11 @@ the largest number of formulas (1,066 and 2,626), and the latter also
 has the largest number of weighted cells (2,403). Their relatively
 high execution time is attributable to the fact that cost of impact
 analysis increases as the number of formulas increases, since the
-Excel recalculation engine must do more work per item tested.
+Excel recalculation engine must do more work per item tested. The
+\texttt{intresults} spreadsheet also has an extremely highly-connected
+clique in its dependence graph, which leads to both higher time for
+dependence analysis and increases the cost of recalculations during
+impact analysis (see Figure~\ref{fig:intresults_tree}).
 
 \paragraph{Summary:} For nearly every spreadsheet
  examined, \checkcell{}'s runtime is under three minutes; we believe
@@ -200,3 +197,9 @@ an order of magnitude error (one too many 0's).
 Several of our benchmarks are empty forms and are thus populated only with zero values.  We exclude these spreadsheets from our analysis since the standard deviation of their average impacts is, by definition, zero, and they would thus be vacuously normal.
 
 Our analysis of 23 spreadsheets shows that average impact distributions appear largely normal, thus supporting our normality assumption.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside of 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger claim, since small distributions tend to have fewer outliers.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=7in]{intresults_tree}
+  \caption{A dataflow graph for the \texttt{intresults} spreadsheet, one of the benchmarks with an unusually long runtime.  The highly-connected clique in the center causes the impact analysis to dominate \checkcell{}'s computation time since a change in a single cell may require the recomputation of a large number of values. \label{fig:intresults_tree}}
+\end{figure*}
