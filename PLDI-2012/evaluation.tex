@@ -41,7 +41,7 @@
 \small{s446gradessp04} & \small{335} & \small{1369} & \small{1247} & \small{129.36} & \small{9.76} & \small{113.29} & \small{6.27} \\ 
 \small{NEW} & \small{2626} & \small{2574} & \small{2403} & \small{683.32} & \small{115.75} & \small{440.30} & \small{127.23} \\ 
     \end{tabular}%
-  \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells weighs each cell by the number of formulas that depend on it. A breakdown of \checkcell{} execution times (in seconds) appears on the right side.\label{tab:spreadsheet_characteristics}}
+  \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the total number of cells that are used in any formula; the weighted number of cells weighs cells \emph{in ranges} by the number of formulas that depend on it. A breakdown of \checkcell{} execution times (in seconds) appears on the right side.\label{tab:spreadsheet_characteristics}}
 \end{table*}
 
 We evaluate \checkcell{} across two dimensions: its execution time,
@@ -66,9 +66,11 @@ of these spreadsheets, ordered by the number of formulas each
 contains. We include two columns that count the number of cells in
 different ways. \emph{Cells (raw)} indicates the total number of cells
 that participate in any computation. \emph{Cells (weighted)} indicates
-the total number of cells, weighted by the number of times each cell
-is used in a computation. For example, a cell that is involved in two
-computations is counted twice.
+the total number of cells \emph{inside ranges}, weighted by the number
+of times each cell is used in a computation. For example, a cell that
+is in a range involved in two computations is counted twice. Because
+the weighted cell count only includes ranges, it is possible for it to
+be lower than the raw number of cells.
 
 Figure~\ref{fig:execution_time_graph} reports the performance of data
 debugging across our spreadsheet suite, ordered by the weighted number
