@@ -196,7 +196,7 @@ an order of magnitude error (one too many 0's).
 
 Several of our benchmarks are empty forms and are thus populated only with zero values.  We exclude these spreadsheets from our analysis since the standard deviation of their average impacts is, by definition, zero, and they would thus be vacuously normal.
 
-Our analysis of 23 spreadsheets shows that average impact distributions appear largely normal, thus supporting our normality assumption.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside of 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger claim, since small distributions tend to have fewer outliers.
+Our analysis of 23 spreadsheets shows that average impact scores which are more than two standard deviations from the mean impact score are in fact rare, thus supporting our decision to reject them.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger evidence, since small distributions tend to have fewer outliers.
 
 \begin{figure*}[!t]
 \centering
