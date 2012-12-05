@@ -1,0 +1,98 @@
+\section{Related Work}
+
+% The formula here is: discuss related work in one facet; end with a contrast with the current work.
+
+\subsection*{Data Cleaning}
+
+Most past work on locating or removing errors in data has focused
+on \emph{data cleaning} or \emph{scrubbing} in database
+systems~\cite{DBLP:journals/debu/RahmD00,han2006data}. Standard
+approaches include statistical outlier analysis for removing noisy
+data~\cite{1583581}, interpolation to fill in missing data (e.g., with
+averages), and using cross-correlation with other data sources to correct or
+locate errors~\cite{Hernandez:1995:MPL:223784.223807}.
+
+% Also: noise removal.
+
+% Section~\ref{FIXME} shows that statistical outlier analysis often produces unacceptably large numbers of false positives. 
+
+% SURVEY! http://www.dbis.informatik.hu-berlin.de/dbisold/research/bioinformatics/papers/data_cleansing.html
+
+A number of approaches have been developed that allow data cleaning to
+be expressed programmatically or applied interactively. Programmatic
+approaches include AJAX, which expresses a data cleaning program as a
+DAG of transformations from input to
+output~\cite{Galhardas:2000:AED:342009.336568}. Data Auditor applies
+rules and target relations entered by a
+programmer~\cite{Golab:2010:DAE:1920841.1921060}. A similar
+domain-specific approach has been employed for data streams to smooth
+data temporally and isolate it spatially~\cite{1617508}. Potter's
+Wheel, by Raman and Hellerstein, is an interactive tool that lets
+users visualize and apply data cleansing
+transformations~\cite{Raman:2001:PWI:645927.672045}.
+
+To identify errors, Luebbers et al. describe an interactive data
+mining approach based on machine learning that builds decision trees
+from databases. It derives logical rules (e.g., ``$\mbox{BRV} =
+404 \Rightarrow \mbox{GBM} = 901$'') that hold for most of the
+database, and marks deviations as errors to be examined by a data
+quality engineer~\cite{Luebbers:2003:SDD:1315451.1315499}. Raz et al.\
+describe an approach aimed at arbitrary software that uses
+Daikon~\cite{ernst2007daikon} to infer invariants about numerical
+input data and then report discrepancies as ``semantic
+anomalies''~\cite{Raz:2002:SAD:581339.581378}.  Data debugging is
+orthogonal to these approaches: rather than searching for latent
+relationships in or across data, it measures the interaction of data with
+the programs that operate on them.
+ 
+
+\subsection*{Spreadsheet Errors}
+
+Spreadsheets have been one of the most prominent computer applications
+since their creation in 1979.
+ The most widely used spreadsheet application today is Microsoft
+Excel. Excel includes rudimentary error detection including errors in
+formula entry like division by zero, a reference to a non-existient
+formula or cell, invalid numerical arguments, or accidental mixing of
+text and numbers.
+% http://office.microsoft.com/en-us/excel-help/find-and-correct-errors-in-formulas-HP010066255.aspx
+Excel also checks for inconsistency with adjacent formulas and other
+structural errors, which it highlights with a ``squiggly'' underline. In addition, Excel provides a formula auditor, which lets users view dependencies flowing into and out of particular formulas.
+% http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
+
+Past work on detecting errors in spreadsheets has focused on inferring
+units and relationships (has-a, is-a) from information like structural
+clues and column
+headers, and then checking for inconsistencies~\cite{Antoniu:2004:VUC:998675.999448,DBLP:conf/kbse/AhmadAGK03,Chambers:2010:RSL:1860134.1860346,Erwig:2009:SES:1608570.1608694,Erwig:2005:AGM:1062455.1062494}. For
+example, XeLda checks if formulas process values with incorrect units
+or if derived units clash with unit annotations. There also has been
+considerable work on testing tools for
+spreadsheets~\cite{fisher2006scaling,rothermel1998you,rothermel2001methodology,Carver:2006:EET:1159733.1159775}.
+
+This work is complementary and orthogonal to \checkcell{}, which
+works with standard, unannotated spreadsheets and focuses on unusual
+interactions of data with formulas.
+
+
+% What is Jaffry et al\. ~\cite{DBLP:journals/corr/abs-0803-1748}?
+
+\subsection*{Statistical Outlier Analysis}
+
+Techniques to locate outliers date to the earliest days of statistics,
+when they were developed to make nautical measurements more
+robust. Widely-used approaches include Peirce's criterion, Chauvenet's
+criterion, and Grubb's test for
+outliers~\cite{barnett1994outliers}. All of these techniques require
+that data belong to a known distribution, primarily the normal
+(Gaussian). Unfortunately, input data does not necessarily fit any
+statistical distribution. Moreover, identifying outliers leads to
+false positives when they do not materially contribute to the result
+of a computation (i.e., have no impact). By contrast, data debugging only reports
+data items with a substantial impact on a computation.
+
+%\checkcell{} leverages the
+%fact that its statistical sampling approach forces observed effects to
+%follow a Gaussian distribution (as Section~\ref{sec:FIXME} explains),
+%allowing it to use the Peirce outlier test to determine whether a
+%particular value has an unusual impact on a computation.
+

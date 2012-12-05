@@ -12,6 +12,18 @@
 \usepackage{amssymb}
 \usepackage{url}
 
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{conjecture}{Conjecture}[section]
+\newtheorem{fact}{Fact}
+\newtheorem{problem}{Problem}
+\newtheorem{example}{Example}
+\newtheorem{claim}{Claim}
+
+
 \input{macros}
 \usepackage{smallheadings}
 
@@ -42,7 +54,10 @@
 {\singlespace
 \setcounter{page}{1}
 
-%\input{introduction}
+\input{introduction}
+\input{overview}
+\input{analysis}
+\input{evaluation}
 %\input{jsbackground}
 %\input{static-lang}
 %\input{dynamic-lang}
@@ -50,6 +65,7 @@
 %\input{codegen}
 %\input{system-support}
 
+\input{related}
 \input{impact} 
 \input{prior}
 \input{conclusion}
