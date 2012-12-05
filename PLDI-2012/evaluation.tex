@@ -41,7 +41,7 @@
 \small{s446gradessp04} & \small{335} & \small{1369} & \small{1247} & \small{129.36} & \small{9.76} & \small{113.29} & \small{6.27} \\ 
 \small{NEW} & \small{2626} & \small{2574} & \small{2403} & \small{683.32} & \small{115.75} & \small{440.30} & \small{127.23} \\ 
     \end{tabular}%
-  \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the number of cells that are used in any formula; the weighted number of cells weighs each cell by the number of formulas that depend on it. A breakdown of \checkcell{} execution times (in seconds) appears on the right side.\label{tab:spreadsheet_characteristics}}
+  \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the total number of cells that are used in any formula; the weighted number of cells weighs cells \emph{in ranges} by the number of formulas that depend on it. A breakdown of \checkcell{} execution times (in seconds) appears on the right side.\label{tab:spreadsheet_characteristics}}
 \end{table*}
 
 We evaluate \checkcell{} across two dimensions: its execution time,
@@ -66,9 +66,11 @@ of these spreadsheets, ordered by the number of formulas each
 contains. We include two columns that count the number of cells in
 different ways. \emph{Cells (raw)} indicates the total number of cells
 that participate in any computation. \emph{Cells (weighted)} indicates
-the total number of cells, weighted by the number of times each cell
-is used in a computation. For example, a cell that is involved in two
-computations is counted twice.
+the total number of cells \emph{inside ranges}, weighted by the number
+of times each cell is used in a computation. For example, a cell that
+is in a range involved in two computations is counted twice. Because
+the weighted cell count only includes ranges, it is possible for it to
+be lower than the raw number of cells.
 
 Figure~\ref{fig:execution_time_graph} reports the performance of data
 debugging across our spreadsheet suite, ordered by the weighted number
@@ -87,7 +89,7 @@ weighted number of cells.
 The spreadsheets that require the most execution time both have by far
 the largest number of formulas (1,066 and 2,626), and the latter also
 has the largest number of weighted cells (2,403). Their relatively
-high execution time is attributable to the fact that cost of impact
+high execution time is attributable to the fact that the cost of impact
 analysis increases as the number of formulas increases, since the
 Excel recalculation engine must do more work per item tested. The
 \texttt{intresults} spreadsheet also has an extremely highly-connected
@@ -196,7 +198,7 @@ an order of magnitude error (one too many 0's).
 
 Several of our benchmarks are empty forms and are thus populated only with zero values.  We exclude these spreadsheets from our analysis since the standard deviation of their average impacts is, by definition, zero, and they would thus be vacuously normal.
 
-Our analysis of 23 spreadsheets shows that average impact distributions appear largely normal, thus supporting our normality assumption.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside of 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger claim, since small distributions tend to have fewer outliers.
+Our analysis of 23 spreadsheets shows that average impact scores which are more than two standard deviations from the mean impact score are in fact rare, thus supporting our decision to reject them.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger evidence, since small distributions tend to have fewer outliers.
 
 \begin{figure*}[!t]
 \centering
