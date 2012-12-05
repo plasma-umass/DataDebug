@@ -1,0 +1,122 @@
+\begin{thebibliography}{10}
+
+\bibitem{Barowy:2012:API:2384616.2384663}
+D.~W. Barowy, C.~Curtsinger, E.~D. Berger, and A.~McGregor.
+\newblock {\sc AutoMan}: a platform for integrating human-based and digital
+  computation.
+\newblock In {\em Proceedings of the ACM international conference on Object
+  oriented programming systems languages and applications (OOPSLA 2012)}, pages
+  639--654, New York, NY, USA, 2012. ACM.
+
+\bibitem{DBLP:conf/oopsla/BergerYLN09}
+E.~D. Berger, T.~Yang, T.~Liu, and G.~Novark.
+\newblock Grace: safe multithreaded programming for {C/C++}.
+\newblock In S.~Arora and G.~T. Leavens, editors, {\em Proceedings of the 24th
+  Annual ACM SIGPLAN Conference on Object-Oriented Programming, Systems,
+  Languages, and Applications (OOPSLA 2009)}, pages 81--96, Oct. 2009.
+
+\bibitem{1134000}
+E.~D. Berger and B.~G. Zorn.
+\newblock {DieHard}: Probabilistic memory safety for unsafe languages.
+\newblock In {\em Proceedings of the 2006 ACM SIGPLAN Conference on Programming
+  Language Design and Implementation (PLDI 2006)}, pages 158--168, New York,
+  NY, USA, 2006. ACM Press.
+
+\bibitem{flux06usenix}
+B.~Burns, K.~Grimaldi, A.~Kostadinov, E.~D. Berger, and M.~D. Corner.
+\newblock Flux: A language for programming high-performance servers.
+\newblock In {\em Proceedings of the 2006 USENIX Annual Technical Conference},
+  pages 129--142, June 2006.
+
+\bibitem{proartis2013}
+F.~J. Cazorla, E.~Quinones, T.~Vardanega, L.~Cucu, B.~Triquet, G.~Bernat,
+  E.~Berger, J.~Abella, F.~Wartel, M.~Houston, L.~Santinelli, L.~Kosmidis,
+  C.~Lo, and D.~Maxim.
+\newblock {PROARTIS}: Probabilistically analysable real-time systems.
+\newblock {\em ACM Transactions on Embedded Computing Systems (TECS)}, 2013.
+
+\bibitem{transparent2006usenix}
+J.~Cipar, M.~D. Corner, and E.~D. Berger.
+\newblock Transparent contribution of memory.
+\newblock In {\em Proceedings of the 2006 USENIX Annual Technical Conference},
+  pages 109--114, June 2006.
+
+\bibitem{stabilizer:asplos13}
+C.~Curtsinger and E.~D. Berger.
+\newblock {\sc Stabilizer}: Statistically sound performance evaluation.
+\newblock In {\em Proceedings of the seventeenth international conference on
+  Architectural Support for Programming Languages and Operating Systems},
+  ASPLOS '13, New York, NY, USA, 2013. ACM.
+
+\bibitem{feng05}
+Y.~Feng and E.~D. Berger.
+\newblock A locality-improving dynamic memory allocator.
+\newblock In {\em Proceedings of the {ACM SIGPLAN} 2005 Workshop on Memory
+  System Performance (MSP)}, Chicago, IL, June 2005.
+
+\bibitem{hert05a}
+M.~Hertz and E.~D. Berger.
+\newblock Quantifying the performance of garbage collection vs. explicit memory
+  management.
+\newblock In {\em Proceedings of the 20th annual {ACM} {SIGPLAN} Conference on
+  Object-Oriented Programming Systems, Languages, and Applications (OOPSLA
+  2005)}, San Diego, CA, Oct. 2005.
+
+\bibitem{hert05}
+M.~Hertz, Y.~Feng, and E.~D. Berger.
+\newblock Garbage collection without paging.
+\newblock In {\em Proceedings of the 2005 {ACM} {SIGPLAN} Conference on
+  Programming Language Design and Implementation (PLDI 2005)}, pages 143--153.
+  ACM, June 2005.
+
+\bibitem{Liu:2011:SPD:2048066.2048070}
+T.~Liu and E.~D. Berger.
+\newblock {\sc Sheriff}: precise detection and automatic mitigation of false
+  sharing.
+\newblock In {\em Proceedings of the 2011 ACM international conference on
+  Object oriented programming systems languages and applications}, OOPSLA '11,
+  pages 3--18, New York, NY, USA, 2011. ACM.
+
+\bibitem{Liu:2011:DED:2043556.2043587}
+T.~Liu, C.~Curtsinger, and E.~D. Berger.
+\newblock {\sc Dthreads}: efficient deterministic multithreading.
+\newblock In {\em Proceedings of the Twenty-Third ACM Symposium on Operating
+  Systems Principles}, SOSP '11, pages 327--336, New York, NY, USA, 2011. ACM.
+
+\bibitem{1346296}
+V.~B. Lvin, G.~Novark, E.~D. Berger, and B.~G. Zorn.
+\newblock Archipelago: trading address space for reliability and security.
+\newblock In {\em ASPLOS XIII: Proceedings of the 13th international conference
+  on Architectural support for programming languages and operating systems},
+  pages 115--124, New York, NY, USA, Mar. 2008. ACM.
+
+\bibitem{1250736}
+G.~Novark, E.~D. Berger, and B.~G. Zorn.
+\newblock Exterminator: automatically correcting memory errors with high
+  probability.
+\newblock In {\em Proceedings of the 2007 ACM SIGPLAN Conference on Programming
+  Language Design and Implementation (PLDI 2007)}, pages 1--11, New York, NY,
+  USA, 2007. ACM Press.
+
+\bibitem{1267316}
+T.~Yang, E.~D. Berger, S.~F. Kaplan, and J.~E.~B. Moss.
+\newblock {CRAMM}: virtual memory support for garbage-collected applications.
+\newblock In {\em Proceedings of the 7th USENIX Symposium on Operating Systems
+  Design and Implementation (OSDI '06)}, pages 103--116, Berkeley, CA, USA,
+  2006. USENIX Association.
+
+\bibitem{yang04}
+T.~Yang, M.~Hertz, E.~D. Berger, S.~F. Kaplan, and J.~E.~B. Moss.
+\newblock Automatic heap sizing: Taking real memory into account.
+\newblock In {\em Proceedings of the 2004 {ACM} {SIGPLAN} International
+  Symposium on Memory Management (ISMM)}, pages 61--72. ACM Press, Nov. 2004.
+
+\bibitem{DBLP:conf/osdi/YangLBKM08}
+T.~Yang, T.~Liu, E.~D. Berger, S.~F. Kaplan, and J.~E.~B. Moss.
+\newblock Redline: First class support for interactivity in commodity operating
+  systems.
+\newblock In R.~Draves and R.~van Renesse, editors, {\em Proceedings of the 8th
+  USENIX Symposium on Operating Systems Design and Implementation (OSDI 2008)},
+  pages 73--86. USENIX Association, Dec. 2008.
+
+\end{thebibliography}

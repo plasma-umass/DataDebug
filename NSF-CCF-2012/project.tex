@@ -1,0 +1,68 @@
+% DON'T FORGET COLLAB PLAN & DATA RETENTION PLAN.
+
+\documentclass[10pt]{article}
+% \usepackage{subfigure}
+\usepackage{graphics}
+\usepackage{palatino}
+\usepackage{epsfig}
+\usepackage{bbding}
+\usepackage{color}
+\usepackage[override]{cmtt}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+
+\input{macros}
+\usepackage{smallheadings}
+
+\newcommand{\punt}[1]{}
+
+\begin{document}
+\thispagestyle{empty}
+\singlespace
+
+\newcommand{\projectname}{
+\begin{center}
+        {\large\bf\textsf{
+            SHF:Small: Data Debugging}}\\
+        {\textsf{Emery Berger, Alexandra Meliou}} 
+\end{center}}
+
+\input{summary}
+\clearpage
+
+\thispagestyle{empty}
+\singlespace
+\input{data-retention}
+\clearpage
+
+\input{budget-justification}
+
+\projectname
+{\singlespace
+\setcounter{page}{1}
+
+%\input{introduction}
+%\input{jsbackground}
+%\input{static-lang}
+%\input{dynamic-lang}
+%\input{opt}
+%\input{codegen}
+%\input{system-support}
+
+\input{impact} 
+\input{prior}
+\input{conclusion}
+}
+
+\clearpage
+{\singlespace \small
+\bibliographystyle{abbrv}
+\bibliography{ref,berger/emery}
+}
+
+%\clearpage
+%\input{collaboration}
+%\input{timeline}
+
+\end{document}

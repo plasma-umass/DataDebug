@@ -1,0 +1,173 @@
+\usepackage{xspace}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usepackage{listings}
+\usepackage{textcomp}
+
+%\usepackage{floatflt}
+
+%
+% abbreviations
+%
+
+\hyphenation{J-Stack}
+\newcommand{\doppio}[1]{{\textsc{Doppio}}}
+\newcommand{\jstack}[1]{{\textsc{JStack}}}
+\newcommand{\jsopt}[1]{{\textsc{JSOpt}}}
+\newcommand{\jstuner}[1]{{\textsc{JSTuner}}}
+\newcommand{\lambdajs}[1]{\ensuremath{\lambda_{\mathit{JS}}}\xspace}
+
+\newcommand{\gctk}{GCTk\xspace}
+\newcommand{\mmtk}{MMTk\xspace}
+\newcommand{\jikes}{Jikes RVM\xspace}
+\newcommand{\jikesrvm}{\jikes\xspace}
+\newcommand{\jala}{Jalape\~{n}o\xspace}
+\newcommand{\jalapeno}{Jalape\~{n}o\xspace}
+\newcommand{\specjvm}{SPEC JVM\xspace}
+\newcommand{\jess}{\textsf{\_202\_jess}\xspace}
+\newcommand{\raytrace}{\textsf{\_205\_raytrace}\xspace}
+\newcommand{\db}{\textsf{\_209\_db}\xspace}
+\newcommand{\javac}{\textsf{\_213\_javac}\xspace}
+\newcommand{\jack}{\textsf{\_228\_jack}\xspace}
+\newcommand{\compress}{\textsf{\_201\_compress}\xspace}
+\newcommand{\mpegaudio}{\textsf{\_222\_mpegaudio}\xspace}
+\newcommand{\mtrt}{\textsf{\_227\_mtrt}\xspace}
+\newcommand{\jbb}{\textsf{pseudojbb}\xspace}
+
+\newcommand{\dacapo}{\textsf{DaCapo}\xspace}
+\newcommand{\dacapover}{\textsf{DaCapo b.050224}\xspace}
+\newcommand{\antlr}{\textsf{antlr}\xspace}
+\newcommand{\bloat}{\textsf{bloat}\xspace}
+\newcommand{\chart}{\textsf{chart}\xspace}
+\newcommand{\eclipse}{\textsf{eclipse}\xspace}
+\newcommand{\fop}{\textsf{fop}\xspace}
+\newcommand{\hsqldb}{\textsf{hsqldb}\xspace}
+\newcommand{\jython}{\textsf{jython}\xspace}
+\newcommand{\luindex}{\textsf{luindex}\xspace}
+\newcommand{\lusearch}{\textsf{lusearch}\xspace}
+\newcommand{\pmd}{\textsf{pmd}\xspace}
+\newcommand{\ps}{\textsf{ps}\xspace}
+\newcommand{\xalan}{\textsf{xalan}\xspace}
+
+\newcommand{\psfun}{\textsf{ps-fun}\xspace}
+\newcommand{\ipsixql}{\textsf{ipsixql}\xspace}
+
+\newcommand{\Ginseng}{{\sc Ginseng}\xspace}
+
+%
+% misc
+%
+\newcommand{\fix}[2]{\textbf{#1 says:~\emph{\textcolor{red}{ #2}}}}
+\newcommand{\todo}[1]{\textcolor{red}{TODO: {#1}}}
+\newcommand{\comment}[1]{\textcolor{blue}{\textbf{COMMENT}~\emph{#1}}}
+\newcommand{\ignore}[1]{}
+\newcommand{\mccenter}[1]{\multicolumn{1}{c|}{#1}}
+
+%
+% spacing
+%
+\clubpenalty 10000
+\widowpenalty 10000
+\def\topfraction{0.9}
+\def\bottomfraction{0.9}
+\def\textfraction{0.1}
+\newcommand{\singlespace}{\renewcommand{\baselinestretch}{1.00}\small\normalsize}
+\newcommand{\doublespace}{\renewcommand{\baselinestretch}{1.5}\small\normalsize}
+\newcommand{\tight}{\renewcommand{\baselinestretch}{1.28}\small\normalsize}
+%\renewcommand{\subfigbottomskip}{0.25ex}
+%\renewcommand{\subfigcapskip}{0ex}
+
+%
+% margins
+%
+\topmargin -.5truein
+\textheight 9truein
+\oddsidemargin .25truein
+\evensidemargin .25truein
+\textwidth 6truein
+
+%
+% sectioning commands See Latex Companion, pp24-30 for details
+%
+\setcounter{secnumdepth}{2}
+\makeatletter
+%\parskip=0pt
+\renewcommand\section{\@startsection{section}
+        {1}%    level
+        {\z@}%  indent
+        {-2.5ex}% beforeskip
+        {.5ex}% afterskip
+        {\normalfont\normalsize\bfseries\parskip=0pt}}% style
+\renewcommand\subsection{\@startsection{subsection}
+        {2}%    level
+        {\z@}%  indent
+        {-1ex}% beforeskip
+        {.2ex}% afterskip
+        {\normalfont\normalsize\bfseries\parskip=0pt}}
+\renewcommand\subsubsection{\@startsection{subsubsection}%
+        {3}%    level
+        {0em}%  indent
+        {1ex}%  beforeskip
+        {-.5em}% afterskip
+        {\normalfont\normalsize\bfseries\parskip=0pt}}% style
+% The following will generate compact para headings
+\renewcommand\paragraph{\@startsection{paragraph}%
+        {4}%    level
+        {0em}%  indent
+        {.5ex}%  beforeskip
+        {-.5em}% afterskip
+        {\normalfont\normalsize\bfseries\parskip=0pt}}% style
+\setlength\partopsep{0\p@}
+\setlength\parskip{0\p@ \@plus \p@}
+\makeatother
+
+\lstdefinelanguage{LambdaJS}{
+sensitive=false,
+morekeywords={let,func,return,undefined,null,typeof,true,false,ref,deref,
+              var,new,break,while,try,catch,finally,throw,err,if,else,for,do,
+              with,delete,new,instanceof,},
+keywordstyle=\bfseries\sffamily,
+identifierstyle=\sffamily,
+comment=[l]{//},
+commentstyle=\sffamily,
+string=[d]{"},
+stringstyle=\sffamily,
+mathescape=true,
+extendedchars=true,
+basicstyle=\footnotesize\ttfamily,
+showstringspaces=false,
+numbers=none,
+firstnumber=0,
+numberstyle=\tiny,
+stepnumber=5,
+numbersep=5pt,
+upquote=true,
+columns=fullflexible,
+flexiblecolumns=true,
+}
+
+\lstdefinelanguage{JavaScript}{
+sensitive=false,
+morekeywords={let,function,return,undefined,null,typeof,true,false,ref,deref,
+              var,new,break,while,try,catch,finally,throw,err,if,else,for,do,
+              with,delete,new,instanceof,this,},
+keywordstyle=\ttfamily,
+identifierstyle=\ttfamily,
+comment=[l]{//},
+commentstyle=\ttfamily,
+string=[d]{"},
+stringstyle=\ttfamily,
+mathescape=true,
+extendedchars=true,
+basicstyle=\footnotesize\ttfamily,
+showstringspaces=false,
+numbers=none,
+firstnumber=0,
+numberstyle=\tiny,
+stepnumber=5,
+numbersep=5pt,
+upquote=true,
+columns=fixed,
+flexiblecolumns=true,
+}
+\lstset{language=JavaScript}
