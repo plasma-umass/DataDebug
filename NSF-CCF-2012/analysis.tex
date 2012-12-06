@@ -143,31 +143,6 @@ Therefore, the estimated impact computed by sampling is
 nearly as effective at reducing both false positives and false
 negatives as computing the actual impact.
 
-\punt{
-\paragraph{Normal distribution of impacts.}
-
-Justifies use of trimming (only reporting things that are two standard
-deviations)--high confidence that they are outliers.  Average change,
-independent (random), same distribution (don't exclude same cell
-swap). Use 30 samples.
-
-\paragraph{Probability of missing important data.}
-
-30 samples. Odds of missing something important are vanishingly small.
-Cite Feller. Limitations: threshold functions.
-
-\paragraph{Limitations}
-
-\begin{itemize}
-\item {\bf Array formulas.}
-\item {\bf Tables.}
-\item {\bf Control flow / HLOOKUP / VLOOKUP.}
-\item {\bf Outputs that change data type.}
-\item {\bf Macros / side-effects.}
-\end{itemize}
-}
-
-
 \subsection{Impact Outlier Analysis}
 \label{sec:outlier_analysis}
 
@@ -201,7 +176,6 @@ conservative, since it includes all distributions with heavier tails
 kurtosis generally have small tails, they also tend to have few
 outliers, by definition. Thus, failing to report outliers for
 distributions with negative kurtosis is usually safe.
-
 One exception worth noting and a limitation of this approach is
 symmetric multimodal distributions, where the outlier values are not only
 in the tail but also centered around the mean. Using the normal as a

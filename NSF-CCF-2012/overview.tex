@@ -42,7 +42,7 @@
 \end{table}%
 }
 
-This section describes in detail the algorithms that data debugging
+This section outlines the algorithms that data debugging
 employs. Section~\ref{sec:analysis} includes formal analysis of various
 aspects of the data debugging algorithms described here, including
 asymptotic performance and statistical effectiveness.
@@ -51,9 +51,9 @@ asymptotic performance and statistical effectiveness.
 
 % the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
 
-Throughout this section, we illustrate these algorithms with a running
-example of a budget shown in Figure~\ref{fig:personal_budget}, which
-is a reduced version of a sample template included with Microsoft Excel. This
+We illustrate these algorithms with a running
+example of a budget shown in Figure~\ref{fig:personal_budget}, 
+a reduced version of a sample template included with Microsoft Excel. This
 spreadsheet tracks expected versus real spending on monthly
 expenses. The spreadsheet indicates whether the user can afford to
 splurge and go out to a fancy restaurant, which is when real spending
@@ -71,7 +71,7 @@ The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs).
 In a spreadsheet, inputs are data in cells, while computations are
 either charts or formulas that are not used by other formulas.
-\checkcell{} uses techniques similar to past work to identify
+Our \checkcell{} prototype uses techniques similar to past work to identify
 dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
 support for charts.
 
