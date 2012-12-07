@@ -31,7 +31,7 @@ analysis to find and rank data based on the unusualness of its impact
 on the results of a computation. Data debugging works by first
 building a data dependence graph of the computations. It then measures
 data impact by replacing data items with data chosen from the same
-group (e.g., a range in a spreadsheet formula) and observing the
+group (such as a range in a spreadsheet formula) and observing the
 resulting changes in computations that depend on that data. This
 non-parametric approach allows data debugging to find errors in both
 numeric and non-numeric data, without any requirement that data follow
@@ -41,28 +41,28 @@ By calling attention to data with unusual impact, data debugging can
 provide insights into both the data and the computation and reveal
 errors. Data debugging is especially well-suited for data-intensive
 programming environments like databases and spreadsheets that
-intertwine data and programs (e.g., with queries and formulas). 
+intertwine data and programs, e.g., with queries and formulas.
 
-We have developed a prototype data debugging tool for spreadsheets called
-\checkcell{} that
+We have developed a prototype data debugging tool
+for spreadsheets. This tool, called
+\checkcell{},
  highlights data whose impact crosses a threshold of unusualness,
 ranking these cells by coloring them in shades proportionally to their
 impact: the brighter a cell is highlighted, the more unusual impact it
 has.  While untuned, our prototype is empirically and analytically
 efficient and effective; analysis time ranges from seconds to minutes.
-A case study by employing human workers via a crowdsourcing platform
-shows that \checkcell{} is effective at
-finding actual data entry errors.
+A case study employing human workers via a crowdsourcing platform
+verifies that \checkcell{} finds actual data entry errors.
 
 This project will develop data debugging in several key directions,
-broadening its scope and improving its performance: (1) extension of
-data debugging to database systems and MapReduce tasks; (2) static
-analysis of formulas and queries to enable optimizations; (3)
-derivation of incremental versions of data debugging algorithms to
-minimize recomputations when data changes; (4) parallelizing data
-debugging to take advantage of multicore architectures. This work will
-make it possible for data debugging to detect likely errors as soon as
-they are entered into a spreadsheet or added to a database.
+broadening its scope and improving its
+performance: (1) extension of data debugging to database systems and
+MapReduce tasks; (2) static analysis of formulas and queries to enable
+optimizations; (3) derivation of incremental versions of data
+debugging algorithms to minimize recomputations when data changes; and (4)
+parallelizing data debugging to take advantage of multicore
+architectures. This work will make it possible for data debugging to
+detect likely errors as soon as they are entered.
 
 \smallskip
 \noindent{\bf\textsf{Broader Impact.}}
