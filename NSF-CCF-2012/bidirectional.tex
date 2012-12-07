@@ -1,0 +1,86 @@
+\section{Bi-directional Debugging} % (fold)
+\label{sec:bi_directional_debugging}
+
+We propose to combine two methods of performing impact analysis to improve the accuracy, performance, and scalability of data debugging.
+
+\subsection{Forward Analysis} % (fold)
+\label{sub:forward_analysis}
+The impact analysis in \checkcell\ relies on re-calculating computations either exhaustively, or using random sampling over the provided range. We call this approach \emph{forward impact analysis}: we modify the input of the computation and observe the effect of the change in the output. This method is very powerful, because it does not require any knowledge of the inner workings of the computation, and it can be used on any pure function. However, it also has certain disadvantages.
+
+\paragraph{Efficiency.} % (fold)
+\label{par:efficiency}
+Forward analysis can be very inefficient when applied to large or complex problems, as it needs to repeat the computation for different settings of the input parameters. The computation itself may be computationally intensive, and calculating the exact impact of each input parameter would require an exhaustive search over the input domain. Calculating impact over sets of input parameters makes the problem even harder, as it causes combinatorial explosion of the search space. \todo{motivate impact over sets of inputs?}
+% paragraph efficiency (end)
+
+\paragraph{Outputs with complex conditions.} % (fold)
+\label{par:outputs_with_complex_conditions}
+Forward analysis may be unsuitable when the quality of an output is determined by complex conditions. Assume a set of outputs $\mathcal{S}$, which are computed by different black box functions over the same input parameters, and a sanity check condition specifying that the number of distinct values in $\mathcal{S}$ should be minimized. Quantifying the impact of an input to the result given such a condition is not straightforward, and cannot be computed by the simple forward analysis method employed by \checkcell.
+% paragraph outputs_with_complex_conditions (end)
+
+
+\paragraph{Reuse results.} % (fold)
+\label{par:reuse_results}
+Forward analysis iterates over multiple configurations of the input and recomputes a given function over each one. Since the computation is treated as a black box, we cannot reuse intermediate results across different configurations.
+
+% paragraph reuse_results (end)
+
+\paragraph{Staged Computation} % (fold)
+\label{par:staged_computation}
+Computation comprised of multiple blackbox components. Do we compute impact on the final output, or the intermediate results?
+% paragraph staged_computation (end)
+
+\comment{Thinking about different functions: How does \checkcell\ handle parity computation? Take 3 values A=1, B=1, C=0. It seems that the impact of C will be higher than the impact of A and B. Can we do this better with reverse analysis?}
+
+
+
+If not blackbox, then we can be smarter about it. For example, if you know that the function is ``mean'', you can compute impact efficiently.
+
+How can this be generalized?
+% subsection forward_analysis (end)
+
+
+\subsection{Reverse Analysis} % (fold)
+\label{sub:reverse_analysis}
+ We propose to augment data debugging with \emph{reverse impact analysis}: we specify the desired value of the output and reverse-engineer how the input should be changed to achieve that value. 
+
+
+Reverse analysis.
+
+My stuff here on Reverse data management, Tiresias, and causality. Add example of reduction to SAT or LP?
+
+Pros and Cons.
+% subsection reverse_analysis (end)
+
+
+%--------------------------------------------------------------------------
+In forward analysis we modify the data and observe the effect of the changes to the output. The benefit of this approach is that it works with arbitrary transformations. The disadvantage is that it is inefficient when the input domain is large, since it does exhaustive search over the domain. In reverse analysis we specify a change to the output, and reverse engineer the appropriate changes to the input. This approach is applicable to a limited set of transformations, but it should be more efficient and accurate for these cases.
+
+In complex transformations, we may have parts that are amenable to reverse analysis, but also blackbox components. In these cases, I expect that a combination of the techniques would work well. 
+
+\begin{enumerate}
+	\item Divide the problem into smaller sub-problems.
+	
+	Take Boolean variables A, B, C, and D, that have the dependency D = A and (B or C).
+	A is derived from the input set S1 through a blackbox transformation. B and C are similarly derived from S2 and S3 respectively. All of A, B, and C are equal to True given the current inputs.
+
+	Now say that we want to compute the impact of the input cells to the final output D. The naive forward approach would consider all input cells collectively {S1, S2, S3} to determine the impact on D. That could lead to wrong results if there is disparity in the values across the 3 domains, or if the 3 blackbox transformations are very different. Alternatively, we can use forward analysis on A, B, and C independently, and weigh the impact results based on their responsibility metric towards D (which is determined by reverse analysis). This would be more efficient, as both the reverse and forward parts would operate on smaller problems.
+	
+	\item Complex conditions on values
+	
+	
+	Take 3 cells c1, c2, and c3. Their values are determined based on blackbox operations on some input, but the results are in these domains respectively: {a,b}, {b}, {a,c}. Currently the cells have the values c1=a, c2=b, and c3=c. Now say that you know that all 3 cells are expected to have as similar values as possible. If they don't, it could be an indication of errors. In this case, it is easy to see that in order to satisfy this constraint, either c1 should switch to b, or c3 should switch to a. 
+
+	In general, discovering these solutions will not be straightforward. It is possible to use forward analysis for this task, but it would pretty much end up doing an exhausting search. Instead, we can use reverse analysis to determine the proper values of the cells. We can write this problem as an integer program with variables x1=(c1=a), x2=(c1=b), etc. (I am omitting the actual produced program here, but let me know if you want to see it.)
+	Based on the solution, we can further use forward analysis to investigate the impact of each input to the cells that were determined as erroneous.
+	
+	\item Filter the input domain before reverse analysis
+	
+	
+	In a setting like the previous example, we can use forward analysis to reduce the domain size, before applying reverse analysis. For example, say that an output cell takes values from the domain {a,b,c,d,e,f}, and is currently set to a. Forward analysis discovers a single input cell with high impact, and changing that cell changes the output from a to b. This probably means that we can ignore the rest of the domain {c,d,e,f}, reducing the number of variables and constraints  that reverse analysis would generate.
+	
+\end{enumerate}
+
+
+
+
+% section bi_directional_debugging (end)
