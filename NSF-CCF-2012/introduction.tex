@@ -126,8 +126,20 @@ shades proportionally to their impact: the brighter a cell is
 highlighted, the more unusual impact it has.
 \checkcell{} is empirically and analytically efficient and effective, as we show in Sections~\ref{sec:analysis} and~\ref{sec:evaluation}. The current prototype is untuned but
 analysis time is generally low, taking seconds to run on most of the
-spreadsheets we examine. We perform a case study by employing human
+spreadsheets we examine (although occasionally taking minutes). We perform a case study by employing human
 workers via a crowdsourcing platform (Amazon's Mechanical Turk), and
 show that \checkcell{} is effective at finding actual data entry
 errors.
+
+This project will develop data debugging in several key directions,
+broadening its scope and improving its performance: (1) extension of
+data debugging to database systems; (2) static analysis of formulas
+and queries to enable optimizations; (3) derivation of incremental
+versions of data debugging algorithms to minimize recomputations when
+data changes; (4) parallelizing data debugging to take advantage of
+multicore architectures. This work will make it possible for data
+debugging to detect likely errors as soon as they are entered into a
+spreadsheet or added to a database.
+
+\emph{FIX ME more, add outline, etc.}
 

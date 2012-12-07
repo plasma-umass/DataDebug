@@ -1,23 +1,87 @@
 \projectname{}
 
 \noindent{\bf\textsf{Intellectual Merit.}} 
+In many computational tasks, correctness is a primary
+concern. Techniques to reduce program errors range from testing and
+runtime assertions, to dynamic and static analysis tools that can
+discover a wide range of bugs. However, a program is just one part of
+a computation. If the input to the program contains errors, the result
+of the computation is likely to not be correct. Unlike programs, data
+cannot easily be tested or analyzed for correctness.  Part of the
+problem is that it can be difficult to decide whether any given data
+element is an error or not. For example, the number \texttt{1234}
+might be correct, or the correct value might
+be \texttt{12.34}. Typographical errors can change data items by
+orders of magnitude. Unfortunately, finding this kind of mistake via
+manual data auditing is onerous, unscalable, and error-prone. Data
+errors can be costly: errors in spreadsheet data have led to losses of
+millions of dollars.
 
-Data debugging, awesome.
+This project proposes \emph{\bf data debugging}, an approach for
+locating likely data errors. Since it is impossible to know \emph{a
+priori} whether data are erroneous or not, data debugging aims to do
+the next best thing: \emph{locating data that has an unusual impact on
+the computation}. Intuitively, data that has an inordinate impact on
+the result of a computation is either very important, or it is wrong. By
+contrast, wrong data whose presence has no particularly unusual effect
+on the final result does not merit special attention.
+
+Data debugging combines data dependence analysis and statistical
+analysis to find and rank data based on the unusualness of its impact
+on the results of a computation. Data debugging works by first
+building a data dependence graph of the computations. It then measures
+data impact by replacing data items with data chosen from the same
+group (e.g., a range in a spreadsheet formula) and observing the
+resulting changes in computations that depend on that data. This
+non-parametric approach allows data debugging to find errors in both
+numeric and non-numeric data, without any requirement that data follow
+any particular statistical distribution.
+
+By calling attention to data with unusual impact, data debugging can
+provide insights into both the data and the computation and reveal
+errors. Data debugging is especially well-suited for data-intensive
+programming environments like databases and spreadsheets that
+intertwine data and programs (e.g., with queries and formulas). 
+
+We have developed a prototype data debugging tool for spreadsheets called
+\checkcell{} that
+ highlights data whose impact crosses a threshold of unusualness,
+ranking these cells by coloring them in shades proportionally to their
+impact: the brighter a cell is highlighted, the more unusual impact it
+has.  While untuned, our prototype is empirically and analytically
+efficient and effective; analysis time ranges from seconds to minutes.
+A case study by employing human workers via a crowdsourcing platform
+shows that \checkcell{} is effective at
+finding actual data entry errors.
+
+This project will develop data debugging in several key directions,
+broadening its scope and improving its performance: (1) extension of
+data debugging to database systems; (2) static analysis of formulas
+and queries to enable optimizations; (3) derivation of incremental
+versions of data debugging algorithms to minimize recomputations when
+data changes; (4) parallelizing data debugging to take advantage of
+multicore architectures. This work will make it possible for data
+debugging to detect likely errors as soon as they are entered into a
+spreadsheet or added to a database.
 
 \smallskip
-\noindent{\bf\textsf{Broader Impact.}}  Data debugging will save the world.
-The investigators will make their
-benchmarks and tools publicly available, adding to the national
-research infrastructure.
+\noindent{\bf\textsf{Broader Impact.}}
+Data debugging is a new paradigm for attacking the problem of errors
+in data by leveraging the interaction between data and the programs
+that operate on them.  If successful, this project will dramatically
+reduce the risks of human data entry errors or data corruption,
+increasing the reliability of computations over data, and potentially
+saving companies millions of dollars.
 
-The investigators' prior tools and systems are widely used in research
-and industry: the Hoard high-performance memory manager, the DieHard
-error-tolerant and DieHarder secure runtime systems now incorporated
-in Windows, \emph{Alexandra's stuff}. Educational impact will include
-training graduate and undergraduate students in key language system
-technologies, contributing to the technology workforce, and outreach
-to under-represented groups via the inclusion of female students from
-nearby Mount Holyoke and Smith Colleges.
+The investigators will make their benchmarks and tools publicly
+available, adding to the national research infrastructure. Several of
+the investigators' prior tools and systems are widely used in research
+and industry, including the Hoard high-performance memory manager, and the
+DieHard error-tolerant and DieHarder secure runtime systems now
+incorporated in Windows. Educational impact will include training
+graduate and undergraduate students, contributing to the technology
+workforce, and outreach to under-represented groups via the inclusion
+of female students from nearby Mount Holyoke and Smith Colleges.
 
 \smallskip
 \noindent{\bf\textsf{Key words:}} Programming Languages; Databases; Big Data; Errors
