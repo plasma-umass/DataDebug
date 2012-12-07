@@ -4,12 +4,12 @@
 In many computational tasks, correctness is a primary
 concern. Techniques to reduce program errors range from testing and
 runtime assertions, to dynamic and static analysis tools that can
-discover a wide range of bugs. However, a program is just one part of
-a computation. If the input to the program contains errors, the result
-of the computation is likely to not be correct. Unlike programs, data
+discover a wide range of bugs. However, a program is just part of
+a computation: if its input contains errors, the result
+is likely to not be correct. Unlike programs, data
 cannot easily be tested or analyzed for correctness.  Part of the
-problem is that it can be difficult to decide whether any given data
-element is an error or not. For example, the number \texttt{1234}
+problem is that it is difficult to decide whether data
+is wrong. For example, the number \texttt{1234}
 might be correct, or the correct value might
 be \texttt{12.34}. Typographical errors can change data items by
 orders of magnitude. Unfortunately, finding this kind of mistake via
@@ -56,13 +56,13 @@ finding actual data entry errors.
 
 This project will develop data debugging in several key directions,
 broadening its scope and improving its performance: (1) extension of
-data debugging to database systems; (2) static analysis of formulas
-and queries to enable optimizations; (3) derivation of incremental
-versions of data debugging algorithms to minimize recomputations when
-data changes; (4) parallelizing data debugging to take advantage of
-multicore architectures. This work will make it possible for data
-debugging to detect likely errors as soon as they are entered into a
-spreadsheet or added to a database.
+data debugging to database systems and MapReduce tasks; (2) static
+analysis of formulas and queries to enable optimizations; (3)
+derivation of incremental versions of data debugging algorithms to
+minimize recomputations when data changes; (4) parallelizing data
+debugging to take advantage of multicore architectures. This work will
+make it possible for data debugging to detect likely errors as soon as
+they are entered into a spreadsheet or added to a database.
 
 \smallskip
 \noindent{\bf\textsf{Broader Impact.}}
