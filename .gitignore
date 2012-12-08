@@ -13,3 +13,10 @@ bin
 obj
 *.suo
 ~$*
+*.bbl
+
+*.blg
+
+*.log
+
+*.aux
