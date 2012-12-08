@@ -1,5 +1,5 @@
 \section{Map-Reduce Pipelines}
-Large-scale data-parallel computation is increasingly important.  Technologies such as FlumeJava, have addressed the difficulty of maximizing computational power for these kinds of workloads~\cite{pldi:flumejava}.  However, debugging data-parallel programs remains difficult, particularly with regard to errors in giga-, tera-, and peta-scale inputs.  For example, the presence of a single unexpected zero value can dramatically alter the result of many mathematical programs.  Finding and correcting these errors, preferably automatically, is an important step in making large-scale computation more robust.
+Large-scale data-parallel computation is increasingly important.  Technologies such as MapReduce provide useful functional programming constructs for parallelizing compute-intensive jobs.  However, debugging data-parallel programs remains difficult, particularly with regard to errors in giga-, tera-, and peta-scale inputs.  For example, the presence of a single unexpected zero value can dramatically alter the result of many mathematical programs.  Finding and correcting these errors, preferably automatically, is an important step in making large-scale computation more robust.
 
 \begin{figure*}[t]
 	\includegraphics[width=2.5in]{images/mapreduce}
@@ -11,7 +11,7 @@ Large-scale data-parallel computation is increasingly important.  Technologies s
 	}
 \end{figure*}
 
-MapReduce and Hadoop jobs are themselves low-level programming idioms, but frameworks like FlumeJava (and by extension, its Hadoop dual, Crunch) allow multi-stage MapReduce programs to be represented by higher-level functional programming constructs.  These constructs allow the runtime to build a program dependency graph.  This higher-level representation gives the runtime global information that facilitates automatic performance-enhancing program transformations, such as reordering of functions in the program call graph to increase parallelism.
+MapReduce and Hadoop jobs are low-level programming idioms, but frameworks like FlumeJava (and by extension, its Hadoop dual, Crunch) allow multi-stage MapReduce programs to be represented by higher-level programming constructs~\cite{pldi:flumejava}.  These constructs allow the runtime to determine a program dependency graph.  This higher-level representation gives the runtime global information that facilitates automatic performance-enhancing program transformations, such as reordering of functions in the program call graph to increase parallelism.
 
 Data-parallel programs share many of the same properties that make data-debugging a useful technique in spreadsheets.  The input to the mapper stage of a MapReduce problem is a large, homogenous vector amenable to the same kind of input perturbation that \checkcell{} uses.  A key property of the computation kernel in a MapReduce job is that code be shared-nothing and re-entrant, thus data-debugging, which often needs to recompute certain portions of the call graph, can be inserted into a portion of a MapReduce job without affecting the semantics of the original program.
 
