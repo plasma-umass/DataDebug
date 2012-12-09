@@ -1,11 +1,17 @@
-\section{Overview}
+\section{Data Debugging: Overview}
 \label{sec:overview}
 
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=3in]{overview-example}
-  \caption{A sample spreadsheet showing a personal budget, with an unfortunate typographical error (see Section~\ref{sec:overview}).\label{fig:personal_budget}}
+\subfigure[A spreadsheet with a typographical error.\label{fig:personal_budget}]{
+  \includegraphics[width=2.5in]{overview-example}
+}
+\hspace{1em}
+\subfigure[The same spreadsheet, with the error highlighted by \checkcell{} as the value with the most unusual impact on the computation.\label{fig:personal_budget_highlighted}]{
+  \includegraphics[width=2.5in]{overview-example-highlighted}
+}
+\caption{A sample spreadsheet showing a personal budget. The typographical error is correctly indicated by \checkcell{}, our prototype data debugging tool for spreadsheets.}
 \end{figure}
 
 \punt{
@@ -82,16 +88,16 @@ formulas that compute the average over their inputs. A data value that
 significantly alters the average is considered to have an
 unusual impact on the chart.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=1.75in]{dependence-graph}
-\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Figure~\ref{fig:personal_budget}.\label{fig:dependence-graph}}
-\end{figure}
+%\begin{figure}[!t]
+%\centering
+%\includegraphics[width=1.75in]{dependence-graph}
+%\caption{The dependence graph that \checkcell{} extracts from the spreadsheet in Figure~\ref{fig:personal_budget}.\label{fig:dependence-graph}}
+%\end{figure}
 
-Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
-extracts from this spreadsheet. The final formula, the only output in
-this spreadsheet (shown in black), depends on two formulas, which depend on two
-disjoint data ranges.
+%Figure~\ref{fig:dependence-graph} shows the dependence graph that \checkcell{}
+%extracts from this spreadsheet. The final formula, the only output in
+%this spreadsheet (shown in black), depends on two formulas, which depend on two
+%disjoint data ranges.
 
 
 \subsection{Impact Analysis}
@@ -114,12 +120,6 @@ output is numeric or non-numeric. For numeric data, the impact score
 is the absolute change from the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3in]{overview-example-highlighted}
-  \caption{The same spreadsheet, with the error highlighted by \checkcell{} as the value with the most unusual impact on the computation.\label{fig:personal_budget_highlighted}}
-\end{figure}
 
 For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
 starts with cell \texttt{B3}. It chooses an item from the same
