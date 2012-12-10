@@ -1,0 +1,215 @@
+\section{Data Debugging: Databases} % (fold)
+\label{sec:bi_directional}
+
+We propose to apply data debugging techniques to perform data cleaning
+on relational data.  Cleaning tools attempt to purge datasets of
+discrepancies before the data can be used, but many errors still go
+undetected and get propagated further through queries and other
+transformations. When errors are detected in transformation results,
+it is critical to trace them back to their source and correct them to
+prevent them from affecting other computations. Data debugging can
+facilitate \emph{post factum} cleaning by identifying the input data
+with the highest contributions to an incorrect result. We propose to
+combine two methods of impact analysis in large-scale relational
+datasets: forward and reverse analysis.
+
+\subsection{Forward Analysis} % (fold)
+\label{sub:forward_analysis}
+
+The approach outlined in Section~\ref{sec:overview} relies on
+re-calculating computations either exhaustively, or using random
+sampling over a range of data. In a database setting, this approach
+can be viewed as an extreme form of \emph{forward analysis}: an
+analysis that starts with data and observes its effect on a
+query. Previous forward analyses in database research include
+\emph{hypothetical}, or \emph{what-if} queries
+\cite{DBLP:conf/vldb/BalminPP00,DBLP:conf/icde/LakshmananRS08}: a
+query result is computed based on a (single) hypothetical change to
+the input data. Data debugging requires invoking multiple what-if
+queries to find values with inordinately high impacts.
+
+Forward analysis is powerful because it does not require any knowledge
+of the inner workings of the computation, but for database systems,
+directly adopting the data debugging approach outlined earlier would
+be inefficient. Computing the transformation itself may be
+computationally intensive, and calculating the exact impact of each
+input tuple would require an exhaustive search over the input domain.
+
+One way to reduce the cost of data debugging in databases is to peel
+back the black box abstraction, as described in our proposed work for
+spreadsheets.  The black box abstraction makes it particularly
+suitable for user-defined functions (UDF). However, many computations
+in the relational model rely on SQL transformations, which are simple
+to analyze.
+
+% Exploiting knowledge of the data transformations can
+%improve performance, but requires lifting the black box assumption.
+
+% In this setting, the black box model is too restrictive.
+
+
+% Forward analysis is inefficient and does not scale to complex problems: computing the transformation itself may be computationally intensive, and calculating the exact impact of each input tuple requires an exhaustive search over the input domain. 
+% Calculating impact over sets of input tuples makes the problem even harder, as it causes combinatorial explosion of the search space. 
+%Lifting the black box assumption can often do much better. 
+% We revisit the personal budget example discussed in Section~\ref{sec:overview}. If we know the function that computes cell \texttt{B12}, we can calculate the impact of a cell \texttt{B$_j$} as follows:
+% \begin{align}\label{eqn:example_reverse}
+% 	\sum_{i\neq j} I(\texttt{B}_j - \texttt{B}_i > \texttt{B}11-\texttt{C}11-150) = \sum_{i\neq j} I(\texttt{B}_j - \texttt{B}_i >3520.92)
+% \end{align}
+% where $I$ is an indicator function. Therefore, we can determine the impact of an input value without recomputing the function. SQL transformations are particularly amenable to such optimizations. 
+
+Consider the following example SQL query, where the inner subquery
+returns all departments that have a branch in Boston, and the outer
+query computes the average salary of the employees that do not work in
+any of those departments.
+
+%The following nested SQL query returns the average salary of all employees who do not work for a department that has a branch in Boston.
+\texttt{
+\begin{tabbing}
+		SELECT	\=avg(E.salary)\\
+		FROM	\>Employees E\\
+		WHERE	\>E.department NOT IN	(\=SELECT	\=distinct D.name\+\+\\
+										FROM	\>Department D, Branches B\\
+										WHERE	\>D.did = B.did AND B.location = `Boston')
+\end{tabbing}}
+
+\noindent
+In this example, we do not need to recompute the nested subquery if
+only the \texttt{Employees} table is modified during impact
+analysis. SQL queries are particularly amenable to such optimizations.
+
+% \comment{In a relational setting, impact analysis also needs to account for functional dependencies and other database-enforced constraints (e.g. foreign-key constraints). These would restrict the modifications that we can apply to the input. Is this interesting/important enough to mention here?}
+
+% \comment{Possible argument against black box: ``weird'' functions like parity.}
+
+% subsection forward_analysis (end)
+
+\subsection{Reverse Analysis} % (fold)
+\label{sub:reverse_analysis}
+
+Data in databases often comes from multiple sources, and is collected
+via multiple methods.  In practice, databases are often produced by
+merging other existing databases. However, this process can introduce
+redundancies and inconsistencies.
+
+\begin{example}\label{ex:how-to}
+A manufacturing company orders parts from multiple suppliers around
+the world. To reduce its dependence from any single country, the
+company makes sure that its inventory orders from each country do not
+exceed 10\% of all orders. However, after merging with another
+manufacturer, this condition is no longer satisfied. The company needs
+to ``clean'' its inventory orders by reassigning some orders to
+different suppliers. Ideally, it would like to achieve this with the
+minimum number of changes.
+\end{example}
+
+Example~\ref{ex:how-to} presents a data cleaning scenario which is not
+well suited for forward analysis. In the presence of complex
+conditions, forward impact analysis has to exhaustively search all
+possible scenarios.
+
+In previous work, we have modeled these scenarios with \emph{how-to}
+queries: ``how should the input change in order to achieve the desired
+output?''~\cite{DBLP:journals/pvldb/MeliouGS11} How-to queries are an
+example of \emph{reverse analysis}. In contrast to forward analysis,
+reverse analysis specifies the desired effect on the output, and
+reverse engineers how the input should change. Reverse analysis has
+more complex semantics and higher implementation complexity compared
+to forward analysis due to the fact the inverse of a function is not
+always a function. Given a desired output, there may be multiple input
+values (or none at all) that produce it.  As opposed to forward
+analysis, reverse analysis cannot handle black box computations, but
+uses knowledge of the transformations to perform the evaluation
+efficiently.
+
+%To circumvent this difficulty in a general framework we will use SAT and Mixed Integer Programming (MIP) solvers as general purpose tools in reverse analysis. 
+
+% We propose to augment data debugging with \emph{reverse impact analysis}. In contrast to forward analysis (``how would the output change for a given change in the input''), reverse analysis answers the question ``how should the input change in order to achieve the desired output?'' 
+
+The Tiresias system~\cite{DBLP:conf/sigmod/MeliouS12,
+  DBLP:conf/sigmod/MeliouSS12}, developed by PI Meliou, can
+efficiently evaluate how-to queries, and is used for complex cleaning
+tasks such as the one in Example~\ref{ex:how-to}. How-to queries are
+constraint optimization problems defined over relational data, but
+they cannot be expressed in standard SQL. Tiresias allows users to
+issue how-to queries through a declarative language based on
+Datalog~\cite{DBLP:journals/tkde/CeriGT89}, and the queries are
+evaluated using mixed integer programming solvers.
+
+\paragraph{Calculating impact.} % (fold)
+\label{par:calculating_impact}
+
+Tiresias does not quantify the impact of input data, but rather
+produces an instance of the input that satisfies all cleaning
+constraints. In prior work, PI Meliou introduced a theory of causality
+for relational databases~\cite{DBLP:journals/debu/MeliouGHKMS10},
+which can model impact under the reverse analysis model. It is
+possible to characterize the family of conjunctive queries for which
+\emph{responsibility}---the contribution of an input to a result---can
+be computed in polynomial
+time~\cite{DBLP:journals/pvldb/MeliouGMS11}. Tiresias uses SAT solvers
+to compute responsibility efficiently for NP-hard
+cases~\cite{DBLP:conf/sigmod/MeliouGNS11}.
+
+% paragraph calculating_impact (end)
+
+% Halpern and
+%Pearl~\cite{HalpernPearl:Cause2005} and Chockler and
+%Halpern~\cite{DBLP:journals/jair/ChocklerH04} gave mathematical
+%definitions of causality and its related notion of degree of
+%responsibility. Responsibility quantifies  
+
+% subsection reverse_analysis (end)
+
+
+%--------------------------------------------------------------------------
+
+\subsection{Proposed Work} % (fold)
+\label{sub:research_plan}
+
+Complex transformations contain both glass box and black box
+components. We propose to develop \textbf{bi-directional data
+  cleaning} techniques that combine both forward and reverse
+analysis. This framework can flexibly adapt to different types of
+computations. We will investigate the following research questions:
+
+\begin{description}
+	\item[Types of computation.] Reverse analysis is clearly not
+          suited for black box computation, but forward analysis may
+          still be well-suited to certain glass box components. We
+          will investigate different types of computation to discover
+          patterns that could indicate which technique is more
+          appropriate for each pattern.
+
+	\item[Scaling and efficiency.] In prior work, PI Meliou demonstrated that
+          many reverse analysis tasks can be broken into independent
+          components and executed in
+          parallel~\cite{DBLP:conf/sigmod/MeliouS12}. We will develop
+          techniques for efficient parallelization of such tasks, and
+          investigate approximation methods for tasks that cannot be
+          parallelized.
+
+	\item[Cleaning optimizations.] In complex transformations, it
+          is not clear how forward and reverse analysis should be
+          combined. We will use computational patterns to design a
+          cleaning optimizer, modeled after traditional relational
+          query optimizers. Given a cleaning task, the optimizer
+          should select how to subdivide the task into the forward and
+          reverse components, and in which order the tasks should be
+          performed.
+
+	\item[Interactive cleaning.] Cleaning tasks are often based on
+          complex constraints, and have many possible solutions. It
+          can be a daunting undertaking for a user to assess these
+          solutions, or even define the cleaning task itself.  We will
+          design an interactive interface to allow users to easily
+          identify possible problems, and we will investigate
+          techniques to refine solutions based on user feedback.
+
+\end{description}
+
+
+% subsection research_plan (end)
+
+
+
+% section bi_directional (end)

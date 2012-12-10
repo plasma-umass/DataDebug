@@ -1,0 +1,92 @@
+% scale
+% precision
+% find corrupt or unreliable data sources
+% test sensitivity to data
+% automatically ``clean'' data sources by eliminating and comparing
+
+
+\documentclass[10pt]{article}
+\usepackage{subfigure}
+\usepackage{graphics}
+\usepackage{palatino}
+\usepackage{epsfig}
+\usepackage{bbding}
+\usepackage{color}
+\usepackage[override]{cmtt}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{conjecture}{Conjecture}[section]
+\newtheorem{fact}{Fact}
+\newtheorem{problem}{Problem}
+\newtheorem{example}{Example}
+\newtheorem{claim}{Claim}
+
+
+\input{macros}
+\usepackage{smallheadings}
+
+\newcommand{\punt}[1]{}
+
+\begin{document}
+\thispagestyle{empty}
+\singlespace
+
+\newcommand{\projectname}{
+\begin{center}
+        {\large\bf\textsf{
+            SHF:Small: Data Debugging}}\\
+        {\textsf{Emery Berger, Alexandra Meliou}} 
+\end{center}}
+
+\input{summary}
+\clearpage
+
+\thispagestyle{empty}
+\singlespace
+\input{data-retention}
+\clearpage
+
+\input{budget-justification}
+
+\projectname
+{\singlespace
+\setcounter{page}{1}
+
+\input{introduction}
+\input{overview}
+% \input{analysis}
+
+%%%%% Spreadsheets -- preliminary results (with a bit of analysis) %%%%
+%\input{analysis}
+\input{spreadsheets}
+
+%%%%% Databases (preliminary / proposed)
+\input{bidirectional}
+
+%%%%% Map-Reduce (proposed)
+\input{mapreduce}
+
+\input{related}
+\input{impact} 
+\input{prior}
+\input{conclusion}
+}
+
+\clearpage
+{\singlespace \small
+\bibliographystyle{abbrv}
+\bibliography{ref,berger/emery,meliou,provenance}
+}
+
+%\clearpage
+%\input{collaboration}
+%\input{timeline}
+
+\end{document}

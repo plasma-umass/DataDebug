@@ -1,3 +1,5 @@
+\section{Related Work}
+
 % The formula here is: discuss related work in one facet; end with a contrast with the current work.
 
 \subsection*{Data Cleaning}
@@ -43,6 +45,10 @@ orthogonal to these approaches: rather than searching for latent
 relationships in or across data, it measures the interaction of data with
 the programs that operate on them.
  
+\subsection*{View Updates}
+An interesting, and related work is the view side-effects problem on tuple deletion and annotation propagation~\cite{DBLP:conf/pods/BunemanKT02}. This problem involves finding a subset of tuples in the database whose deletion will eliminate a given tuple t from the view, with the minimum number of side-effects (other tuple eliminations) in the view. An analogous definition of the problem exist for tuple insertion and updates, and all are shown to be hard, in general. Very recent work~\cite{cong2010} studies the ``side-effect free'' version of this problem, where zero side-effects are enforced, and the aim is to minimize the subset of tuples selected from the database. Here, the same hardness results hold as in the general version of the problem.
+
+The problem of view updates does not measure the impact of input data to the output, but rather tries to identify the input tuples that will achieve a specific change to a view (output).
 
 \subsection*{Spreadsheet Errors}
 
@@ -50,7 +56,7 @@ Spreadsheets have been one of the most prominent computer applications
 since their creation in 1979.
  The most widely used spreadsheet application today is Microsoft
 Excel. Excel includes rudimentary error detection including errors in
-formula entry like division by zero, a reference to a non-existient
+formula entry like division by zero, a reference to a non-existent
 formula or cell, invalid numerical arguments, or accidental mixing of
 text and numbers.
 % http://office.microsoft.com/en-us/excel-help/find-and-correct-errors-in-formulas-HP010066255.aspx

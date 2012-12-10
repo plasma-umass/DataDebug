@@ -1,10 +1,13 @@
+\section{Data Debugging: Spreadsheets}
+\label{sec:evaluation}
+
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=5.5in]{execution_time_graph}
-  \caption{\checkcell{} execution time. For most of the spreadsheets, \checkcell{} completes its analysis in under 9 seconds; for all but two, it completes in under three minutes (see Section~\ref{sec:execution_time}).\label{fig:execution_time_graph}}
+  \caption{\checkcell{} execution time. For most of the spreadsheets, \checkcell{} completes its analysis in under 9 seconds; for all but two, it completes in under three minutes.\label{fig:execution_time_graph}}
 \end{figure*}
  
-
+\punt{
 \begin{table*}[!b]
   \centering \begin{tabular}{l|rrr||r|rrr}
  \small{\bf{Spreadsheet}} & \small{\bf{Formulas}} & \small{\bf{Cells}} & \small{\bf{Cells}} & \small{\bf{Runtime}} & \small{\bf{Dep.}} & \small{\bf{Impact}}   & \small{\bf{Impact}} \\
@@ -43,46 +46,88 @@
     \end{tabular}%
   \caption{The benchmark suite of 30 spreadsheets, a random sample from the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}, ordered by weighted number of cells. The raw number of cells indicates the total number of cells that are used in any formula; the weighted number of cells weighs cells \emph{in ranges} by the number of formulas that depend on it. A breakdown of \checkcell{} execution times (in seconds) appears on the right side.\label{tab:spreadsheet_characteristics}}
 \end{table*}
+}
 
-We evaluate \checkcell{} across two dimensions: its execution time,
-and its effectiveness at finding actual errors.
+In our preliminary work, we have developed the \checkcell{} prototype
+for data debugging in spreadsheets.  \checkcell{} runs as an add-in in
+Microsoft Excel 2010, and incorporates the algorithms described in the
+overview. Figure~\ref{fig:personal_budget_highlighted} shows the
+effect of running \checkcell{} on the example described above, which
+in this case identifies cell \texttt{B4} as the only one with an
+unusual impact on the spreadsheet.
 
-Our experimental platform is a 13'' MacBook Air equipped 4GB of RAM
-and an Intel Core i5-2557M processor running at 1.70GHz. The operating
-system is Windows 7 Professional (SP1), which executes non-virtualized
-(via Bootcamp). \checkcell{} was compiled using Microsoft Visual C\#
-2010, and runs as an add-in in Microsoft Excel 2010.
 
-\subsection{Execution Time}
-\label{sec:execution_time}
+We evaluate \checkcell{} analytically and empirically across
+two dimensions: its execution time, and its effectiveness at finding
+actual errors. 
+%  Our
+%experimental platform is a 13'' MacBook Air equipped 4GB of RAM and an
+%Intel Core i5-2557M processor running at 1.70GHz. The operating system
+%is Windows 7 Professional (SP1), which executes non-virtualized (via
+%Bootcamp).
 
-To measure the runtime of \checkcell{}, we run it on a random subset
+\subsection{Runtime: Analysis}
+\label{sec:asymptotic_analysis}
+
+Data debugging operates in several phases: computing the dependence
+graph, performing impact analysis, and then ranking impacts. Runtime
+depends on the following parameters: the number of data items ($n$),
+the number of formulas ($f$), and the number of inputs ($i$). In
+spreadsheets, the number of inputs equals the number of data items,
+but in other contexts like databases, inputs correspond to fields, so
+$i \ll n$. Since each formula and data item must be examined at least
+once to compute the dependence graph and to measure impact,
+respectively, runtime for data debugging must be 
+$\Omega(n+f)$.
+
+The cost of building the dependence graph varies depending on the
+structure of the computation. It has a worst-case runtime of
+$O((i*f)^2)$, quadratic in the total number of inputs and formulas; it
+is theoretically possible for each formula to depend on every input
+and other formula. However, this kind of pathological computation
+structure is atypical. Dependence graphs normally form a tree or a
+forest of trees. In this case, the cost of constructing the dependence
+graph becomes linear in the number of inputs and formulas, or
+$O(i+f)$.
+
+Impact analysis dominates the costs of constructing the dependence
+graph and ranking impacts, since it requires recalculation of the
+computations affected by changes in the data.
+
+A na\"ive implementation of impact analysis that checked the impact of
+each data item by systematically replacing it with every other item in
+the same range would require $O(n^2)$ time. Worse, each of these
+iterations requires potentially costly recalculations. For large
+ranges, such an approach would make data debugging unusable in
+practice.
+ 
+By using a fixed number of random selections once the range
+exceeds a threshold size, data debugging keeps the total number of
+recalculations to $O(n)$, linear in the number of data items. Any
+strategy that visits each data item at least once takes $O(n)$ time,
+so this bound is tight.
+
+Finally, ranking impacts involves only two linear passes over the
+impacts to compute absolute impact scores, so it also operates in
+(optimal) linear time in the number of impacts.
+
+\subsection{Runtime: Empirical Results}
+
+To empirically measure the runtime of \checkcell{}, we run it on a random subset
 of 30 spreadsheets drawn from the EUSES
 corpus~\cite{Fisher:2005:ESC:1082983.1083242}, excluding those that do not contain
 formulas.
 
-Table~\ref{tab:spreadsheet_characteristics} includes characteristics
-of these spreadsheets, ordered by the number of formulas each
-contains. We include two columns that count the number of cells in
-different ways. \emph{Cells (raw)} indicates the total number of cells
-that participate in any computation. \emph{Cells (weighted)} indicates
-the total number of cells \emph{inside ranges}, weighted by the number
-of times each cell is used in a computation. For example, a cell that
-is in a range involved in two computations is counted twice. Because
-the weighted cell count only includes ranges, it is possible for it to
-be lower than the raw number of cells.
-
 Figure~\ref{fig:execution_time_graph} reports the performance of data
 debugging across our spreadsheet suite, ordered by the weighted number
-of cells. Table~\ref{tab:spreadsheet_characteristics} includes the full data.
+of cells.
 
 For 19 of the 30 spreadsheets, \checkcell{} takes 9 seconds or less to
 complete. Its runtime is less than three minutes for all but two of
 the spreadsheets: \texttt{intresults} and \texttt{NEW}, which take 318
 seconds and 683 seconds, respectively. The average runtime over all
 spreadsheets is 61 seconds; without the two outliers, it is 29
-seconds. As our analysis in Section~\ref{sec:asymptotic_analysis}
-predicts, the cost of \checkcell{} is generally proportional to the
+seconds. The cost of \checkcell{} is generally proportional to the
 cost of the impact analysis, which is in turn dependent on the
 weighted number of cells.
 
@@ -95,11 +140,10 @@ Excel recalculation engine must do more work per item tested. The
 \texttt{intresults} spreadsheet also has an extremely highly-connected
 clique in its dependence graph, which leads to both higher time for
 dependence analysis and increases the cost of recalculations during
-impact analysis (see Figure~\ref{fig:intresults_tree}).
+impact analysis. % (see Figure~\ref{fig:intresults_tree}).
 
-\paragraph{Summary:} For nearly every spreadsheet
- examined, \checkcell{}'s runtime is under three minutes; we believe
- this overhead is acceptable for an error detection tool.
+%\paragraph{Summary:} For nearly every spreadsheet
+% examined, \checkcell{}'s runtime is under three minutes.
 
 % Info about the benchmarks.
 
@@ -109,7 +153,7 @@ impact analysis (see Figure~\ref{fig:intresults_tree}).
 
 % \paragraph{9-Grades}
 
-\subsection{Error Detection}
+\subsection{Error Detection: Empirical Results}
 \label{sec:user_study}
 
 While \checkcell{} can be used across the EUSES suite, looking for
@@ -191,17 +235,36 @@ an order of magnitude error (one too many 0's).
 
 \paragraph{Summary:} By searching for data with unusual impacts on the spreadsheet, \checkcell{} is able to successfully find actual human data entry errors.
 
-\subsection{Impact Distribution}
-\label{sec:impact_normal}
+\subsection{Proposed Work}
 
-\checkcell{} treats inputs whose impact scores are more than two standard deviations from the mean impact as outliers.  When impact scores are normally distributed, we can strongly claim that scores outside 2 standard deviations are unusual, and that standard outlier rejection techniques are non-controversial.  While \checkcell{} does not assume normality for our outlier rejection procedure, we empirically evaluate the distribution of average impacts produced by our suite of benchmarks.
+\paragraph{Optimization via Static Analysis.} We plan to improve the performance of data debugging in spreadsheets
+by applying static analysis. The primary component of \checkcell{}'s
+overhead is the cost of recomputation during sampling. By peeling back
+the black box assumption and applying analysis to the actual formulas
+involved in the computation, it is possble to compute a data item's
+impact directly without having to perform sampling and repeated
+re-computations.
 
-Several of our benchmarks are empty forms and are thus populated only with zero values.  We exclude these spreadsheets from our analysis since the standard deviation of their average impacts is, by definition, zero, and they would thus be vacuously normal.
+For example, consider a formula that computes the sum of the cells A1
+through A10. Our current approach would find the influence of each of
+the cells by replacing each cell by one of the other cells in the
+range, and thus would perform 90 computations. However, the impact of
+each cell $A_i$ can be computed equivalently in the following way
+without the need for any substitutions as $\sum_{j=1}^{10}{A_j} -
+(\frac{10}{9})(\sum_{j=1}^{10}{A_j} - A_i)$.  By storing the result of the first
+sum, it is possible to efficiently compute the impact of each $A_i$,
+with no need for sampling.
 
-Our analysis of 23 spreadsheets shows that average impact scores which are more than two standard deviations from the mean impact score are in fact rare, thus supporting our decision to reject them.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger evidence, since small distributions tend to have fewer outliers.
+Many of the most commonly used functions in Excel are as well-behaved
+as the SUM function. These include average, standard deviation, and
+most counting functions. When a computation consists entirely of these
+functions, it will be possible to dramatically reduce the cost of data
+debugging. Of course, computations contain functions that are not
+well-behaved, or whose computation is not possible to analyze because
+it is a user-defined compiled function. Nonetheless, it will be
+possible to speed data debugging whenever formulas consist of
+well-behaved functions combined with other functions using operations
+like addition. We plan to handle dependent chains of functions by
+effectively inlining the functions into their parents and then performing
+analysis and simplification on that larger function.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=7in]{intresults_tree}
-  \caption{A dataflow graph for the \texttt{intresults} spreadsheet, one of the benchmarks with an unusually long runtime.  The highly-connected clique in the center causes the impact analysis to dominate \checkcell{}'s computation time since a change in a single cell may require the recomputation of a large number of values. \label{fig:intresults_tree}}
-\end{figure*}

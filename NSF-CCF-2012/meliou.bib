@@ -1,0 +1,486 @@
+%% This BibTeX bibliography file was created using BibDesk.
+%% http://bibdesk.sourceforge.net/
+
+
+%% Created for Alexandra Meliou at 2012-07-17 00:23:37 -0700 
+
+
+%% Saved with string encoding Unicode (UTF-8) 
+
+
+
+@inproceedings{DBLP:conf/sigmod/MeliouS12,
+	Abstract = {How-To queries answer fundamental data analysis questions of the form: ``How
+should the input change in order to achieve the desired output''. As a Reverse
+Data Management problem, the evaluation of how-to queries is harder than their
+``forward'' counterpart: hypothetical, or what-if queries. In this paper, we
+present Tiresias, the first system that provides support for how-to queries,
+allowing the definition and integrated evaluation of a large set of constrained
+optimization problems, specifically Mixed Integer Programming problems, on top
+of a relational database system. Tiresias generates the problem variables,
+constraints and objectives by issuing standard SQL statements, allowing for
+its integration with any RDBMS. The contributions of this work are the
+following: (a) we define how-to queries using possible world semantics, and
+propose the specification language TiQL (for Tiresias Query Language) based on
+simple extensions to standard Datalog. (b) We define translation rules that
+generate a Mixed Integer Program (MIP) from TiQL specifications, which can be
+solved using existing tools. (c) Tiresias implements powerful ``data-aware''
+optimizations that are beyond the capabilities of modern MIP solvers,
+dramatically improving the system performance. (d) Finally, an extensive
+performance evaluation on the TPC-H dataset demonstrates the effectiveness of
+these optimizations, particularly highlighting the ability to apply
+divide-and-conquer methods to break MIP problems into smaller instances.},
+	Author = {Alexandra Meliou and Dan Suciu},
+	Booktitle = {Proceedings of the ACM SIGMOD International Conference on
+                   Management of Data (SIGMOD)},
+    doi = {10.1145/2213836.2213875},
+	Pages = {337-348},
+	Title = {Tiresias: {T}he Database Oracle for How-To Queries},
+	Venue = {SIGMOD},
+	month = {May},
+	Year = {2012}
+}
+
+@inproceedings{DBLP:conf/sigmod/MeliouSS12,
+	Abstract = {In this demo, we will present Tiresias, the first how-to query engine. How-to
+queries represent fundamental data analysis questions of the form: ``How should
+the input change in order to achieve the desired output''. They exemplify an
+important Reverse Data Management problem: solving constrained optimization
+problems over data residing in a DBMS. Tiresias, named after the mythical
+oracle of Thebes, has complex under-workings, but includes a simple interface
+that allows users to load datasets and interactively design optimization
+problems by simply selecting actions, key performance indicators, and
+objectives. The user choices are translated into a declarative query, which is
+then processed by Tiresias and translated into a Mixed Integer Program: we
+then use an MIP solver to find a solution. The solution is then presented to
+the user as an interactive data instance. The user can provide feedback by
+rejecting certain tuples and/or values. Then, based on the user feedback,
+Tiresias automatically refines the how-to query and presents a new set of
+results.},
+	Author = {Alexandra Meliou and Yisong Song and Dan Suciu},
+	Booktitle = {Proceedings of the ACM SIGMOD International Conference on
+                   Management of Data (SIGMOD)},
+	Comment = {<span class="emphasis">best demonstration award</span>},
+	Pages = {709-712},
+	Title = {Tiresias: {A} Demonstration of How-To Queries},
+	doi = {10.1145/2213836.2213939},
+	Venue = {SIGMOD},
+	month = {May},
+	Year = {2012}
+}
+
+@misc{Meliou-diploma,
+	Abstract = {The XML Language is becoming the new standard for storing and exchanging
+knowledge through the internet. XML data incorporate structure and data in one
+entity. The data model of XML is a graph representation of a collection of
+atomic and complex objects. Under certain conditions, the XML data model
+becomes a schema tree. Schema trees are rooted ordered labeled trees that
+express the structural relationships between the nodes of an XML document.
+Schema trees are used to represent not only XML documents, but also complex
+data. 
+The main purpose of this thesis is to explore the algebraic properties of
+hierarchical structures. Given two or more trees we define new trees by
+applying operators like union, intersection, difference. These operators are
+defined in such a way that they obey laws similar to the ones of set theory.
+We study the conditions under which these operators are applicable, and we
+present algorithms to implement the operators and check their validity.},
+	Author = {Meliou, Alexandra},
+	Howpublished = {Diploma thesis, National Technical University of Athens},
+	Title = {\href{http://www.dblab.ece.ntua.gr/pubs/uploads/DIPL-2003-07.pdf}{Modeling and Exploring the Algebraic Properties of Hierarchical Structures}},
+	Venue = {BSc},
+	month = {May},
+	Year = {2003}
+}
+
+@mastersthesis{Meliou-ms,
+	Abstract = {Sensor networks are progressively becoming a standard in applications that
+require the monitoring of physical phenomena. Measurements like temperature,
+humidity, light, and acceleration are gathered at various locations and can be
+used to extract information on the phenomenon observed. Sensor networks are
+naturally distributed, and they display strong resource restrictions.
+Moreover, the gathered data comes in various degrees of uncertainty, due to
+noisy and dropped measurements, interference, and the unavoidable
+discretization of the examined domain. A basic task in sensor networks is to
+interactively gather data from a subset of nodes in the network. Surprisingly,
+this problem is non-trivial to implement efficiently and robustly, even for
+relatively static networks.
+
+In this thesis we address the traditional database problem of query
+optimization in this new setting. We identify the characteristics of sensor
+network environments and the requirements of applications that are relevant to
+querying. We focus on making queries more energy efficient by means of
+minimizing the communication and sensing that is required to provide
+sufficient answers. Our contributions include theoretical, algorithmic and
+empirical results. We provide complexity analysis for common data gathering
+tasks, develop algorithms that approximate the optimal query plans, and apply
+our techniques to a prototype implementation that tests our theory and
+algorithms over real world data, demonstrating the feasibility of our
+approach.},
+	Author = {Meliou, Alexandra},
+	School = {University of California, Berkeley},
+	Title = {\href{http://people.cs.umass.edu/~ameli/papers/masterthesis.pdf}{Data Gathering Tours in Sensor Networks}},
+	Venue = {MSc},
+	month = {December},
+	Year = {2005}
+}
+
+@phdthesis{Meliou-phd,
+	Abstract = {Sensor networks are progressively becoming a standard in applications that
+require the monitoring of physical phenomena. Measurements like temperature,
+humidity, light, and acceleration are gathered at various locations and can be
+used to extract information on the phenomenon observed. Sensor networks are
+naturally distributed, and they display strong resource restrictions.
+Moreover, the gathered data comes in various degrees of uncertainty, due to
+noisy and dropped measurements, interference, and the unavoidable
+discretization of the examined domain. A basic task in sensor networks is to
+interactively gather data from a subset of nodes in the network. Surprisingly,
+this problem is non-trivial to implement efficiently and robustly, even for
+relatively static networks.
+
+In this thesis we address the traditional database problem of query
+optimization in this new setting. We identify the characteristics of sensor
+network environments and the requirements of applications that are relevant to
+querying. We focus on making queries more energy efficient by means of
+minimizing the communication and sensing that is required to provide
+sufficient answers. Our contributions include theoretical, algorithmic and
+empirical results. We provide complexity analysis for common data gathering
+tasks, develop algorithms that approximate the optimal query plans, and apply
+our techniques to a prototype implementation that tests our theory and
+algorithms over real world data, demonstrating the feasibility of our
+approach.
+},
+	Author = {Meliou, Alexandra},
+	School = {University of California, Berkeley},
+	Title = {\href{http://www.eecs.berkeley.edu/Pubs/TechRpts/2009/EECS-2009-144.html}{Querying Uncertain Data in Resource Constrained Settings}},
+	Venue = {PhD},
+	month = {December},
+	Year = {2009}
+}
+
+@inproceedings{tapp2011b,
+	Abstract = {We show that the default-all propagation scheme for database annotations is
+dangerous. Dangerous here means that it can propagate annotations to the query
+output which are semantically irrelevant to the query the user asked. This is
+the result of considering all relationally equivalent queries and returning
+the union of their where-provenance in an attempt to define a propagation
+scheme that is insensitive to query rewriting. We propose an alternative
+query-rewrite-insensitive (QRI) where-provenance called minimal propagation.
+It is analogous to the minimal witness basis for why-provenance,
+straight-forward to evaluate, and returns all relevant and only relevant
+annotations.},
+	Author = {Gatterbauer, Wolfgang and Meliou, Alexandra and Suciu, Dan},
+	Booktitle = {3rd {USENIX} Workshop on the Theory and Practice of Provenance (TaPP)},
+	Title = {\href{http://arxiv.org/pdf/1105.4395}{Default-all is Dangerous!}},
+	Venue = {TaPP},
+	Year = {2011}}
+
+@inproceedings{tapp2011a,
+	Abstract = {Provenance information is often used to explain query results and outcomes,
+exploit results of prior reasoning, and establish trust in data. The
+generality of the notion makes it applicable in a variety of domains,
+including data warehousing [7], curated databases [4], and various scientific
+applications. The recent introduction of causal reasoning in a database
+setting exploits provenance in ways that expand its applicability to more
+complex problems, and establish new directions, making a step towards
+achieving provenance's full potential. In this paper we explore through a
+variety of examples how causality improves on provenance information, discuss
+the challenges of building causality able systems, and propose some new
+directions.},
+	Author = {Meliou, Alexandra and Gatterbauer, Wolfgang and Suciu, Dan},
+	Booktitle = {3rd {USENIX} Workshop on the Theory and Practice of Provenance (TaPP)},
+	Title = {\href{http://db.cs.washington.edu/causality/papers/TaPP2011.pdf}{Bringing Provenance to its Full Potential Using Causal Reasoning}},
+	Venue = {TaPP},
+	Year = {2011}}
+
+@inproceedings{Jha:fk,
+	Abstract = {Lifted Inference algorithms for representations that combine first-order logic
+and graphical models have been the focus of much recent research. All lifted
+algorithms developed to date are based on the same underlying idea: take a
+standard probabilistic inference algorithm (e.g., variable elimination, belief
+propagation etc.) and improve its efficiency by exploiting repeated structure
+in the first-order model. In this paper, we propose an approach from the other
+side in that we use techniques from logic for probabilistic inference. In
+particular, we define a set of rules that look only at the logical
+representation to identify models for which exact efficient inference is
+possible. Our rules yield new tractable classes that could not be solved
+efficiently by any of the existing techniques.},
+	Author = {Jha, Abhay and Gogate, Vibhav and Meliou, Alexandra and Suciu, Dan},
+	Booktitle = {24th Annual Conference on Neural Information Processing Systems (NIPS)},
+	pages     = {973-981},
+	Title = {\href{http://people.cs.umass.edu/~ameli/papers/NIPS2010.pdf}{Lifted Inference Seen from the Other Side: The Tractable Features}},
+	Venue = {NIPS},
+	month = {December},
+	Year = {2010}
+}
+
+@article{DBLP:journals/pvldb/MeliouGMS11,
+	Abstract = {An answer to a query has a well-defined lineage expression (alternatively
+called how-provenance) that explains how the answer was derived. Recent work
+has also shown how to compute the lineage of a non-answer to a query. However,
+the cause of an answer or non-answer is a more subtle notion and consists, in
+general, of only a fragment of the lineage. In this paper, we adapt Halpern,
+Pearl, and Chockler's recent definitions of causality and responsibility to
+define the causes of answers and non-answers to queries, and their degree of
+responsibility. Responsibility captures the notion of degree of causality and
+serves to rank potentially many causes by their relative contributions to the
+effect. Then, we study the complexity of computing causes and responsibilities
+for conjunctive queries. It is known that computing causes is NP-complete in
+general. Our first main result shows that all causes to conjunctive queries can
+be computed by a relational query which may involve negation. Thus, causality
+can be computed in PTIME, and very efficiently so. Next, we study computing
+responsibility. Here, we prove that the complexity depends on the conjunctive
+query and demonstrate a dichotomy between PTIME and NP-complete cases. For the
+PTIME cases, we give a non-trivial algorithm, consisting of a reduction to the
+max-flow computation problem. Finally, we prove that, even when it is in PTIME,
+responsibility is complete for LOGSPACE, implying that, unlike causality, it
+cannot be computed by a relational query},
+	Author = {Alexandra Meliou and Wolfgang Gatterbauer and Katherine F. Moore and Dan Suciu},
+	Journal = {PVLDB},
+	Number = {1},
+	Pages = {34-45},
+	Title = {The Complexity of Causality and Responsibility for Query Answers and non-Answers},
+	Venue = {PVLDB},
+	Volume = {4},
+	Year = {2010}
+}
+
+@inproceedings{DBLP:conf/amw/MeliouGH10,
+	Abstract = {In this work we present in-network techniques to improve the efficiency of
+spatial aggregate queries. Such queries are very common in a sensornet
+setting, demanding more targeted techniques for their handling. Our approach
+constructs and maintains multi-resolution cube hierarchies inside the network,
+which can be constructed in a distributed fashion. In case of failures,
+recovery can also be performed with in-network decisions. In this paper we
+demonstrate how in-network cube hierarchies can be used to summarize sensor
+data, and how they can be exploited to improve the efficiency of spatial
+aggregate queries. We show that query plans over our cube summaries can be
+computed in polynomial time, and we present a PTIME algorithm that selects the
+minimum number of data requests that can compute the answer to a spatial
+query. We further extend our algorithm to handle optimization over multiple
+queries, which can also be done in polynomial time. We discuss enriching cube
+hierarchies with extra summary information, and present an algorithm for
+distributed cube construction. Finally we investigate node and area failures,
+and algorithms to recover query results.},
+	Author = {Alexandra Meliou and Carlos Guestrin and Joseph M. Hellerstein},
+	Booktitle = {Proceedings of the 4th Alberto Mendelzon International Workshop on Foundations of Data Management (AMW)},
+	Title = {\href{http://arxiv.org/abs/1007.3781}{Multiresolution Cube Estimators for Sensor Network Aggregate Queries}},
+	Venue = {AMW},
+	Year = {2010}
+}
+
+@inproceedings{DBLP:conf/ipsn/MeliouGH09,
+	Abstract = {In this work we present new in-network techniques for communication efficient
+approximate query processing in wireless sensornets. We use a model-based
+approach that constructs and maintains a spanning tree within the network,
+rooted at the basestation. The tree maintains compressed summary information
+for each link that is used to "stub out" traversal during query processing.
+Our work is based on a formal model of the in-network tree construction task
+framed as an optimization problem. We demonstrate hardness results for that
+problem, and develop efficient approximation algorithms for subtasks that are
+too expensive to compute exactly. We also propose efficient heuristics to
+accommodate a wider set of workloads, and empirically evaluate their
+performance and sensitivity to model changes},
+	Author = {Alexandra Meliou and Carlos Guestrin and Joseph M. Hellerstein},
+	Booktitle = {Proceedings of the 8th International Conference on Information Processing in Sensor Networks (IPSN)},
+	Pages = {229-240},
+	Title = {\href{http://people.cs.umass.edu/~ameli/papers/IPSN2009.pdf}{Approximating Sensor Network Queries using In-Network Summaries}},
+	Venue = {IPSN},
+	month = {April},
+	Year = {2009}
+}
+
+@article{DBLP:journals/debu/MeliouGHKMS10,
+	Abstract = {Provenance is often used to validate data, by verifying its origin and
+explaining its derivation. When searching for ``causes'' of tuples in the query
+results or in general observations, the analysis of lineage becomes an
+essential tool for providing such justifications. However, lineage can quickly
+grow very large, limiting its immediate use for providing intuitive
+explanations to the user. The formal notion of causality is a more refined
+concept that identifies causes for observations based on user-defined criteria,
+and that assigns to them gradual degrees of responsibility based on their
+respective contributions. In this paper, we initiate a discussion on causality
+in databases, give some simple definitions, and motivate this formalism through
+a number of example applications.},
+	Author = {Alexandra Meliou and Wolfgang Gatterbauer and Joseph Y. Halpern and Christoph Koch and Katherine F. Moore and Dan Suciu},
+	Journal = {IEEE Data Engineering Bulletin},
+	Number = {3},
+	Pages = {59-67},
+	Title = {Causality in Databases},
+	Type = {article},
+	Venue = {DEBul},
+	Volume = {33},
+	Year = {2010}
+}
+
+@article{DBLP:journals/pvldb/MeliouGS11,
+	Abstract = {Database research mainly focuses on forward-moving data flows: source data is
+subjected to transformations and evolves through queries, aggregations, and
+view definitions to form a new target instance, possibly with a different
+schema. This Forward Paradigm underpins most data management tasks today, such
+as querying, data integration, data mining, etc. We contrast this forward
+processing with Reverse Data Management (RDM), where the action needs to be
+performed on the input data, on behalf of desired outcomes in the output data.
+Some data management tasks already fall under this paradigm, for example
+updates through views, data generation, data cleaning and repair. RDM is, by
+necessity, conceptually more difficult to define, and computationally harder
+to achieve. Today, however, as increasingly more of the available data is
+derived from other data, there is an increased need to be able to modify the
+input in order to achieve a desired effect on the output, motivating a
+systematic study of RDM. We define the Reverse Data Management problem, and
+classify RDM problems into four categories. We illustrate known examples of
+RDM problems and classify them under these categories. Finally, we introduce a
+new type of RDM problem, How-To Queries.},
+	Author = {Alexandra Meliou and Wolfgang Gatterbauer and Dan Suciu},
+	Journal = {PVLDB},
+	Number = {11},
+	Pages = {1490-1493},
+	Title = {Reverse Data Management},
+	Venue = {PVLDB},
+	Volume = {4},
+	Year = {2011}
+}
+
+
+@article{DBLP:journals/isci/DalamagasMS08,
+	Abstract = {The Semantic Web is the next step of the current Web where information will
+become more machine-understandable to support effective data discovery and
+integration. Hierarchical schemas, either in the form of tree-like structures
+(e.g., DTDs, XML schemas), or in the form of hierarchies on a
+category/subcategory basis (e.g., thematic hierarchies of portal catalogs),
+play an important role in this task. They are used to enrich semantically the
+available information. Up to now, hierarchical schemas have been treated
+rather as sets of individual elements, acting as semantic guides for browsing
+or querying data. Under that view, queries like "find the part of a portal
+catalog which is not present in another catalog" can be answered only in a
+procedural way, specifying which nodes to select and how to get them. For this
+reason, we argue that hierarchical schemas should be treated as full-fledged
+objects so as to allow for their manipulation. This work proposes models and
+operators to manipulate the structural information of hierarchies, considering
+them as first-class citizens. First, we explore the algebraic properties of
+trees representing hierarchies, and define a lattice algebraic structure on
+them. Then, turning this structure into a boolean algebra, we present the
+operators S-union, S-intersection and S-difference to support structural
+manipulation of hierarchies. These operators have certain algebraic properties
+to provide clear semantics and assist the transformation, simplification and
+optimization of sequences of operations using laws similar to those of set
+theory. Also, we identify the conditions under which this framework is
+applicable. Finally, we demonstrate an application of our framework for
+manipulating hierarchical schemas on tree-like hierarchies encoded as RDF/s
+files.},
+	Author = {Theodore Dalamagas and Alexandra Meliou and Timos K. Sellis},
+	Journal = {Information Sciences, Elsevier},
+	Number = {4},
+	Pages = {985-1010},
+	doi = {10.1016/j.ins.2007.09.022},
+	Title = {\href{http://people.cs.umass.edu/~ameli/papers/InfSci2008.pdf}{Modeling and Manipulating the Structure of Hierarchical Schemas for the Web}},
+	Venue = {InfSci},
+	Volume = {178},
+	Year = {2008}
+}
+
+@inproceedings{DBLP:conf/sigmod/MeliouGNS11,
+	Abstract = {A surprising query result is often an indication of errors in the query or the
+underlying data. Recent work suggests using causal reasoning to find
+explanations for the surprising result. In practice, however, one often has
+multiple queries and/or multiple answers, some of which may be considered
+correct and others unexpected. In this paper, we focus on determining the
+causes of a set of unexpected results, possibly conditioned on some prior
+knowledge of the correctness of another set of results. We call this problem
+ViewConditioned Causality. We adapt the definitions of causality and
+responsibility for the case of multiple answers/views and provide a
+non-trivial algorithm that reduces the problem of finding causes and their
+responsibility to a satisfiability problem that can be solved with existing
+tools. We evaluate both the accuracy and effectiveness of our approach on a
+real dataset of user-generated mobile device tracking data, and demonstrate
+that it can identify causes of error more effectively than static Boolean
+influence and alternative notions of causality.},
+	Author = {Alexandra Meliou and Wolfgang Gatterbauer and Suman Nath and Dan Suciu},
+	Booktitle = {Proceedings of the ACM SIGMOD International Conference on Management of Data (SIGMOD)},
+	Pages = {505-516},
+	doi = {10.1145/1989323.1989376},
+	Title = {Tracing Data Errors with View-Conditioned Causality},
+	Venue = {SIGMOD},
+	month = {June},
+	Year = {2011}
+}
+
+@inproceedings{DBLP:conf/ipsn/MeliouCHGH06,
+	Abstract = {A basic task in sensor networks is to interactively gather data from a subset
+of the sensor nodes. When data needs to be gathered from a selected set of
+nodes in the network, existing communication schemes often behave poorly. In
+this paper, we study the algorithmic challenges in efficiently routing a
+fixed-size packet through a small number of nodes in a sensor network, picking
+up data as the query is routed. We show that computing the optimal routing
+scheme to visit a specific set of nodes is NP-complete, but we develop
+approximation algorithms that produce plans with costs within a constant
+factor of the optimum. We enhance the robustness of our initial approach to
+accommodate the practical issues of limited-sized packets as well as network
+link and node failures, and examine how different approaches behave with
+dynamic changes in the network topology. Our theoretical results are validated
+via an implementation of our algorithms on the TinyOS platform and a
+controlled simulation study using Matlab and TOSSIM.},
+	Author = {Alexandra Meliou and David Chu and Joseph M. Hellerstein and Carlos Guestrin and Wei Hong},
+	Booktitle = {Proceedings of the 5th International Conference on Information Processing in Sensor Networks (IPSN)},
+	Pages = {43-50},
+	Title = {\href{http://people.cs.umass.edu/~ameli/papers/IPSN2006.pdf}{Data Gathering Tours in Sensor Networks}},
+	doi = {10.1145/1127777.1127788},
+	Venue = {IPSN},
+	month = {April},
+	Year = {2006}
+}
+
+@inproceedings{DBLP:conf/mud/MeliouGMS10,
+	Abstract = {In this paper, we propose causality as a unified framework to explain query
+answers and non-answers, thus generalizing and extending several previously
+proposed definitions of provenance and missing query result explanations.
+Starting from the established definition of actual causes by Halpern and Pearl
+[12], we propose functional causes as a refined definition of causality with
+several desirable properties. These properties allow us to apply our notion of
+causality in a database context and apply it uniformly to define the causes of
+query results and their individual contributions in several ways: (i) we can
+model both provenance as well as non-answers, (ii) we can define explanations
+as either data in the input relations or relational operations in a query
+plan, and (iii) we can give graded degrees of responsibility to individual
+causes, thus allowing us to rank causes. In particular, our approach allows us
+to explain contributions to relational aggregate functions and to rank causes
+according to their respective responsibilities, aiding users in identifying
+errors in uncertain or untrusted data. Throughout the paper, we illustrate the
+applicability of our framework with several examples. This is the first work
+that treats "positive" and "negative" provenance under the same framework, and
+establishes the theoretical foundations of causality theory in a database
+context.},
+	Author = {Alexandra Meliou and Wolfgang Gatterbauer and Katherine F. Moore and Dan Suciu},
+	Booktitle = {Proceedings of the 4th International VLDB workshop on Management of Uncertain Data (MUD) in conjunction with VLDB},
+	Pages = {3-17},
+	Title = {\href{http://db.cs.washington.edu/causality/papers/MUD2010.pdf}{{Why So}? or {Why No}? Functional Causality for Explaining Query Answers}},
+	Venue = {MUD},
+	month = {September},
+	Year = {2010}
+}
+
+@inproceedings{DBLP:conf/aaai/MeliouKGH07,
+	Abstract = {In many sensing applications we must continuously gather information to
+provide a good estimate of the state of the environment at every point in
+time. A robot may tour an environment, gathering information every hour. In a
+wireless sensor network, these tours correspond to packets being transmitted.
+In these settings, we are often faced with resource restrictions, like energy
+constraints. The users issue queries with certain expectations on the answer
+quality. Thus, we must optimize the tours to ensure the satisfaction of the
+user constraints, while at the same time minimize the cost of the query plan.
+For a single timestep, this optimization problem is NP-hard, but recent
+approximation algorithms with theoretical guarantees provide good solutions.
+In this paper, we present a new efficient nonmyopic greedy algorithm,
+exploiting submodularity of the information collected, that efficiently plans
+data collection tours for an entire (finite) horizon. Our algorithm can use
+any single step procedure as a black box, and, based on its properties,
+provides strong theoretical guarantees for the solution. We also provide an
+extensive empirical analysis demonstrating the benefits of nonmyopic planning
+in a real world sensing application.},
+	Author = {Alexandra Meliou and Andreas Krause and Carlos Guestrin and Joseph M. Hellerstein},
+	Booktitle = {Proceedings of the 22nd National Conference on Artificial Intelligence (AAAI)},
+	Pages = {602-607},
+	Title = {\href{http://people.cs.umass.edu/~ameli/papers/AAAI2007.pdf}{Nonmyopic Informative Path Planning in Spatio-Temporal Models}},
+	Venue = {AAAI},
+	month = {July},
+	Year = {2007}
+}
