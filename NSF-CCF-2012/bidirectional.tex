@@ -1,7 +1,7 @@
-\section{Relational Data Cleaning} % (fold)
+\section{Proposed Research 1: Bi-directional Cleaning for Relational Data} % (fold)
 \label{sec:bi_directional}
 
-Poor data quality costs the US economy more than \$600 billion per year~\cite{eckerson2002}. Cleaning tools attempt to purge datasets of discrepancies before the data can be used, but many errors still go undetected and get further propagated through queries and other transformations. When errors are detected in transformation results, it is critical to trace them back to their source and correct them to prevent them from affecting other computations. Impact analysis can facilitate \emph{post-factum} cleaning, by identifying the input data with the highest contributions to an incorrect result. We propose to combine two methods of impact analysis in large-scale relational datasets: forward and reverse analysis.
+We propose to design data cleaning techniques for relational data, based on impact analysis. Poor data quality costs the US economy more than \$600 billion per year~\cite{eckerson2002}. Cleaning tools attempt to purge datasets of discrepancies before the data can be used, but many errors still go undetected and get further propagated through queries and other transformations. When errors are detected in transformation results, it is critical to trace them back to their source and correct them to prevent them from affecting other computations. Impact analysis can facilitate \emph{post-factum} cleaning, by identifying the input data with the highest contributions to an incorrect result. We propose to combine two methods of impact analysis in large-scale relational datasets: forward and reverse analysis.
 
 \subsection{Forward Analysis} % (fold)
 \label{sub:forward_analysis}
@@ -71,9 +71,9 @@ Tiresias does not quantify the impact of input data, but rather produces an inst
 
 %--------------------------------------------------------------------------
 
-\subsection{Bi-directional Data Cleaning} % (fold)
-\label{sub:bi_directional_data_cleaning}
-Complex transformations contain both glass box and black box components. We propose to develop \emph{bi-directional data cleaning} techniques that combines both forward and reverse analysis. This framework can flexibly adapt to different types of computations. We will investigate the following research questions:
+\subsection{Research Plan} % (fold)
+\label{sub:research_plan}
+Complex transformations contain both glass box and black box components. We propose to develop \textbf{bi-directional data cleaning} techniques that combines both forward and reverse analysis. This framework can flexibly adapt to different types of computations. We will investigate the following research questions:
 \begin{description}
 	\item[Types of computation.] Reverse analysis is clearly not suited for black box computation, but forward analysis may still be well suited for certain glass box components. We will investigate different types of computation to discover patterns that could indicate which technique is more appropriate for each pattern.
 	\item[Scaling and efficiency.] Co-PI Meliou demonstrated that many reverse analysis tasks can be broken into independent components and executed in parallel~\cite{DBLP:conf/sigmod/MeliouS12}. We will develop techniques for efficient parallelization of such tasks, and investigate approximation methods for tasks that cannot be parallelized.
@@ -82,8 +82,8 @@ Complex transformations contain both glass box and black box components. We prop
 \end{description}
 
 
-% subsection bi_directional_data_cleaning (end)
+% subsection research_plan (end)
 
 
 
-% section bi_directional_debugging (end)
+% section bi_directional (end)
