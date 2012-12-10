@@ -2,13 +2,10 @@
 \label{sec:introduction}
 
 % \textbf{Software bugs: well-studied, effective tools.}
-Correctness is a primary
-concern for most computations. Most
-past work has
-focused on ways to discover whether the program performing the
-computation is correct. Techniques to reduce program errors range from
-testing and runtime assertions, to dynamic and static analysis tools
-that can discover a wide range of bugs. These tools and approaches enable programmers to find errors and
+Correctness is a key
+concern for nearly all computations. Many tools exist to combat program errors, ranging from testing and
+runtime assertions, to dynamic and static analysis tools. 
+These tools and approaches enable programmers to find errors and
 reduce their impact, contributing to improving overall code quality.
 
 % ~\cite{unittesting,Miller:1990:ESR:96267.96279}
@@ -16,7 +13,7 @@ reduce their impact, contributing to improving overall code quality.
 % ~\cite{valgrind,dawsonthing,otherpcmemberfoo}
 
 % Data errors, not so much.
-However, a program is just one part of a computation. Existing tools ignore the correctness of program \emph{inputs}. If the input contains errors, the
+However, the program is just one part of a computation. Existing tools ignore the correctness of program \emph{inputs}. If the input contains errors, the
 result of the computation is likely to not be correct. Unlike
 programs, data cannot easily be tested or analyzed for correctness.
 
@@ -38,12 +35,14 @@ errors can arise in a variety of ways~\cite{hellerstein2008quantitative}:
 While data errors pose a threat to the correctness of any computation,
 they are especially problematic in data-intensive programming
 environments like databases, spreadsheets, and certain scientific
-computations. In these
-settings, data correctness can be as important as program correctness
-(``garbage in, garbage out''). The results produced by the
-computations---queries, formulas, charts, and other analyses---may be rendered invalid by data errors. These errors can be costly:
-errors in spreadsheet data have led to losses of millions of
-dollars~\cite{DBLP:journals/corr/abs-0803-2527,sakalerrors}.
+computations. In these settings, data correctness can be as important
+as program correctness (``garbage in, garbage out''). The results
+produced by the computations---queries, formulas, charts, and other
+analyses---may be rendered invalid by data errors. These errors can be
+costly: errors in spreadsheet data have led to losses of millions of
+dollars~\cite{DBLP:journals/corr/abs-0803-2527,sakalerrors}, and poor
+data quality has been estimated to cost the US economy more than \$600
+billion per year~\cite{eckerson2002}.
 
 %%%%  Things to add in citations: %%%%
 % TransAlta took a $24 million charge -- copy and paste error
@@ -109,7 +108,7 @@ distribution.
 By calling attention to data with unusual impact, data debugging can
 provide insights into both the data and the computation and reveal
 errors. We believe data debugging is broadly applicable, though it is
-especially well-suited for data-intensive programming that intertwines
+especially well-suited for data-intensive programming environments that intertwine
 data and programs (e.g., with queries and formulas).
 
 We have developed a prototype of a data debugging tool in the form
