@@ -17,6 +17,8 @@ mathematical computations. For example, the presence of a single zero
 value can result in catastrophic cancellation; the same is true for
 order-of-magnitude errors.
 
+\subsection{Proposed Work}
+
 Because correcting individual errors in large-scale datasets is likely
 to be infeasible, we propose to use data debugging techniques to
 automatically make large-scale computations more robust. The key idea
@@ -41,8 +43,7 @@ problems with input data.
 	}
 \end{figure*}
 
-\subsection{MapReduce-Based Frameworks}
-
+\paragraph{MapReduce-Based Frameworks.}
 While MapReduce and Hadoop jobs are low-level programming idioms,
 frameworks like FlumeJava (and by extension, its Hadoop-based clone, Crunch)
 allow multi-stage MapReduce programs to be represented by higher-level
@@ -64,8 +65,7 @@ needs to recompute certain portions of the call graph) can be inserted
 into a portion of a MapReduce job without affecting the semantics of
 the original program.
 
-\subsection{Data Debugging for Robustness}
-
+\paragraph{Data Debugging for Robustness.}
 As with \checkcell{}, data debugging functions can transparently
 augment a FlumeJava program.  The tradeoff is a small performance
 penalty for the additional robustness data debugging provides. Data
