@@ -4,7 +4,7 @@
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=5.5in]{execution_time_graph}
-  \caption{\checkcell{} execution time. For most of the spreadsheets, \checkcell{} completes its analysis in under 9 seconds; for all but two, it completes in under three minutes (see Section~\ref{sec:execution_time}).\label{fig:execution_time_graph}}
+  \caption{\checkcell{} execution time. For most of the spreadsheets, \checkcell{} completes its analysis in under 9 seconds; for all but two, it completes in under three minutes.\label{fig:execution_time_graph}}
 \end{figure*}
  
 \punt{
@@ -51,10 +51,15 @@
 In our preliminary work, we have developed the \checkcell{} prototype
 for data debugging in spreadsheets.  \checkcell{} runs as an add-in in
 Microsoft Excel 2010, and incorporates the algorithms described in the
-overview. We evaluate \checkcell{} analytically and empirically across
-two dimensions: its execution time, and its effectiveness at finding
-actual errors.
+overview. Figure~\ref{fig:personal_budget_highlighted} shows the
+effect of running \checkcell{} on the example described above, which
+in this case identifies cell \texttt{B4} as the only one with an
+unusual impact on the spreadsheet.
 
+
+We evaluate \checkcell{} analytically and empirically across
+two dimensions: its execution time, and its effectiveness at finding
+actual errors. 
 %  Our
 %experimental platform is a 13'' MacBook Air equipped 4GB of RAM and an
 %Intel Core i5-2557M processor running at 1.70GHz. The operating system
@@ -100,9 +105,7 @@ By using a fixed number of random selections once the range
 exceeds a threshold size, data debugging keeps the total number of
 recalculations to $O(n)$, linear in the number of data items. Any
 strategy that visits each data item at least once takes $O(n)$ time,
-so this bound is tight. Section~\ref{sec:sampling_effectiveness}
-explains why this strategy approximates the effect of a complete
-examination of other inputs, while minimizing execution time.
+so this bound is tight.
 
 Finally, ranking impacts involves only two linear passes over the
 impacts to compute absolute impact scores, so it also operates in
@@ -124,8 +127,7 @@ complete. Its runtime is less than three minutes for all but two of
 the spreadsheets: \texttt{intresults} and \texttt{NEW}, which take 318
 seconds and 683 seconds, respectively. The average runtime over all
 spreadsheets is 61 seconds; without the two outliers, it is 29
-seconds. As our analysis in Section~\ref{sec:asymptotic_analysis}
-predicts, the cost of \checkcell{} is generally proportional to the
+seconds. The cost of \checkcell{} is generally proportional to the
 cost of the impact analysis, which is in turn dependent on the
 weighted number of cells.
 
@@ -234,8 +236,35 @@ an order of magnitude error (one too many 0's).
 \paragraph{Summary:} By searching for data with unusual impacts on the spreadsheet, \checkcell{} is able to successfully find actual human data entry errors.
 
 \subsection{Proposed Work}
-\todo{Static analysis, peeling back the abstraction layer goes here.}
 
+We plan to improve the performance of data debugging in spreadsheets
+by applying static analysis. The primary component of \checkcell{}'s
+overhead is the cost of recomputation during sampling. By peeling back
+the black box assumption and applying analysis to the actual formulas
+involved in the computation, it is possble to compute a data item's
+impact directly, without having to perform sampling and repeated
+re-computations.
+
+For example, consider a formula that computes the sum of the cells A1
+through A10. Our current approach would find the influence of each of
+the cells by replacing each cell by one of the other cells in the
+range, and thus would perform 90 computations. However, the impact of
+each cell $A_i$ can be computed equivalently in the following way
+without the need for any substitutions as $\sum_{j=1}^{10}{A_j} -
+(\frac{10}{9})(\sum_{j=1}^{10}{A_j} - A_i)$.  By storing the result of the first
+sum, it is possible to efficiently compute the impact of each $A_i$,
+with no need for sampling.
+
+Many of the most commonly used functions in Excel are as well-behaved
+as the SUM function. These include average, standard deviation, and
+most counting functions. When a computation consists entirely of these
+functions, it will be possible to dramatically reduce the cost of data
+debugging. Of course, computations contain functions that are not
+well-behaved, or whose computation is not possible to analyze because
+it is a user-defined compiled function. Nonetheless, it will be
+possible to speed data debugging whenever formulas consist of
+well-behaved functions combined with other functions using operations
+like addition.
 
 \punt{
 \subsection{Impact Distribution}

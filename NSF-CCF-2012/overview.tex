@@ -48,15 +48,12 @@
 \end{table}%
 }
 
-This section outlines the algorithms that data debugging
-employs. Section~\ref{sec:analysis} includes formal analysis of various
-aspects of the data debugging algorithms described here, including
-asymptotic performance and statistical effectiveness.
-
 % in cell \texttt{B3}
 
 % the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
 
+This section outlines the algorithms that data debugging
+employs. 
 We illustrate these algorithms with a running
 example of a budget shown in Figure~\ref{fig:personal_budget}, 
 a reduced version of a sample template included with Microsoft Excel. This
@@ -77,16 +74,15 @@ The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs).
 In a spreadsheet, inputs are data in cells, while computations are
 either charts or formulas that are not used by other formulas.
-Our \checkcell{} prototype uses techniques similar to past work to identify
-dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
-support for charts.
-
-Charts are often a key ``result'' of a spreadsheet computation, so it
-is important to detect data that triggers dramatic changes in
-charts. To handle charts, \checkcell{} treats them as if they were
-formulas that compute the average over their inputs. A data value that
-significantly alters the average is considered to have an
-unusual impact on the chart.
+%Our \checkcell{} prototype uses techniques similar to past work to identify
+%dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
+%support for charts.
+%Charts are often a key ``result'' of a spreadsheet computation, so it
+%is important to detect data that triggers dramatic changes in
+%charts. To handle charts, \checkcell{} treats them as if they were
+%formulas that compute the average over their inputs. A data value that
+%significantly alters the average is considered to have an
+%unusual impact on the chart.
 
 %\begin{figure}[!t]
 %\centering
@@ -121,9 +117,9 @@ is the absolute change from the original value.
 For non-numeric data, the impact score is an \emph{indicator value}: 1
 if the result of the computation changed, and 0 if not.
 
-For the spreadsheet in Figure~\ref{fig:personal_budget}, \checkcell{}
-starts with cell \texttt{B3}. It chooses an item from the same
-range, for example, cell \texttt{B6}. Replacing \texttt{B3}
+For the spreadsheet in Figure~\ref{fig:personal_budget}, we % \checkcell{}
+start with cell \texttt{B3}. We choose an item from the same
+range; for example, cell \texttt{B6}. Replacing \texttt{B3}
 with \texttt{B6} results in a new sum, \$4352.50. Since this sum does
 not change the \texttt{Yes} answer in the formula, the impact score
 for cell \texttt{B3} remains 0.
@@ -132,19 +128,20 @@ However, the same procedure for cell \texttt{B4} is likely to have a
 different effect.  For example, replacing \texttt{B4}
 with \texttt{B9} yields a sum of \$1866.25. The difference
 between this sum and actual spending has now dropped below \$150,
-triggering a change in the result to \texttt{No}. \checkcell{} then
-adds 1 to cell \texttt{B4}'s impact score.
+triggering a change in the result to \texttt{No}. We then
+add 1 to cell \texttt{B4}'s impact score.
 
 % Each data item maintains a separate impact score for every computation.
 
 To minimize sampling error, random
-selection (for large ranges) is repeated a fixed number of times (at least 30),
+selection for large ranges is repeated a fixed number of times (at least 30),
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of
-iterations. Section~\ref{sec:asymptotic_analysis} shows that the
-runtime efficiency of this approach is asymptotically optimal, and
-Section~\ref{sec:sampling_effectiveness} explains why sampling can be nearly as
-effective as checking each item's impact exhaustively.
+iterations. 
+%Section~\ref{sec:asymptotic_analysis} shows that the
+%runtime efficiency of this approach is asymptotically optimal, and
+%Section~\ref{sec:sampling_effectiveness} explains why sampling can be nearly as
+%effective as checking each item's impact exhaustively.
 
 \subsection{Impact Scoring}
 
@@ -154,9 +151,9 @@ each item from the sample mean, divided by the sample standard
 deviation. This \emph{normalized impact score} represents the distance
 from the mean impact, in numbers of standard deviations. A standard
 approach, which we adopt here, is to only report data whose impact is
-at least two standard deviations away from the mean.  Note
-that this interpretation does not depend on normality assumptions
-about the data or its impact (see Section~\ref{sec:analysis}).
+at least two standard deviations away from the mean.
+Note that this interpretation does not depend on normality assumptions
+about the data or its impact.
 
 Each data item's normalized impact scores are then averaged across
 all the outputs, and data debugging assigns that average as the
@@ -167,10 +164,6 @@ computations. The overall impact score is used both for ranking and
 for displaying the relative anomalousness of the impact of particular
 data items, e.g., by coloring such values in brighter colors
 corresponding to their distance from the mean.
-
-Figure~\ref{fig:personal_budget_highlighted} shows the effect of
-running \checkcell{}, which in this case identifies cell \texttt{B4}
-as the only one with an unusual impact on the spreadsheet.
 
 % ``score'' the impact by highlighting the values proportional to their z-score
 
