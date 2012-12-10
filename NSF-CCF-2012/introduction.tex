@@ -120,30 +120,75 @@ In addition, spreadsheet errors are a well known risk and have led to
 significant monetary losses in the past, making them an excellent
 first target for data debugging.
 
-\checkcell{} highlights all data whose
-impact crosses a threshold of unusualness that is more than two standard deviations away from the mean impact.  In the user interface, \checkcell{} ranks these cells by coloring them in
-shades proportionally to their impact: the brighter a cell is
-highlighted, the more unusual impact it has.
-\checkcell{} is empirically and analytically efficient and effective, as we show in Sections~\ref{sec:analysis} and~\ref{sec:evaluation}. The current prototype is untuned but
+\checkcell{} highlights all data whose impact crosses a threshold of
+unusualness that is more than two standard deviations away from the
+mean impact.  In the user interface, \checkcell{} ranks these cells by
+coloring them in shades proportionally to their impact: the brighter a
+cell is highlighted, the more unusual impact it has. \checkcell{} is
+empirically and analytically efficient and effective, as we show in
+Section~\ref{sec:evaluation}. The current prototype is untuned but
 analysis time is generally low, taking seconds to run on most of the
-spreadsheets we examine (although occasionally taking minutes). We perform a case study by employing human
-workers via a crowdsourcing platform (Amazon's Mechanical Turk), and
-show that \checkcell{} is effective at finding actual data entry
-errors.
+spreadsheets we examine (although occasionally taking minutes). We
+perform a case study by employing human workers via a crowdsourcing
+platform (Amazon's Mechanical Turk), and show that \checkcell{} is
+effective at finding actual data entry errors.
 
 \subsection*{Overview and Contributions of Proposed Work}
 
 This project will develop data debugging in several key directions,
-broadening its scope and improving its performance: (1) extension of
-data debugging to database systems and MapReduce pipelines; (2)
-static analysis of formulas and queries to enable optimizations; (3)
-derivation of incremental versions of data debugging algorithms to
-minimize recomputations when data changes; (4) parallelizing data
-debugging to take advantage of multicore architectures. This work will
-make it possible for data debugging to scale to large data sets and
-detect likely errors as soon as they are entered into a spreadsheet or
-added to a database.
+improving its performance and broadening its scope: (1) static
+analysis of formulas and queries to enable optimizations and minimize
+recomputations when data changes; (2) extension of data debugging to
+relational database systems; and (3) incorporation of data debugging
+into MapReduce tasks. This work will make it possible for data
+debugging to detect likely errors as soon as they are entered, or to
+withstand errors automatically.
 
-\emph{FIX ME more, add outline, etc.}
+\begin{table}[!t]
+\centering
+\begin{tabular}{l|l|c|c|c|c}
+\textbf{Domain} & \textbf{Feature} & \textbf{Prior} & \textbf{Preliminary} & \textbf{Proposed} & \textbf{PIs} \\
+\hline
+Spreadsheets               & \checkcell{} implementation       & & \checkmark &  & Berger \\
+                           & static analysis optimizations     & &  & \checkmark & Berger \\
+Databases                  & optimized forward analysis  & & & \checkmark          & Meliou \\
+                           & reverse analysis & \checkmark & & \checkmark & Meliou \\
+                           & (tracking error sources) & & & & \\
+% ~\cite{DBLP:conf/sigmod/MeliouS12, DBLP:conf/sigmod/MeliouSS12}
+                           & bi-directional analysis & & & \checkmark & Meliou \\
+MapReduce                  & input trimming  & & & \checkmark & Berger, Meliou\\
+                           & (withstanding errors) & & & & \\
+\hline
+\end{tabular}
+\caption{Data Debugging: Prior, Preliminary, Proposed Work, and Associated PIs.\label{tab:data-debug-plan}}
+\end{table}
 
+\todo{Table, collaboration}
+
+\paragraph{Broader Impact.} 
+Data debugging is a new paradigm for attacking the problem of errors
+in data by leveraging the interaction between data and the programs
+that operate on them.
+
+\todo{Research impact.}
+
+\todo{Economic and other impact.} If successful, this project will dramatically
+reduce the risks of human data entry errors or data corruption,
+increase the reliability of computations over data, and potentially
+save the US economy millions of dollars.
+
+The investigators will make their benchmarks and tools publicly
+available, adding to the national research infrastructure. Several of
+the investigators' prior tools and systems are widely used in research
+and industry, including the Hoard high-performance memory manager, and the
+DieHard error-tolerant and DieHarder secure runtime systems now
+incorporated in Windows. Educational impact will include training
+graduate and undergraduate students, contributing to the technology
+workforce, and outreach to under-represented groups via the inclusion
+of female students from nearby Mount Holyoke and Smith Colleges.
+
+The PIs have substantial expertise in static analysis, dynamic
+analysis, statistical analysis techniques, and optimizations in both
+programming language and relational database settings, making them
+extremely well-qualified to carry out this research.
 
