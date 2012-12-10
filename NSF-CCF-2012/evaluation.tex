@@ -264,23 +264,7 @@ well-behaved, or whose computation is not possible to analyze because
 it is a user-defined compiled function. Nonetheless, it will be
 possible to speed data debugging whenever formulas consist of
 well-behaved functions combined with other functions using operations
-like addition.
+like addition. We plan to handle dependent chains of functions by
+effectively inlining the functions into their parents and then performing
+analysis and simplification on that larger function.
 
-\punt{
-\subsection{Impact Distribution}
-\label{sec:impact_normal}
-
-\checkcell{} treats inputs whose impact scores are more than two standard deviations from the mean impact as outliers.  When impact scores are normally distributed, we can strongly claim that scores outside 2 standard deviations are unusual, and that standard outlier rejection techniques are non-controversial.  While \checkcell{} does not assume normality for our outlier rejection procedure, we empirically evaluate the distribution of average impacts produced by our suite of benchmarks.
-
-Several of our benchmarks are empty forms and are thus populated only with zero values.  We exclude these spreadsheets from our analysis since the standard deviation of their average impacts is, by definition, zero, and they would thus be vacuously normal.
-
-Our analysis of 23 spreadsheets shows that average impact scores which are more than two standard deviations from the mean impact score are in fact rare, thus supporting our decision to reject them.  In a standard normal distribution, no more than 5\% of values are found outside 2 standard deviations.  In our evaluation, on average, 1.45\% of impact values fall outside 2 standard deviations from the mean.  Limiting our analysis to ranges of size 15 or greater, approximately 3.47\% of their impact values fall outside 2 standard deviations.  The latter is a stronger evidence, since small distributions tend to have fewer outliers.
-
-\punt{
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=7in]{intresults_tree}
-  \caption{A dataflow graph for the \texttt{intresults} spreadsheet, one of the benchmarks with an unusually long runtime.  The highly-connected clique in the center causes the impact analysis to dominate \checkcell{}'s computation time since a change in a single cell may require the recomputation of a large number of values. \label{fig:intresults_tree}}
-\end{figure*}
-}
-}
