@@ -170,23 +170,27 @@ students once the grant is funded.
 \begin{tabular}{llcccc}
 \textbf{Domain} & \textbf{Task} & \textbf{Prior} & \textbf{Preliminary} & \textbf{Proposed} & \textbf{PIs} \\
 \hline
-\multicolumn{6}{c}{\emph{small-scale}} \\
-Spreadsheets               & \checkcell{} implementation       & & \checkmark &  & Berger \\
-                           & static analysis optimizations     & &  & \checkmark & Berger \\
 \hline
-\multicolumn{6}{c}{\emph{medium-scale}} \\
-Databases                  & optimized forward analysis  & & & \checkmark          & Meliou \\
-                           & reverse analysis & \checkmark & & \checkmark & Meliou \\
+\multicolumn{6}{l}{\emph{small-scale}} \\
+%\hline
+\textbf{Spreadsheets}               & \checkcell{} implementation       & & \checkmark &  & Berger \\
+                           & Static analysis optimizations     & &  & \checkmark & Berger \\
+\hline
+\multicolumn{6}{l}{\emph{medium-scale}} \\
+%\hline
+\textbf{Databases}                  & Optimized forward analysis  & & & \checkmark          & Meliou \\
+                           & Reverse analysis & \checkmark & & \checkmark & Meliou \\
                            & (tracking error sources) & & & & \\
 % ~\cite{DBLP:conf/sigmod/MeliouS12, DBLP:conf/sigmod/MeliouSS12}
-                           & bi-directional analysis & & & \checkmark & Meliou \\
+                           & Bi-directional analysis & & & \checkmark & Meliou \\
 \hline
-\multicolumn{6}{c}{\emph{large-scale}} \\
-MapReduce                  & input trimming  & & & \checkmark & Berger, Meliou\\
+\multicolumn{6}{l}{\emph{large-scale}} \\
+%\hline
+\textbf{MapReduce}                  & Input trimming  & & & \checkmark & Berger, Meliou\\
                            & (withstanding errors) & & & & \\
 \hline
 \end{tabular}
-\caption{Data Debugging: Prior, Preliminary, Proposed Work, and Associated PIs. \comment{scales look confusing. I like them in the table but their positioning throws me off.}\label{tab:data-debug-plan}}
+\caption{Data Debugging: Prior, Preliminary, Proposed Work, and Associated PIs.\label{tab:data-debug-plan}}
 \end{table}
 
 \paragraph{Broader Impact.} 
