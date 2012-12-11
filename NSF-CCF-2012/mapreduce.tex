@@ -19,8 +19,8 @@ order-of-magnitude errors.
 
 \subsection{Proposed Work}
 
-Because correcting individual errors in large-scale datasets is likely
-to be infeasible, we propose to use data debugging techniques to
+Correcting individual errors in large-scale datasets is likely
+to be infeasible, so we propose to use data debugging techniques to
 automatically make large-scale computations more robust. The key idea
 is to run data debugging alongside MapReduce jobs and compensate for
 errors automatically by performing what we term \emph{input
@@ -59,7 +59,7 @@ share many of the same properties that make data debugging a useful
 technique in spreadsheets.  The input to the mapper stage of a
 MapReduce problem is a large, homogeneous vector amenable to the same
 kind of input perturbation that \checkcell{} employs.  A key property
-of the computation kernel in a MapReduce job is that code be
+of the computation kernel in a MapReduce job is that code is
 shared-nothing and re-entrant. Therefore, data debugging (which often
 needs to recompute certain portions of the call graph) can be inserted
 into a portion of a MapReduce job without affecting the semantics of
@@ -68,7 +68,7 @@ the original program.
 \paragraph{Data Debugging for Robustness.}
 As with \checkcell{}, data debugging functions can transparently
 augment a FlumeJava program.  The tradeoff is a small performance
-penalty for the additional robustness data debugging provides. Data
+penalty for the additional robustness that data debugging provides. Data
 debugging techniques can be piggybacked on a high-level representation
 so that impact analysis can take advantage of underutilized
 parallelism to minimize the performance impact of our technique.
