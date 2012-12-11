@@ -140,8 +140,8 @@ Developing our data debugging algorithms and integrating them to real systems po
 	\item \emph{Debugging with no information.} Data debugging should work on situations where little is known about the actual presence of errors.
 	\item \emph{Common framework for different error types.} Our model should handle errors of all natures: data entry, measurement, and data integration errors.
 	\item \emph{Extend standard tools.} Our model should be implementable on top of standard data management applications and systems.
-	\item \emph{Efficiency.} Data debugging should be fast to allow for interactive data exploration.
-	\item \emph{Different data scales.} Our model should work on a range of problem scales: from small size personal data, to large-scale MapReduce pipelines.
+	\item \emph{Efficiency.} Data debugging should be fast enough to allow for interactive data exploration.
+	\item \emph{Different data scales.} Our model should work on a range of problem scales: from small-scale data to large-scale MapReduce pipelines.
 \end{itemize}
 % subsection challenges (end)
 
@@ -185,12 +185,12 @@ students once the grant is funded.
 \hline
 \multicolumn{6}{l}{\emph{small-scale}} \\
 %\hline
-\textbf{Spreadsheets}               & \checkcell{} implementation       & & \checkmark &  & Berger \\
+\textbf{Spreadsheets}~(\S~\ref{sec:evaluation})               & \checkcell{} implementation    & & \checkmark &  & Berger \\
                            & Static analysis optimizations     & &  & \checkmark & Berger \\
 \hline
 \multicolumn{6}{l}{\emph{medium-scale}} \\
 %\hline
-\textbf{Databases}                  & Optimized forward analysis  & & & \checkmark          & Meliou \\
+\textbf{Databases}~(\S~\ref{sec:bi_directional})                  & Optimized forward analysis  & & & \checkmark          & Meliou \\
                            & Reverse analysis & \checkmark & & \checkmark & Meliou \\
                            & (tracking error sources) & & & & \\
 % ~\cite{DBLP:conf/sigmod/MeliouS12, DBLP:conf/sigmod/MeliouSS12}
@@ -198,7 +198,7 @@ students once the grant is funded.
 \hline
 \multicolumn{6}{l}{\emph{large-scale}} \\
 %\hline
-\textbf{MapReduce}                  & Input trimming  & & & \checkmark & Berger, Meliou\\
+\textbf{MapReduce}~(\S~\ref{sec:mapreduce})                  & Input trimming  & & & \checkmark & Berger, Meliou\\
                            & (withstanding errors) & & & & \\
 \hline
 \end{tabular}
@@ -216,12 +216,12 @@ community as a whole, and economic impact.
 \paragraph{Computer Science.}
 By bridging the gap between computations (in the form of formulas,
 queries, and MapReduce pipelines) and the data they operate on, this
-project spans two traditional areas of computer science: programming
-languages and databases. PI Berger is a programming languages
-researcher, and PI Meliou is a database researcher. The PIs intend to
-publish results for this project in both communities, increasing
-cross-fertilization of ideas and techniques across the two
-communities.
+project opens up a new area of research that spans two traditional
+areas of computer science: programming languages and databases. PI
+Berger is a programming languages researcher, and PI Meliou is a
+database researcher. The PIs intend to publish results for this
+project in both communities, increasing cross-fertilization of ideas
+and techniques across the two communities.
 
 \paragraph{Scientific Community.} % (fold)
 \label{par:scientific}
@@ -265,10 +265,12 @@ undergraduate students, contributing to the technology workforce, and
 outreach to under-represented groups via the inclusion of female
 students from nearby Mount Holyoke and Smith Colleges.
 
+%In addition to being widely applicable, the data debugging project
+%will also have educational impact on students, and the programming
+%languages and database research communities, as we discuss further in
+%Section~\ref{sec:impact}.
+
 The PIs have substantial expertise in static analysis, dynamic
 analysis, statistical analysis techniques, and optimizations in both
 programming language and relational database settings, making them
 extremely well-qualified to carry out this research.
-
-In addition to being widely applicable, the data debugging project will also have education impacts on students, and the programming languages and database research communities, as we discuss further in Section~\ref{sec:impact}.
-

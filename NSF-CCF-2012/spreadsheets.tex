@@ -69,8 +69,8 @@ actual errors.
 \subsection{Runtime: Analysis}
 \label{sec:asymptotic_analysis}
 
-Data debugging operates in several phases: computing the dependence
-graph, performing impact analysis, and then ranking impacts. Runtime
+Data debugging operates in several phases: (1) computing the dependence
+graph, (2) performing impact analysis, and then (3) ranking impacts. Runtime
 depends on the following parameters: the number of data items ($n$),
 the number of formulas ($f$), and the number of inputs ($i$). In
 spreadsheets, the number of inputs equals the number of data items,
@@ -85,8 +85,8 @@ structure of the computation. It has a worst-case runtime of
 $O((i\cdot f)^2)$, quadratic in the total number of inputs and formulas; it
 is theoretically possible for each formula to depend on every input
 and other formula. However, this kind of pathological computation
-structure is atypical. Dependence graphs normally form a tree or a
-forest of trees \comment{Aren't they DAGs? I think the correct term may be forest of polytrees (http://en.wikipedia.org/wiki/Polytree)}. In this case, the cost of constructing the dependence
+structure is atypical. Dependence graphs normally form a polytree or a
+forest of polytrees. In this case, the cost of constructing the dependence
 graph becomes linear in the number of inputs and formulas, or
 $O(i+f)$.
 
@@ -112,12 +112,11 @@ impacts to compute absolute impact scores, so it also operates in
 
 \subsection{Runtime: Empirical Results}
 
-To empirically measure the runtime of \checkcell{}, we run it on a random
-subset of 30 spreadsheets drawn from the EUSES
-corpus~\cite{Fisher:2005:ESC:1082983.1083242}, excluding those that do not
-contain formulas. Figure~\ref{fig:execution_time_graph} reports the
-performance of data debugging across our spreadsheet suite, ordered by the
-weighted number of cells.
+To empirically measure the runtime of \checkcell{}, we run it on a
+random subset of 30 spreadsheets drawn from the EUSES
+corpus~\cite{Fisher:2005:ESC:1082983.1083242}, excluding those that do
+not contain formulas. Figure~\ref{fig:execution_time_graph} reports
+the performance of data debugging across our spreadsheet suite.
 
 For 19 of the 30 spreadsheets, \checkcell{} takes 9 seconds or less to
 complete. Its runtime is less than three minutes for all but two of
@@ -125,19 +124,17 @@ the spreadsheets: \texttt{intresults} and \texttt{NEW}, which take 318
 seconds and 683 seconds, respectively. The average runtime over all
 spreadsheets is 61 seconds; without the two outliers, it is 29
 seconds. The cost of \checkcell{} is generally proportional to the
-cost of the impact analysis, which is in turn dependent on the
-weighted number of cells. \comment{get rid of ``weighted''? I think it's a minor detail, and it's confusing.}
+cost of the impact analysis.
 
 The spreadsheets that require the most execution time both have by far
-the largest number of formulas (1,066 and 2,626), and the latter also
-has the largest number of weighted cells (2,403). Their relatively
-high execution time is attributable to the fact that the cost of impact
-analysis increases as the number of formulas increases, since the
-Excel recalculation engine must do more work per item tested. The
-\texttt{intresults} spreadsheet also has an extremely highly-connected
-clique in its dependence graph, which leads to both higher time for
-dependence analysis and increases the cost of recalculations during
-impact analysis. % (see Figure~\ref{fig:intresults_tree}).
+the largest number of formulas, and the latter also has the largest
+number of data. Their relatively high execution time is attributable
+to the fact that the cost of impact analysis increases as the number
+of formulas increases, since the Excel recalculation engine must do
+more work per item tested. The \texttt{intresults} spreadsheet also
+has an extremely highly-connected clique in its dependence graph,
+which makes the dependence analysis and impact analysis phases more
+expensive.
 
 %\paragraph{Summary:} For nearly every spreadsheet
 % examined, \checkcell{}'s runtime is under three minutes.
@@ -248,9 +245,9 @@ the cells by replacing each cell by one of the other cells in the
 range, and thus would perform 90 computations. However, the impact of
 each cell $A_i$ can be computed equivalently in the following way
 without the need for any substitutions as $\sum_{j=1}^{10}{A_j} -
-(\frac{10}{9})(\sum_{j=1}^{10}{A_j} - A_i)$.  By storing the result of the first
-sum, it is possible to efficiently compute the impact of each $A_i$,
-with no need for sampling.
+(\frac{10}{9})(\sum_{j=1}^{10}{A_j} - A_i)$.  By storing the result of
+the first sum, it is possible to efficiently compute the impact of
+each $A_i$ directly (without sampling).
 
 Many of the most commonly used functions in Excel are as well-behaved
 as the SUM function. These include average, standard deviation, and
@@ -261,8 +258,14 @@ well-behaved, or whose computation is not possible to analyze because
 it is a user-defined compiled function. Nonetheless, it will be
 possible to speed data debugging whenever formulas consist of
 well-behaved functions combined with other functions using operations
-like addition. We plan to handle dependent chains of functions by
+like addition.
+We plan to handle dependent chains of functions by
 effectively inlining the functions into their parents and then performing
 analysis and simplification on that larger function.
-\comment{Another technique: use of intermediate results. Break the function into components. Some of them do not change in every iteration, so you can precompute part of the function. This is slightly different from the previous point.}
+
+% We can further improve
+% performance by caching parts of functions that do not depend on 
+
+% \comment{Another technique: use of intermediate results. Break the function into components. Some of them do not change in every iteration, so you can precompute part of the function. This is slightly different from the previous point.}
+% EDB: Hm. will have to think about this.
 

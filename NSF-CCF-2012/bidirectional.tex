@@ -1,17 +1,17 @@
 \section{Medium-Scale Data Debugging: Relational Databases} % (fold)
 \label{sec:bi_directional}
 
-We propose to apply data debugging techniques to perform data cleaning
-on relational data.  Cleaning tools attempt to purge datasets of
-discrepancies before the data can be used, but many errors still go
-undetected and get propagated further through queries and other
-transformations. When errors are detected in transformation results,
-it is critical to trace them back to their source and correct them to
-prevent them from affecting other computations. Data debugging can
-facilitate \emph{post factum} cleaning by identifying the input data
-with the highest contributions to an incorrect result. We propose to
-combine two methods of impact analysis in large-scale relational
-datasets: forward and reverse analysis.
+We now describe how we propose to apply data debugging techniques to
+perform data cleaning on relational data.  Cleaning tools attempt to
+purge datasets of discrepancies before the data can be used, but many
+errors still go undetected and get propagated further through queries
+and other transformations. When errors are detected in transformation
+results, it is critical to trace them back to their source and correct
+them to prevent them from affecting other computations. Data debugging
+can facilitate \emph{post factum} cleaning by identifying the input
+data with the highest contributions to an incorrect result. To make
+this efficient, we propose to combine two methods of impact analysis
+in large-scale relational datasets: forward and reverse analysis.
 
 \subsection{Forward Analysis} % (fold)
 \label{sub:forward_analysis}
@@ -35,63 +35,23 @@ be inefficient. Computing the transformation itself may be
 computationally intensive, and calculating the exact impact of each
 input tuple would require an exhaustive search over the input domain.
 
-One way to reduce the cost of data debugging in databases is to peel
-back the black box abstraction, as described in our proposed work for
-spreadsheets.  The black box abstraction makes it particularly
-suitable for user-defined functions (UDF). However, many computations
-in the relational model rely on SQL transformations, which are simple
-to analyze.
-
-% Exploiting knowledge of the data transformations can
-%improve performance, but requires lifting the black box assumption.
-
-% In this setting, the black box model is too restrictive.
-
-
-% Forward analysis is inefficient and does not scale to complex problems: computing the transformation itself may be computationally intensive, and calculating the exact impact of each input tuple requires an exhaustive search over the input domain. 
-% Calculating impact over sets of input tuples makes the problem even harder, as it causes combinatorial explosion of the search space. 
-%Lifting the black box assumption can often do much better. 
-% We revisit the personal budget example discussed in Section~\ref{sec:overview}. If we know the function that computes cell \texttt{B12}, we can calculate the impact of a cell \texttt{B$_j$} as follows:
-% \begin{align}\label{eqn:example_reverse}
-% 	\sum_{i\neq j} I(\texttt{B}_j - \texttt{B}_i > \texttt{B}11-\texttt{C}11-150) = \sum_{i\neq j} I(\texttt{B}_j - \texttt{B}_i >3520.92)
-% \end{align}
-% where $I$ is an indicator function. Therefore, we can determine the impact of an input value without recomputing the function. SQL transformations are particularly amenable to such optimizations. 
-
-Consider the following example SQL query, where the inner subquery
-returns all departments that have a branch in Boston, and the outer
-query computes the average salary of the employees that do not work in
-any of those departments.
-
-%The following nested SQL query returns the average salary of all employees who do not work for a department that has a branch in Boston.
-\texttt{
-\begin{tabbing}
-		SELECT	\=avg(E.salary)\\
-		FROM	\>Employees E\\
-		WHERE	\>E.department NOT IN	(\=SELECT	\=distinct D.name\+\+\\
-										FROM	\>Department D, Branches B\\
-										WHERE	\>D.did = B.did AND B.location = `Boston')
-\end{tabbing}}
-
-\noindent
-In this example, we do not need to recompute the nested subquery if
-only the \texttt{Employees} table is modified during impact
-analysis. SQL queries are particularly amenable to such optimizations.
-
-% \comment{In a relational setting, impact analysis also needs to account for functional dependencies and other database-enforced constraints (e.g. foreign-key constraints). These would restrict the modifications that we can apply to the input. Is this interesting/important enough to mention here?}
-
-% \comment{Possible argument against black box: ``weird'' functions like parity.}
-
-% subsection forward_analysis (end)
-
 \subsection{Reverse Analysis} % (fold)
 \label{sub:reverse_analysis}
-Forward impact analysis is not well-suited for certain errors that
-result from data integration. To address these cases, we propose \emph{reverse analysis}, a technique that analyzes transformations, such as SQL queries, and virtually inverts them to derive an input from a given output.
+Forward impact analysis is also not well-suited for certain errors that
+result from data integration. To address these cases, we propose
+\emph{reverse analysis}, a technique that analyzes transformations,
+such as SQL queries, and virtually inverts them to derive an input
+from a given output.
 
-Data in databases often comes from multiple
-sources, and is collected via multiple methods. In practice, databases are
-often produced by merging other existing databases, and this process can
-introduce redundancies and inconsistencies. Data integration errors are often identified by the violation of key constraints and other functional dependencies. Figure~\ref{fig:integrationExample} demonstrates a key-constraint violation after merging two relations. A database needs to satisfy several, often complex constraints, and the cleaning task may specify additional constraints or objectives.
+Data in databases often comes from multiple sources, and is collected
+via multiple methods. In practice, databases are often produced by
+merging other existing databases, and this process can introduce
+redundancies and inconsistencies. Data integration errors are often
+identified by the violation of key constraints and other functional
+dependencies. Figure~\ref{fig:integrationExample} demonstrates a
+key-constraint violation after merging two relations. A database needs
+to satisfy several often complex constraints, and the cleaning task
+may specify additional constraints or objectives.
 
 \begin{figure}
 	\small{\begin{tabular}{|l|l|l|l|l|l|l|l|}
@@ -114,6 +74,9 @@ introduce redundancies and inconsistencies. Data integration errors are often id
 	\caption{Data integration errors: ItemNum is a key (its value is unique) in the input tables, but the same is not true for the integration result. The integrated data needs to be cleaned to produce a valid data instance.}\label{fig:integrationExample}
 \end{figure}
 
+Consider the following example of a data cleaning scenario that is not
+well suited for forward analysis:
+
 \begin{example}\label{ex:how-to}
 A manufacturing company orders parts from multiple suppliers around
 the world. To reduce its dependence from any single country, the
@@ -125,10 +88,9 @@ different suppliers. Ideally, it would like to achieve this with the
 minimum number of changes.
 \end{example}
 
-Example~\ref{ex:how-to} presents a data cleaning scenario which is not
-well suited for forward analysis. In the presence of complex
-conditions, forward impact analysis has to exhaustively search all
-possible scenarios.
+In the presence of such complex conditions, forward impact analysis
+would have to exhaustively search all possible scenarios, which is
+intractable.
 
 In previous work, we have modeled these scenarios with \emph{how-to}
 queries: ``how should the input change in order to achieve the desired
@@ -150,7 +112,7 @@ efficiently.
 
 The Tiresias system~\cite{DBLP:conf/sigmod/MeliouS12,
   DBLP:conf/sigmod/MeliouSS12}, developed by PI Meliou, can
-efficiently evaluate how-to queries, and is used for complex cleaning
+efficiently evaluate how-to queries and perform complex cleaning
 tasks such as the one in Example~\ref{ex:how-to}. How-to queries are
 constraint optimization problems defined over relational data, but
 they cannot be expressed in standard SQL. Tiresias allows users to
@@ -160,7 +122,6 @@ evaluated using mixed integer programming solvers.
 
 \paragraph{Calculating impact.} % (fold)
 \label{par:calculating_impact}
-
 Tiresias does not quantify the impact of input data, but rather
 produces an instance of the input that satisfies all cleaning
 constraints. In prior work, PI Meliou introduced a theory of causality
@@ -173,18 +134,6 @@ time~\cite{DBLP:journals/pvldb/MeliouGMS11}. Tiresias uses SAT solvers
 to compute responsibility efficiently for NP-hard
 cases~\cite{DBLP:conf/sigmod/MeliouGNS11}.
 
-% paragraph calculating_impact (end)
-
-% Halpern and
-%Pearl~\cite{HalpernPearl:Cause2005} and Chockler and
-%Halpern~\cite{DBLP:journals/jair/ChocklerH04} gave mathematical
-%definitions of causality and its related notion of degree of
-%responsibility. Responsibility quantifies  
-
-% subsection reverse_analysis (end)
-
-
-%--------------------------------------------------------------------------
 
 \subsection{Proposed Work} % (fold)
 \label{sub:research_plan}
@@ -197,8 +146,44 @@ computations. We will investigate the following research questions:
 
 \paragraph{Static analysis of SQL queries.} % (fold)
 \label{par:static_analysis_of_sql_queries}
-SQL queries are the primary type of computation in relational databases. We will investigate techniques to break down queries into \emph{active} and \emph{inactive} components: active components are the parts of the query that need to be recomputed during forward analysis, whereas inactive are components that compute intermediate results that don't change and thus can be precomputed. This is a hard problem as it relates to the problems of query containment and equivalence, which are undecidable~\cite{abiteboul1994foundations,DBLP:conf/pods/CalvaneseGL98}.
+One way to reduce the cost of data debugging in databases is to peel
+back the black box abstraction, as described in our proposed work for
+spreadsheets. The black box abstraction makes it particularly
+suitable for user-defined functions (UDF). However, many computations
+in the relational model rely on SQL transformations, which are simple
+to analyze.
+
+Consider the following example SQL query, where the inner subquery
+returns all departments that have a branch in Boston, and the outer
+query computes the average salary of the employees that do not work in
+any of those departments.
+
+\texttt{
+\begin{tabbing}
+		SELECT	\=avg(E.salary)\\
+		FROM	\>Employees E\\
+		WHERE	\>E.department NOT IN	(\=SELECT	\=distinct D.name\+\+\\
+										FROM	\>Department D, Branches B\\
+										WHERE	\>D.did = B.did AND B.location = `Boston')
+\end{tabbing}}
+
+\noindent
+In this example, we do not need to recompute the nested subquery if
+only the \texttt{Employees} table is modified during impact
+analysis. SQL queries are particularly amenable to such optimizations.
+
+\punt{
+We will also investigate techniques to break down queries into
+\emph{active} and \emph{inactive} components: active components are
+the parts of the query that need to be recomputed during forward
+analysis, whereas inactive are components that compute intermediate
+results that do not change and thus can be precomputed. While it is
+not possible to do this for all queries, as it relates to the
+undecidable problems of query containment and
+equivalence~\cite{abiteboul1994foundations,DBLP:conf/pods/CalvaneseGL98},
+we will do \comment{what exactly?}
 % paragraph static_analysis_of_sql_queries (end)
+}
 
 \paragraph{Cleaning optimizations.} % (fold)
 \label{par:cleaning_optimizations}

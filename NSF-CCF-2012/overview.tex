@@ -69,18 +69,19 @@ money that he or she does not actually have.
 \subsection{Dependence Analysis}
 
 The first step in data debugging is to identify the relationship of
-data (inputs) to computations (outputs).
-In a spreadsheet, inputs are data in cells, while computations are
-either charts or formulas that are not used by other formulas. \comment{Is this restriction necessary?}
+input data to output computations.
+In a spreadsheet, we consider inputs to be data in cells, and outputs to be computations---either formulas or charts---that are not used by other formulas.
+Charts are often a key result of a spreadsheet computation, so it
+is important to detect data that triggers dramatic changes in
+charts. To handle charts, we treat them as if they were
+formulas that compute the average over their inputs. A data value that
+significantly alters the average is considered to have an
+unusual impact on the chart.
+
+%  \comment{Is this restriction necessary?}
 %Our \checkcell{} prototype uses techniques similar to past work to identify
 %dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
 %support for charts.
-%Charts are often a key ``result'' of a spreadsheet computation, so it
-%is important to detect data that triggers dramatic changes in
-%charts. To handle charts, \checkcell{} treats them as if they were
-%formulas that compute the average over their inputs. A data value that
-%significantly alters the average is considered to have an
-%unusual impact on the chart.
 
 %\begin{figure}[!t]
 %\centering
@@ -129,7 +130,7 @@ add 1 to cell \texttt{B4}'s impact score.
 % Each data item maintains a separate impact score for every computation.
 
 To minimize sampling error, random
-selection for large ranges is repeated a fixed number of times (at least 30) \comment{(shouldn't this number depend on the size of the range?)},
+selection for large ranges is repeated a number of times (e.g., 30),
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of
 iterations. 

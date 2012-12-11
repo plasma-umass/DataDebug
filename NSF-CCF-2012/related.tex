@@ -84,7 +84,15 @@ responsibility was shown to be NP-hard in general
 \cite{DBLP:journals/ai/EiterL02}. In prior work, we extended the notions of causality and responsibility to
 database queries~\cite{DBLP:journals/pvldb/MeliouGMS11}, and analyzed the complexity of computing the responsibility metric for conjunctive queries.
 
-Causality and responsibility are a form of reverse analysis. To goal is to assign a contribution score to each input, but that is calculated based on the causal network defined by the given function. Notably, using the HP definition of causality, equivalent functions can result in different evaluations for these metrics, if the functions correspond to different causal networks; e.g., $f_1(x_1,x_2) = x_1\vee x_2$ and $f_2(x_1,x_2) = x_1\vee (\neg x_1\wedge x_2)$. This is not the case for the impact metric that we calculate in data debugging.
+Causality and responsibility are a form of reverse analysis. To goal
+is to assign a contribution score to each input, but that is
+calculated based on the causal network defined by the given
+function. Notably, using the HP definition of causality, equivalent
+functions can result in different evaluations for these metrics, if
+the functions correspond to different causal networks; e.g.,
+$f_1(x_1,x_2) = x_1\vee x_2$ and $f_2(x_1,x_2) = x_1\vee (\neg
+x_1\wedge x_2)$. This is not the case for the impact metric that we
+calculate in data debugging.
 
 % In prior work, we extended the notions of causality and responsibility to
 % database queries~\cite{DBLP:journals/pvldb/MeliouGMS11}. Here the input
@@ -101,9 +109,22 @@ Causality and responsibility are a form of reverse analysis. To goal is to assig
 
 
 \subsection*{View Updates}
-An interesting, and related work is the view side-effects problem on tuple deletion and annotation propagation~\cite{DBLP:conf/pods/BunemanKT02}. This problem involves finding a subset of tuples in the database whose deletion will eliminate a given tuple t from the view, with the minimum number of side-effects (other tuple eliminations) in the view. An analogous definition of the problem exist for tuple insertion and updates, and all are shown to be hard, in general. Very recent work~\cite{cong2010} studies the ``side-effect free'' version of this problem, where zero side-effects are enforced, and the aim is to minimize the subset of tuples selected from the database. Here, the same hardness results hold as in the general version of the problem.
+Another related area is the view side-effects problem on
+tuple deletion and annotation
+propagation~\cite{DBLP:conf/pods/BunemanKT02}. This problem involves
+finding a subset of tuples in the database whose deletion will
+eliminate a given tuple $t$ from the view with the minimum number of
+side-effects (other tuple eliminations) in the view. An analogous
+definition of the problem exists for tuple insertion and updates, and
+all are shown to be hard, in general. Recent work
+studies the ``side-effect free'' version of this problem, where zero
+side-effects are enforced, and the aim is to minimize the subset of
+tuples selected from the database~\cite{cong2010}. Here, the same hardness results
+hold as in the general version of the problem.
 
-The problem of view updates does not measure the impact of input data to the output, but rather tries to identify the input tuples that will achieve a specific change to a view (output).
+Unlike data debugging, view updates does not measure the impact of input data
+to the output, but rather aims to identify the input tuples that will
+yield a specific change to a view (output).
 
 \subsection*{Spreadsheet Errors}
 
@@ -128,7 +149,7 @@ or if derived units clash with unit annotations. There also has been
 considerable work on testing tools for
 spreadsheets~\cite{fisher2006scaling,rothermel1998you,rothermel2001methodology,Carver:2006:EET:1159733.1159775}.
 
-This work is complementary and orthogonal to \checkcell{}, which
+This work is complementary and orthogonal to data debugging for spreadsheets, which
 works with standard, unannotated spreadsheets and focuses on unusual
 interactions of data with formulas.
 
