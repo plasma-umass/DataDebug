@@ -237,12 +237,12 @@ an order of magnitude error (one too many 0's).
 
 \subsection{Proposed Work}
 
-We plan to improve the performance of data debugging in spreadsheets
+\paragraph{Optimization via Static Analysis.} We plan to improve the performance of data debugging in spreadsheets
 by applying static analysis. The primary component of \checkcell{}'s
 overhead is the cost of recomputation during sampling. By peeling back
 the black box assumption and applying analysis to the actual formulas
 involved in the computation, it is possble to compute a data item's
-impact directly, without having to perform sampling and repeated
+impact directly without having to perform sampling and repeated
 re-computations.
 
 For example, consider a formula that computes the sum of the cells A1

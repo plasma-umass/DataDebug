@@ -136,34 +136,58 @@ effective at finding actual data entry errors.
 \subsection*{Overview and Contributions of Proposed Work}
 
 This project will develop data debugging in several key directions,
-improving its performance and broadening its scope: (1) static
-analysis of formulas and queries to enable optimizations and minimize
-recomputations when data changes; (2) extension of data debugging to
-relational database systems; and (3) incorporation of data debugging
-into MapReduce tasks. This work will make it possible for data
-debugging to detect likely errors as soon as they are entered, or to
+improving its performance and broadening its scope. We will develop
+data debugging approaches that apply at different scales:
+
+\paragraph{Small-scale: Spreadsheets.} We plan to apply static
+analysis to formulas to enable optimizations and minimize
+recomputations when data changes, making it possible to detect
+likely errors as soon as they are entered.
+
+\paragraph{Medium-scale: Database systems.} We will extend data debugging to
+relational database systems by combining static and dynamic analysis
+in an approach we call \emph{bi-directional
+  analysis} to efficiently identify erroneous tuples and trace errors back to their sources.
+
+\paragraph{Large-scale: MapReduce.} At the largest scale, we will incorporate data debugging
+into MapReduce tasks. Because human review of possible errors at this
+scale is intractable, we will apply data debugging techniques both to
+identify erroneous data sources and to allow MapReduce tasks to
 withstand errors automatically.
+
+Table~\ref{tab:data-debug-plan} presents an overview of our prior,
+preliminary, and proposed work, and a breakdown of responsibility for
+each task by PI. PI Berger will lead the effort on applying data
+debugging to spreadsheets, while PI Meliou will lead the effort for
+databases. Both will jointly lead the effort on applying data
+debugging to MapReduce. The PIs have had several meetings separately
+and together with graduate students in planning for this grant, and we
+plan to have weekly data debugging meetings of PIs and graduate
+students once the grant is funded.
 
 \begin{table}[!t]
 \centering
-\begin{tabular}{l|l|c|c|c|c}
+\begin{tabular}{llcccc}
 \textbf{Domain} & \textbf{Task} & \textbf{Prior} & \textbf{Preliminary} & \textbf{Proposed} & \textbf{PIs} \\
 \hline
+\multicolumn{6}{c}{\emph{small-scale}} \\
 Spreadsheets               & \checkcell{} implementation       & & \checkmark &  & Berger \\
                            & static analysis optimizations     & &  & \checkmark & Berger \\
+\hline
+\multicolumn{6}{c}{\emph{medium-scale}} \\
 Databases                  & optimized forward analysis  & & & \checkmark          & Meliou \\
                            & reverse analysis & \checkmark & & \checkmark & Meliou \\
                            & (tracking error sources) & & & & \\
 % ~\cite{DBLP:conf/sigmod/MeliouS12, DBLP:conf/sigmod/MeliouSS12}
                            & bi-directional analysis & & & \checkmark & Meliou \\
+\hline
+\multicolumn{6}{c}{\emph{large-scale}} \\
 MapReduce                  & input trimming  & & & \checkmark & Berger, Meliou\\
                            & (withstanding errors) & & & & \\
 \hline
 \end{tabular}
 \caption{Data Debugging: Prior, Preliminary, Proposed Work, and Associated PIs.\label{tab:data-debug-plan}}
 \end{table}
-
-\todo{Table, collaboration}
 
 \paragraph{Broader Impact.} 
 Data debugging is a new paradigm for attacking the problem of errors
@@ -186,16 +210,6 @@ incorporated in Windows. Educational impact will include training
 graduate and undergraduate students, contributing to the technology
 workforce, and outreach to under-represented groups via the inclusion
 of female students from nearby Mount Holyoke and Smith Colleges.
-
-Table~\ref{tab:data-debug-plan} presents an overview of our prior,
-preliminary, and proposed work, and a breakdown of responsibility for
-each task by PI. PI Berger will lead the effort on applying data
-debugging to spreadsheets, while PI Meliou will lead the effort for
-databases. Both will jointly lead the effort on applying data
-debugging to MapReduce. The PIs have had several meetings separately
-and together with graduate students in planning for this grant, and we
-plan to have weekly data debugging meetings of PIs and graduate
-students once the grant is funded.
 
 The PIs have substantial expertise in static analysis, dynamic
 analysis, statistical analysis techniques, and optimizations in both
