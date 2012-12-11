@@ -44,7 +44,62 @@ anomalies''~\cite{Raz:2002:SAD:581339.581378}.  Data debugging is
 orthogonal to these approaches: rather than searching for latent
 relationships in or across data, it measures the interaction of data with
 the programs that operate on them.
- 
+
+\subsection*{Causality and Responsibility}
+Causality is an active area of research, mostly in AI and philosophy that
+studies the causes of an outcome. One of the basic notions in causality theory
+is \emph{counterfactual causality} \cite{Menzies:Causation2008,Lewis1973}. An
+input variable is counterfactual if a change in its value reverses the value
+of the output variable. In our terms, it means that the variable has high
+impact. 
+% Counterfactuals are a very intuitive notion, but very limited in their
+% applicability as they don't support disjunctive causes: If $Y$ occurs when
+% $X_1$ or $X_2$ occurs, neither of $X_1$ or $X_2$ are counterfactual causes for
+% $Z$.
+
+Halpern and Pearl \cite{HalpernPearl:Cause2005} extended counterfactuals by
+introducing \emph{actual causes} which rely upon a graph structure called a
+\emph{causal network}, and added the notion of \emph{permissive
+contingencies}. 
+% The causal network is defined by \emph{structural equations}, which describe
+% how variables relate to each other; for example $Y = X_1 \vee X_2$ is a
+% structural equation linking inputs $X_1$ and $X_2$ to output $Z$. 
+Contingencies are based on the notion of \emph{intervention}: what becomes
+counterfactual if part of the input changes. For example, if $X_1$ and $X_2$
+are both \texttt{true}, neither of them is counterfactual for $Y=X_1 \vee
+X_2$. However, if the input changes in a certain way, for instance $X_2$ is
+\texttt{false}, then $X_1$ becomes counterfactual. One says that \emph{$X_1$
+is an actual cause of $Z$ under the contingency $X_2=\texttt{false}$}. Such
+contingencies can be viewed as alternative possible worlds or variable
+assignments. Roughly, a variable $X$ is an actual cause if there exists a
+contingency (a value assignment for the other variables) that makes $X$
+counterfactual.
+
+The notion of \emph{responsibility} was first defined in
+\cite{DBLP:journals/jair/ChocklerH04} as a measure of the degree of causality:
+the responsibility is inverse proportional to the size of the smallest
+contingency set. Responsibility is a metric related impact, and it quantifies
+the contribution of an input to an output. Determining causes and
+responsibility was shown to be NP-hard in general
+\cite{DBLP:journals/ai/EiterL02}. In prior work, we extended the notions of causality and responsibility to
+database queries~\cite{DBLP:journals/pvldb/MeliouGMS11}, and analyzed the complexity of computing the responsibility metric for conjunctive queries.
+
+Causality and responsibility are a form of reverse analysis. To goal is to assign a contribution score to each input, but that is calculated based on the causal network defined by the given function. Notably, using the HP definition of causality, equivalent functions can result in different evaluations for these metrics, if the functions correspond to different causal networks; e.g., $f_1(x_1,x_2) = x_1\vee x_2$ and $f_2(x_1,x_2) = x_1\vee (\neg x_1\wedge x_2)$. This is not the case for the impact metric that we calculate in data debugging.
+
+% In prior work, we extended the notions of causality and responsibility to
+% database queries~\cite{DBLP:journals/pvldb/MeliouGMS11}. Here the input
+% variables are tuples in the input database, the output variables are the
+% answer tuples returned by the query, and the causal network is given by the
+% \emph{lineage expression}. An input tuple is a \emph{counterfactual cause} for
+% an output tuple if its removal from the input causes the output to disappear.
+% An input tuple is an \emph{actual cause} for an output tuple if there exists a
+% set of tuples in the input (the contingency) such that, after removing them,
+% the input tuple becomes a counterfactual cause. The complexity of causality
+% and responsibility were analyzed as a function of the query (query
+% complexity). These results are unrelated to our work, since we analyze
+% directly the lineage expression and do not consider query complexity.
+
+
 \subsection*{View Updates}
 An interesting, and related work is the view side-effects problem on tuple deletion and annotation propagation~\cite{DBLP:conf/pods/BunemanKT02}. This problem involves finding a subset of tuples in the database whose deletion will eliminate a given tuple t from the view, with the minimum number of side-effects (other tuple eliminations) in the view. An analogous definition of the problem exist for tuple insertion and updates, and all are shown to be hard, in general. Very recent work~\cite{cong2010} studies the ``side-effect free'' version of this problem, where zero side-effects are enforced, and the aim is to minimize the subset of tuples selected from the database. Here, the same hardness results hold as in the general version of the problem.
 
