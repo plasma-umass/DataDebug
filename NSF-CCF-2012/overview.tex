@@ -52,16 +52,14 @@
 
 % the EUSES repository~\cite{Fisher:2005:ESC:1082983.1083242}
 
-This section outlines the algorithms that data debugging
-employs. 
-We illustrate these algorithms with a running
-example of a budget shown in Figure~\ref{fig:personal_budget}, 
-a reduced version of a sample template included with Microsoft Excel. This
-spreadsheet tracks expected versus real spending on monthly
-expenses. The spreadsheet indicates whether the user can afford to
-splurge and go out to a fancy restaurant, which is when real spending
-is at least \$150 less than expected. However, this example contains
-an unfortunate typographical error that could lead the user to spend
+We present an overview of data debugging, and the algorithms that it employs.
+We illustrate these algorithms with a running example of a budget shown in
+Figure~\ref{fig:personal_budget}, which is a reduced version of a sample
+template included with Microsoft Excel. This spreadsheet tracks expected
+versus real spending on monthly expenses. The spreadsheet indicates whether
+the user can afford to splurge and go out to a fancy restaurant, which is when
+real spending is at least \$150 less than expected. However, this example
+contains an unfortunate typographical error that could lead the user to spend
 money that he or she does not actually have.
 
 % In this case, the error is relatively easy to find, but 
@@ -73,7 +71,7 @@ money that he or she does not actually have.
 The first step in data debugging is to identify the relationship of
 data (inputs) to computations (outputs).
 In a spreadsheet, inputs are data in cells, while computations are
-either charts or formulas that are not used by other formulas.
+either charts or formulas that are not used by other formulas. \comment{Is this restriction necessary?}
 %Our \checkcell{} prototype uses techniques similar to past work to identify
 %dependencies in spreadsheets~\cite{fisher2006scaling}, but adds
 %support for charts.
@@ -98,16 +96,14 @@ either charts or formulas that are not used by other formulas.
 
 \subsection{Impact Analysis}
 
-The next step is to iterate through the data itself to test the impact
-of each data item on all computations. For each item, data debugging
-repeatedly chooses another item from the same ``distribution'', e.g.,
-another tuple in the same table, or another cell in the same range,
-and replaces the item being tested with the selected one. 
-
-The selection process is exhaustive for small ranges (less than 30
-elements); that is, for each item, impact analysis tests the effect of
-replacing it with every other item in the range. For larger ranges, we
-employ random sampling.
+The next step is to iterate through the data itself to test the impact of each
+data item on all computations. For each item, data debugging repeatedly
+chooses another item from the same ``distribution'', e.g., another tuple in
+the same table, or another cell in the same range, and replaces the item being
+tested with the selected one. The selection process is exhaustive for small
+ranges (less than 30 elements); that is, for each item, impact analysis tests
+the effect of replacing it with every other item in the range. For larger
+ranges, we employ random sampling.
 
 The computations are then recalculated using this new dataset. Changes
 in the computations are recorded as their \emph{impact scores} on each
@@ -134,7 +130,7 @@ add 1 to cell \texttt{B4}'s impact score.
 % Each data item maintains a separate impact score for every computation.
 
 To minimize sampling error, random
-selection for large ranges is repeated a fixed number of times (at least 30),
+selection for large ranges is repeated a fixed number of times (at least 30) \comment{(shouldn't this number depend on the size of the range?)},
 accumulating the impact scores associated with each datum. The impact
 score is then divided by the number of
 iterations. 
@@ -145,15 +141,14 @@ iterations.
 
 \subsection{Impact Scoring}
 
-In the final phase, the impacts of each data item are normalized by transforming
-them into a test statistic computed as the absolute distance of
-each item from the sample mean, divided by the sample standard
-deviation. This \emph{normalized impact score} represents the distance
-from the mean impact, in numbers of standard deviations. A standard
-approach, which we adopt here, is to only report data whose impact is
-at least two standard deviations away from the mean.
-Note that this interpretation does not depend on normality assumptions
-about the data or its impact.
+In the final phase, the impact of each data item is normalized by transforming
+it into a test statistic computed as the absolute distance of each item from
+the sample mean, divided by the sample standard deviation. This
+\emph{normalized impact score} represents the distance from the mean impact,
+in numbers of standard deviations. A standard approach, which we adopt here,
+is to only report data whose impact is at least two standard deviations away
+from the mean. Note that this interpretation does not depend on normality
+assumptions about the data or its impact.
 
 Each data item's normalized impact scores are then averaged across
 all the outputs, and data debugging assigns that average as the
