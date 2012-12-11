@@ -133,7 +133,19 @@ perform a case study by employing human workers via a crowdsourcing
 platform (Amazon's Mechanical Turk), and show that \checkcell{} is
 effective at finding actual data entry errors.
 
-\subsection*{Overview and Contributions of Proposed Work}
+\subsection{Challenges} % (fold)
+\label{sub:challenges}
+Developing our data debugging algorithms and integrating them to real systems poses several challenges:
+\begin{itemize}
+	\item \emph{Debugging with no information.} Data debugging should work on situations where little is known about the actual presence of errors.
+	\item \emph{Common framework for different error types.} Our model should handle errors of all natures: data entry, measurement, and data integration errors.
+	\item \emph{Extend standard tools.} Our model should be implementable on top of standard data management applications and systems.
+	\item \emph{Efficiency.} Data debugging should be fast to allow for interactive data exploration.
+	\item \emph{Different data scales.} Our model should work on a range of problem scales: from small size personal data, to large-scale MapReduce pipelines.
+\end{itemize}
+% subsection challenges (end)
+
+\subsection{Intellectual Merit}
 
 This project will develop data debugging in several key directions,
 improving its performance and broadening its scope. We will develop
@@ -193,7 +205,7 @@ students once the grant is funded.
 \caption{Data Debugging: Prior, Preliminary, Proposed Work, and Associated PIs.\label{tab:data-debug-plan}}
 \end{table}
 
-\subsection*{Broader Impact} 
+\subsection{Broader Impact} 
 
 Data debugging is a new paradigm for attacking the problem of errors
 in data by leveraging the interaction between data and the programs
