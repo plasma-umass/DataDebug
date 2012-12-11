@@ -133,7 +133,7 @@ possible scenarios.
 In previous work, we have modeled these scenarios with \emph{how-to}
 queries: ``how should the input change in order to achieve the desired
 output?''~\cite{DBLP:journals/pvldb/MeliouGS11} How-to queries are an
-example of \emph{reverse analysis}. In contrast to forward analysis,
+example of reverse analysis. In contrast to forward analysis,
 reverse analysis specifies the desired effect on the output, and
 reverse engineers how the input should change. Reverse analysis has
 more complex semantics and higher implementation complexity compared
@@ -195,40 +195,30 @@ components. We propose to develop \textbf{bi-directional data
 analysis. This framework can flexibly adapt to different types of
 computations. We will investigate the following research questions:
 
-\begin{description}
-	\item[Types of computation.] Reverse analysis is clearly not
-          suited for black box computation, but forward analysis may
-          still be well-suited to certain glass box components. We
-          will investigate different types of computation to discover
-          patterns that could indicate which technique is more
-          appropriate for each pattern.
+\paragraph{Static analysis of SQL queries.} % (fold)
+\label{par:static_analysis_of_sql_queries}
+SQL queries are the primary type of computation in relational databases. We will investigate techniques to break down queries into \emph{active} and \emph{inactive} components: active components are the parts of the query that need to be recomputed during forward analysis, whereas inactive are components that compute intermediate results that don't change and thus can be precomputed. This is a hard problem as it relates to the problem of query containment, which is undecidable~\cite{DBLP:conf/pods/CalvaneseGL98}.
+% paragraph static_analysis_of_sql_queries (end)
 
-	\item[Scaling and efficiency.] In prior work, PI Meliou demonstrated that
-          many reverse analysis tasks can be broken into independent
-          components and executed in
-          parallel~\cite{DBLP:conf/sigmod/MeliouS12}. We will develop
-          techniques for efficient parallelization of such tasks, and
-          investigate approximation methods for tasks that cannot be
-          parallelized.
+\paragraph{Cleaning optimizations.} % (fold)
+\label{par:cleaning_optimizations}
+In complex transformations, it is not clear how forward and reverse analysis
+should be combined. We will use computational patterns to design a cleaning
+optimizer, modeled after traditional relational query optimizers. Given a
+cleaning task, the optimizer should select how to subdivide the task into the
+forward and reverse components, and in which order the tasks should be
+performed.
+% paragraph cleaning_optimizations (end)
 
-	\item[Cleaning optimizations.] In complex transformations, it
-          is not clear how forward and reverse analysis should be
-          combined. We will use computational patterns to design a
-          cleaning optimizer, modeled after traditional relational
-          query optimizers. Given a cleaning task, the optimizer
-          should select how to subdivide the task into the forward and
-          reverse components, and in which order the tasks should be
-          performed.
+\paragraph{Interactive cleaning.} % (fold)
+\label{par:interactive_cleaning}
+Cleaning tasks are often based on complex constraints, and have many possible
+solutions. It can be a daunting undertaking for a user to assess these
+solutions, or even define the cleaning task itself. We will design an
+interactive interface to allow users to easily identify possible problems, and
+we will investigate techniques to refine solutions based on user feedback.
+% paragraph interactive_cleaning (end)
 
-	\item[Interactive cleaning.] Cleaning tasks are often based on
-          complex constraints, and have many possible solutions. It
-          can be a daunting undertaking for a user to assess these
-          solutions, or even define the cleaning task itself.  We will
-          design an interactive interface to allow users to easily
-          identify possible problems, and we will investigate
-          techniques to refine solutions based on user feedback.
-
-\end{description}
 
 
 % subsection research_plan (end)
