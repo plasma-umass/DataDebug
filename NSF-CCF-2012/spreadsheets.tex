@@ -74,7 +74,7 @@ graph, performing impact analysis, and then ranking impacts. Runtime
 depends on the following parameters: the number of data items ($n$),
 the number of formulas ($f$), and the number of inputs ($i$). In
 spreadsheets, the number of inputs equals the number of data items,
-but in other contexts like databases, inputs correspond to fields, so
+but in other contexts like databases, inputs correspond to relation attributes (columns), whereas data items correspond to tuples, so
 $i \ll n$. Since each formula and data item must be examined at least
 once to compute the dependence graph and to measure impact,
 respectively, runtime for data debugging must be 
@@ -86,41 +86,38 @@ $O((i*f)^2)$, quadratic in the total number of inputs and formulas; it
 is theoretically possible for each formula to depend on every input
 and other formula. However, this kind of pathological computation
 structure is atypical. Dependence graphs normally form a tree or a
-forest of trees. In this case, the cost of constructing the dependence
+forest of trees \comment{Aren't they DAGs? I think the correct term may be forest of polytrees (http://en.wikipedia.org/wiki/Polytree)}. In this case, the cost of constructing the dependence
 graph becomes linear in the number of inputs and formulas, or
 $O(i+f)$.
 
 Impact analysis dominates the costs of constructing the dependence
 graph and ranking impacts, since it requires recalculation of the
 computations affected by changes in the data.
-
-A na\"ive implementation of impact analysis that checked the impact of
+A na\"ive implementation of impact analysis that checks the impact of
 each data item by systematically replacing it with every other item in
 the same range would require $O(n^2)$ time. Worse, each of these
 iterations requires potentially costly recalculations. For large
 ranges, such an approach would make data debugging unusable in
 practice.
  
+Data debugging scales to larger input ranges using sampling.
 By using a fixed number of random selections once the range
 exceeds a threshold size, data debugging keeps the total number of
 recalculations to $O(n)$, linear in the number of data items. Any
 strategy that visits each data item at least once takes $O(n)$ time,
 so this bound is tight.
-
 Finally, ranking impacts involves only two linear passes over the
 impacts to compute absolute impact scores, so it also operates in
 (optimal) linear time in the number of impacts.
 
 \subsection{Runtime: Empirical Results}
 
-To empirically measure the runtime of \checkcell{}, we run it on a random subset
-of 30 spreadsheets drawn from the EUSES
-corpus~\cite{Fisher:2005:ESC:1082983.1083242}, excluding those that do not contain
-formulas.
-
-Figure~\ref{fig:execution_time_graph} reports the performance of data
-debugging across our spreadsheet suite, ordered by the weighted number
-of cells.
+To empirically measure the runtime of \checkcell{}, we run it on a random
+subset of 30 spreadsheets drawn from the EUSES
+corpus~\cite{Fisher:2005:ESC:1082983.1083242}, excluding those that do not
+contain formulas. Figure~\ref{fig:execution_time_graph} reports the
+performance of data debugging across our spreadsheet suite, ordered by the
+weighted number of cells.
 
 For 19 of the 30 spreadsheets, \checkcell{} takes 9 seconds or less to
 complete. Its runtime is less than three minutes for all but two of
@@ -129,7 +126,7 @@ seconds and 683 seconds, respectively. The average runtime over all
 spreadsheets is 61 seconds; without the two outliers, it is 29
 seconds. The cost of \checkcell{} is generally proportional to the
 cost of the impact analysis, which is in turn dependent on the
-weighted number of cells.
+weighted number of cells. \comment{get rid of ``weighted''? I think it's a minor detail, and it's confusing.}
 
 The spreadsheets that require the most execution time both have by far
 the largest number of formulas (1,066 and 2,626), and the latter also
@@ -267,4 +264,5 @@ well-behaved functions combined with other functions using operations
 like addition. We plan to handle dependent chains of functions by
 effectively inlining the functions into their parents and then performing
 analysis and simplification on that larger function.
+\comment{Another technique: use of intermediate results. Break the function into components. Some of them do not change in every iteration, so you can precompute part of the function. This is slightly different from the previous point.}
 
