@@ -1,4 +1,4 @@
-\section{Data Debugging: Databases} % (fold)
+\section{Medium Scale Data Debugging: Relational Databases} % (fold)
 \label{sec:bi_directional}
 
 We propose to apply data debugging techniques to perform data cleaning
@@ -85,11 +85,34 @@ analysis. SQL queries are particularly amenable to such optimizations.
 
 \subsection{Reverse Analysis} % (fold)
 \label{sub:reverse_analysis}
+Forward impact analysis is not well-suited for certain errors that
+result from data integration. To address these cases, we propose \emph{reverse analysis}. This technique analyzes transformations, such as SQL queries, and effectively inverts them to derive an input from a given output.
 
-Data in databases often comes from multiple sources, and is collected
-via multiple methods.  In practice, databases are often produced by
-merging other existing databases. However, this process can introduce
-redundancies and inconsistencies.
+Data in databases often comes from multiple
+sources, and is collected via multiple methods. In practice, databases are
+often produced by merging other existing databases, and this process can
+introduce redundancies and inconsistencies. Data integration errors are often identified by the violation of key constraints and other functional dependencies. Figure~\ref{fig:integrationExample} demonstrates a key-constraint violation after merging two relations. A database needs to satisfy several, often complex constraints, and the cleaning task may specify additional constraints or objectives.
+
+\begin{figure}
+	\small{\begin{tabular}{|l|l|l|l|l|l|l|l|}
+		\multicolumn{5}{c}{Input tables} & \multicolumn{1}{l}{}& \multicolumn{2}{c}{Integration result}\\
+		\multicolumn{5}{c}{$\overbrace{\rule{9.5cm}{0pt}}$} & \multicolumn{1}{l}{}& \multicolumn{2}{c}{$\overbrace{\rule{4.5cm}{0pt}}$}\\
+		\multicolumn{2}{l}{Products (A)} & \multicolumn{1}{l}{} & \multicolumn{2}{l}{Products (B)} & \multicolumn{1}{l}{} & \multicolumn{2}{l}{All Products}\\
+		\cline{1-2}\cline{4-5}\cline{7-8}
+		\textbf{\underline{ItemNum}} & \textbf{product name} & \multicolumn{1}{l|}{} & \textbf{\underline{ItemNum}} & \textbf{product name} & \multicolumn{1}{l|}{} & \textbf{ItemNum} & \textbf{product name}\\
+		\cline{1-2}\cline{4-5}\cline{7-8}
+		5253B002 & Nikon D4 SLR & \multicolumn{1}{l|}{} & 5253B002 & Nikon D4 digital & \multicolumn{1}{l|}{} & 5253B002 & Nikon D4 SLR\\
+		\cline{1-2}\cline{4-5}\cline{7-8}
+		25482 & Canon EOS 1D X & \multicolumn{1}{l|}{} & 25482 & Canon 1DX EOS & \multicolumn{1}{l|}{} & 5253B002 & Nikon D4 digital\\
+		\cline{1-2}\cline{4-5}\cline{7-8}
+		\multicolumn{6}{l|}{} & 25482 & Canon EOS 1D X\\
+		\cline{7-8}
+		\multicolumn{6}{l|}{} & 25482 & Canon 1DX EOS\\
+		\cline{7-8}
+		
+	\end{tabular}}
+	\caption{ItemNum is a key (its value is unique) in the input tables, but the same is not true for the integration result. The integrated data needs to be cleaned to produce a valid data instance.}\label{fig:integrationExample}
+\end{figure}
 
 \begin{example}\label{ex:how-to}
 A manufacturing company orders parts from multiple suppliers around
