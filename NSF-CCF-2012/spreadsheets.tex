@@ -249,16 +249,16 @@ each $A_i$ directly (without sampling).
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=5.5in]{images/frequency-formulas}
-  \caption{The frequency of formulas over ranges, measured over a random sample of 200 spreadsheets drawn from the EUSES repository. Well-behaved functions like SUM, MIN, and AVERAGE dominate, demonstrating ample opportunity for our proposed optimizations.\label{fig:frequency_formulas}}
+  \caption{The frequency of formulas over ranges, across the entire EUSES repository. SUM dominates and other well-behaved functions like AVERAGE and PRODUCT are also common, demonstrating ample opportunity for our proposed optimization.\label{fig:frequency_formulas}}
 \end{figure*}
 
 To evaluate the opportunity for this optimization, we wrote a tool to
-count the occurrences of functions over ranges from a random selection
-of spreadsheets drawn from the EUSES repository. Figure~\ref{fig:frequency_formulas}
-presents the results, obtained from 200 spreadsheets. As the figure
-shows, uses of the sum function dominate all other functions.
-The next most frequent functions are min and average, both of which
-are amenable to our proposed optimization.
+count the occurrences of functions over ranges from all the
+spreadsheets in the EUSES repository (approximately
+5,000). Figure~\ref{fig:frequency_formulas} presents the results. As
+the figure shows, uses of the SUM function dominate all other
+functions.  Two other common functions are average and product, both
+of which are amenable to our proposed optimization.
 
 When a computation consists entirely of these
 functions, it will be possible to dramatically reduce the cost of data
