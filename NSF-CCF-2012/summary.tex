@@ -4,39 +4,39 @@
 Correctness is a key concern for nearly all computations. Many tools
 exist to combat program errors, ranging from testing and runtime
 assertions, to dynamic and static analysis tools. However, a program
-is just part of a computation: if its input contains errors, the
+is just one part of a computation: if its input contains errors, the
 result is likely to not be correct. Unlike programs, data cannot
 easily be tested or analyzed for correctness.  Part of the problem is
-that it is difficult to decide whether data is wrong. For example, the
-number \texttt{1234} might be correct, or the correct value might
-be \texttt{12.34}. Typographical errors can change data items by
-orders of magnitude. Unfortunately, finding this kind of mistake via
+that it is difficult to decide whether data is wrong. Typographical errors can change data items by
+orders of magnitude. For example, the
+number \texttt{1234} might be entered when the correct value is \texttt{12.34}. Unfortunately, finding this kind of mistake via
 manual data auditing is onerous, unscalable, and error-prone. Data
 errors can be costly: errors in spreadsheet data have led to losses of
 millions of dollars, and poor data quality has been estimated to cost
-the US economy more than \$600 billion per year.
+the US economy more than \$600 billion per year~\cite{eckerson2002}.
 
 This project proposes \emph{\bf data debugging}, an approach for
 locating likely data errors. Since it is impossible to know \emph{a
-priori} whether data are erroneous or not, data debugging aims to do
+priori} whether data is incorrect, data debugging aims to do
 the next best thing: \emph{locating data that has an unusual impact on
-the computation}. Intuitively, data that has an inordinate impact on
+the computation}. Intuitively, data with an inordinate impact on
 the result of a computation is either very important, or it is wrong. By
 contrast, wrong data whose presence has no particularly unusual effect
-on the final result does not merit special attention.
+on the final result does not matter.
 
 Data debugging combines data dependence analysis and statistical
 analysis to find and rank data based on the unusualness of its impact
 on the results of a computation. Data debugging works by first
 building a data dependence graph of the computations. It then measures
-data impact by replacing data items with data chosen from the same
+\emph{impact} by replacing data items with data chosen from the same
 group (such as a range in a spreadsheet formula) and observing the
-resulting changes in computations that depend on that data. This
-non-parametric approach allows data debugging to find errors in both
+resulting changes in computations that depend on that data. It then reports data whose impact crosses a threshold of
+unusualness that is more than two standard deviations away from the
+mean impact. This
+approach lets data debugging find errors in both
 numeric and non-numeric data, without any requirement that data follow
 any particular statistical distribution.
-
-By calling attention to data with unusual impact, data debugging can
+By calling attention to data with inordinately high impact, data debugging can
 provide insights into both the data and the computation and reveal
 errors. Data debugging is especially well-suited for data-intensive
 programming environments like databases and spreadsheets that
@@ -46,15 +46,14 @@ We have developed a prototype data debugging tool
 for spreadsheets. This tool, called
 \checkcell{},
  highlights data whose impact crosses a threshold of unusualness,
-ranking these cells by coloring them in shades proportionally to their
+ranking these cells by coloring them in shades proportional to their
 impact: the brighter a cell is highlighted, the more unusual impact it
 has.  While untuned, our prototype is empirically and analytically
 efficient and effective; analysis time ranges from seconds to minutes.
 A case study employing human workers via a crowdsourcing platform
 verifies that \checkcell{} finds actual data entry errors.
 
-This project will develop data debugging in several key directions,
-improving its performance and broadening its scope. This work will
+This project will develop data debugging in several key directions that will improve its performance and broaden its scope. This work will
 optimize \emph{small-scale} data debugging in spreadsheets via static
 analysis of formulas, enabling detection of likely errors as soon as
 they are entered; develop \emph{medium-scale} data debugging for
