@@ -157,7 +157,6 @@ Consider the following example SQL query, where the inner subquery
 returns all departments that have a branch in Boston, and the outer
 query computes the average salary of the employees that do not work in
 any of those departments.
-
 \texttt{
 \begin{tabbing}
 		SELECT	\=avg(E.salary)\\
@@ -171,6 +170,27 @@ any of those departments.
 In this example, we do not need to recompute the nested subquery if
 only the \texttt{Employees} table is modified during impact
 analysis. SQL queries are particularly amenable to such optimizations.
+% paragraph static_analysis_of_sql_queries (end)
+
+\paragraph{SQL rewrites.} % (fold)
+\label{par:sql_rewrites}
+SQL is a declarative language, so a query can be expressed in many
+different forms, each producing the same result, but possibly having
+vastly different execution plans and performance. 
+%The problem of query
+%equivalence is undecidable in general, and it is even NP-hard for
+%conjunctive
+%queries~\cite{abiteboul1994foundations,DBLP:conf/pods/CalvaneseGL98}. However,
+%there are several heuristics that guide query rewrites, e.g.,
+%unnesting and
+%decorrelation~\cite{DBLP:conf/sigmod/PiraheshHH92}. 
+Traditional query rewriting is geared toward improving query
+runtime~\cite{DBLP:conf/sigmod/PiraheshHH92}, but data debugging may
+often have conflicting objectives, e.g., it favors some types of
+nesting. We will investigate heuristics for query rewriting, with the
+objective of optimizing repeated execution in the context of data
+debugging.
+% paragraph sql_rewrites (end)
 
 \punt{
 We will also investigate techniques to break down queries into
@@ -182,7 +202,7 @@ not possible to do this for all queries, as it relates to the
 undecidable problems of query containment and
 equivalence~\cite{abiteboul1994foundations,DBLP:conf/pods/CalvaneseGL98},
 we will do \comment{what exactly?}
-% paragraph static_analysis_of_sql_queries (end)
+
 }
 
 \paragraph{Cleaning optimizations.} % (fold)

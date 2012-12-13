@@ -67,7 +67,7 @@ contingencies}.
 Contingencies are based on the notion of \emph{intervention}: what becomes
 counterfactual if part of the input changes. For example, if $X_1$ and $X_2$
 are both \texttt{true}, neither of them is counterfactual for $Y=X_1 \vee
-X_2$. However, if the input changes in a certain way, for instance $X_2$ is
+X_2$. However, if $X_2$ is
 \texttt{false}, then $X_1$ becomes counterfactual. One says that \emph{$X_1$
 is an actual cause of $Z$ under the contingency $X_2=\texttt{false}$}. Such
 contingencies can be viewed as alternative possible worlds or variable
@@ -137,7 +137,7 @@ formula or cell, invalid numerical arguments, or accidental mixing of
 text and numbers.
 % http://office.microsoft.com/en-us/excel-help/find-and-correct-errors-in-formulas-HP010066255.aspx
 Excel also checks for inconsistency with adjacent formulas and other
-structural errors, which it highlights with a ``squiggly'' underline. In addition, Excel provides a formula auditor, which lets users view dependencies flowing into and out of particular formulas.
+structural errors, which it highlights with a ``squiggly'' underline, and provides a formula auditor that lets users view dependencies flowing into and out of particular formulas.
 % http://office.microsoft.com/en-us/excel-help/use-error-checking-to-correct-common-errors-in-formulas-HA010342331.aspx
 
 Past work on detecting errors in spreadsheets has focused on inferring
@@ -150,7 +150,7 @@ considerable work on testing tools for
 spreadsheets~\cite{fisher2006scaling,rothermel1998you,rothermel2001methodology,Carver:2006:EET:1159733.1159775}.
 
 This work is complementary and orthogonal to data debugging for spreadsheets, which
-works with standard, unannotated spreadsheets and focuses on unusual
+works with unannotated spreadsheets and focuses on unusual
 interactions of data with formulas.
 
 
