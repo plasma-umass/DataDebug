@@ -1,6 +1,0 @@
-small-scale to medium-scale to large-scale
-polytrees
-
-\comment{Another technique: use of intermediate results. Break the function into components. Some of them do not change in every iteration, so you can precompute part of the function. This is slightly different from the previous point.}
-EDB: Hm. will have to think about this.
-
