@@ -3108,6 +3108,8 @@ namespace DataDebug
             {
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
             }
+
+            int outliers_count = 0; 
             //Procedure for swapping values within ranges, one cell at a time
             if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
             {
@@ -3885,10 +3887,10 @@ namespace DataDebug
                     //        }
                     //    }
                     //}
-                    string outlier_percentages = "Range size:\tOutlier percentage:\n";
+                    //string outlier_percentages = "Range size:\tOutlier percentage:\n";
                     for (int i = 0; i < output_cells.Count; i++)
                     {
-                        int outliers_for_this_output = 0; 
+                        //int outliers_for_this_output = 0; 
                         for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
                         {
                             //input_cells_in_computation_count++;
@@ -3899,21 +3901,32 @@ namespace DataDebug
                             {
                                 //MessageBox.Show(worksheet.Name + ":R" + (row + 1) + "C" + (col + 1) + " is an outlier with respect to output " + (i + 1) + " with a z-score of " + impacts_grid[worksheet.Index - 1][row][col][i]);
                                 int[] outlier = new int[3];
+                                bool already_added = false; 
                                 outlier[0] = worksheet_index;
                                 outlier[1] = row;
                                 outlier[2] = col;
-                                outliers.Add(outlier);
-                                outliers_for_this_output++;
+                                foreach (int[] o in outliers)
+                                {
+                                    if (o[0] == outlier[0] && o[1] == outlier[1] && o[2] == outlier[2])
+                                    {
+                                        already_added = true; 
+                                    }
+                                }
+                                if (!already_added)
+                                {
+                                    outliers.Add(outlier);
+                                }
+                                //outliers_for_this_output++;
                                 //worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.Red;
                                 //return;
                             }
                         }
-                        outlier_percentages += reachable_impacts_grid_array[i].Length + "\t" + (double)outliers_for_this_output / (double)reachable_impacts_grid_array[i].Length + "\n"; 
+                        //outlier_percentages += reachable_impacts_grid_array[i].Length + "\t" + (double)outliers_for_this_output / (double)reachable_impacts_grid_array[i].Length + "\n"; 
                     }
 
-                    Display outlier_percentages_display = new Display();
-                    outlier_percentages_display.textBox1.Text = outlier_percentages;
-                    outlier_percentages_display.ShowDialog();
+                    //Display outlier_percentages_display = new Display();
+                    //outlier_percentages_display.textBox1.Text = outlier_percentages;
+                    //outlier_percentages_display.ShowDialog();
                     //outlier_detection_stopwatch.Stop();
                     
                     //for (int row = 0; row < Globals.ThisAddIn.Application.Worksheets[1].UsedRange.Rows.Count; row++)
@@ -3933,6 +3946,7 @@ namespace DataDebug
                     //Find the highest weighted average z-score among the outliers
                     double max_weighted_z_score = 0.0;
                     int[][] outliers_array = outliers.ToArray();
+                    outliers_count = outliers_array.Length;
                     for (int i = 0; i < outliers_array.Length; i++)
                     {
                         if (average_z_scores[outliers_array[i][0]][outliers_array[i][1]][outliers_array[i][2]] > max_weighted_z_score)
@@ -3988,7 +4002,7 @@ namespace DataDebug
                             {
                                 if (average_z_scores[worksheet.Index - 1][row][col] > 2.0)
                                 {
-                                    worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_z_score) * 255), 255, 255);
+                                    worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.Red;// System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_z_score) * 255), 255, 255);
                                 }
                             }
                         }
@@ -4208,19 +4222,22 @@ namespace DataDebug
             //    tree_building_timespan.Seconds + swapping_timespan.Seconds + z_score_timespan.Seconds + average_z_score_timespan.Seconds + outlier_detection_timespan.Seconds + outlier_coloring_timespan.Seconds,  
             //    (tree_building_timespan.Milliseconds + swapping_timespan.Milliseconds + z_score_timespan.Milliseconds + average_z_score_timespan.Milliseconds + outlier_detection_timespan.Milliseconds + outlier_coloring_timespan.Milliseconds) / 10);
             
-//            Display timeDisplay = new Display();
-//            stats_text += "" //"Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\tOutlier Detection (s):\tOutlier Coloring (s):\n"
+            Display timeDisplay = new Display();
+            stats_text += "" //+ "Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\t"
+//          //  + "Outlier Detection (s):\tOutlier Coloring (s):\t"
+            //+ "Outliers found:\n"
 //                //"Formula cells:\t" + formula_cells_count + "\n"
 //                //+ "Number of input cells involved in computations:\t" + input_cells_in_computation_count
 //                //+ "\nExecution times (seconds): "
-//                + Globals.ThisAddIn.Application.ActiveWorkbook.Name + "\t"
-//                + formula_cells_count + "\t"
-//                + raw_input_cells_in_computation_count + "\t"
-//                + input_cells_in_computation_count + "\t"
-//                + global_time + "\t"
-//                + tree_building_time + "\t"
-//                + swapping_time + "\t"
-//                + impact_scoring_time;
+                + Globals.ThisAddIn.Application.ActiveWorkbook.Name + "\t"
+                + formula_cells_count + "\t"
+                + raw_input_cells_in_computation_count + "\t"
+                + input_cells_in_computation_count + "\t"
+                + global_time + "\t"
+                + tree_building_time + "\t"
+                + swapping_time + "\t"
+                + impact_scoring_time + "\t"
+                + outliers_count;
 //                //+ (z_score_time + average_z_score_time) + "\t"
 //                //+ outlier_detection_time + "\t"
 //                //+ outlier_coloring_time;
@@ -4231,8 +4248,8 @@ namespace DataDebug
 ////                + "\tWeighted average z-score calculation time: " + average_z_score_time + "\n"
 ////                + "\tOutlier detection time: " + outlier_detection_time + "\n"
 ////                + "\tOutlier coloring time: " + outlier_coloring_time + "\n";
-//            timeDisplay.textBox1.Text = stats_text;
-//            timeDisplay.ShowDialog();
+            timeDisplay.textBox1.Text = stats_text;
+            timeDisplay.ShowDialog();
 
             //Procedure for swapping values within ranges, replacing all repeated values at once
             if (checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
