@@ -89,7 +89,7 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_no_sceen_updating);
             this.group1.Items.Add(this.peirce_button);
             this.group1.Items.Add(this.toggle_weighted_average);
-            this.group1.Label = "Dependence Graph & Fuzzing";
+            this.group1.Label = "DataDebug";
             this.group1.Name = "group1";
             // 
             // button1
@@ -129,6 +129,7 @@ namespace DataDebug
             // 
             // button8
             // 
+            this.button8.Enabled = false;
             this.button8.Label = "Clear Coloring";
             this.button8.Name = "button8";
             this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);

@@ -13,7 +13,7 @@ namespace DataDebug
 {
     public partial class Ribbon
     {
-        private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
+        //private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
         List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
         TreeNode[][][] nodes_grid;   //This is a multi-dimensional array of TreeNodes that will hold all the TreeNodes -- stores the dependence graph
         double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
@@ -3530,8 +3530,8 @@ namespace DataDebug
                 regex_array[regex_array.Length - 1] = new Regex(@"(\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
             }
 
-            if (toolHasNotRun)
-            {
+            //if (toolHasNotRun)
+            //{
                 //Save starting colors 
                 originalColorNodes = new List<TreeNode>(); 
                 foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
@@ -3545,12 +3545,14 @@ namespace DataDebug
                     }
                 }
                 constructTree();
-                toolHasNotRun = false;
-            }
-            else
-            {
-                constructTree();
-            }
+                //toolHasNotRun = false;
+                //After the tool has been run at least once, the Clear Coloring button is enabled.
+                button8.Enabled = true;
+            //}
+            //else
+            //{
+            //    constructTree();
+            //}
             //global_stopwatch.Stop();
         }
 
@@ -3821,13 +3823,10 @@ namespace DataDebug
         //Action for "Clear coloring" button
         private void button8_Click(object sender, RibbonControlEventArgs e)
         {
-            if (toolHasNotRun)
-            {
-                return;
-            }
+            //TODO - works well with a single open worksheet, but multiple worksheets being analyzed break things
+            //By default, the "Clear Coloring" button is not clickable unless the tool has been run at least once
             foreach (TreeNode node in originalColorNodes)
             {
-                //MessageBox.Show(node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex+"");
                 //If the node is just a cell, clear any coloring
                 if (!node.isChart() && !node.isRange())
                 {
@@ -3844,8 +3843,9 @@ namespace DataDebug
                     }
                 }
             }
-            //After having cleared things we would like to be able to run the tool again. 
-            toolHasNotRun = true;
+            //After having cleared the coloring we would like to make the "Clear Coloring" button not clickable
+            button8.Enabled = false;
+            //toolHasNotRun = true;
         }
 
         private void toggle_speed_Click(object sender, RibbonControlEventArgs e)
