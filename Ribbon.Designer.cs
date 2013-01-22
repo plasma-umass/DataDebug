@@ -129,9 +129,8 @@ namespace DataDebug
             // 
             // button8
             // 
-            this.button8.Label = "Clear coloring";
+            this.button8.Label = "Clear Coloring";
             this.button8.Name = "button8";
-            this.button8.Visible = false;
             this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
             // 
             // button2

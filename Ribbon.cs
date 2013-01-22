@@ -3821,15 +3821,27 @@ namespace DataDebug
         //Action for "Clear coloring" button
         private void button8_Click(object sender, RibbonControlEventArgs e)
         {
+            if (toolHasNotRun)
+            {
+                return;
+            }
             foreach (TreeNode node in originalColorNodes)
             {
+                //MessageBox.Show(node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex+"");
                 //If the node is just a cell, clear any coloring
                 if (!node.isChart() && !node.isRange())
                 {
                     //MessageBox.Show(node.getName() + " " + node.getOriginalColor());
                     //node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex = 0;
                     //node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex = node.getOriginalColor();
-                    node.getWorksheetObject().get_Range(node.getName()).Interior.Color = node.getOriginalColor();
+                    if (!(node.getOriginalColor() + "").Equals("Color [White]"))
+                    {
+                        node.getWorksheetObject().get_Range(node.getName()).Interior.Color = node.getOriginalColor();
+                    }
+                    else
+                    {
+                        node.getWorksheetObject().get_Range(node.getName()).Interior.ColorIndex = -4142;
+                    }
                 }
             }
             //After having cleared things we would like to be able to run the tool again. 
