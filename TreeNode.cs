@@ -70,7 +70,8 @@ namespace DataDebug
 
             //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]"
             //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight + "[shape = ellipse]"
-            return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[label=\"\", shape = ellipse]"
+            //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[label=\"\", shape = ellipse]"
+            return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse]"
                 //+ weight_string 
                 + parents_string).Replace("$", "");
             //fillcolor = \"green\"   \"0.000 " + weight + " 0.878\"

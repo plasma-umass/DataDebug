@@ -15,13 +15,13 @@ namespace DataDebug
     {
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            var messageBox = MessageBox.Show("DataDebug add-in active!");
+            //var messageBox = MessageBox.Show("DataDebug add-in active!");
         
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-            var messageBox = MessageBox.Show("DataDebug add-in active! (closing)");
+            //var messageBox = MessageBox.Show("DataDebug add-in active! (closing)");
             
         }
 
