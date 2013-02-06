@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace DataDebug
 {
@@ -15,6 +16,7 @@ namespace DataDebug
     /// </summary>
     class TreeNode
     {
+        Excel.Workbook workbook;
         private List<TreeNode> parents;  //these are the TreeNodes that feed into the current cell
         private List<TreeNode> children;    //these are the TreeNodes that the current cell feeds into
         private string name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>_to_<EndCell>; for charts it is "Chart<Name of chart>"
@@ -26,12 +28,13 @@ namespace DataDebug
         //private int originalColor;  //For using ColorIndex property instead of Color property
         private int colorBit = 0; 
         //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
-        public TreeNode(string n, string ws)
+        public TreeNode(string n, string ws, Excel.Workbook wb)
         {
             parents = new List<TreeNode>();
             children = new List<TreeNode>();
             name = n;
             worksheet = ws;
+            workbook = wb;
             weight = 0.0;
             chart = false;
             is_formula = false;
@@ -83,6 +86,11 @@ namespace DataDebug
             return name;
         }
 
+        //Returns the workbook object of the node
+        public Excel.Workbook getWorkbookObject()
+        {
+            return workbook;
+        }
         //Returns the weight of this node
         public double getWeight()
         {

@@ -16,6 +16,11 @@ namespace DataDebug
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             //var messageBox = MessageBox.Show("DataDebug add-in active!");
+            //var excel = this.Application;
+            //((Excel.AppEvents_Event)this.Application).NewWorkbook += WorkbookAdded;
+            //excel.WorkbookOpen += WorkbookAdded;
+            //excel.WorkbookActivate += WorkbookActivated;
+            //excel.WorkbookDeactivate += WorkbookDeactivated;
         
         }
 

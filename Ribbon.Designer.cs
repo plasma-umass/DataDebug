@@ -40,7 +40,6 @@ namespace DataDebug
             this.group1 = this.Factory.CreateRibbonGroup();
             this.button1 = this.Factory.CreateRibbonButton();
             this.checkBox2 = this.Factory.CreateRibbonCheckBox();
-            this.checkBox1 = this.Factory.CreateRibbonCheckBox();
             this.dropDown1 = this.Factory.CreateRibbonDropDown();
             this.button7 = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
@@ -75,7 +74,6 @@ namespace DataDebug
             // 
             this.group1.Items.Add(this.button1);
             this.group1.Items.Add(this.checkBox2);
-            this.group1.Items.Add(this.checkBox1);
             this.group1.Items.Add(this.dropDown1);
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.button8);
@@ -104,12 +102,6 @@ namespace DataDebug
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Visible = false;
             // 
-            // checkBox1
-            // 
-            this.checkBox1.Label = "Use Selection";
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Visible = false;
-            // 
             // dropDown1
             // 
             ribbonDropDownItemImpl1.Label = "Column";
@@ -124,12 +116,10 @@ namespace DataDebug
             // 
             this.button7.Label = "button7";
             this.button7.Name = "button7";
-            this.button7.Visible = false;
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
             // button8
             // 
-            this.button8.Enabled = false;
             this.button8.Label = "Clear Coloring";
             this.button8.Name = "button8";
             this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
@@ -253,7 +243,6 @@ namespace DataDebug
 
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
-        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox1;
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown dropDown1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button2;
