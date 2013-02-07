@@ -44,9 +44,13 @@ namespace DataDebug
             this.button7 = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
             this.button2 = this.Factory.CreateRibbonButton();
+            this.toggle_speed = this.Factory.CreateRibbonCheckBox();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
+            this.toggle_reporting = this.Factory.CreateRibbonCheckBox();
+            this.toggle_array_storage = this.Factory.CreateRibbonCheckBox();
             this.toggle_global_perturbation = this.Factory.CreateRibbonCheckBox();
             this.toggle_analyze_outliers = this.Factory.CreateRibbonCheckBox();
+            this.toggle_no_sceen_updating = this.Factory.CreateRibbonCheckBox();
             this.peirce_button = this.Factory.CreateRibbonButton();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.group2 = this.Factory.CreateRibbonGroup();
@@ -74,9 +78,13 @@ namespace DataDebug
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.button8);
             this.group1.Items.Add(this.button2);
+            this.group1.Items.Add(this.toggle_speed);
             this.group1.Items.Add(this.toggle_compile_regex);
+            this.group1.Items.Add(this.toggle_reporting);
+            this.group1.Items.Add(this.toggle_array_storage);
             this.group1.Items.Add(this.toggle_global_perturbation);
             this.group1.Items.Add(this.toggle_analyze_outliers);
+            this.group1.Items.Add(this.toggle_no_sceen_updating);
             this.group1.Items.Add(this.peirce_button);
             this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Label = "DataDebug";
@@ -123,12 +131,32 @@ namespace DataDebug
             this.button2.Visible = false;
             this.button2.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button2_Click);
             // 
+            // toggle_speed
+            // 
+            this.toggle_speed.Checked = true;
+            this.toggle_speed.Label = "Toggle BLAZING SPEED Swapping Mode";
+            this.toggle_speed.Name = "toggle_speed";
+            this.toggle_speed.Visible = false;
+            // 
             // toggle_compile_regex
             // 
             this.toggle_compile_regex.Checked = true;
             this.toggle_compile_regex.Label = "Compile Regular Expressions";
             this.toggle_compile_regex.Name = "toggle_compile_regex";
             this.toggle_compile_regex.Visible = false;
+            // 
+            // toggle_reporting
+            // 
+            this.toggle_reporting.Label = "Report progress";
+            this.toggle_reporting.Name = "toggle_reporting";
+            this.toggle_reporting.Visible = false;
+            // 
+            // toggle_array_storage
+            // 
+            this.toggle_array_storage.Checked = true;
+            this.toggle_array_storage.Label = "Enable Array Storage";
+            this.toggle_array_storage.Name = "toggle_array_storage";
+            this.toggle_array_storage.Visible = false;
             // 
             // toggle_global_perturbation
             // 
@@ -141,6 +169,13 @@ namespace DataDebug
             this.toggle_analyze_outliers.Label = "Highlight Important Outliers Only";
             this.toggle_analyze_outliers.Name = "toggle_analyze_outliers";
             this.toggle_analyze_outliers.Visible = false;
+            // 
+            // toggle_no_sceen_updating
+            // 
+            this.toggle_no_sceen_updating.Checked = true;
+            this.toggle_no_sceen_updating.Label = "No Screen Updating During Swapping";
+            this.toggle_no_sceen_updating.Name = "toggle_no_sceen_updating";
+            this.toggle_no_sceen_updating.Visible = false;
             // 
             // peirce_button
             // 
@@ -219,9 +254,13 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button7;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button8;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_speed;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_reporting;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_array_storage;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_global_perturbation;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_analyze_outliers;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_no_sceen_updating;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton peirce_button;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
     }
