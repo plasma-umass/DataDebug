@@ -259,6 +259,12 @@
     </Compile>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DataDebugMethods\DataDebugMethods.csproj">
+      <Project>{64DBF1B4-B0B7-4490-8C7C-2DEEA22CB25A}</Project>
+      <Name>DataDebugMethods</Name>
+    </ProjectReference>
+  </ItemGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- Include additional build rules for an Office application add-in. -->
