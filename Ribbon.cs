@@ -8,6 +8,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
+using DataDebugMethods;
 
 namespace DataDebug
 {
@@ -28,8 +29,8 @@ namespace DataDebug
         double[][][] reachable_impacts_grid_array; //This will store impacts for cells reachable from a particular output in array form
         int input_cells_in_computation_count = 0;
         int raw_input_cells_in_computation_count = 0; 
-        int formula_cells_count = 0;
         private Regex[] regex_array;
+        int formula_cells_count;
         System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
         string stats_text = "";
 
@@ -127,46 +128,10 @@ namespace DataDebug
             TimeSpan swapping_timespan = global_stopwatch.Elapsed;
             input_cells_in_computation_count = 0;
             raw_input_cells_in_computation_count = 0;
-            formula_cells_count = 0;
-            
-            Excel.Range[] analysisRanges = new Excel.Range[Globals.ThisAddIn.Application.Worksheets.Count]; //This keeps track of the range to be analyzed in every worksheet of the workbook
-            int worksheet_index = 0; // keeps track of which worksheet we are currently examining
-            foreach (Excel.Worksheet ws in Globals.ThisAddIn.Application.Worksheets)
-            {
-                Excel.Range number_cells = null;
-                Excel.Range formula_cells = null;
-                foreach (Excel.Range cell in ws.UsedRange)
-                {
-                    if (cell.HasFormula)
-                    {
-                        if (formula_cells == null)
-                        {
-                            formula_cells = cell;
-                        }
-                        else
-                        {
-                            formula_cells = Globals.ThisAddIn.Application.Union(
-                                            cell, //activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeConstants, Microsoft.Office.Interop.Excel.XlSpecialCellsValue.xlNumbers), //activeWorksheet.UsedRange;
-                                            formula_cells, //activeWorksheet.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeFormulas, Type.Missing), 
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
-                        }
-                    }
-                }
-                if (formula_cells != null)
-                {
-                    formula_cells_count += formula_cells.Cells.Count;
-                    analysisRanges[worksheet_index] = formula_cells;
-                }
-                else
-                {
-                    analysisRanges[worksheet_index] = null;
-                    //MessageBox.Show("No cells to analyze in worksheet " + ws.Name +".");
-                }
-                worksheet_index++;
-            }
+
+            // Get a range representing the formula cells for each worksheet in each workbook
+            var analysisRanges = ConstructTree.GetFormulaRanges(Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application);
+            formula_cells_count = ConstructTree.CountFormulaCells(analysisRanges);
             
             //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
             //This includes cells that contain constants and formulas
