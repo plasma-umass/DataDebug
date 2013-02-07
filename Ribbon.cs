@@ -1632,7 +1632,7 @@ namespace DataDebug
                     double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
                     //double max_total_delta = 0;     //The maximum influence found (for normalizing)
                     //double min_total_delta = -1;     //The minimum influence found (for normalizing)
-                    int swaps_per_range = 1; // 30;
+                    int swaps_per_range = 30; // 30;
                     if (range_node.getParents().Count <= swaps_per_range)
                     {
                         swaps_per_range = range_node.getParents().Count - 1;
@@ -1651,7 +1651,7 @@ namespace DataDebug
                         
                         //Generate 30 random indices for swapping with siblings
                         int[] indices = new int[swaps_per_range];
-                        if (swaps_per_range == 1)
+                        if (swaps_per_range == 30)
                         {
                             int indices_pointer = 0;
                             int random_index = 0;
