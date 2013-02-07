@@ -220,7 +220,6 @@
     <Compile Include="Stats\NormalDistribution.cs" />
     <Compile Include="Stats\NormalKS.cs" />
     <Compile Include="Stats\Utilities.cs" />
-    <Compile Include="TreeNode.cs" />
     <EmbeddedResource Include="Display.resx">
       <DependentUpon>Display.cs</DependentUpon>
     </EmbeddedResource>

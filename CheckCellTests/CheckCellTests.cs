@@ -85,7 +85,7 @@ namespace CheckCellTests
             {
                 // get a reference to the range
                 // note that the array returned by ConstructTree.GetFormulaRanges is zero-based unlike Excel's Workbook.Worksheets list.
-                // This we only adjust i by 2.
+                // Thus we only adjust i by 2.
                 Excel.Range r = fs_rs[i + 2];
 
                 // check that all formulae for this worksheet are accounted for

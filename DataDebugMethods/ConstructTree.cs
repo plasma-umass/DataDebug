@@ -14,7 +14,10 @@ namespace DataDebugMethods
             int count = 0;
             foreach (var r in rs)
             {
-                count += r.Cells.Count;
+                if (r != null)
+                {
+                    count += r.Cells.Count;
+                }
             }
             return count;
         }
