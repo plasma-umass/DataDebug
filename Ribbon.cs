@@ -130,7 +130,7 @@ namespace DataDebug
             raw_input_cells_in_computation_count = 0;
 
             // Get a range representing the formula cells for each worksheet in each workbook
-            var analysisRanges = ConstructTree.GetFormulaRanges(Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application);
+            Excel.Range[] analysisRanges = ConstructTree.GetFormulaRanges(Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application);
             formula_cells_count = ConstructTree.CountFormulaCells(analysisRanges);
             
             //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
@@ -193,10 +193,10 @@ namespace DataDebug
                         if (c.HasFormula)
                         {
                             TreeNode formula_cell = null;
-                            //Look for the node object for the current cell in the existing TreeNodes
                             //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                             if (c.Column <= (c.Worksheet.UsedRange.Columns.Count + c.Worksheet.UsedRange.Column) && c.Row <= (c.Worksheet.UsedRange.Rows.Count + c.Worksheet.UsedRange.Row))
                             {
+                                //Look for the node object for the current cell in the existing TreeNodes
                                 //if a TreeNode exists for this cell already
                                 if (nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1] != null)
                                 {
@@ -223,34 +223,8 @@ namespace DataDebug
                             }
 
                             string formula = c.Formula;  //The formula contained in the cell
-                            //if (formula.Contains("HLOOKUP") || formula.Contains("VLOOKUP"))
-                            //{
-                            //    continue;
-                            //}
-                            Regex hlookup_regex = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-                            Regex hlookup_regex_1 = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-                            Regex vlookup_regex = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-                            Regex vlookup_regex_1 = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-                            MatchCollection matchedLookups = hlookup_regex.Matches(formula);
-                            foreach (Match match in matchedLookups)
-                            {
-                                formula = formula.Replace(match.Value, "");
-                            }
-                            matchedLookups = hlookup_regex_1.Matches(formula);
-                            foreach (Match match in matchedLookups)
-                            {
-                                formula = formula.Replace(match.Value, "");
-                            }
-                            matchedLookups = vlookup_regex.Matches(formula);
-                            foreach (Match match in matchedLookups)
-                            {
-                                formula = formula.Replace(match.Value, "");
-                            }
-                            matchedLookups = vlookup_regex_1.Matches(formula);
-                            foreach (Match match in matchedLookups)
-                            {
-                                formula = formula.Replace(match.Value, "");
-                            }
+                            ConstructTree.StripLookups(formula);
+
                             MatchCollection matchedRanges = null;
                             MatchCollection matchedCells = null;
                             int ws_index = 1;

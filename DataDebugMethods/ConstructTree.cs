@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Text.RegularExpressions;
 
 namespace DataDebugMethods
 {
@@ -68,6 +69,34 @@ namespace DataDebugMethods
                 worksheet_index++;
             }
             return analysisRanges;
+        }
+
+        public static void StripLookups(string formula)
+        {
+            Regex hlookup_regex = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+            Regex hlookup_regex_1 = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+            Regex vlookup_regex = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+            Regex vlookup_regex_1 = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+            MatchCollection matchedLookups = hlookup_regex.Matches(formula);
+            foreach (Match match in matchedLookups)
+            {
+                formula = formula.Replace(match.Value, "");
+            }
+            matchedLookups = hlookup_regex_1.Matches(formula);
+            foreach (Match match in matchedLookups)
+            {
+                formula = formula.Replace(match.Value, "");
+            }
+            matchedLookups = vlookup_regex.Matches(formula);
+            foreach (Match match in matchedLookups)
+            {
+                formula = formula.Replace(match.Value, "");
+            }
+            matchedLookups = vlookup_regex_1.Matches(formula);
+            foreach (Match match in matchedLookups)
+            {
+                formula = formula.Replace(match.Value, "");
+            }
         }
     }
 }
