@@ -45,7 +45,7 @@ namespace CheckCellTests
                                          new Tuple<string,string>("B44", "=MEDIAN(D4:D9)")};
 
             // to keep track of what we did
-            var d = new Dictionary<Excel.Worksheet,List<Tuple<string,string>>>();
+            var d = new Dictionary<int,List<Tuple<string,string>>>();
 
             // add the formulae to the worksheets, randomly
             foreach (int i in e)
@@ -53,10 +53,10 @@ namespace CheckCellTests
                 // convert array index into worksheet reference, because
                 // GetFormulaRanges returns an array indexed not by formula reference
                 // but by the worksheet's index in the global worksheet array
-                Excel.Worksheet w = ws[i];
+                Excel.Worksheet w = ws[i + 3];
 
                 // init list for each worksheet
-                d[w] = new List<Tuple<string,string>>();
+                d[i] = new List<Tuple<string,string>>();
 
                 // add the formulae, randomly
                 foreach (var f in fs)
@@ -65,7 +65,7 @@ namespace CheckCellTests
                     {
                         w.Range[f.Item1, f.Item1].Formula = f.Item2;
                         // keep track of what we did
-                        d[w].Add(f);
+                        d[i].Add(f);
                     }
                 }
             }
@@ -79,7 +79,32 @@ namespace CheckCellTests
                 throw new Exception("ConstructTree.GetFormulaRanges() should return " + e.Count().ToString() + " elements.");
             }
 
-            // 
+            // make sure that each worksheet's range has the formulae that it should
+            bool all_ok = true;
+            foreach (int i in e)
+            {
+                // get a reference to the range
+                // note that the array returned by ConstructTree.GetFormulaRanges is zero-based unlike Excel's Workbook.Worksheets list.
+                // This we only adjust i by 2.
+                Excel.Range r = fs_rs[i + 2];
+
+                // check that all formulae for this worksheet are accounted for
+                bool r_ok = d[i].Aggregate(true, (bool acc, Tuple<string,string> f) => {
+                                bool found = false;
+                                foreach(Excel.Range cell in r) {
+                                    if (cell.Formula == f.Item2) {
+                                        found = true;
+                                    }
+                                }
+                                return acc && found;
+                            });
+
+                all_ok = all_ok && r_ok;
+            }
+
+            if (!all_ok) {
+                throw new Exception("ConstructTree.GetFormulaRanges() failed to return all of the formulae that were added.");
+            }
         }
     }
 }
