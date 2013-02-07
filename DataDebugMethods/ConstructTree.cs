@@ -74,6 +74,60 @@ namespace DataDebugMethods
             return analysisRanges;
         }
 
+        //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
+        //This includes cells that contain constants and formulas
+        //Go through every worksheet
+        public static TreeNode[][][] CreateFormulaNodes(Excel.Range[] rs, Excel.Application app)
+        {
+            TreeNode[][][] nodes_grid;   //This is a multi-dimensional array of TreeNodes that will hold all the TreeNodes -- stores the dependence graph
+            Excel.Workbook wb = app.ActiveWorkbook;
+
+            // init nodes_grid
+            nodes_grid = new TreeNode[app.Worksheets.Count + app.Charts.Count][][];
+            int index = 0;
+            foreach (Excel.Worksheet worksheet in app.Worksheets)
+            {
+                nodes_grid[worksheet.Index - 1] = new TreeNode[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
+                for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
+                {
+                    nodes_grid[worksheet.Index - 1][row] = new TreeNode[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
+                    for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
+                    {
+                        nodes_grid[worksheet.Index - 1][row][col] = null;
+                    }
+                }
+                index++;
+            }
+
+            foreach (Excel.Range worksheet_range in rs)
+            {
+                // Go through every cell of every worksheet
+                if (worksheet_range != null)
+                {
+                    foreach (Excel.Range cell in worksheet_range)
+                    {
+                        if (cell.Value != null)
+                        {
+                            TreeNode n = new TreeNode(cell.Address, cell.Worksheet, wb);  //Create a TreeNode for every cell with the name being the cell's address and set the node's worksheet appropriately
+                            if (cell.HasFormula)
+                            {
+                                n.setIsFormula();
+                            }
+                            try
+                            {
+                                nodes_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1] = n;
+                            }
+                            catch
+                            {
+                                cell.Interior.Color = System.Drawing.Color.Purple;
+                            }
+                        }
+                    }
+                }
+            }
+            return nodes_grid;
+        }
+
         public static void StripLookups(string formula)
         {
             Regex hlookup_regex = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);

@@ -17,7 +17,6 @@ namespace DataDebug
         //private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
         List<TreeNode> originalColorNodes = new List<TreeNode>(); //List for storing the original colors for all nodes
         List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
-        TreeNode[][][] nodes_grid;   //This is a multi-dimensional array of TreeNodes that will hold all the TreeNodes -- stores the dependence graph
         double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
         bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
         double[][] min_max_delta_outputs; //This keeps the min and max delta for each output
@@ -59,40 +58,9 @@ namespace DataDebug
             // Get a range representing the formula cells for each worksheet in each workbook
             Excel.Range[] analysisRanges = ConstructTree.GetFormulaRanges(Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application);
             formula_cells_count = ConstructTree.CountFormulaCells(analysisRanges);
-            
-            //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
-            //This includes cells that contain constants and formulas
-            //Go through every worksheet
-            foreach (Excel.Range worksheet_range in analysisRanges)
-            {
-                // Go through every cell of every worksheet
-                if (worksheet_range != null)
-                {
-                    foreach (Excel.Range cell in worksheet_range)
-                    {
-                        if (cell.Value != null)
-                        {
-                            TreeNode n = new TreeNode(cell.Address, cell.Worksheet, Globals.ThisAddIn.Application.ActiveWorkbook);  //Create a TreeNode for every cell with the name being the cell's address and set the node's worksheet appropriately
-                            if (cell.HasFormula)
-                            {
-                                n.setIsFormula();
-                            }
-                            try
-                            {
-                                nodes_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1] = n;
-                            }
-                            catch
-                            {
-                                cell.Interior.Color = System.Drawing.Color.Purple;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    continue;
-                }
-            }
+
+            // Create nodes for every cell containing a formula; modifies nodes_grid
+            TreeNode[][][] nodes_grid = ConstructTree.CreateFormulaNodes(analysisRanges, Globals.ThisAddIn.Application);
 
             //Next we go through the cells that contain formulas in order to extract the dependencies between them and their inputs
             //For every cell that contains a formula, we get the node we created for that cell. Then we parse the formula using a regular expresion 
@@ -2170,24 +2138,8 @@ namespace DataDebug
             
             //Construct a new tree every time the tool is run
             nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
-
             ranges = new List<TreeNode>();        //This is a list holding all the ranges of TreeNodes in the Excel file
             charts = new List<TreeNode>();        //This is a list holding all the chart TreeNodes in the Excel file
-            nodes_grid = new TreeNode[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
-            int index = 0;
-            foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-            {
-                nodes_grid[worksheet.Index - 1] = new TreeNode[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
-                for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
-                {
-                    nodes_grid[worksheet.Index - 1][row] = new TreeNode[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
-                    for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
-                    {
-                        nodes_grid[worksheet.Index - 1][row][col] = null;
-                    }
-                }
-                index++;
-            }
             
             //Compile regular expressions
             if (toggle_compile_regex.Checked)
