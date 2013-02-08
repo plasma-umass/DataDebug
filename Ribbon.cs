@@ -91,8 +91,8 @@ namespace DataDebug
                     {
                         if (c.HasFormula)
                         {
-                            //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
-                            Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c));
+                            // Sanity check-- ensure that cells from ranges in analysisRanges are inside the UsedRange
+                            Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c), "This spreadsheet violates a condition thought to be impossible.");
                             TreeNode formula_cell = nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1];
 
                             string formula = c.Formula;  //The formula contained in the cell
