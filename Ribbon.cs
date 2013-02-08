@@ -9,6 +9,7 @@ using Office = Microsoft.Office.Core;
 using System.Text.RegularExpressions;
 using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
+using System.Diagnostics;
 
 namespace DataDebug
 {
@@ -81,6 +82,7 @@ namespace DataDebug
                 index_worksheet_names++;
             }
 
+            // worksheet_range is guaranteed to consist only of a collection of formula cells
             foreach (Excel.Range worksheet_range in analysisRanges)
             {
                 if (worksheet_range != null) //if the worksheet is not blank, analyze its contents
@@ -89,35 +91,9 @@ namespace DataDebug
                     {
                         if (c.HasFormula)
                         {
-                            TreeNode formula_cell = null;
                             //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
-                            if (c.Column <= (c.Worksheet.UsedRange.Columns.Count + c.Worksheet.UsedRange.Column) && c.Row <= (c.Worksheet.UsedRange.Rows.Count + c.Worksheet.UsedRange.Row))
-                            {
-                                //Look for the node object for the current cell in the existing TreeNodes
-                                //if a TreeNode exists for this cell already
-                                if (nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1] != null)
-                                {
-                                    formula_cell = nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1];
-                                }
-                            }
-                            else
-                            {
-                                //Create a tree node for the cell
-                                TreeNode n = new TreeNode(c.Address, c.Worksheet, Globals.ThisAddIn.Application.ActiveWorkbook);  //Create a TreeNode for every cell with the name being the cell's address and set the node's worksheet appropriately
-                                if (c.HasFormula)
-                                {
-                                    n.setIsFormula();
-                                }
-                                try
-                                {
-                                    nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1] = n;
-                                }
-                                catch
-                                {
-                                    c.Interior.Color = System.Drawing.Color.Purple;
-                                }
-                                formula_cell = n;
-                            }
+                            Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c));
+                            TreeNode formula_cell = nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1];
 
                             string formula = c.Formula;  //The formula contained in the cell
                             ConstructTree.StripLookups(formula);
