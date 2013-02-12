@@ -15,6 +15,7 @@ namespace DataDebug
 {
     public partial class Ribbon
     {
+        private int TRANSPARENT_COLOR_INDEX = -4142;  //-4142 is the transparent default background
         //private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
         List<TreeNode> originalColorNodes = new List<TreeNode>(); //List for storing the original colors for all nodes
         List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
@@ -2186,7 +2187,7 @@ namespace DataDebug
                         }
                         else
                         {
-                            originalColorNodes[i].getWorksheetObject().get_Range(originalColorNodes[i].getName()).Interior.ColorIndex = -4142;  //-4142 is the transparent default background for cells
+                            originalColorNodes[i].getWorksheetObject().get_Range(originalColorNodes[i].getName()).Interior.ColorIndex = TRANSPARENT_COLOR_INDEX;  //-4142 is the transparent default background for cells
                         }
                     }
                     originalColorNodes.RemoveAt(i);
