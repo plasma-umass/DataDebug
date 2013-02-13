@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -9,10 +9,10 @@ namespace DataDebugMethods
 {
     public static class ConstructTree
     {
-        public static int CountFormulaCells(Excel.Range[] rs)
+        public static int CountFormulaCells(ArrayList rs)
         {
             int count = 0;
-            foreach (var r in rs)
+            foreach (Excel.Range r in rs)
             {
                 if (r != null)
                 {
@@ -22,11 +22,12 @@ namespace DataDebugMethods
             return count;
         }
 
-        public static Excel.Range[] GetFormulaRanges(Excel.Sheets ws, Excel.Application app)
+        public static ArrayList GetFormulaRanges(Excel.Sheets ws, Excel.Application app)
         {
-            Excel.Range[] analysisRanges = new Excel.Range[ws.Count]; //This keeps track of the range to be analyzed in every worksheet of the workbook
+            // This keeps track of the range to be analyzed in every worksheet of the workbook
+            // We have to use ArrayList because COM interop does not work with generics.
+            var analysisRanges = new ArrayList(); 
 
-            int worksheet_index = 0; // keeps track of which worksheet we are currently examining
             foreach (Excel.Worksheet w in ws)
             {
                 Excel.Range formula_cells = null;
@@ -61,15 +62,8 @@ namespace DataDebugMethods
                 // we found at least one cell
                 if (formula_cells != null)
                 {
-                    analysisRanges[worksheet_index] = formula_cells;
+                    analysisRanges.Add(formula_cells);
                 }
-                // we found no cells
-                else
-                {
-                    analysisRanges[worksheet_index] = null;
-                }
-                // point at the next worksheet in analysisRanges
-                worksheet_index++;
             }
             return analysisRanges;
         }
@@ -77,7 +71,7 @@ namespace DataDebugMethods
         //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
         //This includes cells that contain constants and formulas
         //Go through every worksheet
-        public static TreeNode[][][] CreateFormulaNodes(Excel.Range[] rs, Excel.Application app)
+        public static TreeNode[][][] CreateFormulaNodes(ArrayList rs, Excel.Application app)
         {
             TreeNode[][][] nodes_grid;   //This is a multi-dimensional array of TreeNodes that will hold all the TreeNodes -- stores the dependence graph
             Excel.Workbook wb = app.ActiveWorkbook;

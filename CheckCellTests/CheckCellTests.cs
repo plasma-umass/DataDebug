@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -45,18 +45,13 @@ namespace CheckCellTests
                                          new Tuple<string,string>("B44", "=MEDIAN(D4:D9)")};
 
             // to keep track of what we did
-            var d = new Dictionary<int,List<Tuple<string,string>>>();
+            var d = new System.Collections.Generic.Dictionary<Excel.Worksheet, System.Collections.Generic.List<Tuple<string, string>>>();
 
             // add the formulae to the worksheets, randomly
-            foreach (int i in e)
+            foreach (Excel.Worksheet w in ws)
             {
-                // convert array index into worksheet reference, because
-                // GetFormulaRanges returns an array indexed not by formula reference
-                // but by the worksheet's index in the global worksheet array
-                Excel.Worksheet w = ws[i + 3];
-
                 // init list for each worksheet
-                d[i] = new List<Tuple<string,string>>();
+                d[w] = new System.Collections.Generic.List<Tuple<string,string>>();
 
                 // add the formulae, randomly
                 foreach (var f in fs)
@@ -65,34 +60,34 @@ namespace CheckCellTests
                     {
                         w.Range[f.Item1, f.Item1].Formula = f.Item2;
                         // keep track of what we did
-                        d[i].Add(f);
+                        d[w].Add(f);
                     }
+                }
+                // we need at least one formula, so add one if the above procedure did not
+                if (d[w].Count() == 0)
+                {
+                    w.Range[fs[0].Item1, fs[0].Item1].Formula = fs[0].Item2;
                 }
             }
 
-            // get the formulae
-            Excel.Range[] fs_rs = ConstructTree.GetFormulaRanges(ws, app);
+            // get the formulae; 1 formula per worksheet
+            ArrayList fs_rs = ConstructTree.GetFormulaRanges(ws, app);
 
             // there should be e.Count + 3 entries
             // don't forget: workbooks have 3 blank worksheets by default
-            if (fs_rs.Length != e.Count() + 3) {
+            if (fs_rs.Count != e.Count() + 3) {
                 throw new Exception("ConstructTree.GetFormulaRanges() should return " + e.Count().ToString() + " elements.");
             }
 
             // make sure that each worksheet's range has the formulae that it should
             bool all_ok = true;
-            foreach (int i in e)
+            foreach (Excel.Range r in fs_rs)
             {
-                // get a reference to the range
-                // note that the array returned by ConstructTree.GetFormulaRanges is zero-based unlike Excel's Workbook.Worksheets list.
-                // Thus we only adjust i by 2.
-                Excel.Range r = fs_rs[i + 2];
-
                 // check that all formulae for this worksheet are accounted for
-                bool r_ok = d[i].Aggregate(true, (bool acc, Tuple<string,string> f) => {
+                bool r_ok = d[r.Worksheet].Aggregate(true, (bool acc, Tuple<string,string> f) => {
                                 bool found = false;
                                 foreach(Excel.Range cell in r) {
-                                    if (cell.Formula == f.Item2) {
+                                    if (String.Equals((string)cell.Formula, f.Item2)) {
                                         found = true;
                                     }
                                 }
