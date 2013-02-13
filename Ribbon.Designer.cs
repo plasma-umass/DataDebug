@@ -40,9 +40,7 @@ namespace DataDebug
             this.checkBox2 = this.Factory.CreateRibbonCheckBox();
             this.button7 = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
-            this.button2 = this.Factory.CreateRibbonButton();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
-            this.peirce_button = this.Factory.CreateRibbonButton();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
@@ -67,9 +65,7 @@ namespace DataDebug
             this.group1.Items.Add(this.checkBox2);
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.button8);
-            this.group1.Items.Add(this.button2);
             this.group1.Items.Add(this.toggle_compile_regex);
-            this.group1.Items.Add(this.peirce_button);
             this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Label = "DataDebug";
             this.group1.Name = "group1";
@@ -98,26 +94,12 @@ namespace DataDebug
             this.button8.Name = "button8";
             this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
             // 
-            // button2
-            // 
-            this.button2.Label = "Derivatives";
-            this.button2.Name = "button2";
-            this.button2.Visible = false;
-            this.button2.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button2_Click);
-            // 
             // toggle_compile_regex
             // 
             this.toggle_compile_regex.Checked = true;
             this.toggle_compile_regex.Label = "Compile Regular Expressions";
             this.toggle_compile_regex.Name = "toggle_compile_regex";
             this.toggle_compile_regex.Visible = false;
-            // 
-            // peirce_button
-            // 
-            this.peirce_button.Label = "Peirce Criterion for selected range";
-            this.peirce_button.Name = "peirce_button";
-            this.peirce_button.Visible = false;
-            this.peirce_button.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.peirce_button_Click);
             // 
             // toggle_weighted_average
             // 
@@ -139,25 +121,21 @@ namespace DataDebug
             // 
             this.button3.Label = "Normal Anderson-Darling Test";
             this.button3.Name = "button3";
-            this.button3.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button3_Click);
             // 
             // button4
             // 
             this.button4.Label = "Find Outliers";
             this.button4.Name = "button4";
-            this.button4.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button4_Click);
             // 
             // button5
             // 
             this.button5.Label = "Clear";
             this.button5.Name = "button5";
-            this.button5.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button5_Click);
             // 
             // button6
             // 
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
-            this.button6.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button6_Click);
             // 
             // Ribbon
             // 
@@ -179,7 +157,6 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button1;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton button2;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button3;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button4;
@@ -189,7 +166,6 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button7;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button8;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton peirce_button;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
     }
 
