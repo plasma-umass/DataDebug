@@ -1,4 +1,4 @@
-*~
+A*~
 main.aux
 main.log
 main.bbl
@@ -14,9 +14,8 @@ obj
 *.suo
 ~$*
 *.bbl
-
 *.blg
-
 *.log
-
 *.aux
+*.trx
+AgentRestart.dat
