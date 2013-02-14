@@ -1,6 +1,7 @@
 // C++11
 // clang++ -std=c++11 samplo.cpp
 
+#include <algorithm>
 #include <vector>
 #include <iostream>
 #include <string>
@@ -13,9 +14,24 @@ using namespace std;
 
 /// @brief Generate a bootstrapped sample from the input distribution.
 template <class TYPE>
-void bootstrap (int excludeIndex,
-		const vector<TYPE>& in,
+void bootstrap (const vector<TYPE>& in,
 		vector<TYPE>& out)
+{
+  assert (in.size() <= out.size());
+  const int N = in.size();
+  for (int i = 0; i < N; i++) {
+    int index = lrand48() % N;
+    out[i] = in[index];
+  }
+}
+
+
+/// @brief Generate a bootstrapped sample from the input distribution,
+/// excluding one element.
+template <class TYPE>
+void exclusiveBootstrap (int excludeIndex,
+			 const vector<TYPE>& in,
+			 vector<TYPE>& out)
 {
   assert (in.size() <= out.size());
   const int N = in.size();
@@ -60,6 +76,11 @@ TYPE max (const vector<TYPE>& in) {
 }
 
 template <class TYPE>
+TYPE average (const vector<TYPE>& in) {
+  return sum (in) / in.size();
+}
+
+template <class TYPE>
 TYPE stddev (const vector<TYPE>& in) {
   TYPE avg = average (in);
   TYPE s = 0;
@@ -68,11 +89,6 @@ TYPE stddev (const vector<TYPE>& in) {
     s += (v * v);
   }
   return sqrt(s / (in.size()-1));
-}
-
-template <class TYPE>
-TYPE average (const vector<TYPE>& in) {
-  return sum (in) / in.size();
 }
 
 /*
@@ -84,18 +100,33 @@ template <class TYPE>
 TYPE poly (const vector<TYPE>& in) {
   TYPE s = 0;
   for (auto const& x : in) {
-    s += (x > 700) ? 1 : 0;
+    //    s += (x > 700) ? 1 : 0;
+    s += x * x;
   }
-  return s; // pow(s, 0.5);
-  //  return fabs(cos(s)) * 1000.0;
+  //  return s; 
+  return sqrt(s);
 }
 
+typedef unsigned long long vectorType;
+
+template <class TYPE>
+int comparator (const void * a, const void * b) {
+  auto ula = *((TYPE *) a);
+  auto ulb = *((TYPE *) b);
+  if (a < b) {
+    return -1;
+  }
+  if (a == b) {
+    return 0;
+  }
+  return 1;
+}
 
 int main()
 {
   const int NELEMENTS = 100;
-  const int NBOOTSTRAPS = 1000;
-  typedef unsigned long long vectorType;
+  const int NBOOTSTRAPS = 2000;
+  const int NSTDDEVS = 1;
 
   // Seed the random number generator.
   srand48 (time(NULL));
@@ -111,25 +142,48 @@ int main()
     x = (lrand48() % 1000) + 1;
   }
   // Add an anomalous value.
-  a[8] = 2000;
-
-  // Perform the computation.
-  vectorType sumval = poly(a);
+  a[8] = 4000;
 
   // Now we build the impact vector by bootstrapping.
-
+ 
   // For each index...
   for (long k = 0; k < NELEMENTS; k++) {
     long s = 0;
     // ...do a bunch of bootstraps, excluding that index, and add the results.
     for (long i = 0; i < NBOOTSTRAPS; i++) {
-      bootstrap(k, a, b);
+      exclusiveBootstrap(k, a, b);
       s += poly(b);
       //      cout << sum<vectorType>(NELEMENTS, b) << endl;
     }
     // The impact is the AVERAGE result over the bootstrapped samples.
     impacts[k] = s / NBOOTSTRAPS;
-    cout << impacts[k] << endl;
+    //    cout << impacts[k] << endl;
+  }
+  // Compute 95% confidence interval by bootstrapping the original
+  // distribution (omitting nothing).
+  vector<vectorType> bt;
+  bt.resize (NBOOTSTRAPS);
+  for (long i = 0; i < NBOOTSTRAPS; i++) {
+    bootstrap(a, b);
+    auto v = poly(b);
+    bt[i] = v;
+  }
+  sort (bt.begin(), bt.end());
+  int first = (int) (NBOOTSTRAPS * 0.025);
+  int last  = (int) (NBOOTSTRAPS * 0.975);
+  auto sd = stddev (bt);
+  auto mean = average (bt);
+  cout << "bootstrap stddev = " << sd << endl;
+  cout << "bootstrap mean = "   << mean << endl;
+  cout << "original impact = " << poly (a) << endl;
+  cout << "bt[" << first << "] = " << bt[first] << endl;
+  cout << "bt[" << last << "] = "  << bt[last] << endl;
+
+  // Now look for impacts that are more than NSTDDEVS away from the mean.
+  for (int i = 0; i < NELEMENTS; i++) {
+    if (abs((int) (impacts[i] - mean)) > NSTDDEVS * sd) {
+      cout << "item " << i << " appears anomalous: value = " << a[i] << ", impact = " << impacts[i] << endl;
+    }
   }
   return 0;
 }
