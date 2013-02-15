@@ -283,5 +283,102 @@ namespace DataDebugMethods
                 }
             }
         }
+
+        public static void FindCellReferencesWithQuotes(string formula, string worksheet_name, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeNode[][][] nodes_grid)
+        {
+            // Now we look for references of the kind 'worksheet_name'!A1 (with quotation marks)
+            matchedCells = regex_array[4 * (ws_index - 1) + 2].Matches(formula);
+            
+            foreach (Match match in matchedCells)
+            {
+                formula = formula.Replace(match.Value, "");
+                string ws_name = worksheet_name; // match.Value.Substring(1, match.Value.LastIndexOf("!") - 2); // Get the name of the worksheet being referenced
+                string cell_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1);
+                //Get the actual cell that is being referenced
+                Excel.Range input = null;
+                foreach (Excel.Worksheet ws in worksheets)
+                {
+                    //Find the worksheet object that the match belongs to
+                    if (ws.Name == ws_name)
+                    {
+                        input = ws.get_Range(cell_coordinates);
+                    }
+                }
+                TreeNode input_cell = null;
+                //Find the node object for the current cell in the existing TreeNodes
+                //Check if this cell's coordinates are within the bounds of the used range of its spreadsheet, otherwise there will be an index out of bounds error
+                if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
+                {
+                    //if a TreeNode exists for this cell already, use it
+                    if (nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] != null)
+                    {
+                        input_cell = nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1];
+                    }
+                }
+                //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                if (input_cell == null)
+                {
+                    input_cell = new TreeNode(cell_coordinates.Replace("$", ""), ws_ref, activeWorkbook);
+                    //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                    if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
+                    {
+                        nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] = input_cell;
+                    }
+                }
+
+                //Update the dependencies
+                formula_cell.addParent(input_cell);
+                input_cell.addChild(formula_cell);
+            }
+        }
+
+        public static void FindCellReferencesWithoutQuotes(string formula, string worksheet_name, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeNode[][][] nodes_grid)
+        {
+            //Lastly we look for references of the kind worksheet_name!A1 (without quotation marks)
+            matchedCells = regex_array[4 * (ws_index - 1) + 3].Matches(formula);
+            
+            foreach (Match match in matchedCells)
+            {
+                formula = formula.Replace(match.Value, "");
+                string ws_name = worksheet_name; //match.Value.Substring(0, match.Value.LastIndexOf("!")); // Get the name of the worksheet being referenced
+                string cell_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1);
+                //System.Windows.Forms.MessageBox.Show(formula_cell.getName() + " refers to the cell " + ws_name + "!" + cell_coordinates);
+                //Get the actual cell that is being referenced
+                Excel.Range input = null;
+                foreach (Excel.Worksheet ws in worksheets)
+                {
+                    //Find the worksheet object that the match belongs to
+                    if (ws.Name == ws_name)
+                    {
+                        input = ws.get_Range(cell_coordinates);
+                    }
+                }
+                TreeNode input_cell = null;
+                //Find the node object for the current cell in the existing TreeNodes
+                //Check if this cell's coordinates are within the bounds of the used range of its spreadsheet, otherwise there will be an index out of bounds error
+                if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
+                {
+                    //if a TreeNode exists for this cell already, use it
+                    if (nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] != null)
+                    {
+                        input_cell = nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1];
+                    }
+                }
+                //If it wasn't found, then it is blank, and we have to create a TreeNode for it
+                if (input_cell == null)
+                {
+                    input_cell = new TreeNode(cell_coordinates.Replace("$", ""), ws_ref, activeWorkbook);
+                    //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
+                    if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
+                    {
+                        nodes_grid[input.Worksheet.Index - 1][input.Row - 1][input.Column - 1] = input_cell;
+                    }
+                }
+
+                //Update the dependencies
+                formula_cell.addParent(input_cell);
+                input_cell.addChild(formula_cell);
+            }
+        }
     }
 }
