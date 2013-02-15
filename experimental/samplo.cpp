@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <map>
 #include <string>
 using namespace std;
 
@@ -123,8 +124,8 @@ int comparator (const void * a, const void * b) {
 
 int main()
 {
-  const auto NELEMENTS = 30;
-  const auto NBOOTSTRAPS = 200;
+  const auto NELEMENTS = 5000;
+  const auto NBOOTSTRAPS = 20;
   const auto ALPHA = 0.05; // = (1-alpha) confidence interval
 
   // Seed the random number generator.
@@ -139,12 +140,13 @@ int main()
   const float lambda = 0.01;
   // Generate a random vector.
   for (auto &x : a) {
+    // Exponential distribution.
     x = -log(drand48())/lambda;
-    //    cout << "x = " << x << endl;
-    //    x = (lrand48() % 1000) + 1;
+    //    x = (lrand48() % 750) + 1;
   }
+
   // Add an anomalous value.
-  a[8] = 1500;
+  //  a[8] = 1000;
 
   // Now we build the impact vector by bootstrapping.
  
@@ -155,7 +157,6 @@ int main()
     for (long i = 0; i < NBOOTSTRAPS; i++) {
       exclusiveBootstrap(k, a, b);
       s += poly(b);
-      //      cout << sum<vectorType>(NELEMENTS, b) << endl;
     }
     // The impact is the AVERAGE result over the bootstrapped samples.
     impacts[k] = s / NBOOTSTRAPS;
@@ -176,27 +177,22 @@ int main()
   sort (bt.begin(), bt.end());
 
   // Build a histogram.
-  // This should be replaced by a hashmap or something.
-  vector<int> freqCount;
-  int length = bt[NELEMENTS-1]-bt[0]+1;
-  freqCount.resize(length);
+  map<vectorType, int> freqCount;
   for (int i = 0; i < NELEMENTS; i++) {
     freqCount[bt[i]]++;
   }
+
+  // Number of elements to examine on either side of the histogram,
+  // corresponding to the desired confidence interval.
+  int tailcount = floor((ALPHA/2.0) * (float) NELEMENTS);
 
   cout << "# impact of injected anomaly = " << impacts[8] << endl;
   cout << "#  stddevs = " << ((float) impacts[8] - (float) mean) / (float) sd << endl;
   cout << "# mean impact = " << mean << endl;
   cout << "# stddev impact = " << sd << endl;
-  int first;
-  int last;
-
-  cout << "# alpha = " << ALPHA << endl;
-  cout << "# alpha/2 = " << ALPHA/2.0 << endl;
-  cout << "# alpha/2 * newelements = " << (ALPHA/2.0 * (float) NELEMENTS) << endl;
-  int tailcount = floor((ALPHA/2.0) * (float) NELEMENTS);
   cout << "# tailcount = " << tailcount << endl;
 
+  int first;
   {
     int count = 0;
     int index = 0;
@@ -207,6 +203,7 @@ int main()
     first = index;
   }
 
+  int last;
   {
     int count = 0;
     int index = NELEMENTS-1;
@@ -219,12 +216,13 @@ int main()
 
   cout << "# " << 100.0 * (1.0-ALPHA) << "% confidence interval = [" << bt[first] << ", " << bt[last] << "]" << endl;
 
-  // Now look for impacts that are outside the confidence interval.
+  // Now look for impacts that fall outside the confidence interval.
   for (int i = 0; i < NELEMENTS; i++) {
-    //    if (fabs((float) impacts[i] - (float) mean) >= 2 * sd) {
     if ((impacts[i] < bt[first]) ||
 	(impacts[i] > bt[last])) {
-      cout << "# item " << i << " appears anomalous: value = " << a[i] << ", impact = " << impacts[i] << ", stddevs = " << ((float) impacts[i] - (float) mean) / (float) sd << endl;
+      cout << "# item " << i << " appears anomalous: value = " << a[i] 
+	   << ", impact = " << impacts[i] 
+	   << ", stddevs = " << fabs((float) impacts[i] - (float) mean) / (float) sd << endl;
     }
   }
 
