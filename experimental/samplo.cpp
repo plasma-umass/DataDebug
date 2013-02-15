@@ -123,9 +123,9 @@ int comparator (const void * a, const void * b) {
 
 int main()
 {
-  const auto NELEMENTS = 500;
-  const auto NBOOTSTRAPS = 500;
-  const auto CONF_INTERVAL = 97.5; // out of 100
+  const auto NELEMENTS = 30;
+  const auto NBOOTSTRAPS = 200;
+  const auto ALPHA = 0.05; // = (1-alpha) confidence interval
 
   // Seed the random number generator.
   srand48 (time(NULL));
@@ -162,33 +162,7 @@ int main()
     cout << impacts[k] << endl;
   }
 
-#if 0
-  vector<vectorType> bt;
-  bt.resize (NBOOTSTRAPS);
-  for (int i = 0; i < NBOOTSTRAPS; i++) {
-    bootstrap (a, b);
-    bt[i] = poly(b);
-  }
-
-  // Sort and then compute the confidence interval by
-  // choosing the appropriate points in the vector.
-  sort (bt.begin(), bt.end());
-
-  int first = (int) (NBOOTSTRAPS * (0.5 - ((float) CONF_INTERVAL / 200.0))) + 1;
-  int last  = (int) (NBOOTSTRAPS * (0.5 + ((float) CONF_INTERVAL / 200.0)));
-
-  auto sd   = stddev (bt);
-  auto mean = average (bt);
-
-  cout << "first = " << first << endl;
-  cout << "last = " << last << endl;
-  cout << "input mean = " << average (a) << endl;
-  cout << "bootstrap stddev = " << sd << endl;
-  cout << "bootstrap mean = "   << mean << endl;
-  cout << "original impact = "  << poly (a) << endl;
-#endif
-
-  auto sd = stddev (impacts);
+  auto sd   = stddev (impacts);
   auto mean = average (impacts);
 
   // Sort and then compute the confidence interval by
@@ -201,13 +175,49 @@ int main()
   }
   sort (bt.begin(), bt.end());
 
+  // Build a histogram.
+  // This should be replaced by a hashmap or something.
+  vector<int> freqCount;
+  int length = bt[NELEMENTS-1]-bt[0]+1;
+  freqCount.resize(length);
+  for (int i = 0; i < NELEMENTS; i++) {
+    freqCount[bt[i]]++;
+  }
+
   cout << "# impact of injected anomaly = " << impacts[8] << endl;
   cout << "#  stddevs = " << ((float) impacts[8] - (float) mean) / (float) sd << endl;
   cout << "# mean impact = " << mean << endl;
   cout << "# stddev impact = " << sd << endl;
-  int first = (int) (NELEMENTS * (0.5 - ((float) CONF_INTERVAL / 200.0))) + 1;
-  int last  = (int) (NELEMENTS * (0.5 + ((float) CONF_INTERVAL / 200.0)));
-  cout << "# " << CONF_INTERVAL << "% confidence interval = [" << bt[first] << ", " << bt[last] << "]" << endl;
+  int first;
+  int last;
+
+  cout << "# alpha = " << ALPHA << endl;
+  cout << "# alpha/2 = " << ALPHA/2.0 << endl;
+  cout << "# alpha/2 * newelements = " << (ALPHA/2.0 * (float) NELEMENTS) << endl;
+  int tailcount = floor((ALPHA/2.0) * (float) NELEMENTS);
+  cout << "# tailcount = " << tailcount << endl;
+
+  {
+    int count = 0;
+    int index = 0;
+    while (count + freqCount[bt[index]] <= tailcount) {
+      count += freqCount[bt[index]];
+      index++;
+    }
+    first = index;
+  }
+
+  {
+    int count = 0;
+    int index = NELEMENTS-1;
+    while (count + freqCount[bt[index]] <= tailcount) {
+      count += freqCount[bt[index]];
+      index--;
+    }
+    last = index;
+  }
+
+  cout << "# " << 100.0 * (1.0-ALPHA) << "% confidence interval = [" << bt[first] << ", " << bt[last] << "]" << endl;
 
   // Now look for impacts that are outside the confidence interval.
   for (int i = 0; i < NELEMENTS; i++) {
