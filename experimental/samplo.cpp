@@ -19,9 +19,8 @@ void bootstrap (const vector<TYPE>& in,
 {
   assert (in.size() <= out.size());
   const int N = in.size();
-  for (int i = 0; i < N; i++) {
-    int index = lrand48() % N;
-    out[i] = in[index];
+  for (auto& x : out) {
+    x = in[lrand48() % N];
   }
 }
 
@@ -101,10 +100,10 @@ TYPE poly (const vector<TYPE>& in) {
   TYPE s = 0;
   for (auto const& x : in) {
     //    s += (x > 700) ? 1 : 0;
-    s += x * x;
+    s += x; // x * x;
   }
-  //  return s; 
-  return sqrt(s);
+  return s; 
+  // return sqrt(s);
 }
 
 typedef unsigned long long vectorType;
@@ -124,9 +123,9 @@ int comparator (const void * a, const void * b) {
 
 int main()
 {
-  const int NELEMENTS = 100;
-  const int NBOOTSTRAPS = 2000;
-  const int NSTDDEVS = 1;
+  const auto NELEMENTS = 500;
+  const auto NBOOTSTRAPS = 500;
+  const auto CONF_INTERVAL = 97.5; // out of 100
 
   // Seed the random number generator.
   srand48 (time(NULL));
@@ -137,12 +136,15 @@ int main()
   b.resize (NELEMENTS);
   impacts.resize (NELEMENTS);
 
+  const float lambda = 0.01;
   // Generate a random vector.
   for (auto &x : a) {
-    x = (lrand48() % 1000) + 1;
+    x = -log(drand48())/lambda;
+    //    cout << "x = " << x << endl;
+    //    x = (lrand48() % 1000) + 1;
   }
   // Add an anomalous value.
-  a[8] = 4000;
+  a[8] = 1500;
 
   // Now we build the impact vector by bootstrapping.
  
@@ -157,33 +159,65 @@ int main()
     }
     // The impact is the AVERAGE result over the bootstrapped samples.
     impacts[k] = s / NBOOTSTRAPS;
-    //    cout << impacts[k] << endl;
+    cout << impacts[k] << endl;
   }
-  // Compute 95% confidence interval by bootstrapping the original
-  // distribution (omitting nothing).
+
+#if 0
   vector<vectorType> bt;
   bt.resize (NBOOTSTRAPS);
-  for (long i = 0; i < NBOOTSTRAPS; i++) {
-    bootstrap(a, b);
-    auto v = poly(b);
-    bt[i] = v;
+  for (int i = 0; i < NBOOTSTRAPS; i++) {
+    bootstrap (a, b);
+    bt[i] = poly(b);
   }
+
+  // Sort and then compute the confidence interval by
+  // choosing the appropriate points in the vector.
   sort (bt.begin(), bt.end());
-  int first = (int) (NBOOTSTRAPS * 0.025);
-  int last  = (int) (NBOOTSTRAPS * 0.975);
-  auto sd = stddev (bt);
+
+  int first = (int) (NBOOTSTRAPS * (0.5 - ((float) CONF_INTERVAL / 200.0))) + 1;
+  int last  = (int) (NBOOTSTRAPS * (0.5 + ((float) CONF_INTERVAL / 200.0)));
+
+  auto sd   = stddev (bt);
   auto mean = average (bt);
+
+  cout << "first = " << first << endl;
+  cout << "last = " << last << endl;
+  cout << "input mean = " << average (a) << endl;
   cout << "bootstrap stddev = " << sd << endl;
   cout << "bootstrap mean = "   << mean << endl;
-  cout << "original impact = " << poly (a) << endl;
-  cout << "bt[" << first << "] = " << bt[first] << endl;
-  cout << "bt[" << last << "] = "  << bt[last] << endl;
+  cout << "original impact = "  << poly (a) << endl;
+#endif
 
-  // Now look for impacts that are more than NSTDDEVS away from the mean.
+  auto sd = stddev (impacts);
+  auto mean = average (impacts);
+
+  // Sort and then compute the confidence interval by
+  // choosing the appropriate points in the vector.
+  vector<vectorType> bt;
+  bt.resize (NELEMENTS);
+  unsigned int index = 0;
+  for (auto& x : impacts) {
+    bt[index++] = x;
+  }
+  sort (bt.begin(), bt.end());
+
+  cout << "# impact of injected anomaly = " << impacts[8] << endl;
+  cout << "#  stddevs = " << ((float) impacts[8] - (float) mean) / (float) sd << endl;
+  cout << "# mean impact = " << mean << endl;
+  cout << "# stddev impact = " << sd << endl;
+  int first = (int) (NELEMENTS * (0.5 - ((float) CONF_INTERVAL / 200.0))) + 1;
+  int last  = (int) (NELEMENTS * (0.5 + ((float) CONF_INTERVAL / 200.0)));
+  cout << "# " << CONF_INTERVAL << "% confidence interval = [" << bt[first] << ", " << bt[last] << "]" << endl;
+
+  // Now look for impacts that are outside the confidence interval.
   for (int i = 0; i < NELEMENTS; i++) {
-    if (abs((int) (impacts[i] - mean)) > NSTDDEVS * sd) {
-      cout << "item " << i << " appears anomalous: value = " << a[i] << ", impact = " << impacts[i] << endl;
+    //    if (fabs((float) impacts[i] - (float) mean) >= 2 * sd) {
+    if ((impacts[i] < bt[first]) ||
+	(impacts[i] > bt[last])) {
+      cout << "# item " << i << " appears anomalous: value = " << a[i] << ", impact = " << impacts[i] << ", stddevs = " << ((float) impacts[i] - (float) mean) / (float) sd << endl;
     }
   }
+
+
   return 0;
 }
