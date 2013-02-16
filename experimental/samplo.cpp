@@ -14,6 +14,13 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
+const auto NELEMENTS = 30;
+const auto NBOOTSTRAPS = 500;
+
+// = (1-alpha) confidence interval
+//  const auto ALPHA = 0.05; // 95% = 2 std devs
+const auto ALPHA = 0.003; // 99.7% = 3 std devs
+
 #include "realrandomvalue.h"
 #include "mwc.h"
 
@@ -183,19 +190,20 @@ void computeOneBootstrap (const vector<TYPE>& mixsource,
 
 
 template <class TYPE>
-bool significantDifference (float significanceLevel,
+bool significantDifference (const float significanceLevel,
 			    const vector<TYPE>& f,
 			    const vector<TYPE>& g,
 			    unsigned long NumBootstraps = 2000)
 {
   assert (significanceLevel > 0.0);
   assert (significanceLevel < 1.0);
-  // Save the original mean.
+
+  // Compute the original mean.
   auto M = f.size();
   auto N = g.size();
   auto originalMean = fabs((float) average (f) - (float) average (g));
 
-  // Combine both vectors into mix.
+  // Combine both vectors.
   vector<TYPE> combined;
   combined.resize (M + N);
   int index = 0;
@@ -214,44 +222,50 @@ bool significantDifference (float significanceLevel,
     computeOneBootstrap(combined, M, N, bootstrap[i]);
   }
       
-  // Now check to see whether the original mean is in the right
+  // Now check to see whether the original mean is outside the
   // confidence interval.
   sort (bootstrap.begin(), bootstrap.end());
   
   int leftInterval = trunc(significanceLevel/2.0 * NumBootstraps);
   int rightInterval = trunc((1.0 - significanceLevel/2.0) * NumBootstraps);
-  
-  if ((originalMean < bootstrap[leftInterval]) ||
-      (originalMean > bootstrap[rightInterval])) {
-    return true;
-  } else {
-    return false;
+
+  bool isOutside = ((originalMean < bootstrap[leftInterval]) ||
+		    (originalMean > bootstrap[rightInterval]));
+  return isOutside;
+}
+
+
+template <class TYPE>
+bool significant (const int k,
+		  const vector<TYPE>& original,
+		  const vector<TYPE>& bootOriginal,
+		  bool& result)
+{
+  vector<vectorType> b;
+  b.resize (NELEMENTS);
+  vector<vectorType> bootWithout;
+  bootWithout.resize (NBOOTSTRAPS);
+  for (long i = 0; i < NBOOTSTRAPS; i++) {
+    exclusiveBootstrap(k, original, b);
+    bootWithout[i] = poly(b);
   }
+  result = significantDifference (ALPHA, bootOriginal, bootWithout, 10000);
+  return result;
 }
 
 
 int main()
 {
-  const auto NELEMENTS = 30;
-  const auto NBOOTSTRAPS = 1000;
-
-  // = (1-alpha) confidence interval
-  //  const auto ALPHA = 0.05; // 95% = 2 std devs
-  const auto ALPHA = 0.003; // 99.7% = 3 std devs
-
   // Seed the random number generator.
   srand48 (time(NULL));
 
-  vector<vectorType> a, b, impacts;
+  vector<vectorType> original;
 
-  a.resize (NELEMENTS);
-  b.resize (NELEMENTS);
-  impacts.resize (NELEMENTS);
-
-  const float lambda = 0.01;
+  original.resize (NELEMENTS);
 
   // Generate a random vector.
-  for (auto &x : a) {
+  const float lambda = 0.01;
+  for (auto &x : original) {
     // Exponential distribution.
     x = -log(drand48())/lambda;
     cout << "# value = " << x << endl;
@@ -259,31 +273,36 @@ int main()
   }
 
   // Add an anomalous value.
-  a[8] = 1000;
+  original[8] = 1000;
   
-  // Bootstrap of original sample.
-  vector<vectorType> boot;
-  boot.resize (NBOOTSTRAPS);
+  // Bootstrap from the original sample.
+  vector<vectorType> bootOriginal;
+  bootOriginal.resize (NBOOTSTRAPS);
+  vector<vectorType> b;
+  b.resize (NELEMENTS);
   for (int i = 0; i < NBOOTSTRAPS; i++) {
-    bootstrap (a, b);
-    boot[i] = poly (b);
+    // Create a new bootstrap into b.
+    bootstrap (original, b);
+    // Compute the function and save it.
+    bootOriginal[i] = poly (b);
   }
 
-  vector<vectorType> bootOne;
-  bootOne.resize (NBOOTSTRAPS);
+  thread * t = new thread[NELEMENTS];
+  bool * sig = new bool[NELEMENTS];
 
-  // For each index...
+  // For each index, check to see whether the distribution without it
+  // is significantly different from the distribution with it (the
+  // original).
+  for (auto k = 0; k < NELEMENTS; k++) {
+    significant (k, original, bootOriginal, sig[k]);
+    // t[k] = thread (significant<vectorType>, k, a, boot, ref(sig[k]));
+  }
+
   for (long k = 0; k < NELEMENTS; k++) {
-    // ...do a bunch of bootstraps, excluding that index, and add the results.
-    for (long i = 0; i < NBOOTSTRAPS; i++) {
-      exclusiveBootstrap(k, a, b);
-      bootOne[i] = poly(b);
+    //    t[k].join();
+    if (sig[k]) {
+      cout << "element " << k << " (" << original[k] << ") significant." << endl;
     }
-    cout << k << flush;
-    if (significantDifference (0.003, boot, bootOne, 10000)) {
-      cout << " SIGNIFICANT: value = " << a[k];
-    }
-    cout << endl;
   }
   return 0;
 
