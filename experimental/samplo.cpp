@@ -14,55 +14,29 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 30;
-const auto NBOOTSTRAPS = 500;
+const auto NELEMENTS = 50;
+const auto NBOOTSTRAPS = 1000;
 
 // = (1-alpha) confidence interval
-//  const auto ALPHA = 0.05; // 95% = 2 std devs
+// const auto ALPHA = 0.05; // 95% = 2 std devs
 const auto ALPHA = 0.003; // 99.7% = 3 std devs
+// const auto ALPHA = 0.001;
 
-#include "realrandomvalue.h"
-#include "mwc.h"
+#include "fyshuffle.h"
+#include "stats.h"
 
-static MWC mwc (RealRandomValue::value(), RealRandomValue::value());
-
-unsigned int rng() {
-  return mwc.next();
-};
-
-/// @brief Fisher-Yates in-place shuffle.
-template <class TYPE>
-void shuffle (vector<TYPE>& vec)
-{
-  for (auto i = vec.size()-1; i != 0; i--) {
-    auto j = rng() % i;
-    swap (vec[i], vec[j]);
-  }
-}
-
-/// @brief Fisher-Yates shuffle.
-template <class TYPE>
-void shuffle (const vector<TYPE>& in,
-	      vector<TYPE>& out)
-{
-  out[0] = in[0];
-  for (auto i = 1; i < in.size(); i++) {
-    auto j = rng() % i;
-    out[i] = out[j];
-    out[j] = in[i];
-  }
-}
-
+using namespace fyshuffle;
+using namespace stats;
 
 /// @brief Generate a bootstrapped sample from the input distribution.
 template <class TYPE>
 void bootstrap (const vector<TYPE>& in,
 		vector<TYPE>& out)
 {
-  assert (in.size() <= out.size());
-  const int N = in.size();
+  assert (in.size() == out.size());
+  const auto N = in.size();
   for (auto& x : out) {
-    x = in[rng() % N];
+    x = in[lrand48() % N];
   }
 }
 
@@ -70,66 +44,25 @@ void bootstrap (const vector<TYPE>& in,
 /// @brief Generate a bootstrapped sample from the input distribution,
 /// excluding one element.
 template <class TYPE>
-void exclusiveBootstrap (int excludeIndex,
+void exclusiveBootstrap (unsigned long excludeIndex,
 			 const vector<TYPE>& in,
 			 vector<TYPE>& out)
 {
-  assert (in.size() <= out.size());
-  const int N = in.size();
-  for (int i = 0; i < N; i++) {
+  assert (in.size() == out.size());
+  const auto N = in.size();
+  for (auto i = 0; i < N; i++) {
     // Repeatedly pick an index at random to copy into the out array
     // (in other words, this is sampling WITH replacement).  If we hit
     // "excludeIndex", try again. Since this is unlikely to happen
     // frequently (on average, only once), it doesn't make much sense
     // to optimize.
-    int index;
-    index = excludeIndex;
+    auto index = excludeIndex;
     while (index == excludeIndex) {
       index = lrand48() % N;
     }
     out[i] = in[index];
+    //    cout << "# exclusive boot " << excludeIndex << " - " << out[i] << endl;
   }
-}
-
-/*
- * Some basic stats functions over vectors.
- *
- */
-
-template <class TYPE>
-TYPE sum (const vector<TYPE>& in) {
-  TYPE s = 0;
-  for (auto const& x : in) {
-    s += x;
-  }
-  return s;
-}
-
-template <class TYPE>
-TYPE max (const vector<TYPE>& in) {
-  TYPE m = in[0];
-  for (auto& x : in) {
-    if (x > m) {
-      m = x;
-    }
-  }
-  return m;
-}
-
-template <class TYPE>
-TYPE average (const vector<TYPE>& in) {
-  return sum (in) / in.size();
-}
-
-template <class TYPE>
-TYPE stddev (const vector<TYPE>& in) {
-  TYPE avg = average (in);
-  TYPE s = 0;
-  for (auto const& x : in) {
-    TYPE v = x - avg;
-    s += (v * v);
-  }
-  return sqrt(s / (in.size()-1));
 }
 
 /*
@@ -148,25 +81,10 @@ TYPE poly (const vector<TYPE>& in) {
   // return sqrt(s);
 }
 
-typedef unsigned long long vectorType;
-
-template <class TYPE>
-int comparator (const void * a, const void * b) {
-  auto ula = *((TYPE *) a);
-  auto ulb = *((TYPE *) b);
-  if (a < b) {
-    return -1;
-  }
-  if (a == b) {
-    return 0;
-  }
-  return 1;
-}
-
 template <class TYPE>
 void computeOneBootstrap (const vector<TYPE>& mixsource,
-			  int M,
-			  int N,
+			  long M,
+			  long N,
 			  float& bootstrap)
 {
   vector<TYPE> mix;
@@ -174,9 +92,10 @@ void computeOneBootstrap (const vector<TYPE>& mixsource,
   
   // Shuffle mix -- this will let us perform sampling without
   // replacement efficiently.
-  shuffle (mixsource, mix);
+  fyshuffle::transform (mixsource, mix);
+
   // Now we take the first M as "f", and the next N as "g".
-  // Compute their means and save them in bootstrap.
+  // Save the absolute difference of their means.
   float sum1 = 0;
   for (auto i = 0; i < M; i++) {
     sum1 += mix[i];
@@ -185,7 +104,9 @@ void computeOneBootstrap (const vector<TYPE>& mixsource,
   for (auto i = 0; i < N; i++) {
     sum2 += mix[M+i];
   }
-  bootstrap = fabs((sum1/M) - (sum2/N));
+  bootstrap = fabs((sum1/(float) M) - (sum2/(float) N));
+
+  //  cout << "# boot avg = " << sum1/M << ", " << sum2 / N << endl << ": diff = " << bootstrap << endl;
 }
 
 
@@ -193,15 +114,15 @@ template <class TYPE>
 bool significantDifference (const float significanceLevel,
 			    const vector<TYPE>& f,
 			    const vector<TYPE>& g,
-			    unsigned long NumBootstraps = 2000)
+			    unsigned long NumBootstraps = 10000)
 {
   assert (significanceLevel > 0.0);
   assert (significanceLevel < 1.0);
 
-  // Compute the original mean.
+  // Compute the original difference in means.
   auto M = f.size();
   auto N = g.size();
-  auto originalMean = fabs((float) average (f) - (float) average (g));
+  auto originalMeanDiff = fabs((float) average (f) - (float) average (g));
 
   // Combine both vectors.
   vector<TYPE> combined;
@@ -210,27 +131,35 @@ bool significantDifference (const float significanceLevel,
   for (auto const& x : f) {
     combined[index++] = x;
   }
+  assert (index == M);
   for (auto const& x : g) {
     combined[index++] = x;
   }
+  assert (index == M + N);
 
   // Build up the bootstrap of averages.
   vector<float> bootstrap;
   bootstrap.resize (NumBootstraps);
 
   for (auto i = 0; i < NumBootstraps; i++) {
-    computeOneBootstrap(combined, M, N, bootstrap[i]);
+    computeOneBootstrap (combined, M, N, bootstrap[i]);
+    // cout << "# avg bootstrap" << endl;
+    // cout << bootstrap[i] << endl;
   }
       
   // Now check to see whether the original mean is outside the
   // confidence interval.
   sort (bootstrap.begin(), bootstrap.end());
-  
-  int leftInterval = trunc(significanceLevel/2.0 * NumBootstraps);
-  int rightInterval = trunc((1.0 - significanceLevel/2.0) * NumBootstraps);
 
-  bool isOutside = ((originalMean < bootstrap[leftInterval]) ||
-		    (originalMean > bootstrap[rightInterval]));
+  float avgBoot = average (bootstrap);
+
+  // Find the left and right intervals.
+  int leftInterval = floor(significanceLevel / 2.0 * NumBootstraps);
+  int rightInterval = ceil((1.0 - significanceLevel / 2.0) * NumBootstraps);
+
+  bool isOutside = ((originalMeanDiff < bootstrap[leftInterval]) ||
+  		    (originalMeanDiff > bootstrap[rightInterval]));
+
   return isOutside;
 }
 
@@ -241,28 +170,81 @@ bool significant (const int k,
 		  const vector<TYPE>& bootOriginal,
 		  bool& result)
 {
-  vector<vectorType> b;
+  vector<TYPE> b;
   b.resize (NELEMENTS);
-  vector<vectorType> bootWithout;
+
+  // Build a bootstrap distribution WITHOUT index k.
+  vector<TYPE> bootWithout;
   bootWithout.resize (NBOOTSTRAPS);
   for (long i = 0; i < NBOOTSTRAPS; i++) {
     exclusiveBootstrap(k, original, b);
-    bootWithout[i] = poly(b);
+    bootWithout[i] = poly(b); // / (float) NELEMENTS;
+    //    cout << "# boot without" << endl;
+    //    cout << bootWithout[i] << endl;
   }
-  result = significantDifference (ALPHA, bootOriginal, bootWithout, 10000);
+  // Now check to see if there's a significant difference in the
+  // distribution means.
+
+  assert (bootOriginal.size() == NBOOTSTRAPS);
+  assert (bootWithout.size() == NBOOTSTRAPS);
+  result = significantDifference (ALPHA, bootOriginal, bootWithout);
+
+  //  if (k == 0) {
+  //    for (auto x : bootWithout) {
+  //      cout << x << endl;
+  //    }
+  //  }
+
+  //  if (result) {
+  cout << "# significant difference at " << (1.0-ALPHA) << " level? ";
+  if (result) { cout << "YES"; } else { cout << "NO"; }
+  cout << endl;
+  cout << "# results for index " << k << endl;
+  cout << "# avg with = " << average (bootOriginal) << endl;
+  cout << "# avg without = " << average (bootWithout) << endl;
+  //  cout << "# stddev original = " << stddev (bootOriginal) << endl;
+  //  }
   return result;
 }
 
+typedef float vectorType;
 
 int main()
 {
   // Seed the random number generator.
-  srand48 (time(NULL));
+  srand48 (0); // time(NULL));
+
+#if 0
+  // Testing shuffle.
+  vector<vectorType> q, r;
+  q.resize(5);
+  r.resize(5);
+  q[0] = 1;
+  q[1] = 2;
+  q[2] = 3;
+  q[3] = 4;
+  q[4] = 5;
+  shuffle::transform (q, r);
+  for (auto x : r) {
+    cout << "r = " << x << endl;
+  }
+  return 0;
+#endif
 
   vector<vectorType> original;
 
   original.resize (NELEMENTS);
 
+  // Generate a random vector.
+  for (auto &x : original) {
+    // Uniform distribution.
+    x = lrand48() % 9 + 1;
+  }
+
+  original[2] = 100;
+  
+  
+#if 0
   // Generate a random vector.
   const float lambda = 0.01;
   for (auto &x : original) {
@@ -274,6 +256,12 @@ int main()
 
   // Add an anomalous value.
   original[8] = 1000;
+#endif
+  
+ 
+  for (auto const& x : original) {
+    cout << "# value = " << x << endl;    
+  }
   
   // Bootstrap from the original sample.
   vector<vectorType> bootOriginal;
@@ -284,24 +272,61 @@ int main()
     // Create a new bootstrap into b.
     bootstrap (original, b);
     // Compute the function and save it.
-    bootOriginal[i] = poly (b);
+    bootOriginal[i] = poly (b); //  / (float) NELEMENTS;
+    //    cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
   }
 
-  thread * t = new thread[NELEMENTS];
+  sort (bootOriginal.begin(), bootOriginal.end());
+
+  //  cout << "# bootOriginal average = " << average (bootOriginal) << endl;
+  //  cout << "# bootOriginal SD = " << stddev (bootOriginal) << endl;
+
   bool * sig = new bool[NELEMENTS];
 
   // For each index, check to see whether the distribution without it
   // is significantly different from the distribution with it (the
   // original).
+  vector<float> bootWithout;
+  bootWithout.resize (NBOOTSTRAPS);
+
+  auto bootOrigAvg = average (bootOriginal);
+
   for (auto k = 0; k < NELEMENTS; k++) {
-    significant (k, original, bootOriginal, sig[k]);
-    // t[k] = thread (significant<vectorType>, k, a, boot, ref(sig[k]));
+
+    // Build a bootstrap distribution WITHOUT index k.
+    for (long i = 0; i < NBOOTSTRAPS; i++) {
+      exclusiveBootstrap(k, original, b);
+      bootWithout[i] = poly(b); //  / (float) NELEMENTS;
+    }
+
+    auto bootWoAvg = average (bootWithout);
+
+    sort (bootWithout.begin(), bootWithout.end());
+
+    cout << "# bootOriginal AVERAGE = " << average (bootOriginal) << endl;
+    cout << "# bootWithout  AVERAGE = " << average (bootWithout) << endl;
+    cout << "# bootOriginal[25] = "  << bootOriginal[25] << endl;
+    cout << "# bootOriginal[975] = " << bootOriginal[975] << endl;
+    cout << "# bootWithout[25] = "   << bootWithout[25] << endl;
+    cout << "# bootWithout[975] = "  << bootWithout[975] << endl;
+
+    if ((bootWoAvg < bootOriginal[25]) ||
+	(bootWoAvg > bootOriginal[975]) ||
+	(bootOrigAvg < bootWithout[25]) ||
+	(bootOrigAvg > bootWithout[975])) {
+      sig[k] = true;
+    } else {
+      sig[k] = false;
+    }
+
+
+    //    sig[k] = significantDifference (0.001, bootOriginal, bootWithout, 1000);
   }
 
   for (long k = 0; k < NELEMENTS; k++) {
     //    t[k].join();
     if (sig[k]) {
-      cout << "element " << k << " (" << original[k] << ") significant." << endl;
+      cout << "# element " << k << " (" << original[k] << ") significant." << endl;
     }
   }
   return 0;
