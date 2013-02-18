@@ -18,8 +18,8 @@ const auto NELEMENTS = 50;
 const auto NBOOTSTRAPS = 1000;
 
 // = (1-alpha) confidence interval
-// const auto ALPHA = 0.05; // 95% = 2 std devs
-const auto ALPHA = 0.003; // 99.7% = 3 std devs
+const auto ALPHA = 0.05; // 95% = 2 std devs
+// const auto ALPHA = 0.003; // 99.7% = 3 std devs
 // const auto ALPHA = 0.001;
 
 #include "fyshuffle.h"
@@ -241,7 +241,7 @@ int main()
     x = lrand48() % 9 + 1;
   }
 
-  original[2] = 100;
+  original[2] = 40;
   
   
 #if 0
@@ -291,6 +291,10 @@ int main()
 
   auto bootOrigAvg = average (bootOriginal);
 
+  // Find the left and right intervals.
+  auto leftInterval = floor(ALPHA / 2.0 * NBOOTSTRAPS);
+  auto rightInterval = ceil((1.0 - ALPHA / 2.0) * NBOOTSTRAPS);
+
   for (auto k = 0; k < NELEMENTS; k++) {
 
     // Build a bootstrap distribution WITHOUT index k.
@@ -310,10 +314,10 @@ int main()
     cout << "# bootWithout[25] = "   << bootWithout[25] << endl;
     cout << "# bootWithout[975] = "  << bootWithout[975] << endl;
 
-    if ((bootWoAvg < bootOriginal[25]) ||
-	(bootWoAvg > bootOriginal[975]) ||
-	(bootOrigAvg < bootWithout[25]) ||
-	(bootOrigAvg > bootWithout[975])) {
+    if ((bootWoAvg < bootOriginal[leftInterval]) ||
+	(bootWoAvg > bootOriginal[rightInterval]) ||
+	(bootOrigAvg < bootWithout[leftInterval]) ||
+	(bootOrigAvg > bootWithout[rightInterval])) {
       sig[k] = true;
     } else {
       sig[k] = false;
