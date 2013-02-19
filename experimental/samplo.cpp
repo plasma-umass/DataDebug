@@ -14,12 +14,12 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 50;
-const auto NBOOTSTRAPS = 1000;
+const auto NELEMENTS = 10;
+const auto NBOOTSTRAPS = 5000;
 
 // = (1-alpha) confidence interval
-const auto ALPHA = 0.05; // 95% = 2 std devs
-// const auto ALPHA = 0.003; // 99.7% = 3 std devs
+// const auto ALPHA = 0.05; // 95% = 2 std devs
+const auto ALPHA = 0.003; // 99.7% = 3 std devs
 // const auto ALPHA = 0.001;
 
 #include "fyshuffle.h"
@@ -72,12 +72,12 @@ void exclusiveBootstrap (unsigned long excludeIndex,
 
 template <class TYPE>
 TYPE poly (const vector<TYPE>& in) {
-  TYPE s = 0;
+  auto s = 0.0;
   for (auto const& x : in) {
-    //    s += (x > 700) ? 1 : 0;
-    s += x; // x * x;
+    s += (x > 7.0) ? (x * 1.0) : 0.0;
+    // s += cos(x * x); // x * x;
   }
-  return s; 
+  return s; // sqrt(s); 
   // return sqrt(s);
 }
 
@@ -150,8 +150,6 @@ bool significantDifference (const float significanceLevel,
   // Now check to see whether the original mean is outside the
   // confidence interval.
   sort (bootstrap.begin(), bootstrap.end());
-
-  float avgBoot = average (bootstrap);
 
   // Find the left and right intervals.
   int leftInterval = floor(significanceLevel / 2.0 * NumBootstraps);
@@ -241,7 +239,8 @@ int main()
     x = lrand48() % 9 + 1;
   }
 
-  original[2] = 40;
+  // Add an anomalous value.
+  //  original[2] = 20;
   
   
 #if 0
@@ -259,9 +258,11 @@ int main()
 #endif
   
  
+#if 1
   for (auto const& x : original) {
     cout << "# value = " << x << endl;    
   }
+#endif
   
   // Bootstrap from the original sample.
   vector<vectorType> bootOriginal;
@@ -273,7 +274,7 @@ int main()
     bootstrap (original, b);
     // Compute the function and save it.
     bootOriginal[i] = poly (b); //  / (float) NELEMENTS;
-    //    cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
+    cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
   }
 
   sort (bootOriginal.begin(), bootOriginal.end());
@@ -307,13 +308,6 @@ int main()
 
     sort (bootWithout.begin(), bootWithout.end());
 
-    cout << "# bootOriginal AVERAGE = " << average (bootOriginal) << endl;
-    cout << "# bootWithout  AVERAGE = " << average (bootWithout) << endl;
-    cout << "# bootOriginal[25] = "  << bootOriginal[25] << endl;
-    cout << "# bootOriginal[975] = " << bootOriginal[975] << endl;
-    cout << "# bootWithout[25] = "   << bootWithout[25] << endl;
-    cout << "# bootWithout[975] = "  << bootWithout[975] << endl;
-
     if ((bootWoAvg < bootOriginal[leftInterval]) ||
 	(bootWoAvg > bootOriginal[rightInterval]) ||
 	(bootOrigAvg < bootWithout[leftInterval]) ||
@@ -323,12 +317,9 @@ int main()
       sig[k] = false;
     }
 
-
-    //    sig[k] = significantDifference (0.001, bootOriginal, bootWithout, 1000);
   }
 
   for (long k = 0; k < NELEMENTS; k++) {
-    //    t[k].join();
     if (sig[k]) {
       cout << "# element " << k << " (" << original[k] << ") significant." << endl;
     }
