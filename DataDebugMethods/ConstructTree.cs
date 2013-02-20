@@ -595,7 +595,6 @@ namespace DataDebugMethods
                 foreach (Excel.Series series in (Excel.SeriesCollection)chart.SeriesCollection(Type.Missing))
                 {
                     string formula = series.Formula;  //The formula contained in the cell
-                    //find_references(chart_node, formula);
 
                     MatchCollection matchedRanges = null;
                     MatchCollection matchedCells = null;
@@ -1335,6 +1334,16 @@ namespace DataDebugMethods
                     }
                 }
             }
+        }
+
+        public static string GenerateGraphVizTree(System.Collections.Generic.List<TreeNode> nodes)
+        {
+            string tree = "";
+            foreach (TreeNode node in nodes)
+            {
+                tree += node.toGVString(0) + "\n";
+            }
+            return "digraph g{" + tree + "}"; 
         }
     }
 }

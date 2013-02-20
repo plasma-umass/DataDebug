@@ -127,15 +127,11 @@ namespace DataDebug
                 }
             }
 
-            //Print out text for GraphViz representation of the dependence graph
-            //string tree1 = "";
-            //foreach (TreeNode node in nodes)
-            //{
-            //    tree1 += node.toGVString(0) + "\n";
-            //}
-            //Display disp1 = new Display();
-            //disp1.textBox1.Text = "digraph g{" + tree1 + "}";
-            //disp1.ShowDialog();
+            //Display textbox with GraphViz representation of the dependence graph
+            //Display disp = new Display();
+            //disp.textBox1.Text = ConstructTree.GenerateGraphVizTree(nodes);
+            //disp.ShowDialog();
+
             ConstructTree.FindReferencesInCharts(regex_array, ranges, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Charts, nodes_grid, worksheet_names, worksheet_refs, Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application.Names, nodes);
 
             //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
@@ -147,6 +143,9 @@ namespace DataDebug
             
             //Tree building stopwatch
             TimeSpan tree_building_timespan = global_stopwatch.Elapsed;
+
+            //Disable screen updating during perturbation to speed things up
+            Globals.ThisAddIn.Application.ScreenUpdating = false;
 
             //Grids for storing influences
             double[][][] influences_grid = null;
@@ -168,9 +167,6 @@ namespace DataDebug
                     }
                 }
             }
-            
-            //Disable screen updating during perturbation to speed things up
-            Globals.ThisAddIn.Application.ScreenUpdating = false;
             
             int outliers_count = 0; 
             //Procedure for swapping values within ranges, one cell at a time
