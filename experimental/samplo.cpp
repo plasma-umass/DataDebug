@@ -14,7 +14,7 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 10;
+const auto NELEMENTS = 100;
 const auto NBOOTSTRAPS = 5000;
 
 // = (1-alpha) confidence interval
@@ -24,46 +24,11 @@ const auto ALPHA = 0.003; // 99.7% = 3 std devs
 
 #include "fyshuffle.h"
 #include "stats.h"
+#include "bootstrap.h"
 
 using namespace fyshuffle;
 using namespace stats;
 
-/// @brief Generate a bootstrapped sample from the input distribution.
-template <class TYPE>
-void bootstrap (const vector<TYPE>& in,
-		vector<TYPE>& out)
-{
-  assert (in.size() == out.size());
-  const auto N = in.size();
-  for (auto& x : out) {
-    x = in[lrand48() % N];
-  }
-}
-
-
-/// @brief Generate a bootstrapped sample from the input distribution,
-/// excluding one element.
-template <class TYPE>
-void exclusiveBootstrap (unsigned long excludeIndex,
-			 const vector<TYPE>& in,
-			 vector<TYPE>& out)
-{
-  assert (in.size() == out.size());
-  const auto N = in.size();
-  for (auto i = 0; i < N; i++) {
-    // Repeatedly pick an index at random to copy into the out array
-    // (in other words, this is sampling WITH replacement).  If we hit
-    // "excludeIndex", try again. Since this is unlikely to happen
-    // frequently (on average, only once), it doesn't make much sense
-    // to optimize.
-    auto index = excludeIndex;
-    while (index == excludeIndex) {
-      index = lrand48() % N;
-    }
-    out[i] = in[index];
-    //    cout << "# exclusive boot " << excludeIndex << " - " << out[i] << endl;
-  }
-}
 
 /*
  * A function, used for testing.
@@ -74,7 +39,7 @@ template <class TYPE>
 TYPE poly (const vector<TYPE>& in) {
   auto s = 0.0;
   for (auto const& x : in) {
-    s += (x > 7.0) ? (x * 1.0) : 0.0;
+    s += (x > 7.0) ? (x * 1.0) : (x * 0.1);
     // s += cos(x * x); // x * x;
   }
   return s; // sqrt(s); 
@@ -104,7 +69,7 @@ void computeOneBootstrap (const vector<TYPE>& mixsource,
   for (auto i = 0; i < N; i++) {
     sum2 += mix[M+i];
   }
-  bootstrap = fabs((sum1/(float) M) - (sum2/(float) N));
+  bootstrap = (sum1/(float) M) - (sum2/(float) N);
 
   //  cout << "# boot avg = " << sum1/M << ", " << sum2 / N << endl << ": diff = " << bootstrap << endl;
 }
@@ -114,7 +79,7 @@ template <class TYPE>
 bool significantDifference (const float significanceLevel,
 			    const vector<TYPE>& f,
 			    const vector<TYPE>& g,
-			    unsigned long NumBootstraps = 10000)
+			    unsigned long NumBootstraps = NBOOTSTRAPS)
 {
   assert (significanceLevel > 0.0);
   assert (significanceLevel < 1.0);
@@ -122,7 +87,7 @@ bool significantDifference (const float significanceLevel,
   // Compute the original difference in means.
   auto M = f.size();
   auto N = g.size();
-  auto originalMeanDiff = fabs((float) average (f) - (float) average (g));
+  auto originalMeanDiff = (float) average (f) - (float) average (g);
 
   // Combine both vectors.
   vector<TYPE> combined;
@@ -155,6 +120,11 @@ bool significantDifference (const float significanceLevel,
   int leftInterval = floor(significanceLevel / 2.0 * NumBootstraps);
   int rightInterval = ceil((1.0 - significanceLevel / 2.0) * NumBootstraps);
 
+  cout << "# originalMeanDiff = " << originalMeanDiff << endl;
+  cout << "# interval = ["
+       << bootstrap[leftInterval] << ","
+       << bootstrap[rightInterval] << "]" << endl;
+
   bool isOutside = ((originalMeanDiff < bootstrap[leftInterval]) ||
   		    (originalMeanDiff > bootstrap[rightInterval]));
 
@@ -175,8 +145,8 @@ bool significant (const int k,
   vector<TYPE> bootWithout;
   bootWithout.resize (NBOOTSTRAPS);
   for (long i = 0; i < NBOOTSTRAPS; i++) {
-    exclusiveBootstrap(k, original, b);
-    bootWithout[i] = poly(b); // / (float) NELEMENTS;
+    bootstrap::exclusive (k, original, b);
+    bootWithout[i] = poly(b) / (float) NELEMENTS;
     //    cout << "# boot without" << endl;
     //    cout << bootWithout[i] << endl;
   }
@@ -187,21 +157,13 @@ bool significant (const int k,
   assert (bootWithout.size() == NBOOTSTRAPS);
   result = significantDifference (ALPHA, bootOriginal, bootWithout);
 
-  //  if (k == 0) {
-  //    for (auto x : bootWithout) {
-  //      cout << x << endl;
-  //    }
-  //  }
 
-  //  if (result) {
   cout << "# significant difference at " << (1.0-ALPHA) << " level? ";
   if (result) { cout << "YES"; } else { cout << "NO"; }
   cout << endl;
   cout << "# results for index " << k << endl;
   cout << "# avg with = " << average (bootOriginal) << endl;
   cout << "# avg without = " << average (bootWithout) << endl;
-  //  cout << "# stddev original = " << stddev (bootOriginal) << endl;
-  //  }
   return result;
 }
 
@@ -212,49 +174,32 @@ int main()
   // Seed the random number generator.
   srand48 (0); // time(NULL));
 
-#if 0
-  // Testing shuffle.
-  vector<vectorType> q, r;
-  q.resize(5);
-  r.resize(5);
-  q[0] = 1;
-  q[1] = 2;
-  q[2] = 3;
-  q[3] = 4;
-  q[4] = 5;
-  shuffle::transform (q, r);
-  for (auto x : r) {
-    cout << "r = " << x << endl;
-  }
-  return 0;
-#endif
-
   vector<vectorType> original;
 
   original.resize (NELEMENTS);
 
+#if 1
+
   // Generate a random vector.
   for (auto &x : original) {
     // Uniform distribution.
-    x = lrand48() % 9 + 1;
+    x = lrand48() % 3 + 1;
   }
 
   // Add an anomalous value.
-  //  original[2] = 20;
-  
-  
-#if 0
+  original[2] = 180; // 640; // 64;
+   
+#else
+
   // Generate a random vector.
   const float lambda = 0.01;
   for (auto &x : original) {
     // Exponential distribution.
     x = -log(drand48())/lambda;
-    cout << "# value = " << x << endl;
-    //    x = (lrand48() % 750) + 1;
   }
 
   // Add an anomalous value.
-  original[8] = 1000;
+  //  original[8] = 1000;
 #endif
   
  
@@ -271,9 +216,9 @@ int main()
   b.resize (NELEMENTS);
   for (int i = 0; i < NBOOTSTRAPS; i++) {
     // Create a new bootstrap into b.
-    bootstrap (original, b);
+    bootstrap::complete (original, b);
     // Compute the function and save it.
-    bootOriginal[i] = poly (b); //  / (float) NELEMENTS;
+    bootOriginal[i] = poly (b) / (float) NELEMENTS;
     cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
   }
 
@@ -287,8 +232,7 @@ int main()
   // For each index, check to see whether the distribution without it
   // is significantly different from the distribution with it (the
   // original).
-  vector<float> bootWithout;
-  bootWithout.resize (NBOOTSTRAPS);
+  vector<float> bootWithout[NELEMENTS];
 
   auto bootOrigAvg = average (bootOriginal);
 
@@ -298,32 +242,35 @@ int main()
 
   for (auto k = 0; k < NELEMENTS; k++) {
 
+    bootWithout[k].resize (NBOOTSTRAPS);
+
     // Build a bootstrap distribution WITHOUT index k.
     for (long i = 0; i < NBOOTSTRAPS; i++) {
-      exclusiveBootstrap(k, original, b);
-      bootWithout[i] = poly(b); //  / (float) NELEMENTS;
+      bootstrap::exclusive (k, original, b);
+      bootWithout[k][i] = poly(b) / (float) NELEMENTS;
     }
 
-    auto bootWoAvg = average (bootWithout);
+    sort (bootWithout[k].begin(), bootWithout[k].end());
 
-    sort (bootWithout.begin(), bootWithout.end());
+    // KS test.
 
-    if ((bootWoAvg < bootOriginal[leftInterval]) ||
-	(bootWoAvg > bootOriginal[rightInterval]) ||
-	(bootOrigAvg < bootWithout[leftInterval]) ||
-	(bootOrigAvg > bootWithout[rightInterval])) {
-      sig[k] = true;
-    } else {
-      sig[k] = false;
+    auto max = -1.0;
+    for (auto i = 0; i < NBOOTSTRAPS; i++) {
+      auto val = fabs(bootOriginal[i]- bootWithout[k][i]);
+      if (val > max) {
+	max = val;
+      }
     }
-
+    // c(0.001) = 1.95
+    // Reject the null hypothesis if KS > c(alpha) * critical value.
+    auto criticalValue = 2.0 * sqrt(((NBOOTSTRAPS*NBOOTSTRAPS)/(2.0 * NBOOTSTRAPS)));
+    //    auto criticalValue = 2.0 * sqrt(((NBOOTSTRAPS*NBOOTSTRAPS)/(2.0 * NBOOTSTRAPS)));
+    auto KS = sqrt(((NBOOTSTRAPS*NBOOTSTRAPS)/(2.0 * NBOOTSTRAPS)) * max);
+    if (KS > criticalValue) {
+      cout << "#element " << k << " is significantly different." << endl;
+    }
   }
 
-  for (long k = 0; k < NELEMENTS; k++) {
-    if (sig[k]) {
-      cout << "# element " << k << " (" << original[k] << ") significant." << endl;
-    }
-  }
   return 0;
 
 }
