@@ -250,23 +250,7 @@ int main()
       bootWithout[k][i] = poly(b) / (float) NELEMENTS;
     }
 
-    sort (bootWithout[k].begin(), bootWithout[k].end());
-
-    // KS test.
-
-    auto max = -1.0;
-    for (auto i = 0; i < NBOOTSTRAPS; i++) {
-      auto val = fabs(bootOriginal[i]- bootWithout[k][i]);
-      if (val > max) {
-	max = val;
-      }
-    }
-    // c(0.001) = 1.95
-    // Reject the null hypothesis if KS > c(alpha) * critical value.
-    auto criticalValue = 2.0 * sqrt(((NBOOTSTRAPS*NBOOTSTRAPS)/(2.0 * NBOOTSTRAPS)));
-    //    auto criticalValue = 2.0 * sqrt(((NBOOTSTRAPS*NBOOTSTRAPS)/(2.0 * NBOOTSTRAPS)));
-    auto KS = sqrt(((NBOOTSTRAPS*NBOOTSTRAPS)/(2.0 * NBOOTSTRAPS)) * max);
-    if (KS > criticalValue) {
+    if (stats::kolmogorovSmirnoff (bootOriginal, bootWithout[k])) {
       cout << "#element " << k << " is significantly different." << endl;
     }
   }
