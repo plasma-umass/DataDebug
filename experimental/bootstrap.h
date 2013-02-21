@@ -1,5 +1,8 @@
 // -*- C++ -*-
 
+#ifndef BOOTSTRAP_H_
+#define BOOTSTRAP_H_
+
 #include <stdlib.h>
 #include <vector>
 
@@ -44,3 +47,5 @@ namespace bootstrap {
   }
   
 }
+
+#endif
