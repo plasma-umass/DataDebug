@@ -22,7 +22,7 @@ namespace DataDebug
         List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
         double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
         bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
-        double[][] min_max_delta_outputs; //This keeps the min and max delta for each output
+        double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
         List<TreeNode> ranges;  //This is a list of all the ranges we have identified
         List<TreeNode> charts;  //This is a list of all the charts in the workbook
         List<StartValue> starting_outputs; //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
@@ -138,7 +138,6 @@ namespace DataDebug
             //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
             starting_outputs = new List<StartValue>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
             output_cells = new List<TreeNode>(); //This will store all the output nodes at the start of the fuzzing procedure
-
             ConstructTree.StoreOutputs(starting_outputs, output_cells, nodes_grid);
             
             //Tree building stopwatch
@@ -150,27 +149,12 @@ namespace DataDebug
             //Grids for storing influences
             double[][][] influences_grid = null;
             int[][][] times_perturbed = null;
-            influences_grid = new double[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
-            times_perturbed = new int[Globals.ThisAddIn.Application.Worksheets.Count + Globals.ThisAddIn.Application.Charts.Count][][];
-            foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-            {
-                influences_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
-                times_perturbed[worksheet.Index - 1] = new int[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
-                for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
-                {
-                    influences_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
-                    times_perturbed[worksheet.Index - 1][row] = new int[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
-                    for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
-                    {
-                        influences_grid[worksheet.Index - 1][row][col] = 0.0;
-                        times_perturbed[worksheet.Index - 1][row][col] = 0;
-                    }
-                }
-            }
+            //influences_grid and times_perturbed are passed by reference so that they can be modified in the setUpGrids method
+            ConstructTree.setUpGrids(ref influences_grid, ref times_perturbed, Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application.Charts);
             
             int outliers_count = 0; 
             //Procedure for swapping values within ranges, one cell at a time
-            if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
+            if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked (not checked by default)
             {
                 List<TreeNode> swap_domain;
                 swap_domain = ranges;
@@ -240,201 +224,7 @@ namespace DataDebug
                         }
                     }
                 }
-
-                foreach (TreeNode range_node in swap_domain)
-                {
-                    //If this node is not a range, continue to the next node because no perturbations can be done on this node.
-                    if (!range_node.isRange())
-                    {
-                        continue;
-                    }
-                    //For every range node
-                    double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
-                    //double max_total_delta = 0;     //The maximum influence found (for normalizing)
-                    //double min_total_delta = -1;     //The minimum influence found (for normalizing)
-                    int swaps_per_range = 30; // 30;
-                    if (range_node.getParents().Count <= swaps_per_range)
-                    {
-                        swaps_per_range = range_node.getParents().Count - 1;
-                    }
-                    Random rand = new Random();
-                    int current_index = 0; 
-                    //Swapping values; loop over all nodes in the range
-                    foreach (TreeNode parent in range_node.getParents())
-                    {
-                        //Do not perturb nodes which are intermediate computations
-                        if (parent.hasParents())
-                        {
-                            continue;
-                        }
-                        input_cells_in_computation_count++;
-                        
-                        //Generate 30 random indices for swapping with siblings
-                        int[] indices = new int[swaps_per_range];
-                        if (swaps_per_range == 30)
-                        {
-                            int indices_pointer = 0;
-                            int random_index = 0;
-                            for (int i = 0; i < swaps_per_range; i++)
-                            {
-                                do
-                                {
-                                    random_index = rand.Next(range_node.getParents().Count);
-                                } while (random_index == current_index);
-                                indices[indices_pointer] = random_index;
-                                indices_pointer++;
-                            }
-                        }
-                        //Generate indices for swapping with siblings -- include all indices but the one for the current node (so as to not swap with itself)
-                        else
-                        {
-                            int sibling_ind = 0; //sibling_ind is a counter that goes through all indices
-                            for (int i = 0; i < swaps_per_range; i++)
-                            {
-                                if (sibling_ind == current_index)       //if the sibling index is the same as the current node's index, go to the next index
-                                {
-                                    sibling_ind++;
-                                }
-                                indices[i] = sibling_ind;
-                                sibling_ind++;
-                            }
-                        }
-
-                        Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
-                        string formula = "";
-                        if (cell.HasFormula)
-                        {
-                            formula = cell.Formula;
-                        }
-                        StartValue start_value = new StartValue(cell.Value); //Store the initial value of this cell before swapping
-                        double total_delta = 0.0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
-                        double delta = 0.0;   // Stores the change in outputs caused by a single swap
-                        //Swapping loop - swap every sibling or a reduced number of siblings (approximately equal to swaps_per_range), for reduced complexity and runtime
-                        //foreach (TreeNode sibling in node.getParents())
-                        foreach (int sibling_index in indices)
-                        {
-                            TreeNode sibling = range_node.getParents()[sibling_index];
-                            if (sibling.getName() == parent.getName() && sibling.getWorksheetObject() == parent.getWorksheetObject())
-                            {
-                                continue; // If this is the current cell, move on to the next cell -- this should never happen because the sibling index should never equal the current index
-                            }
-
-                            try
-                            {
-                                times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
-                            }
-                            catch
-                            {
-                                cell.Interior.Color = System.Drawing.Color.Purple;
-                            }
-                            Excel.Range sibling_cell = sibling.getWorksheetObject().get_Range(sibling.getName());
-                            cell.Value = sibling_cell.Value; //This is the swap -- we assign the value of the sibling cell to the value of our cell
-                            delta = 0.0;
-                            //foreach (TreeNode n in output_cells)
-                            for (int i = 0; i < output_cells.Count; i++)
-                            {
-                                try
-                                {
-                                    //If this output is not reachable from this cell, continue
-                                    if (reachable_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][i] == false)
-                                    {
-                                        continue;
-                                    }
-                                }
-                                catch
-                                {
-                                    continue;
-                                }
-                                TreeNode n = output_cells[i];
-                                if (starting_outputs[i].get_string() == null) // If the output is not a string
-                                {
-                                    if (!n.isChart())   //If the output is not a chart, it must be a number
-                                    {
-                                        delta = Math.Abs(starting_outputs[i].get_double() - (double)n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
-                                    }
-                                    else  // The node is a chart
-                                    {
-                                        double sum = 0.0;
-                                        TreeNode parent_range = n.getParents()[0];
-                                        foreach (TreeNode par in parent_range.getParents())
-                                        {
-                                            sum = sum + (double)par.getWorksheetObject().get_Range(par.getName()).Value;
-                                        }
-                                        double average = sum / parent_range.getParents().Count;
-                                        delta = Math.Abs(starting_outputs[i].get_double() - average);
-                                    }
-                                }
-                                else  // If the output is a string
-                                {
-                                    if (String.Equals(starting_outputs[i].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
-                                    {
-                                        delta = 0.0;
-                                    }
-                                    else
-                                    {
-                                        delta = 1.0;
-                                    }
-                                }
-                                //Add to the impact of the cell for this output
-                                impacts_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][i] += delta;
-                                //Compare the min/max values for this output to this delta
-                                if (min_max_delta_outputs[i][0] == -1.0)
-                                {
-                                    min_max_delta_outputs[i][0] = delta;
-                                }
-                                else
-                                {
-                                    if (min_max_delta_outputs[i][0] > delta)
-                                    {
-                                        min_max_delta_outputs[i][0] = delta;
-                                    }
-                                }
-                                if (min_max_delta_outputs[i][1] < delta)
-                                {
-                                    min_max_delta_outputs[i][1] = delta;
-                                }
-                                //index++;
-                                total_delta = total_delta + delta;
-                            }
-                        }
-                        
-                        if (start_value.get_string() == null)
-                        {
-                            cell.Value = start_value.get_double();
-                        }
-                        else
-                        {
-                            cell.Value = start_value.get_string();
-                        }
-                        if (formula != "")
-                        {
-                            cell.Formula = formula;
-                        }
-                        current_index++;
-                    }
-
-                    //TODO: if there are overflow issues consider making total_influence an array of doubles (of size 100 for instance) and use each slot as a bin for parts of the sum
-                    //each part can be divided by the denominator and then the average_influence is the sum of the entries in the array
-                }
-
-                //Convert reachable_impacts_grid to array form
-                reachable_impacts_grid_array = new double[output_cells.Count][][];
-                for (int i = 0; i < output_cells.Count; i++)
-                {
-                    reachable_impacts_grid_array[i] = reachable_impacts_grid[i].ToArray(); 
-                }
-
-                //Populate reachable_impacts_grid_array from impacts_grid
-                for (int i = 0; i < output_cells.Count; i++)
-                {
-                    for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
-                    {
-                        reachable_impacts_grid_array[i][d] = new double[4] { reachable_impacts_grid_array[i][d][0], 
-                            reachable_impacts_grid_array[i][d][1], 
-                            reachable_impacts_grid_array[i][d][2], 
-                            impacts_grid[(int)reachable_impacts_grid_array[i][d][0]][(int)reachable_impacts_grid_array[i][d][1]][(int)reachable_impacts_grid_array[i][d][2]][i] };
-                    }
-                }
+                ConstructTree.SwappingProcedure(swap_domain, input_cells_in_computation_count, min_max_delta_outputs, impacts_grid, times_perturbed, output_cells, reachable_grid, starting_outputs, ref reachable_impacts_grid_array, reachable_impacts_grid);
 
                 //Stop timing swapping procedure:
                 swapping_timespan = global_stopwatch.Elapsed;
