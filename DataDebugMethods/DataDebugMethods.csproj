@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="ConstructTree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StartValue.cs" />
     <Compile Include="TreeNode.cs" />
     <Compile Include="Utility.cs" />
   </ItemGroup>
