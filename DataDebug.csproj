@@ -262,6 +262,10 @@
       <Project>{64DBF1B4-B0B7-4490-8C7C-2DEEA22CB25A}</Project>
       <Name>DataDebugMethods</Name>
     </ProjectReference>
+    <ProjectReference Include="ExcelParser\ExcelParser.fsproj">
+      <Project>{6DE2A2B9-C029-4BDB-8992-D16276471D9F}</Project>
+      <Name>ExcelParser</Name>
+    </ProjectReference>
   </ItemGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
