@@ -129,7 +129,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindRangeReferencesWithQuotes(ref string formula, string worksheet_name, MatchCollection matchedRanges, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Worksheet referencedWorksheet, TreeDict nodes)
+        public static void FindRangeReferencesWithQuotes(ref string formula, string worksheet_name, MatchCollection matchedRanges, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Worksheet referencedWorksheet, TreeDict nodes)
         {
             //First look for range references of the form 'worksheet_name'!A1:A10 in the formula (with quotation marks around the name)
             matchedRanges = regex_array[4 * (ws_index - 1)].Matches(formula);
@@ -191,7 +191,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindRangeReferencesWithoutQuotes(ref string formula, string worksheet_name, MatchCollection matchedRanges, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Worksheet referencedWorksheet, TreeDict nodes)
+        public static void FindRangeReferencesWithoutQuotes(ref string formula, string worksheet_name, MatchCollection matchedRanges, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Worksheet referencedWorksheet, TreeDict nodes)
         {
             //Next look for range references of the form worksheet_name!A1:A10 in the formula (no quotation marks around the name)
             matchedRanges = regex_array[4 * (ws_index - 1) + 1].Matches(formula);
@@ -251,7 +251,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindCellReferencesWithQuotes(ref string formula, string worksheet_name, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes)
+        public static void FindCellReferencesWithQuotes(ref string formula, string worksheet_name, MatchCollection matchedCells, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes)
         {
             // Now we look for references of the kind 'worksheet_name'!A1 (with quotation marks)
             matchedCells = regex_array[4 * (ws_index - 1) + 2].Matches(formula);
@@ -298,7 +298,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindCellReferencesWithoutQuotes(string formula, string worksheet_name, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes)
+        public static void FindCellReferencesWithoutQuotes(string formula, string worksheet_name, MatchCollection matchedCells, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Worksheet ws_ref, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes)
         {
             //Lastly we look for references of the kind worksheet_name!A1 (without quotation marks)
             matchedCells = regex_array[4 * (ws_index - 1) + 3].Matches(formula);
@@ -345,7 +345,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindRangeReferencesInCurrentWorksheet(ref string formula, MatchCollection matchedRanges, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes, Excel.Range c)
+        public static void FindRangeReferencesInCurrentWorksheet(ref string formula, MatchCollection matchedRanges, MatchCollection matchedCells, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes, Excel.Range c)
         {
             //First look for range references in the formula
             matchedRanges = regex_array[regex_array.Length - 2].Matches(formula);
@@ -404,7 +404,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindNamedRangeReferences(ref string formula, MatchCollection matchedRanges, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes, Excel.Range c, Excel.Names names)
+        public static void FindNamedRangeReferences(ref string formula, MatchCollection matchedRanges, MatchCollection matchedCells, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes, Excel.Range c, Excel.Names names)
         {
             //Find any references to named ranges
             //TODO -- this should probably be done in a better way - with a regular expression that will catch things like this:
@@ -505,7 +505,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindCellReferencesInCurrentWorksheet(ref string formula, MatchCollection matchedRanges, MatchCollection matchedCells, Regex[] regex_array, int ws_index, System.Collections.Generic.List<TreeNode> ranges, TreeNode formula_cell, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes, Excel.Range c)
+        public static void FindCellReferencesInCurrentWorksheet(ref string formula, MatchCollection matchedRanges, MatchCollection matchedCells, Regex[] regex_array, int ws_index, TreeList ranges, TreeNode formula_cell, Excel.Workbook activeWorkbook, Excel.Sheets worksheets, TreeDict nodes, Excel.Range c)
         {
             matchedCells = regex_array[regex_array.Length - 1].Matches(formula);
             foreach (Match m in matchedCells)
@@ -538,7 +538,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void FindReferencesInCharts(Regex[] regex_array, System.Collections.Generic.List<TreeNode> ranges, Excel.Workbook activeWorkbook, Excel.Sheets charts, TreeDict nodes, string[] worksheet_names, Excel.Worksheet[] worksheet_refs, Excel.Sheets worksheets, Excel.Names names,TreeList nodelist)
+        public static void FindReferencesInCharts(Regex[] regex_array, TreeList ranges, Excel.Workbook activeWorkbook, Excel.Sheets charts, TreeDict nodes, string[] worksheet_names, Excel.Worksheet[] worksheet_refs, Excel.Sheets worksheets, Excel.Names names,TreeList nodelist)
         {
             foreach (Excel.Chart chart in charts)
             {
@@ -1173,7 +1173,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void StoreOutputs(System.Collections.Generic.List<StartValue> starting_outputs, System.Collections.Generic.List<TreeNode> output_cells, TreeDict nodes)
+        public static void StoreOutputs(System.Collections.Generic.List<StartValue> starting_outputs, TreeList output_cells, TreeDict nodes)
         {
             // Collect output values
             foreach (TreeDictPair tdp in nodes)
@@ -1224,7 +1224,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static string GenerateGraphVizTree(System.Collections.Generic.List<TreeNode> nodes)
+        public static string GenerateGraphVizTree(TreeList nodes)
         {
             string tree = "";
             foreach (TreeNode node in nodes)
@@ -1255,7 +1255,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static void SwappingProcedure(System.Collections.Generic.List<TreeNode> swap_domain, int input_cells_in_computation_count, double[][] min_max_delta_outputs, double[][][][] impacts_grid, int[][][] times_perturbed, System.Collections.Generic.List<TreeNode> output_cells, bool[][][][] reachable_grid, System.Collections.Generic.List<StartValue> starting_outputs, ref double[][][] reachable_impacts_grid_array, System.Collections.Generic.List<double[]>[] reachable_impacts_grid)
+        public static void SwappingProcedure(TreeList swap_domain, int input_cells_in_computation_count, double[][] min_max_delta_outputs, double[][][][] impacts_grid, int[][][] times_perturbed, TreeList output_cells, bool[][][][] reachable_grid, System.Collections.Generic.List<StartValue> starting_outputs, ref double[][][] reachable_impacts_grid_array, System.Collections.Generic.List<double[]>[] reachable_impacts_grid)
         {
             foreach (TreeNode range_node in swap_domain)
             {
@@ -1453,7 +1453,7 @@ namespace DataDebugMethods
 
         }
 
-        public static void ComputeZScoresAndFindOutliers(System.Collections.Generic.List<TreeNode> output_cells, double[][][] reachable_impacts_grid_array, double[][][][] impacts_grid, int[][][] times_perturbed, Excel.Sheets worksheets, int outliers_count)
+        public static void ComputeZScoresAndFindOutliers(TreeList output_cells, double[][][] reachable_impacts_grid_array, double[][][][] impacts_grid, int[][][] times_perturbed, Excel.Sheets worksheets, int outliers_count)
         {
             //Now for each output, compute the z-score of the impact of each input
             for (int i = 0; i < output_cells.Count; i++)
