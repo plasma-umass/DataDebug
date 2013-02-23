@@ -116,7 +116,11 @@ int main()
     }
 
     if (stats::kolmogorovSmirnoff (bootOriginal, bootWithout)) {
-      cout << "#element " << k << " is significantly different." << endl;
+      cout << "#element " << k << " is significantly different per KS test." << endl;
+    }
+
+    if (stats::meanDistance (bootOriginal, bootWithout)) {
+      cout << "#element " << k << " is significantly different per mean-distance test." << endl;
     }
   }
 

@@ -50,6 +50,34 @@ namespace stats {
     return sqrt(s / (in.size()-1));
   }
 
+  template <class TYPE>
+  bool meanDistance (vector<TYPE>& a,
+		     vector<TYPE>& b,
+		     float significanceLevel = 0.05)
+  {
+    assert (a.size() == b.size());
+
+    sort (a.begin(), a.end());
+    sort (b.begin(), b.end());
+
+    auto aAverage = average (a);
+    auto bAverage = average (b);
+
+    auto leftInterval  = floor(significanceLevel / 2.0 * a.size());
+    auto rightInterval = ceil((1.0 - significanceLevel / 2.0) * a.size());
+
+    bool result;
+    if ((aAverage < b[leftInterval]) ||
+	(aAverage > b[rightInterval]) ||
+	(bAverage < a[leftInterval]) ||
+	(bAverage > a[rightInterval])) {
+      result = true;
+    } else {
+      result = false;
+    }
+    return result;
+  }
+
   /// @brief returns true iff a and b are significantly different.
   /// i.e., it's safe to reject the null hypothesis that they are from
   /// the same distribution.
