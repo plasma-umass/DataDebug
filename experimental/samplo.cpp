@@ -119,6 +119,10 @@ int main()
       cout << "#element " << k << " is significantly different per KS test." << endl;
     }
 
+    if (stats::mannWhitney (bootOriginal, bootWithout)) {
+      cout << "#element " << k << " is significantly different per Mann-Whitney test." << endl;
+    }
+
     if (stats::meanDistance (bootOriginal, bootWithout)) {
       cout << "#element " << k << " is significantly different per mean-distance test." << endl;
     }
