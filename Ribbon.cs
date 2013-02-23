@@ -11,6 +11,8 @@ using System.Text.RegularExpressions;
 using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
 using System.Diagnostics;
+using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
+using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 
 namespace DataDebug
 {
@@ -19,7 +21,7 @@ namespace DataDebug
         private int TRANSPARENT_COLOR_INDEX = -4142;  //-4142 is the transparent default background
         //private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
         List<TreeNode> originalColorNodes = new List<TreeNode>(); //List for storing the original colors for all nodes
-        List<TreeNode> nodes;        //This is a list holding all the TreeNodes in the Excel file
+        List<TreeNode> nodelist;        //This is a list holding all the TreeNodes in the Excel file
         double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
         bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
         double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
@@ -62,20 +64,18 @@ namespace DataDebug
             ArrayList analysisRanges = ConstructTree.GetFormulaRanges(Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application);
             formula_cells_count = ConstructTree.CountFormulaCells(analysisRanges);
 
-            // Create nodes for every cell containing a formula; modifies nodes_grid
-            TreeNode[][][] nodes_grid = ConstructTree.CreateFormulaNodes(analysisRanges, Globals.ThisAddIn.Application);
-
-            //Next we go through the cells that contain formulas in order to extract the dependencies between them and their inputs
-            //For every cell that contains a formula, we get the node we created for that cell. Then we parse the formula using a regular expresion 
-            //to find any references to cells or ranges. (We first look for references to ranges, because they supersede the single cell references.)
-            //Whenever a reference is found, we update the parent-child relationship between the formula cell and the referenced cell or range.
-            //If a range reference is found, we create a node representing that range, and we also create nodes for all of the cells that compose it. 
-            //The range is connected to the formula cell, and the composing cells are connected to the range. 
-            //If a single cell reference is found, we connect it to the formula cell directly. 
+            // Create nodes for every cell containing a formula
+            // old nodes_grid coordinates were:
+            //  1st: worksheet index
+            //  2nd: row
+            //  3rd: col
+            TreeDict nodes = ConstructTree.CreateFormulaNodes(analysisRanges, Globals.ThisAddIn.Application);
             
             // Get the names of all worksheets in the workbook and store them in the array worksheet_names
-            String[] worksheet_names = new String[Globals.ThisAddIn.Application.Worksheets.Count]; // Array holding the names of every worksheet in the workbook
-            Excel.Worksheet[] worksheet_refs = new Excel.Worksheet[Globals.ThisAddIn.Application.Worksheets.Count]; // ditto, but for the actual references
+            String[] worksheet_names = new String[Globals.ThisAddIn.Application.Worksheets.Count];
+            // ditto, but for the actual references
+            Excel.Worksheet[] worksheet_refs = new Excel.Worksheet[Globals.ThisAddIn.Application.Worksheets.Count]; 
+
             int index_worksheet_names = 0; // Index for populating the worksheet_names
             foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
             {
@@ -91,7 +91,12 @@ namespace DataDebug
                 {
                     // Sanity check-- ensure that cells from ranges in analysisRanges are inside the UsedRange
                     Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c), "This spreadsheet violates a condition thought to be impossible.");
-                    TreeNode formula_cell = nodes_grid[c.Worksheet.Index - 1][c.Row - 1][c.Column - 1];
+                    TreeNode formula_cell;
+                    AST.Address addr = Utility.ParseXLAddress(c);
+                    if (!nodes.TryGetValue(addr, out formula_cell))
+                    {
+                        throw new Exception("Sometimes you eat the bear, and sometimes, well, he eats you.");
+                    }
 
                     string formula = c.Formula;  //The formula contained in the cell
                     ConstructTree.StripLookups(formula);
@@ -107,22 +112,22 @@ namespace DataDebug
                         Excel.Worksheet ws_ref = worksheet_refs[i];
                         string worksheet_name = s.Replace("+", @"\+").Replace("^", @"\^").Replace("$", @"\$").Replace(".", @"\."); //Escape certain characters in the regular expression
                         //First look for range references of the form 'worksheet_name'!A1:A10 in the formula (with quotation marks around the name)
-                        ConstructTree.FindRangeReferencesWithQuotes(formula, worksheet_name, matchedRanges, regex_array, ws_index, ranges, formula_cell, ws_ref, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets[ws_index], nodes_grid);
+                        ConstructTree.FindRangeReferencesWithQuotes(ref formula, worksheet_name, matchedRanges, regex_array, ws_index, ranges, formula_cell, ws_ref, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets[ws_index], nodes);
 
                         //Next look for range references of the form worksheet_name!A1:A10 in the formula (no quotation marks around the name)
-                        ConstructTree.FindRangeReferencesWithoutQuotes(formula, worksheet_name, matchedRanges, regex_array, ws_index, ranges, formula_cell, ws_ref, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets[ws_index], nodes_grid);
+                        ConstructTree.FindRangeReferencesWithoutQuotes(ref formula, worksheet_name, matchedRanges, regex_array, ws_index, ranges, formula_cell, ws_ref, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets[ws_index], nodes);
 
                         // Now we look for references of the kind 'worksheet_name'!A1 (with quotation marks)
-                        ConstructTree.FindCellReferencesWithQuotes(formula, worksheet_name, matchedCells, regex_array, ws_index, ranges, formula_cell, ws_ref, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes_grid);
+                        ConstructTree.FindCellReferencesWithQuotes(ref formula, worksheet_name, matchedCells, regex_array, ws_index, ranges, formula_cell, ws_ref, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes);
                         
                         ws_index++;
                     }
 
-                    ConstructTree.FindRangeReferencesInCurrentWorksheet(formula, matchedRanges, matchedCells, regex_array, ws_index, ranges, formula_cell, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes_grid, c);
+                    ConstructTree.FindRangeReferencesInCurrentWorksheet(ref formula, matchedRanges, matchedCells, regex_array, ws_index, ranges, formula_cell, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes, c);
 
-                    ConstructTree.FindNamedRangeReferences(formula, matchedRanges, matchedCells, regex_array, ws_index, ranges, formula_cell, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes_grid, c, Globals.ThisAddIn.Application.Names);
+                    ConstructTree.FindNamedRangeReferences(ref formula, matchedRanges, matchedCells, regex_array, ws_index, ranges, formula_cell, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes, c, Globals.ThisAddIn.Application.Names);
 
-                    ConstructTree.FindCellReferencesInCurrentWorksheet(formula, matchedRanges, matchedCells, regex_array, ws_index, ranges, formula_cell, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes_grid, c);
+                    ConstructTree.FindCellReferencesInCurrentWorksheet(ref formula, matchedRanges, matchedCells, regex_array, ws_index, ranges, formula_cell, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Worksheets, nodes, c);
                      
                 }
             }
@@ -132,14 +137,15 @@ namespace DataDebug
             //disp.textBox1.Text = ConstructTree.GenerateGraphVizTree(nodes);
             //disp.ShowDialog();
 
-            ConstructTree.FindReferencesInCharts(regex_array, ranges, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Charts, nodes_grid, worksheet_names, worksheet_refs, Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application.Names, nodes);
+            ConstructTree.FindReferencesInCharts(regex_array, ranges, Globals.ThisAddIn.Application.ActiveWorkbook, Globals.ThisAddIn.Application.Charts, nodes, worksheet_names, worksheet_refs, Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application.Names, nodelist);
 
             //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
             //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
             starting_outputs = new List<StartValue>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
             output_cells = new List<TreeNode>(); //This will store all the output nodes at the start of the fuzzing procedure
-            ConstructTree.StoreOutputs(starting_outputs, output_cells, nodes_grid);
-            
+
+            ConstructTree.StoreOutputs(starting_outputs, output_cells, nodes);
+         
             //Tree building stopwatch
             TimeSpan tree_building_timespan = global_stopwatch.Elapsed;
 
@@ -202,28 +208,19 @@ namespace DataDebug
                 }
 
                 //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-                foreach (TreeNode[][] node_arr_arr in nodes_grid)
+                //System.Windows.Forms.MessageBox.Show("There are " + nodes.Count.ToString() + " nodes in our dictionary.");
+                foreach (TreeDictPair tdp in nodes)
                 {
-                    if (node_arr_arr != null)
+                    var node = tdp.Value;
+                    if (!node.hasParents())
                     {
-                        foreach (TreeNode[] node_arr in node_arr_arr)
-                        {
-                            foreach (TreeNode node in node_arr)
-                            {
-                                if (node != null)
-                                {
-                                    if (!node.hasParents())
-                                    {
-                                        node.setWeight(1.0);  //Set the weight of all input nodes to 1.0 to start
-                                        //Now we propagate it's weight to all of it's children
-                                        TreeNode.propagateWeightUp(node, 1.0, node, output_cells, reachable_grid, reachable_impacts_grid);
-                                        raw_input_cells_in_computation_count++;
-                                    }
-                                }
-                            }
-                        }
+                        node.setWeight(1.0);  //Set the weight of all input nodes to 1.0 to start
+                        //Now we propagate it's weight to all of it's children
+                        TreeNode.propagateWeightUp(node, 1.0, node, output_cells, reachable_grid, reachable_impacts_grid);
+                        raw_input_cells_in_computation_count++;
                     }
                 }
+
                 ConstructTree.SwappingProcedure(swap_domain, input_cells_in_computation_count, min_max_delta_outputs, impacts_grid, times_perturbed, output_cells, reachable_grid, starting_outputs, ref reachable_impacts_grid_array, reachable_impacts_grid);
 
                 //Stop timing swapping procedure:
@@ -449,7 +446,7 @@ namespace DataDebug
             stats_text = "";
             
             //Construct a new tree every time the tool is run
-            nodes = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
+            nodelist = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
             ranges = new List<TreeNode>();        //This is a list holding all the ranges of TreeNodes in the Excel file
             charts = new List<TreeNode>();        //This is a list holding all the chart TreeNodes in the Excel file
             
