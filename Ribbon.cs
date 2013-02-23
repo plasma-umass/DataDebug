@@ -208,7 +208,7 @@ namespace DataDebug
                 }
 
                 //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-                //System.Windows.Forms.MessageBox.Show("There are " + nodes.Count.ToString() + " nodes in our dictionary.");
+                System.Windows.Forms.MessageBox.Show("There are " + nodes.Count.ToString() + " nodes in our dictionary.");
                 foreach (TreeDictPair tdp in nodes)
                 {
                     var node = tdp.Value;
