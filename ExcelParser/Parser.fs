@@ -35,6 +35,12 @@
     let AddressReference ws: Parser<_> = (attempt (AddressReferenceWorksheet ws)) <|> (AddressReferenceNoWorksheet ws)
     let Reference ws: Parser<_> = (attempt (RangeReference ws)) <|> (AddressReference ws)
 
+    // Expressions
+    let Expression ws: Parser<_> = Reference ws
+
+    // Formulas
+    let Formula ws: Parser<_> = pstring "=" >>. (Expression ws) .>> eof
+
     // monadic wrapper for success/failure
     let test p str =
         match run p str with
@@ -51,5 +57,10 @@
         | Success(range, _, _) -> Some(range)
         | Failure(errorMsg, _, _) -> None
 
-    // helper function for mortals to comprehend; note the use of the EOF parser!
-    let ConsoleTest(s: string) = test ((Reference fake_ws) .>> eof) s
+    let GetReference str ws: Reference option =
+        match run ((Reference ws) .>> eof) str with
+        | Success(reference, _, _) -> Some(reference)
+        | Failure(errorMsg, _, _) -> None
+
+    // helper function for mortals to comprehend; note that Formula looks for EOF
+    let ConsoleTest(s: string) = test (Formula fake_ws) s

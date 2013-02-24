@@ -10,12 +10,12 @@ namespace DataDebugMethods
 {
     public static class Utility
     {
-        public static AST.Range ParseXLRange(Excel.Range rng)
+        public static AST.Reference ParseReferenceOfXLRange(Excel.Range rng)
         {
             string rng_r1c1 = rng.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false];
-            FSharpOption<AST.Range> r = ExcelParser.GetRange(rng_r1c1, rng.Worksheet);
+            FSharpOption<AST.Reference> r = ExcelParser.GetReference(rng_r1c1, rng.Worksheet);
 
-            if (FSharpOption<AST.Range>.get_IsNone(r))
+            if (FSharpOption<AST.Reference>.get_IsNone(r))
             {
                 throw new Exception("Unimplemented address feature in address string: '" + rng_r1c1 + "'");
             }
@@ -30,16 +30,9 @@ namespace DataDebugMethods
             return ExcelParser.GetAddress(rng_r1c1, rng.Worksheet);
         }
 
-        public static bool InsideRectangle(Excel.Range rng, AST.Range rect)
+        public static bool InsideRectangle(Excel.Range rng, AST.Reference rect)
         {
-            AST.Range addr_rng = ParseXLRange(rng);
-
-            bool is_bad = (addr_rng.getXLeft() < rect.getXLeft() ||
-                           addr_rng.getYTop() < rect.getYTop() ||
-                           addr_rng.getXRight() > rect.getXRight() ||
-                           addr_rng.getYBottom() > rect.getYBottom());
-
-            return !is_bad;
+            return ParseReferenceOfXLRange(rng).InsideRef(rect);
         }
 
         public static bool InsideUsedRange(Excel.Range rng)
@@ -47,9 +40,9 @@ namespace DataDebugMethods
             return InsideRectangle(rng, UsedRange(rng));
         }
 
-        public static AST.Range UsedRange(Excel.Range rng)
+        public static AST.Reference UsedRange(Excel.Range rng)
         {
-            return ParseXLRange(rng.Worksheet.UsedRange);
+            return ParseReferenceOfXLRange(rng.Worksheet.UsedRange);
         }
     }
 }

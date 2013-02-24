@@ -32,31 +32,51 @@
             self.X = addr.X &&
             self.Y = addr.Y &&
             self.worksheet_idx = addr.worksheet_idx
+        member self.InsideRange(rng: Range) : bool =
+            not (self.X < rng.getXLeft() ||
+                 self.Y < rng.getYTop() ||
+                 self.X > rng.getXRight() ||
+                 self.Y > rng.getYBottom());
+        member self.InsideAddr(addr: Address) : bool =
+            self.X = addr.X && self.Y = addr.Y
 
-    type Range(topleft: Address, bottomright: Address) =
+    and Range(topleft: Address, bottomright: Address) =
         let _tl = topleft
-        // single-address range or multi-address range?
         let _br = bottomright  
         override self.ToString() =
             let tlstr = topleft.ToString()
             let brstr = bottomright.ToString()
             tlstr + "," + brstr
-        member public self.getXLeft() : int = _tl.X
-        member public self.getXRight() : int = _br.X
-        member public self.getYTop() : int = _tl.Y
-        member public self.getYBottom() : int = _br.Y
+        member self.getXLeft() : int = _tl.X
+        member self.getXRight() : int = _br.X
+        member self.getYTop() : int = _tl.Y
+        member self.getYBottom() : int = _br.Y
+        member self.InsideRange(rng: Range) : bool =
+            not (self.getXLeft() < rng.getXLeft() ||
+                 self.getYTop() < rng.getYTop() ||
+                 self.getXRight() > rng.getXRight() ||
+                 self.getYBottom() > rng.getYBottom());
+        // Yup, weird case.  This is because we actually
+        // distinguish between addresses and ranges, unlike Excel.
+        member self.InsideAddr(addr: Address) : bool =
+            not (self.getXLeft() < addr.X ||
+                 self.getYTop() < addr.Y ||
+                 self.getXRight() > addr.X ||
+                 self.getYBottom() > addr.Y);
 
     type ReferenceRange(wsname: string option, rng: Range) =
         override self.ToString() =
             match wsname with
             | Some(wsn) -> "ReferenceRange(" + wsn.ToString() + ", " + rng.ToString() + ")"
             | None -> "ReferenceRange(None, " + rng.ToString() + ")"
+        member self.Range = rng
 
     type ReferenceAddress(wsname: string option, addr: Address) =
         override self.ToString() =
             match wsname with
             | Some(wsn) -> "ReferenceAddress(" + wsname.ToString() + ", " + addr.ToString() + ")"
             | None -> "ReferenceAddress(None, " + addr.ToString() + ")"
+        member self.Address = addr
 
     type Reference =
     | RangeRef of ReferenceRange
@@ -65,3 +85,15 @@
             match self with
             | RangeRef(rr) -> rr.ToString()
             | AddressRef(ar) -> ar.ToString()
+        member self.InsideAddr(addr: Address) : bool =
+            match self with
+            | RangeRef(rr) -> rr.Range.InsideAddr(addr)
+            | AddressRef(ar) -> ar.Address.InsideAddr(addr)
+        member self.InsideRange(rng: Range) : bool =
+            match self with
+            | RangeRef(rr) -> rr.Range.InsideRange(rng)
+            | AddressRef(ar) -> ar.Address.InsideRange(rng)
+        member self.InsideRef(ref: Reference) : bool =
+            match ref with
+            | RangeRef(rr) -> self.InsideRange(rr.Range)
+            | AddressRef(ar) -> self.InsideAddr(ar.Address)
