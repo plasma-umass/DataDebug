@@ -33,20 +33,35 @@
             self.Y = addr.Y &&
             self.worksheet_idx = addr.worksheet_idx
 
-    type Range(topleft: Address, bottomright: Address option) =
+    type Range(topleft: Address, bottomright: Address) =
         let _tl = topleft
         // single-address range or multi-address range?
-        let _br =
-            match bottomright with
-            | Some(br) -> br
-            | None -> topleft    
+        let _br = bottomright  
         override self.ToString() =
             let tlstr = topleft.ToString()
-            let brstr = match bottomright with
-                        | Some(br) -> br.ToString()
-                        | None -> "*"
+            let brstr = bottomright.ToString()
             tlstr + "," + brstr
         member public self.getXLeft() : int = _tl.X
         member public self.getXRight() : int = _br.X
         member public self.getYTop() : int = _tl.Y
         member public self.getYBottom() : int = _br.Y
+
+    type ReferenceRange(wsname: string option, rng: Range) =
+        override self.ToString() =
+            match wsname with
+            | Some(wsn) -> "ReferenceRange(" + wsn.ToString() + ", " + rng.ToString() + ")"
+            | None -> "ReferenceRange(None, " + rng.ToString() + ")"
+
+    type ReferenceAddress(wsname: string option, addr: Address) =
+        override self.ToString() =
+            match wsname with
+            | Some(wsn) -> "ReferenceAddress(" + wsname.ToString() + ", " + addr.ToString() + ")"
+            | None -> "ReferenceAddress(None, " + addr.ToString() + ")"
+
+    type Reference =
+    | RangeRef of ReferenceRange
+    | AddressRef of ReferenceAddress
+        override self.ToString() =
+            match self with
+            | RangeRef(rr) -> rr.ToString()
+            | AddressRef(ar) -> ar.ToString()
