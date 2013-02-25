@@ -14,7 +14,7 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 100;
+const auto NELEMENTS = 10;
 const auto NBOOTSTRAPS = 5000;
 
 // = (1-alpha) confidence interval
@@ -39,7 +39,8 @@ template <class TYPE>
 TYPE poly (const vector<TYPE>& in) {
   auto s = 0.0;
   for (auto const& x : in) {
-    s += (x > 7.0) ? (x * 1.0) : (x * 0.1);
+    s += x;
+    //    s += (x > 7.0) ? (x * 1.0) : (x * 0.0);
     // s += cos(x * x); // x * x;
   }
   return s; // sqrt(s); 
@@ -65,7 +66,7 @@ int main()
   }
 
   // Add an anomalous value.
-  original[2] = 180; // 640; // 64;
+  original[2] = 10; // 180; // 640; // 64;
    
 #else
 
@@ -115,6 +116,7 @@ int main()
       bootWithout[i] = poly(b) / (float) NELEMENTS;
     }
 
+#if 0
     if (stats::kolmogorovSmirnoff (bootOriginal, bootWithout)) {
       cout << "#element " << k << " is significantly different per KS test." << endl;
     }
@@ -122,6 +124,7 @@ int main()
     if (stats::mannWhitney (bootOriginal, bootWithout)) {
       cout << "#element " << k << " is significantly different per Mann-Whitney test." << endl;
     }
+#endif
 
     if (stats::meanDistance (bootOriginal, bootWithout)) {
       cout << "#element " << k << " is significantly different per mean-distance test." << endl;

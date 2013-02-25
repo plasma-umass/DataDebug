@@ -63,7 +63,7 @@ namespace stats {
     sort (a.begin(), a.end());
     sort (b.begin(), b.end());
 
-    int R[2] = {0, 0};
+    double R[2] = {0.0, 0.0};
 
     // Compute ranks.
     auto aIndex = 0;
@@ -79,24 +79,51 @@ namespace stats {
 	if (a[aIndex] < b[bIndex]) {
 	  R[0] += i + 1;
 	  aIndex++;
-	} else {
+	} else if (a[aIndex] > b[bIndex]) {
 	  R[1] += i + 1;
+	  bIndex++;
+	}
+	else {
+	  // Equal: split the tie.
+	  assert (a[aIndex] == b[bIndex]);
+	  R[0] += (i + 1)/2.0;
+	  R[1] += (i + 1)/2.0;
+	  aIndex++;
 	  bIndex++;
 	}
       }
     }
 
-    int U[2] = { 0, 0 };
-    U[0] = R[0] - (a.size()*(a.size()+1))/2.0;
-    U[1] = R[1] - (b.size()*(b.size()+1))/2.0;
-    assert (U[0] + U[1] == a.size() * b.size());
-    auto m = (a.size() * b.size()) / 2.0;
-    auto s = sqrt((a.size() * b.size() * (a.size() + b.size() + 1.0))/12.0);
+    double U[2] = { 0.0, 0.0 };
+    auto n1 = a.size();
+    auto n2 = b.size();
+    auto N  = n1 + n2;
+    U[0] = R[0] - (n1*(n1+1))/2.0;
+    U[1] = R[1] - (n2*(n2+1))/2.0;
+    assert (U[0] + U[1] == n1 * n2);
+    //    auto mean = (n1 * n2) / 2.0;
 
-    float zScore = fabs(min(U[0],U[1]) - m) / s;
+    auto u_val = n1 * n2 + n1 * (n1+1)/2 - R[0];
+    double mean = n1 * n2 / 2.0;
 
+    //    auto mean = (n1 * n2) / 2.0;
+    // without ties, use this:
+    auto stddev = sqrt((n1 * n2 * (N + 1.0))/12.0);
+
+
+    cout << "min U = " << min(R[0],R[1]) << endl;
+    cout << "uval = " << u_val << endl;
+    cout << "mean = " << mean << endl;
+    cout << "alternate z = " << (u_val - mean) / stddev << endl;
+
+    // Since we can have ties, we should use an adjustment. This would
+    // entail counting the number of tied ranks, which is reasonably
+    // complex. We punt this for now.
+    float zScore = fabs(min(U[0],U[1]) - mean) / stddev;
+    cout << zScore << endl;
+ 
     // For now we hard code this. FIX ME.
-    if (fabs(zScore) > 4.0) {
+    if (zScore > 6.0) {
       return true;
     } else {
       return false;
@@ -106,7 +133,7 @@ namespace stats {
   void testMannWhitney() {
     vector<int> a = {0, 6, 7, 8, 9, 10};
     vector<int> b = {1, 2, 3, 4, 5, 11};
-    mannWhitney (a, b);
+    cout << mannWhitney (a, b) << endl;
   }
 
   template <class TYPE>
@@ -119,17 +146,22 @@ namespace stats {
     sort (a.begin(), a.end());
     sort (b.begin(), b.end());
 
+    //    auto aAverage = a[a.size()/2]; // average (a);
+    //    auto bAverage = b[b.size()/2]; // average (b);
     auto aAverage = average (a);
     auto bAverage = average (b);
 
-    auto leftInterval  = floor(significanceLevel / 2.0 * a.size());
-    auto rightInterval = ceil((1.0 - significanceLevel / 2.0) * a.size());
+    auto aLeftInterval  = floor(significanceLevel / 2.0 * a.size());
+    auto aRightInterval = ceil((1.0 - significanceLevel / 2.0) * a.size());
+
+    auto bLeftInterval  = floor(significanceLevel / 2.0 * b.size());
+    auto bRightInterval = ceil((1.0 - significanceLevel / 2.0) * b.size());
 
     bool result;
-    if ((aAverage < b[leftInterval]) ||
-	(aAverage > b[rightInterval]) ||
-	(bAverage < a[leftInterval]) ||
-	(bAverage > a[rightInterval])) {
+    if ((aAverage < b[bLeftInterval]) ||
+	(aAverage > b[bRightInterval]) ||
+	(bAverage < a[aLeftInterval]) ||
+	(bAverage > a[aRightInterval])) {
       result = true;
     } else {
       result = false;
