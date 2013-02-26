@@ -1581,33 +1581,7 @@ namespace DataDebugMethods
             }
             //Look for outliers:
             System.Collections.Generic.List<int[]> outliers = new System.Collections.Generic.List<int[]>();
-            //for (int i = 0; i < output_cells.Count; i++)
-            //{
-            //    foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-            //    {
-            //        for (int row = 0; row < worksheet.UsedRange.Rows.Count; row++)
-            //        {
-            //            for (int col = 0; col < worksheet.UsedRange.Columns.Count; col++)
-            //            {
-            //                if (times_perturbed[worksheet.Index - 1][row][col] != 0)
-            //                {
-            //                    if (impacts_grid[worksheet.Index - 1][row][col][i] > 2.0)
-            //                    {
-            //                        //System.Windows.Forms.MessageBox.Show(worksheet.Name + ":R" + (row + 1) + "C" + (col + 1) + " is an outlier with respect to output " + (i + 1) + " with a z-score of " + impacts_grid[worksheet.Index - 1][row][col][i]);
-            //                        int[] outlier = new int[3];
-            //                        outlier[0] = worksheet.Index - 1;
-            //                        outlier[1] = row;
-            //                        outlier[2] = col;
-            //                        outliers.Add(outlier);
-            //                        //worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.Red;
-            //                        //return;
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-            //string outlier_percentages = "Range size:\tOutlier percentage:\n";
+            
             for (int i = 0; i < output_cells.Count; i++)
             {
                 //int outliers_for_this_output = 0; 

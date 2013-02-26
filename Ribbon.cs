@@ -104,8 +104,7 @@ namespace DataDebug
                     MatchCollection matchedRanges = null;
                     MatchCollection matchedCells = null;
                     int ws_index = 1;   //the index of the worksheet in which the formula cell resides
-                    //foreach (string s in worksheet_names)
-
+                    
                     for (int i = 0; i < worksheet_names.Count(); i++)
                     {
                         string s = worksheet_names[i];  //the name of the worksheet that may be referenced in the formula
@@ -237,26 +236,19 @@ namespace DataDebug
             string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
             string swapping_time = (swapping_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", swapping_timespan.Minutes, swapping_timespan.Seconds, swapping_timespan.Milliseconds / 10);
             string impact_scoring_time = (impact_scoring_timespan.TotalSeconds - swapping_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", z_score_timespan.Minutes, z_score_timespan.Seconds, z_score_timespan.Milliseconds / 10);
-            //string average_z_score_time = average_z_score_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", average_z_score_timespan.Minutes, average_z_score_timespan.Seconds, average_z_score_timespan.Milliseconds / 10);
-            //string outlier_detection_time = outlier_detection_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", outlier_detection_timespan.Minutes, outlier_detection_timespan.Seconds, outlier_detection_timespan.Milliseconds / 10);
-            //string outlier_coloring_time = outlier_coloring_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", outlier_coloring_timespan.Minutes, outlier_coloring_timespan.Seconds, outlier_coloring_timespan.Milliseconds / 10);
-            //System.Windows.Forms.MessageBox.Show("Done building dependence graph.\nTime elapsed: " + treeTime);
             global_stopwatch.Stop();
             // Get the elapsed time as a TimeSpan value.
             TimeSpan global_timespan = global_stopwatch.Elapsed;
             //string global_time = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", global_timespan.Hours, global_timespan.Minutes, global_timespan.Seconds, global_timespan.Milliseconds / 10);
             string global_time = global_timespan.TotalSeconds + ""; //(tree_building_timespan.TotalSeconds + swapping_timespan.TotalSeconds + z_score_timespan.TotalSeconds + average_z_score_timespan.TotalSeconds + outlier_detection_timespan.TotalSeconds + outlier_coloring_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}",
-            //    tree_building_timespan.Minutes + swapping_timespan.Minutes + z_score_timespan.Minutes + average_z_score_timespan.Minutes + outlier_detection_timespan.Minutes + outlier_coloring_timespan.Minutes,
-            //    tree_building_timespan.Seconds + swapping_timespan.Seconds + z_score_timespan.Seconds + average_z_score_timespan.Seconds + outlier_detection_timespan.Seconds + outlier_coloring_timespan.Seconds,  
-            //    (tree_building_timespan.Milliseconds + swapping_timespan.Milliseconds + z_score_timespan.Milliseconds + average_z_score_timespan.Milliseconds + outlier_detection_timespan.Milliseconds + outlier_coloring_timespan.Milliseconds) / 10);
             
             Display timeDisplay = new Display();
             stats_text += "" //+ "Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\t"
-//          //  + "Outlier Detection (s):\tOutlier Coloring (s):\t"
+            //  + "Outlier Detection (s):\tOutlier Coloring (s):\t"
             //+ "Outliers found:\n"
-//                //"Formula cells:\t" + formula_cells_count + "\n"
-//                //+ "Number of input cells involved in computations:\t" + input_cells_in_computation_count
-//                //+ "\nExecution times (seconds): "
+                //"Formula cells:\t" + formula_cells_count + "\n"
+                //+ "Number of input cells involved in computations:\t" + input_cells_in_computation_count
+                //+ "\nExecution times (seconds): "
                 + Globals.ThisAddIn.Application.ActiveWorkbook.Name + "\t"
                 + formula_cells_count + "\t"
                 + raw_input_cells_in_computation_count + "\t"
@@ -393,39 +385,6 @@ namespace DataDebug
                     }
                 }
             }
-
-
-            //Print out text for GraphViz representation of the dependence graph
-            //string tree = "";
-            //string ranges_text = "";
-            //foreach (TreeNode[][] node_arr_arr in nodes_grid)
-            //{
-            //    foreach (TreeNode[] node_arr in node_arr_arr)
-            //    {
-            //        foreach (TreeNode node in node_arr)
-            //        {
-            //            if (node != null)
-            //            {
-            //                tree += node.toGVString(0) + "\n"; //tree += node.toGVString(max_weight) + "\n";
-            //            }
-            //        }
-            //    }
-            //}
-            //foreach (TreeNode node in ranges)
-            //{
-            //    tree += node.toGVString(0) + "\n"; //tree += node.toGVString(max_weight) + "\n";
-            //    foreach (TreeNode parent in node.getParents())
-            //    {
-            //        ranges_text += parent.getWorksheetObject().Index + "," + parent.getName().Replace("$", "") + "," + parent.getWorksheetObject().get_Range(parent.getName()).Value + "\n";
-            //    }
-            //}
-            
-            //Display disp = new Display();
-            //disp.textBox1.Text = "digraph g{" + tree + "}";
-            //disp.ShowDialog();
-            //Display disp_ranges = new Display();
-            //disp_ranges.textBox1.Text = ranges_text;
-            //disp_ranges.ShowDialog();
         }
         
         //Action for "Analyze Worksheet" button
