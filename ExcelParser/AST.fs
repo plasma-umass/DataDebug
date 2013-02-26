@@ -36,7 +36,7 @@
             not (self.X < rng.getXLeft() ||
                  self.Y < rng.getYTop() ||
                  self.X > rng.getXRight() ||
-                 self.Y > rng.getYBottom());
+                 self.Y > rng.getYBottom())
         member self.InsideAddr(addr: Address) : bool =
             self.X = addr.X && self.Y = addr.Y
 
@@ -55,45 +55,48 @@
             not (self.getXLeft() < rng.getXLeft() ||
                  self.getYTop() < rng.getYTop() ||
                  self.getXRight() > rng.getXRight() ||
-                 self.getYBottom() > rng.getYBottom());
+                 self.getYBottom() > rng.getYBottom())
         // Yup, weird case.  This is because we actually
         // distinguish between addresses and ranges, unlike Excel.
         member self.InsideAddr(addr: Address) : bool =
             not (self.getXLeft() < addr.X ||
                  self.getYTop() < addr.Y ||
                  self.getXRight() > addr.X ||
-                 self.getYBottom() > addr.Y);
+                 self.getYBottom() > addr.Y)
 
-    type ReferenceRange(wsname: string option, rng: Range) =
+    type Reference(wsname: string option) =
+        let mutable wbname = None
+        abstract member InsideRef: Reference -> bool
+        abstract member WorkbookName: string option with get, set
+        abstract member WorksheetName: string option
+        default self.WorkbookName
+            with get() = wbname
+            and set(value) = wbname <- value
+        default self.WorksheetName = wsname
+        default self.InsideRef(ref: Reference) = false
+
+    and ReferenceRange(wsname: string option, rng: Range) =
+        inherit Reference(wsname)
         override self.ToString() =
             match wsname with
             | Some(wsn) -> "ReferenceRange(" + wsn.ToString() + ", " + rng.ToString() + ")"
             | None -> "ReferenceRange(None, " + rng.ToString() + ")"
+        override self.InsideRef(ref: Reference) : bool =
+            match ref with
+            | :? ReferenceAddress as ar -> rng.InsideAddr(ar.Address)
+            | :? ReferenceRange as rr -> rng.InsideRange(rr.Range)
+            | _ -> failwith "Unknown Reference subclass."
         member self.Range = rng
 
-    type ReferenceAddress(wsname: string option, addr: Address) =
+    and ReferenceAddress(wsname: string option, addr: Address) =
+        inherit Reference(wsname)
         override self.ToString() =
             match wsname with
-            | Some(wsn) -> "ReferenceAddress(" + wsname.ToString() + ", " + addr.ToString() + ")"
+            | Some(wsn) -> "ReferenceAddress(" + wsn.ToString() + ", " + addr.ToString() + ")"
             | None -> "ReferenceAddress(None, " + addr.ToString() + ")"
         member self.Address = addr
-
-    type Reference =
-    | RangeRef of ReferenceRange
-    | AddressRef of ReferenceAddress
-        override self.ToString() =
-            match self with
-            | RangeRef(rr) -> rr.ToString()
-            | AddressRef(ar) -> ar.ToString()
-        member self.InsideAddr(addr: Address) : bool =
-            match self with
-            | RangeRef(rr) -> rr.Range.InsideAddr(addr)
-            | AddressRef(ar) -> ar.Address.InsideAddr(addr)
-        member self.InsideRange(rng: Range) : bool =
-            match self with
-            | RangeRef(rr) -> rr.Range.InsideRange(rng)
-            | AddressRef(ar) -> ar.Address.InsideRange(rng)
-        member self.InsideRef(ref: Reference) : bool =
+        override self.InsideRef(ref: Reference) =
             match ref with
-            | RangeRef(rr) -> self.InsideRange(rr.Range)
-            | AddressRef(ar) -> self.InsideAddr(ar.Address)
+            | :? ReferenceAddress as ar -> addr.InsideAddr(ar.Address)
+            | :? ReferenceRange as rr -> addr.InsideRange(rr.Range)
+            | _ -> failwith "Unknown Reference subclass."

@@ -15,7 +15,6 @@
 
     // Ranges
     let MoreAddr ws: Parser<_> = pstring ":" >>. (AddrR1C1 ws)
-//    let NoMoreAddr: Parser<Address option> = pstring "" >>% None
     let RangeR1C1 ws: Parser<_> = pipe2 (AddrR1C1 ws) (MoreAddr ws) (fun r1 r2 -> Range(r1, r2))
 
     // Worksheet Names
@@ -23,20 +22,26 @@
     let WorksheetNameUnquoted: Parser<_> = many1Satisfy (fun c -> (isDigit c) || (isLetter c))
     let WorksheetName: Parser<_> = WorksheetNameQuoted <|> WorksheetNameUnquoted
 
+    // Workbook Names (this may be too restrictive)
+    let WorkbookName: Parser<_> = between (pstring "[") (pstring "]") (many1Satisfy (fun c -> c <> '[' && c <> ']'))
+    let Workbook: Parser<_> = (attempt WorkbookName) <|> (pstring "")
+
     // References
     // References consist of the following parts:
     //   An optional worksheet name prefix
     //   A single-cell ("Address") or multi-cell address ("Range")
-    let RangeReferenceWorksheet ws: Parser<_> = pipe2 (WorksheetName .>> pstring "!") (RangeR1C1 ws) (fun wsname rng -> RangeRef (ReferenceRange(Some(wsname), rng)))
-    let RangeReferenceNoWorksheet ws: Parser<_> = (RangeR1C1 ws) |>> (fun rng -> RangeRef (ReferenceRange(None, rng)))
+    let RangeReferenceWorksheet ws: Parser<_> = pipe2 (WorksheetName .>> pstring "!") (RangeR1C1 ws) (fun wsname rng -> ReferenceRange(Some(wsname), rng) :> Reference)
+    let RangeReferenceNoWorksheet ws: Parser<_> = (RangeR1C1 ws) |>> (fun rng -> ReferenceRange(None, rng) :> Reference)
     let RangeReference ws: Parser<_> = (attempt (RangeReferenceWorksheet ws)) <|> (RangeReferenceNoWorksheet ws)
-    let AddressReferenceWorksheet ws: Parser<_> = pipe2 (WorksheetName .>> pstring "!") (AddrR1C1 ws) (fun wsname addr -> AddressRef (ReferenceAddress(Some(wsname), addr)))
-    let AddressReferenceNoWorksheet ws: Parser<_> = (AddrR1C1 ws) |>> (fun addr -> AddressRef (ReferenceAddress(None, addr)))
+    let AddressReferenceWorksheet ws: Parser<_> = pipe2 (WorksheetName .>> pstring "!") (AddrR1C1 ws) (fun wsname addr -> ReferenceAddress(Some(wsname), addr) :> Reference)
+    let AddressReferenceNoWorksheet ws: Parser<_> = (AddrR1C1 ws) |>> (fun addr -> ReferenceAddress(None, addr) :> Reference)
     let AddressReference ws: Parser<_> = (attempt (AddressReferenceWorksheet ws)) <|> (AddressReferenceNoWorksheet ws)
-    let Reference ws: Parser<_> = (attempt (RangeReference ws)) <|> (AddressReference ws)
+    let ReferenceAorR ws: Parser<_> = (attempt (RangeReference ws)) <|> (AddressReference ws)
+    let Reference ws: Parser<_> = pipe2 Workbook (ReferenceAorR ws) (fun wbname ref -> ref.WorkbookName <- Some wbname; ref)
+    let ReferenceList ws: Parser<_> = sepBy1 (Reference ws) (pstring ",")
 
     // Expressions
-    let Expression ws: Parser<_> = Reference ws
+    let Expression ws: Parser<_> = ReferenceList ws
 
     // Formulas
     let Formula ws: Parser<_> = pstring "=" >>. (Expression ws) .>> eof
