@@ -129,7 +129,7 @@
     and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
         inherit Reference(wsname)
         override self.ToString() =
-            fnname + "(" + String.Join(",", (List.map (fun arg -> arg.ToString()) arglist))
+            fnname + "(" + String.Join(",", (List.map (fun arg -> arg.ToString()) arglist)) + ")"
 
     and ReferenceNamed(wsname: string option, varname: string) =
         inherit Reference(wsname)

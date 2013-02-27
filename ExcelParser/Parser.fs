@@ -6,19 +6,24 @@
     type Parser<'t> = Parser<'t, UserState>
 
     // Addresses
+    // We treat relative and absolute addresses the same-- they behave
+    // exactly the same way unless you copy and paste them.
     let AddrR: Parser<_> = pstring "R" >>. pint32
     let AddrC: Parser<_> = pstring "C" >>. pint32
     let AddrR1C1: Parser<_> = pipe2 AddrR AddrC (fun r c -> Address(r,c,None,None))
-
     let AddrA: Parser<_> = many1Satisfy isAsciiUpper
+    let AddrAAbs: Parser<_> = (pstring "$" <|> pstring "") >>. AddrA
     let Addr1: Parser<_> = pint32
-    let AddrA1: Parser<_> = pipe2 AddrA Addr1 (fun col row -> Address(row,col,None,None))
-
-    let AnyAddr: Parser<_> = (attempt AddrA1) <|> AddrR1C1
+    let Addr1Abs: Parser<_> = (pstring "$" <|> pstring "") >>. Addr1
+    let AddrA1: Parser<_> = pipe2 AddrAAbs Addr1Abs (fun col row -> Address(row,col,None,None))
+    let AnyAddr: Parser<_> = (attempt AddrR1C1) <|> AddrA1
 
     // Ranges
-    let MoreAddr: Parser<_> = pstring ":" >>. AddrR1C1
-    let RangeR1C1: Parser<_> = pipe2 AddrR1C1 MoreAddr (fun r1 r2 -> Range(r1, r2))
+    let MoreAddrR1C1: Parser<_> = pstring ":" >>. AddrR1C1
+    let RangeR1C1: Parser<_> = pipe2 AddrR1C1 MoreAddrR1C1 (fun r1 r2 -> Range(r1, r2))
+    let MoreAddrA1: Parser<_> = pstring ":" >>. AddrA1
+    let RangeA1: Parser<_> = pipe2 AddrA1 MoreAddrA1 (fun r1 r2 -> Range(r1, r2))
+    let RangeAny: Parser<_> = (attempt RangeR1C1) <|> RangeA1
 
     // Worksheet Names
     let WorksheetNameQuoted: Parser<_> = between (pstring "'") (pstring "'") (many1Satisfy ((<>) '\''))
@@ -33,8 +38,8 @@
     // References consist of the following parts:
     //   An optional worksheet name prefix
     //   A single-cell ("Address") or multi-cell address ("Range")
-    let RangeReferenceWorksheet: Parser<_> = pipe2 (WorksheetName .>> pstring "!") RangeR1C1 (fun wsname rng -> ReferenceRange(Some(wsname), rng) :> Reference)
-    let RangeReferenceNoWorksheet: Parser<_> = RangeR1C1 |>> (fun rng -> ReferenceRange(None, rng) :> Reference)
+    let RangeReferenceWorksheet: Parser<_> = pipe2 (WorksheetName .>> pstring "!") RangeAny (fun wsname rng -> ReferenceRange(Some(wsname), rng) :> Reference)
+    let RangeReferenceNoWorksheet: Parser<_> = RangeAny |>> (fun rng -> ReferenceRange(None, rng) :> Reference)
     let RangeReference: Parser<_> = (attempt RangeReferenceWorksheet) <|> RangeReferenceNoWorksheet
 
     let AddressReferenceWorksheet: Parser<_> = pipe2 (WorksheetName .>> pstring "!") AnyAddr (fun wsname addr -> ReferenceAddress(Some(wsname), addr) :> Reference)
@@ -53,7 +58,7 @@
     let FunctionName: Parser<_> = many1Satisfy (fun c -> c <> '(' && c <> ')')
     let Function: Parser<_> = pipe2 (FunctionName .>> pstring "(") (ArgumentList .>> pstring ")") (fun fname arglist -> ReferenceFunction(None, fname, arglist) :> Reference)
     let Argument: Parser<_> = (attempt Function) <|> Reference
-    do ArgumentListImpl := sepBy1 Reference (pstring ",")
+    do ArgumentListImpl := sepBy Reference (pstring ",")
 
     // Expressions
     let Expression: Parser<_> = (attempt Function) <|> Reference
