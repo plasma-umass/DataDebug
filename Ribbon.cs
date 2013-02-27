@@ -266,16 +266,6 @@ namespace DataDebug
                 + swapping_time + "\t"
                 + impact_scoring_time + "\t"
                 + outliers_count;
-//                //+ (z_score_time + average_z_score_time) + "\t"
-//                //+ outlier_detection_time + "\t"
-//                //+ outlier_coloring_time;
-////                + "\nTotal execution time: " + global_time + ":\n"
-////                + "\tTree construction time: " + tree_building_time + "\n"
-////                + "\tSwapping time: " + swapping_time + "\n"
-////                + "\tZ-score calculation time: " + z_score_time + "\n"
-////                + "\tWeighted average z-score calculation time: " + average_z_score_time + "\n"
-////                + "\tOutlier detection time: " + outlier_detection_time + "\n"
-////                + "\tOutlier coloring time: " + outlier_coloring_time + "\n";
             timeDisplay.textBox1.Text = stats_text;
             timeDisplay.ShowDialog();
 
@@ -488,16 +478,19 @@ namespace DataDebug
             constructTree();    
         }
 
-        private void checkBox1_Click(object sender, RibbonControlEventArgs e)
-        {
-        }
-
-
         //Button for testing random code :)
         private void button7_Click(object sender, RibbonControlEventArgs e)
         {
             System.Windows.Forms.MessageBox.Show(Globals.ThisAddIn.Application.ActiveWorkbook.Path + "");
             System.Windows.Forms.MessageBox.Show(Globals.ThisAddIn.Application.Workbooks[1] + "");
+            foreach (Excel.Chart chart in Globals.ThisAddIn.Application.Charts)
+            {
+                foreach (Excel.Series series in (Excel.SeriesCollection)chart.SeriesCollection(Type.Missing))
+                {
+                    string formula = series.Formula;  //The formula contained in the cell
+                    System.Windows.Forms.MessageBox.Show(formula);
+                }
+            }
         }
 
         //Action for "Clear coloring" button
