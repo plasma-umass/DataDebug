@@ -137,7 +137,3 @@
             match wsname with
             | Some(wsn) -> "ReferenceName(" + wsn + ", " + varname + ")"
             | None -> "ReferenceName(None, " + varname + ")"
-
-
-//    type XLFunct(fnname: string, arglist: Reference list) =
-//        override self.ToString() = fnname + "()"
