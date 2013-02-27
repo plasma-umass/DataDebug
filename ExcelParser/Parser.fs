@@ -66,6 +66,9 @@
     // Formulas
     let Formula = pstring "=" >>. Expression .>> eof
 
+    // Resolve all undefined references to the current worksheet and workbook
+    let AddrResolve(ref: Reference)(ws: Worksheet) = ref.Resolve(ws)
+
     // monadic wrapper for success/failure
     let test p str =
         match run p str with

@@ -1,6 +1,9 @@
 ﻿module AST
     open System
     open System.Diagnostics
+    open Microsoft.Office.Interop.Excel
+
+    type Worksheet = Microsoft.Office.Interop.Excel.Worksheet
 
     type Address(R: int, C: int, wsname: string option, wbname: string option) =
         let mutable _wsn = wsname
@@ -88,21 +91,33 @@
             _br.WorkbookName <- wbname
 
     type Reference(wsname: string option) =
-        let mutable wbname = None
+        let mutable _wbn = None
+        let mutable _wsn = wsname
         abstract member InsideRef: Reference -> bool
+        abstract member Resolve: Worksheet -> unit
         abstract member WorkbookName: string option with get, set
-        abstract member WorksheetName: string option
+        abstract member WorksheetName: string option with get, set
         default self.WorkbookName
-            with get() = wbname
-            and set(value) = wbname <- value
-        default self.WorksheetName = wsname
+            with get() = _wbn
+            and set(value) = _wbn <- value
+        default self.WorksheetName
+            with get() = _wsn
+            and set(value) = _wsn <- value
         default self.InsideRef(ref: Reference) = false
+        default self.Resolve(ws: Worksheet) =
+            // set if worksheet is unset, but only
+            // if the workbook is also unset
+            _wsn <- match _wsn with
+                    | Some(ws) -> _wsn
+                    | None -> match _wbn with
+                              | Some(wb) -> _wsn
+                              | None -> Some ws.Name
 
     and ReferenceRange(wsname: string option, rng: Range) =
         inherit Reference(wsname)
         do rng.SetWorksheetName(wsname)
         override self.ToString() =
-            match wsname with
+            match self.WorksheetName with
             | Some(wsn) -> "ReferenceRange(" + wsn.ToString() + ", " + rng.ToString() + ")"
             | None -> "ReferenceRange(None, " + rng.ToString() + ")"
         override self.InsideRef(ref: Reference) : bool =
@@ -111,12 +126,22 @@
             | :? ReferenceRange as rr -> rng.InsideRange(rr.Range)
             | _ -> failwith "Unknown Reference subclass."
         member self.Range = rng
+        override self.Resolve(ws: Worksheet) =
+            // set if worksheet is unset, but only
+            // if the workbook is also unset
+            self.WorksheetName <-
+                match self.WorksheetName with
+                    | Some(ws) -> Some(ws)
+                    | None -> match self.WorksheetName with
+                              | Some(wb) -> self.WorksheetName
+                              | None -> Some ws.Name
+            rng.SetWorksheetName(Some ws.Name)
 
     and ReferenceAddress(wsname: string option, addr: Address) =
         inherit Reference(wsname)
         do addr.WorksheetName <- wsname
         override self.ToString() =
-            match wsname with
+            match self.WorksheetName with
             | Some(wsn) -> "ReferenceAddress(" + wsn.ToString() + ", " + addr.ToString() + ")"
             | None -> "ReferenceAddress(None, " + addr.ToString() + ")"
         member self.Address = addr
@@ -125,15 +150,22 @@
             | :? ReferenceAddress as ar -> addr.InsideAddr(ar.Address)
             | :? ReferenceRange as rr -> addr.InsideRange(rr.Range)
             | _ -> failwith "Invalid Reference subclass."
+        override self.Resolve(ws: Worksheet) =
+            self.WorksheetName <- Some ws.Name
+            addr.WorkbookName <- Some ws.Name
 
     and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
         inherit Reference(wsname)
         override self.ToString() =
             fnname + "(" + String.Join(",", (List.map (fun arg -> arg.ToString()) arglist)) + ")"
+        override self.Resolve(ws: Worksheet) =
+            self.WorksheetName <- Some ws.Name
+            for arg in arglist do
+                arg.Resolve(ws)
 
     and ReferenceNamed(wsname: string option, varname: string) =
         inherit Reference(wsname)
         override self.ToString() =
-            match wsname with
+            match self.WorksheetName with
             | Some(wsn) -> "ReferenceName(" + wsn + ", " + varname + ")"
             | None -> "ReferenceName(None, " + varname + ")"

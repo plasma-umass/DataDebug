@@ -11,8 +11,8 @@ using System.Text.RegularExpressions;
 using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
 using System.Diagnostics;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using TreeDict = System.Collections.Generic.Dictionary<int, DataDebugMethods.TreeNode>;
+using TreeDictPair = System.Collections.Generic.KeyValuePair<int, DataDebugMethods.TreeNode>;
 
 namespace DataDebug
 {
@@ -93,7 +93,7 @@ namespace DataDebug
                     Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c), "This spreadsheet violates a condition thought to be impossible.");
                     TreeNode formula_cell;
                     AST.Address addr = Utility.ParseXLAddress(c);
-                    if (!nodes.TryGetValue(addr, out formula_cell))
+                    if (!nodes.TryGetValue(addr.AddressAsInt32(), out formula_cell))
                     {
                         throw new Exception("Sometimes you eat the bear, and sometimes, well, he eats you.");
                     }
