@@ -146,7 +146,6 @@ namespace DataDebugMethods
                 {
                     if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
                     {
-                        //System.Windows.Forms.MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                         range = n;
                     }
                 }
@@ -155,7 +154,6 @@ namespace DataDebugMethods
                 if (range == null)
                 {
                     range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_ref, activeWorkbook);
-                    //System.Windows.Forms.MessageBox.Show("Created range node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                     ranges.Add(range);
                 }
                 formula_cell.addParent(range);
@@ -208,7 +206,6 @@ namespace DataDebugMethods
                 {
                     if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
                     {
-                        //System.Windows.Forms.MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                         range = n;
                     }
                 }
@@ -216,7 +213,6 @@ namespace DataDebugMethods
                 if (range == null)
                 {
                     range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_ref, activeWorkbook);
-                    //System.Windows.Forms.MessageBox.Show("Created node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                     ranges.Add(range);
                 }
                 formula_cell.addParent(range);
@@ -308,7 +304,6 @@ namespace DataDebugMethods
                 formula = formula.Replace(match.Value, "");
                 string ws_name = worksheet_name; //match.Value.Substring(0, match.Value.LastIndexOf("!")); // Get the name of the worksheet being referenced
                 string cell_coordinates = match.Value.Substring(match.Value.LastIndexOf("!") + 1);
-                //System.Windows.Forms.MessageBox.Show(formula_cell.getName() + " refers to the cell " + ws_name + "!" + cell_coordinates);
                 //Get the actual cell that is being referenced
                 Excel.Range input = null;
                 foreach (Excel.Worksheet ws in worksheets)
@@ -366,7 +361,6 @@ namespace DataDebugMethods
                 //If it does not exist, create it
                 if (range == null)
                 {
-                    //System.Windows.Forms.MessageBox.Show("Created range node:" + c.Worksheet.Name + "_" + endCells[0] + ":" + endCells[1]);
                     range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), c.Worksheet, activeWorkbook);
                     ranges.Add(range);
                 }
@@ -440,7 +434,6 @@ namespace DataDebugMethods
                     //If it does not exist, create it
                     if (range == null)
                     {
-                        //System.Windows.Forms.MessageBox.Show("Created range node:" + c.Worksheet.Name + "_" + endCells[0] + ":" + endCells[1]);
                         range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), named_range.RefersToRange.Worksheet, activeWorkbook);
                         ranges.Add(range);
                     }
@@ -512,7 +505,6 @@ namespace DataDebugMethods
             {
                 Excel.Range input = c.Worksheet.get_Range(m.Value);
                 TreeNode input_cell = null;
-                //System.Windows.Forms.MessageBox.Show(m.Value);
                 //Find the node object for the current cell in the existing TreeNodes
                 //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                 AST.Address addr = Utility.ParseXLAddress(input);
@@ -572,7 +564,6 @@ namespace DataDebugMethods
                             {
                                 if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
                                 {
-                                    //System.Windows.Forms.MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                     range = n;
                                 }
                             }
@@ -580,7 +571,6 @@ namespace DataDebugMethods
                             if (range == null)
                             {
                                 range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_ref, activeWorkbook);
-                                //System.Windows.Forms.MessageBox.Show("Created range node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                 ranges.Add(range);
                             }
                             chart_node.addParent(range);
@@ -628,7 +618,6 @@ namespace DataDebugMethods
                             {
                                 if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
                                 {
-                                    //System.Windows.Forms.MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                     range = n;
                                 }
                             }
@@ -636,7 +625,6 @@ namespace DataDebugMethods
                             if (range == null)
                             {
                                 range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_ref, activeWorkbook);
-                                //System.Windows.Forms.MessageBox.Show("Created range node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                 ranges.Add(range);
                             }
                             chart_node.addParent(range);
@@ -872,7 +860,6 @@ namespace DataDebugMethods
                                 {
                                     if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
                                     {
-                                        //System.Windows.Forms.MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                         range = n;
                                     }
                                 }
@@ -880,7 +867,6 @@ namespace DataDebugMethods
                                 if (range == null)
                                 {
                                     range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_ref, activeWorkbook);
-                                    //System.Windows.Forms.MessageBox.Show("Created range node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                     nodelist.Add(range);
                                 }
                                 chart_node.addParent(range);
@@ -924,7 +910,6 @@ namespace DataDebugMethods
                                 {
                                     if (n.getName().Replace("$", "") == endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", "") && n.getWorksheet() == ws_name)
                                     {
-                                        //System.Windows.Forms.MessageBox.Show("Found node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                         range = n;
                                     }
                                 }
@@ -932,7 +917,6 @@ namespace DataDebugMethods
                                 if (range == null)
                                 {
                                     range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), ws_ref, activeWorkbook);
-                                    //System.Windows.Forms.MessageBox.Show("Created node:" + ws_name + "_" + endCells[0] + ":" + endCells[1]);
                                     nodelist.Add(range);
                                 }
 
@@ -1108,7 +1092,6 @@ namespace DataDebugMethods
                             //If it does not exist, create it
                             if (range == null)
                             {
-                                //System.Windows.Forms.MessageBox.Show("Created range node:" + c.Worksheet.Name + "_" + endCells[0] + ":" + endCells[1]);
                                 range = new TreeNode(endCells[0].Replace("$", "") + "_to_" + endCells[1].Replace("$", ""), named_range.RefersToRange.Worksheet, activeWorkbook);
                                 ranges.Add(range);
                             }
@@ -1595,7 +1578,6 @@ namespace DataDebugMethods
                     double standard_deviations_cutoff = 2.0;
                     if (reachable_impacts_grid_array[i][d][3] > standard_deviations_cutoff)
                     {
-                        //System.Windows.Forms.MessageBox.Show(worksheet.Name + ":R" + (row + 1) + "C" + (col + 1) + " is an outlier with respect to output " + (i + 1) + " with a z-score of " + impacts_grid[worksheet.Index - 1][row][col][i]);
                         int[] outlier = new int[3];
                         bool already_added = false;
                         outlier[0] = worksheet_ind;
