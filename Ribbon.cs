@@ -484,16 +484,24 @@ namespace DataDebug
         {
             Excel.Workbook wb = Globals.ThisAddIn.Application.ActiveWorkbook;
             Excel.Worksheet ws = Globals.ThisAddIn.Application.ActiveSheet;
-            string formula = Globals.ThisAddIn.Application.ActiveCell.Value2;
-            FSharpOption<AST.Reference> parsetree = ExcelParser.ParseFormula(formula, wb, ws);
-            if (FSharpOption<AST.Reference>.get_IsSome(parsetree))
+            Excel.Range fn_cell = Globals.ThisAddIn.Application.ActiveCell;
+            if (fn_cell.HasFormula)
             {
-                System.Windows.Forms.MessageBox.Show(parsetree.Value.ToString());
+                string formula = Convert.ToString(fn_cell.Formula);
+                IEnumerable<Excel.Range> ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
+                foreach (Excel.Range range in ranges)
+                {
+                    foreach (Excel.Range cell in range)
+                    {
+                        cell.Interior.Color = System.Drawing.Color.Red;
+                    }
+                }
             }
             else
             {
-                System.Windows.Forms.MessageBox.Show("Shit don't parse.");
+                System.Windows.Forms.MessageBox.Show("The currently selected cell is not a formula.");
             }
+            
         }
     }
 }

@@ -3,14 +3,22 @@
     open System.Diagnostics
     open Microsoft.Office.Interop.Excel
 
+    type Application = Microsoft.Office.Interop.Excel.Application
     type Workbook = Microsoft.Office.Interop.Excel.Workbook
     type Worksheet = Microsoft.Office.Interop.Excel.Worksheet
+    type XLRange = Microsoft.Office.Interop.Excel.Range
+    type XLRefStyle = Microsoft.Office.Interop.Excel.XlReferenceStyle
 
     type Address(R: int, C: int, wsname: string option, wbname: string option) =
         let mutable _wsn = wsname
         let mutable _wbn = wbname
         new(row: int, col: string, wsname: string option, wbname: string option) =
             Address(row, Address.CharColToInt(col), wsname, wbname)
+        member self.A1(app: Application) : string =
+//            let r1c1 = self.R1C1
+//            let f' = app.ConvertFormula(r1c1, XLRefStyle.xlR1C1, XLRefStyle.xlA1, Microsoft.Office.Interop.Excel.Xl, Type.Missing)
+//            Convert.ToString(f')
+            failwith "Bleh."
         member self.R1C1 =
             let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
             let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
@@ -50,6 +58,8 @@
                  self.Y > rng.getYBottom())
         member self.InsideAddr(addr: Address) : bool =
             self.X = addr.X && self.Y = addr.Y
+        member self.GetCOMObject(app: Application) : XLRange =
+            app.Range(self.A1(app), self.A1(app))
         override self.ToString() =
             "(" + self.Y.ToString() + "," + self.X.ToString() + ")"
         static member CharColToInt(col: string) : int =
@@ -91,36 +101,36 @@
         member self.SetWorkbookName(wbname: string option) : unit =
             _tl.WorkbookName <- wbname
             _br.WorkbookName <- wbname
+        member self.GetCOMObject(app: Application) : XLRange =
+            let tla1 = _tl.A1(app)
+            let bra1 = _br.A1(app)
+            app.Range(tla1, bra1)
 
     type Reference(wsname: string option) =
-        let mutable _wbn = None
-        let mutable _wsn = wsname
+        let mutable _wbn: string option = None
+        let mutable _wsn: string option = wsname
         abstract member InsideRef: Reference -> bool
         abstract member Resolve: Workbook -> Worksheet -> unit
         abstract member WorkbookName: string option with get, set
         abstract member WorksheetName: string option with get, set
         default self.WorkbookName
             with get() = _wbn
-            and set(value) = _wbn <- value
+            and set(value) =
+                _wbn <- value
         default self.WorksheetName
             with get() = _wsn
             and set(value) = _wsn <- value
         default self.InsideRef(ref: Reference) = false
-//        default self.Resolve(wb: Workbook, ws: Worksheet) =
-//            // set if worksheet is unset, but only
-//            // if the workbook is also unset
-//            _wsn <- match _wsn with
-//                    | Some(ws) -> _wsn
-//                    | None -> match _wbn with
-//                              | Some(wb) -> _wsn
-//                              | None -> Some ws.Name
         default self.Resolve(wb: Workbook)(ws: Worksheet) : unit =
             // always resolve the workbook name when it is missing
             // but only resolve the worksheet name when the
             // workbook name is not set
             _wbn <- match self.WorkbookName with
                     | Some(wbn) -> Some wbn
-                    | None -> Some wb.Name
+                    | None -> if wb.Name <> "" then
+                                  Some wb.Name
+                              else
+                                  None
             _wsn <- match self.WorksheetName with
                     | Some(wsn) -> Some wsn
                     | None ->
@@ -204,6 +214,7 @@
 
     and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
         inherit Reference(wsname)
+        member self.ArgumentList = arglist
         override self.ToString() =
             fnname + "(" + String.Join(",", (List.map (fun arg -> arg.ToString()) arglist)) + ")"
         override self.Resolve(wb: Workbook)(ws: Worksheet) =

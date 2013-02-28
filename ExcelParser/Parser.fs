@@ -35,7 +35,7 @@
 
     // Workbook Names (this may be too restrictive)
     let WorkbookName = between (pstring "[") (pstring "]") (many1Satisfy (fun c -> c <> '[' && c <> ']'))
-    let Workbook = (attempt WorkbookName) <|> (pstring "")
+    let Workbook = ((attempt WorkbookName) |>> Some) <|> ((pstring "") >>% None)
 
     // References
     // References consist of the following parts:
@@ -55,7 +55,7 @@
     let NamedReference = pipe2 NamedReferenceFirstChar NamedReferenceLastChars (fun c s -> ReferenceNamed(None, c.ToString() + s) :> Reference)
 
     let ReferenceKinds  = (attempt RangeReference) <|> (attempt AddressReference) <|> NamedReference
-    let Reference = pipe2 Workbook ReferenceKinds (fun wbname ref -> ref.WorkbookName <- Some wbname; ref)
+    let Reference = pipe2 Workbook ReferenceKinds (fun wbname ref -> ref.WorkbookName <- wbname; ref)
 
     // Functions
     let ArgumentList, ArgumentListImpl = createParserForwardedToRef()
@@ -100,7 +100,7 @@
         | Failure(errorMsg, _, _) -> None
 
     let ParseFormula(str, wb, ws): Reference option =
-        match run (Formula .>> eof) str with
+        match run Formula str with
         | Success(formula, _, _) ->
             AddrResolve formula wb ws
             Some(formula)
