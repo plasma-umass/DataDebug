@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 /*
@@ -63,71 +64,36 @@ namespace stats {
     sort (a.begin(), a.end());
     sort (b.begin(), b.end());
 
-    double R[2] = {0.0, 0.0};
+    vector<pair<TYPE,int>> combined;
 
-    // Compute ranks.
-    auto aIndex = 0;
-    auto bIndex = 0;
-    for (auto i = 0; i < a.size() + b.size(); i++) {
-      if (aIndex >= a.size()) {
-	R[1] += i + 1;
-	bIndex++;
-      } else if (bIndex >= b.size()) {
-	R[0] += i + 1;
-	aIndex++;
-      } else {
-	if (a[aIndex] < b[bIndex]) {
-	  R[0] += i + 1;
-	  aIndex++;
-	} else if (a[aIndex] > b[bIndex]) {
-	  R[1] += i + 1;
-	  bIndex++;
-	}
-	else {
-	  // Equal: split the tie.
-	  assert (a[aIndex] == b[bIndex]);
-	  R[0] += (i + 1)/2.0;
-	  R[1] += (i + 1)/2.0;
-	  aIndex++;
-	  bIndex++;
-	}
+    for (auto x : a) { combined.push_back (pair<TYPE,int>(x+drand48(),0)); }
+    for (auto x : b) { combined.push_back (pair<TYPE,int>(x+drand48(),1)); }
+
+    sort (combined.begin(), combined.end());
+
+    // Compute ranks. For now, ignore ties.
+    auto index = 1;
+    auto aRanks = 0;
+    for (auto x : combined) {
+      if (x.second == 0) {
+	aRanks += index;
       }
+      index++;
     }
+    
+    cout << "RANKS = " << aRanks << endl;
 
-    double U[2] = { 0.0, 0.0 };
     auto n1 = a.size();
     auto n2 = b.size();
     auto N  = n1 + n2;
-    U[0] = R[0] - (n1*(n1+1))/2.0;
-    U[1] = R[1] - (n2*(n2+1))/2.0;
-    assert (U[0] + U[1] == n1 * n2);
-    //    auto mean = (n1 * n2) / 2.0;
 
-    auto u_val = n1 * n2 + n1 * (n1+1)/2 - R[0];
-    double mean = n1 * n2 / 2.0;
-
-    //    auto mean = (n1 * n2) / 2.0;
-    // without ties, use this:
-    auto stddev = sqrt((n1 * n2 * (N + 1.0))/12.0);
-
-
-    cout << "min U = " << min(R[0],R[1]) << endl;
-    cout << "uval = " << u_val << endl;
-    cout << "mean = " << mean << endl;
-    cout << "alternate z = " << (u_val - mean) / stddev << endl;
-
-    // Since we can have ties, we should use an adjustment. This would
-    // entail counting the number of tied ranks, which is reasonably
-    // complex. We punt this for now.
-    float zScore = fabs(min(U[0],U[1]) - mean) / stddev;
-    cout << zScore << endl;
- 
-    // For now we hard code this. FIX ME.
-    if (zScore > 6.0) {
-      return true;
-    } else {
-      return false;
-    }
+    auto U = aRanks - (n1 * (n1+1))/2.0;
+    cout << "aRanks = " << aRanks << endl;
+    cout << "U = " << U << endl;
+    auto s = sqrt ((n1*n2)*(n1+n2+1.0)/12.0);
+    auto Z = fabs((U - (n1*n2)/2.0) / s);
+    cout << "Z = " << Z << endl;
+    return false;
   }
 
   void testMannWhitney() {
@@ -167,6 +133,84 @@ namespace stats {
       result = false;
     }
     return result;
+  }
+
+  template <class TYPE>
+  float confidencePermutationTest (const vector<TYPE>& a,
+				   const vector<TYPE>& b,
+				   const int iterations = 1000)
+  {
+    auto originalMeanDiff = fabs((float) average (a) - (float) average (b));
+
+    cout << "original mean diff = " << originalMeanDiff << endl;
+
+    // Combine a and b into a vector called mix.
+    vector<TYPE> mix;
+    mix.resize (a.size() + b.size());
+
+    {
+      auto index = 0;
+      for (auto const& x : a) {
+	mix[index++] = x;
+      }
+      for (auto const& x : b) {
+	mix[index++] = x;
+      }
+    }
+    
+    // Now repeatedly construct two different permutations of this mix,
+    // and compute their averages. We count the number of times the original average
+    // is smaller than the average of the permuted samples.
+    auto count = 0;
+    float minDiff = 1e99;
+    float maxDiff = -1e99;
+    for (auto i = 0; i < iterations; i++) {
+      fyshuffle::inplace (mix);
+      float s1 = 0.0, s2 = 0.0;
+      for (auto j = 0; j < a.size(); j++) {
+	s1 += mix[j];
+      }
+      for (auto j = a.size(); j < a.size() + b.size(); j++) {
+	s2 += mix[j];
+      }
+      float currDiff = fabs(s1/a.size() - s2/b.size());
+      if (minDiff > currDiff) { minDiff = currDiff; }
+      if (maxDiff < currDiff) { maxDiff = currDiff; }
+      if (originalMeanDiff <= currDiff) {
+	count++;
+      }
+    }
+    cout << "count = " << count << endl;
+    cout << "minDiff = " << minDiff << endl;
+    cout << "maxDiff = " << maxDiff << endl;
+    return (float) count / (float) iterations;
+  }
+
+  template <class TYPE>
+  float overlapFraction (vector<TYPE>& a,
+			 vector<TYPE>& b)
+  {
+    sort (a.begin(), a.end());
+    sort (b.begin(), b.end());
+
+    auto counter = 0;
+
+    vector<TYPE> vecs[2];
+    vecs[0] = a;
+    vecs[1] = b;
+    float range[2][2] = {{ a[0], a[a.size()-1] },
+			 { b[0], b[b.size()-1] }};
+
+    for (int i = 0; i < 2; i++) {
+      for (int index = 0; index < vecs[i].size(); index++) {
+	if ((vecs[i][index] >= range[1-i][0]) &&
+	    (vecs[i][index] <= range[1-i][1])) {
+	  counter++;
+	}
+      }
+    }
+
+    return (float) counter / (float) (a.size() + b.size());
   }
 
   /// @brief returns true iff a and b are significantly different.

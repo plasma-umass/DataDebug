@@ -14,13 +14,13 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 10;
-const auto NBOOTSTRAPS = 5000;
+const auto NELEMENTS = 5;
+const auto NBOOTSTRAPS = 1000;
 
 // = (1-alpha) confidence interval
 // const auto ALPHA = 0.05; // 95% = 2 std devs
-const auto ALPHA = 0.003; // 99.7% = 3 std devs
-// const auto ALPHA = 0.001;
+//const auto ALPHA = 0.003; // 99.7% = 3 std devs
+const auto ALPHA = 0.001;
 
 #include "fyshuffle.h"
 #include "stats.h"
@@ -62,11 +62,11 @@ int main()
   // Generate a random vector.
   for (auto &x : original) {
     // Uniform distribution.
-    x = lrand48() % 3 + 1;
+    x = lrand48() % 100 + 1;
   }
 
   // Add an anomalous value.
-  original[2] = 10; // 180; // 640; // 64;
+  original[2] = 800000; // 4; // 180; // 640; // 64;
    
 #else
 
@@ -97,8 +97,8 @@ int main()
     // Create a new bootstrap into b.
     bootstrap::complete (original, b);
     // Compute the function and save it.
-    bootOriginal[i] = poly (b) / (float) NELEMENTS;
-    cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
+    bootOriginal[i] = poly (b);
+    //    cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
   }
 
   // For each index, check to see whether the distribution without it
@@ -113,22 +113,35 @@ int main()
     // Build a bootstrap distribution WITHOUT index k.
     for (long i = 0; i < NBOOTSTRAPS; i++) {
       bootstrap::exclusive (k, original, b);
-      bootWithout[i] = poly(b) / (float) NELEMENTS;
+      bootWithout[i] = poly(b);
     }
+
+    cout << "overlap fraction = " << overlapFraction (bootOriginal, bootWithout) << endl;
 
 #if 0
-    if (stats::kolmogorovSmirnoff (bootOriginal, bootWithout)) {
-      cout << "#element " << k << " is significantly different per KS test." << endl;
-    }
-
-    if (stats::mannWhitney (bootOriginal, bootWithout)) {
-      cout << "#element " << k << " is significantly different per Mann-Whitney test." << endl;
+    auto f = confidencePermutationTest (bootOriginal, bootWithout, 10000);
+    cout << "f value = " << f << endl;
+    if (f <= 0.0001) {
+      cout << "#element " << k << " (" << original[k] << ") is significantly different per permutation test." << endl;
     }
 #endif
 
     if (stats::meanDistance (bootOriginal, bootWithout)) {
       cout << "#element " << k << " is significantly different per mean-distance test." << endl;
     }
+
+#if 0
+    if (stats::kolmogorovSmirnoff (bootOriginal, bootWithout)) {
+      cout << "#element " << k << " is significantly different per KS test." << endl;
+    }
+#endif
+
+#if 1
+    if (stats::mannWhitney (bootOriginal, bootWithout)) {
+      cout << "#element " << k << " is significantly different per Mann-Whitney test." << endl;
+    }
+
+#endif
   }
 
   return 0;
