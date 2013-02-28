@@ -9,10 +9,11 @@ using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
 using System.Text.RegularExpressions;
 using DataDebugMethods;
+using Microsoft.FSharp.Core;
 using TreeNode = DataDebugMethods.TreeNode;
 using System.Diagnostics;
-using TreeDict = System.Collections.Generic.Dictionary<int, DataDebugMethods.TreeNode>;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<int, DataDebugMethods.TreeNode>;
+using TreeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.TreeNode>;
+using TreeDictPair = System.Collections.Generic.KeyValuePair<string, DataDebugMethods.TreeNode>;
 
 namespace DataDebug
 {
@@ -90,10 +91,10 @@ namespace DataDebug
                 foreach (Excel.Range c in worksheet_range)
                 {
                     // Sanity check-- ensure that cells from ranges in analysisRanges are inside the UsedRange
-                    Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c), "This spreadsheet violates a condition thought to be impossible.");
+                    Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c, Globals.ThisAddIn.Application.ActiveWorkbook), "This spreadsheet violates a condition thought to be impossible.");
                     TreeNode formula_cell;
-                    AST.Address addr = Utility.ParseXLAddress(c);
-                    if (!nodes.TryGetValue(addr.AddressAsInt32(), out formula_cell))
+                    AST.Address addr = Utility.ParseXLAddress(c, Globals.ThisAddIn.Application.ActiveWorkbook);
+                    if (!nodes.TryGetValue(addr.AddressAsKey(), out formula_cell))
                     {
                         throw new Exception("Sometimes you eat the bear, and sometimes, well, he eats you.");
                     }
@@ -477,6 +478,22 @@ namespace DataDebug
                     originalColorNodes.RemoveAt(i);
                     i--;
                 }
+            }
+        }
+
+        private void TestParser_Click(object sender, RibbonControlEventArgs e)
+        {
+            Excel.Workbook wb = Globals.ThisAddIn.Application.ActiveWorkbook;
+            Excel.Worksheet ws = Globals.ThisAddIn.Application.ActiveSheet;
+            string formula = Globals.ThisAddIn.Application.ActiveCell.Value2;
+            FSharpOption<AST.Reference> parsetree = ExcelParser.ParseFormula(formula, wb, ws);
+            if (FSharpOption<AST.Reference>.get_IsSome(parsetree))
+            {
+                System.Windows.Forms.MessageBox.Show(parsetree.Value.ToString());
+            }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("Shit don't parse.");
             }
         }
     }
