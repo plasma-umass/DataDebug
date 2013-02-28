@@ -14,8 +14,8 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 5;
-const auto NBOOTSTRAPS = 1000;
+const auto NELEMENTS = 20;
+const auto NBOOTSTRAPS = 2000;
 
 // = (1-alpha) confidence interval
 // const auto ALPHA = 0.05; // 95% = 2 std devs
@@ -52,7 +52,7 @@ typedef float vectorType;
 int main()
 {
   // Seed the random number generator.
-  srand48 (0); // time(NULL));
+  srand48 (time(NULL));
 
   vector<vectorType> original;
   original.resize (NELEMENTS);
@@ -66,7 +66,7 @@ int main()
   }
 
   // Add an anomalous value.
-  original[2] = 800000; // 4; // 180; // 640; // 64;
+  //  original[2] = 110; // 4; // 180; // 640; // 64;
    
 #else
 
@@ -83,8 +83,12 @@ int main()
   
  
 #if 1
-  for (auto const& x : original) {
-    cout << "# value = " << x << endl;    
+  {
+    int count = 0;
+    for (auto const& x : original) {
+      cout << "(" << count << ") value = " << x << endl;    
+      count++;
+    }
   }
 #endif
   
@@ -116,7 +120,7 @@ int main()
       bootWithout[i] = poly(b);
     }
 
-    cout << "overlap fraction = " << overlapFraction (bootOriginal, bootWithout) << endl;
+    //    cout << "overlap fraction = " << overlapFraction (bootOriginal, bootWithout) << endl;
 
 #if 0
     auto f = confidencePermutationTest (bootOriginal, bootWithout, 10000);
@@ -126,9 +130,11 @@ int main()
     }
 #endif
 
+#if 1
     if (stats::meanDistance (bootOriginal, bootWithout)) {
       cout << "#element " << k << " is significantly different per mean-distance test." << endl;
     }
+#endif
 
 #if 0
     if (stats::kolmogorovSmirnoff (bootOriginal, bootWithout)) {
@@ -137,7 +143,7 @@ int main()
 #endif
 
 #if 1
-    if (stats::mannWhitney (bootOriginal, bootWithout)) {
+    if (stats::mannWhitney (bootOriginal, bootWithout, 0.0001)) {
       cout << "#element " << k << " is significantly different per Mann-Whitney test." << endl;
     }
 
