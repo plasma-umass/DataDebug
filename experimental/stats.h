@@ -55,12 +55,78 @@ namespace stats {
   }
 
   template <class TYPE>
+  int rankCount (vector<TYPE>& a,
+		 vector<TYPE>& b)
+  {
+    int count = 0;
+    sort (a.begin(), a.end());
+    sort (b.begin(), b.end());
+    
+    int aIndex = 0;
+    int bIndex = 0;
+    
+    while ((aIndex < a.size()) && (bIndex < b.size())) {
+      if (a[aIndex] < b[bIndex]) {
+	count += b.size() - bIndex;
+	aIndex++;
+      } else {
+	bIndex++;
+      }
+    }
+    return count;
+  }
+
+
+  // Non-parametric form (via Monte Carlo) of Mann-Whitney test:
+  // MC is to compute p-value.
+  template <class TYPE>
   bool mannWhitney (vector<TYPE>& a,
 		    vector<TYPE>& b,
 		    float significanceLevel = 0.05)
   {
     assert (a.size() == b.size());
 
+    sort (a.begin(), a.end());
+    sort (b.begin(), b.end());
+
+    int count = rankCount<TYPE> (a, b);
+
+    cout << "count = " << count << endl;
+
+    vector<TYPE> combined;
+
+    for (auto x : a) { combined.push_back (x); }
+    for (auto x : b) { combined.push_back (x); }
+
+    // Now see what the probability of this value is with Monte Carlo.
+    int freq = 0;
+
+    const int ITERATIONS = 5000;
+
+    for (int it = 0; it < ITERATIONS; it++) {
+      fyshuffle::inplace (combined);
+      
+      vector<TYPE> firstVector (combined.begin(), combined.begin() + a.size());
+      vector<TYPE> secondVector (combined.begin() + a.size(), combined.end());
+      int cnt = rankCount<TYPE>(firstVector, secondVector);
+
+      if (cnt < count) {
+	//	cout << "cnt = " << cnt << endl;
+	freq++;
+      }
+    }
+
+    cout << "freq = " << freq << " out of " << ITERATIONS << endl;
+
+    if ((float) freq / ITERATIONS < significanceLevel) {
+      return true;
+    } else {
+      return false;
+    }
+
+    return false;
+
+#if 0    
     sort (a.begin(), a.end());
     sort (b.begin(), b.end());
 
@@ -94,6 +160,7 @@ namespace stats {
     auto Z = fabs((U - (n1*n2)/2.0) / s);
     cout << "Z = " << Z << endl;
     return false;
+#endif
   }
 
   void testMannWhitney() {
