@@ -190,7 +190,6 @@ namespace DataDebug
                         {
                             impacts_grid[worksheet.Index - 1][row][col] = new double[output_cells.Count];
                             reachable_grid[worksheet.Index - 1][row][col] = new bool[output_cells.Count];
-                            //System.Windows.Forms.MessageBox.Show("output cells count = " + output_cells.Count);
                             for (int i = 0; i < output_cells.Count; i++)
                             {
                                 impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
