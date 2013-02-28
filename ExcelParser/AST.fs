@@ -23,8 +23,18 @@
         member self.WorkbookName
             with get() = _wbn
             and set(value) = _wbn <- value
-        member self.AddressAsKey() : string = self.R1C1
-//        override self.GetHashCode() : int = 
+        member self.AddressAsInt32() =
+            // convert to zero-based indices
+            // the modulus catches overflow; collisions are OK because our equality
+            // operator does an exact check
+            // underflow should throw an exception
+            let col_idx = (C - 1) % 65536       // allow 16 bits for columns
+            let row_idx = (R - 1) % 65536       // allow 16 bits for rows
+            Debug.Assert(col_idx >= 0 && row_idx >= 0)
+            row_idx + (col_idx <<< 16)
+        // Address is used as a Dictionary key, and reference equality
+        // does not suffice, therefore GetHashCode and Equals are provided
+        override self.GetHashCode() : int = self.AddressAsInt32()
         override self.Equals(obj: obj) : bool =
             let addr = obj :?> Address
             self.SameAs addr

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
-using TreeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.TreeNode>;
+using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeList = System.Collections.Generic.List<DataDebugMethods.TreeNode>;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<string, DataDebugMethods.TreeNode>;
+using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 
 namespace DataDebugMethods
 {
@@ -93,7 +93,7 @@ namespace DataDebugMethods
                         if (cell.HasFormula)
                         {
                             n.setIsFormula();
-                            nodes.Add(addr.AddressAsKey(), n);
+                            nodes.Add(addr, n);
                         }
                     }
                 }
@@ -168,7 +168,7 @@ namespace DataDebugMethods
                     if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                     {
                         //if a TreeNode exists for this cell already
-                        nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                        nodes.TryGetValue(addr, out input_cell);
                     }
 
                     //If it wasn't found, then it is blank, and we have to create a TreeNode for it
@@ -178,7 +178,7 @@ namespace DataDebugMethods
                         //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                         if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                         {
-                            nodes.Add(addr.AddressAsKey(), input_cell);
+                            nodes.Add(addr, input_cell);
                         }
                     }
 
@@ -227,7 +227,7 @@ namespace DataDebugMethods
                     if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                     {
                         //if a TreeNode exists for this cell already
-                        nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                        nodes.TryGetValue(addr, out input_cell);
                     }
                     //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                     if (input_cell == null)
@@ -236,7 +236,7 @@ namespace DataDebugMethods
                         //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                         if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                         {
-                            nodes.Add(addr.AddressAsKey(), input_cell);
+                            nodes.Add(addr, input_cell);
                         }
                     }
 
@@ -275,7 +275,7 @@ namespace DataDebugMethods
                 if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                 {
                     //if a TreeNode exists for this cell already, use it
-                    nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                    nodes.TryGetValue(addr, out input_cell);
                 }
                 //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                 if (input_cell == null)
@@ -284,7 +284,7 @@ namespace DataDebugMethods
                     //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                     if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                     {
-                        nodes.Add(addr.AddressAsKey(), input_cell);
+                        nodes.Add(addr, input_cell);
                     }
                 }
 
@@ -321,7 +321,7 @@ namespace DataDebugMethods
                 
                 if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                 {
-                    nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                    nodes.TryGetValue(addr, out input_cell);
                 }
                 //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                 if (input_cell == null)
@@ -330,7 +330,7 @@ namespace DataDebugMethods
                     //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                     if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                     {
-                        nodes.Add(addr.AddressAsKey(), input_cell);
+                        nodes.Add(addr, input_cell);
                     }
                 }
 
@@ -378,7 +378,7 @@ namespace DataDebugMethods
                     if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Row) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                     {
                         //if a TreeNode exists for this cell already, use it
-                        nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                        nodes.TryGetValue(addr, out input_cell);
                     }
                     //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                     if (input_cell == null)
@@ -387,7 +387,7 @@ namespace DataDebugMethods
                         //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                         if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                         {
-                            nodes.Add(addr.AddressAsKey(), input_cell);
+                            nodes.Add(addr, input_cell);
                         }
                     }
 
@@ -450,7 +450,7 @@ namespace DataDebugMethods
                         if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                         {
                             //if a TreeNode exists for this cell already, use it
-                            nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                            nodes.TryGetValue(addr, out input_cell);
                         }
                         //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                         if (input_cell == null)
@@ -459,7 +459,7 @@ namespace DataDebugMethods
                             //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                             if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                             {
-                                nodes.Add(addr.AddressAsKey(), input_cell);
+                                nodes.Add(addr, input_cell);
                             }
                         }
 
@@ -479,7 +479,7 @@ namespace DataDebugMethods
                     if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                     {
                         //if a TreeNode exists for this cell already, use it
-                        nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                        nodes.TryGetValue(addr, out input_cell);
                     }
                     //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                     if (input_cell == null)
@@ -488,7 +488,7 @@ namespace DataDebugMethods
                         //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                         if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                         {
-                            nodes.Add(addr.AddressAsKey(), input_cell);
+                            nodes.Add(addr, input_cell);
                         }
                     }
                     //Update the dependencies
@@ -512,7 +512,7 @@ namespace DataDebugMethods
                 if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                 {
                     //if a TreeNode exists for this cell already, use it
-                    nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                    nodes.TryGetValue(addr, out input_cell);
                 }
                 //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                 if (input_cell == null)
@@ -521,7 +521,7 @@ namespace DataDebugMethods
                     //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                     if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                     {
-                        nodes.Add(addr.AddressAsKey(), input_cell);
+                        nodes.Add(addr, input_cell);
                     }
                 }
                 //Update the dependencies
@@ -585,7 +585,7 @@ namespace DataDebugMethods
                                 if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                 {
                                     //if a TreeNode exists for this cell already
-                                    nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                                    nodes.TryGetValue(addr, out input_cell);
                                 }
                                 //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                                 if (input_cell == null)
@@ -594,7 +594,7 @@ namespace DataDebugMethods
                                     //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                                     if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                     {
-                                        nodes.Add(addr.AddressAsKey(), input_cell);
+                                        nodes.Add(addr, input_cell);
                                     }
                                 }
 
@@ -639,7 +639,7 @@ namespace DataDebugMethods
                                 if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                 {
                                     //if a TreeNode exists for this cell already
-                                    nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                                    nodes.TryGetValue(addr, out input_cell);
                                 }
                                 //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                                 if (input_cell == null)
@@ -648,7 +648,7 @@ namespace DataDebugMethods
                                     //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                                     if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                     {
-                                        nodes.Add(addr.AddressAsKey(), input_cell);
+                                        nodes.Add(addr, input_cell);
                                     }
                                 }
 
@@ -683,7 +683,7 @@ namespace DataDebugMethods
                             if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                             {
                                 //if a TreeNode exists for this cell already, use it
-                                nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                                nodes.TryGetValue(addr, out input_cell);
                             }
                             //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                             if (input_cell == null)
@@ -692,7 +692,7 @@ namespace DataDebugMethods
                                 //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                                 if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                                 {
-                                    nodes.Add(addr.AddressAsKey(), input_cell);
+                                    nodes.Add(addr, input_cell);
                                 }
                             }
 
@@ -726,7 +726,7 @@ namespace DataDebugMethods
                             if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                             {
                                 //if a TreeNode exists for this cell already, use it
-                                nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                                nodes.TryGetValue(addr, out input_cell);
                             }
                             //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                             if (input_cell == null)
@@ -735,7 +735,7 @@ namespace DataDebugMethods
                                 //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                                 if (input.Column <= (input.Worksheet.UsedRange.Columns.Count + input.Worksheet.UsedRange.Column) && input.Row <= (input.Worksheet.UsedRange.Rows.Count + input.Worksheet.UsedRange.Row))
                                 {
-                                    nodes.Add(addr.AddressAsKey(), input_cell);
+                                    nodes.Add(addr, input_cell);
                                 }
                             }
 
@@ -793,7 +793,7 @@ namespace DataDebugMethods
                             if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                             {
                                 //if a TreeNode exists for this cell already, use it
-                                nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                                nodes.TryGetValue(addr, out input_cell);
                             }
                             //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                             if (input_cell == null)
@@ -802,7 +802,7 @@ namespace DataDebugMethods
                                 //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                                 if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                 {
-                                    nodes.Add(addr.AddressAsKey(), input_cell);
+                                    nodes.Add(addr, input_cell);
                                 }
                             }
 
@@ -1109,7 +1109,7 @@ namespace DataDebugMethods
                                 if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                 {
                                     //if a TreeNode exists for this cell already, use it
-                                    nodes.TryGetValue(addr.AddressAsKey(), out input_cell);
+                                    nodes.TryGetValue(addr, out input_cell);
                                 }
                                 //If it wasn't found, then it is blank, and we have to create a TreeNode for it
                                 if (input_cell == null)
@@ -1118,7 +1118,7 @@ namespace DataDebugMethods
                                     //Check if this cell's coordinates are within the bounds of the used range, otherwise there will be an index out of bounds error
                                     if (cellInRange.Column <= (cellInRange.Worksheet.UsedRange.Columns.Count + cellInRange.Worksheet.UsedRange.Column) && cellInRange.Row <= (cellInRange.Worksheet.UsedRange.Rows.Count + cellInRange.Worksheet.UsedRange.Row))
                                     {
-                                        nodes.Add(addr.AddressAsKey(), input_cell);
+                                        nodes.Add(addr, input_cell);
                                     }
                                 }
 

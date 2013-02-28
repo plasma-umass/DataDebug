@@ -12,8 +12,8 @@ using DataDebugMethods;
 using Microsoft.FSharp.Core;
 using TreeNode = DataDebugMethods.TreeNode;
 using System.Diagnostics;
-using TreeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.TreeNode>;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<string, DataDebugMethods.TreeNode>;
+using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
+using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 
 namespace DataDebug
 {
@@ -94,7 +94,7 @@ namespace DataDebug
                     Debug.Assert(DataDebugMethods.Utility.InsideUsedRange(c, Globals.ThisAddIn.Application.ActiveWorkbook), "This spreadsheet violates a condition thought to be impossible.");
                     TreeNode formula_cell;
                     AST.Address addr = Utility.ParseXLAddress(c, Globals.ThisAddIn.Application.ActiveWorkbook);
-                    if (!nodes.TryGetValue(addr.AddressAsKey(), out formula_cell))
+                    if (!nodes.TryGetValue(addr, out formula_cell))
                     {
                         throw new Exception("Sometimes you eat the bear, and sometimes, well, he eats you.");
                     }
