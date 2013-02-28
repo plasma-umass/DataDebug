@@ -3,6 +3,7 @@
     open System.Diagnostics
     open Microsoft.Office.Interop.Excel
 
+    type Workbook = Microsoft.Office.Interop.Excel.Workbook
     type Worksheet = Microsoft.Office.Interop.Excel.Worksheet
 
     type Address(R: int, C: int, wsname: string option, wbname: string option) =
@@ -11,8 +12,8 @@
         new(row: int, col: string, wsname: string option, wbname: string option) =
             Address(row, Address.CharColToInt(col), wsname, wbname)
         member self.R1C1 =
-            let wsstr = match wsname with | Some(ws) -> ws + "!" | None -> ""
-            let wbstr = match wbname with | Some(wb) -> "[" + wb + "]" | None -> ""
+            let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
+            let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
             wbstr + wsstr + "R" + R.ToString() + "C" + C.ToString()
         member self.X = C
         member self.Y = R
@@ -22,16 +23,17 @@
         member self.WorkbookName
             with get() = _wbn
             and set(value) = _wbn <- value
-        member self.XLAddress() : string = self.R1C1
         member self.AddressAsInt32() =
             // convert to zero-based indices
             // the modulus catches overflow; collisions are OK because our equality
             // operator does an exact check
             // underflow should throw an exception
-            let col_idx = (C - 1) % 65536     // allow 16 bits for columns
-            let row_idx = (R - 1) % 65536      // allow 16 bits for rows
+            let col_idx = (C - 1) % 65536       // allow 16 bits for columns
+            let row_idx = (R - 1) % 65536       // allow 16 bits for rows
             Debug.Assert(col_idx >= 0 && row_idx >= 0)
             row_idx + (col_idx <<< 16)
+        // Address is used as a Dictionary key, and reference equality
+        // does not suffice, therefore GetHashCode and Equals are provided
         override self.GetHashCode() : int = self.AddressAsInt32()
         override self.Equals(obj: obj) : bool =
             let addr = obj :?> Address
@@ -94,7 +96,7 @@
         let mutable _wbn = None
         let mutable _wsn = wsname
         abstract member InsideRef: Reference -> bool
-        abstract member Resolve: Worksheet -> unit
+        abstract member Resolve: Workbook -> Worksheet -> unit
         abstract member WorkbookName: string option with get, set
         abstract member WorksheetName: string option with get, set
         default self.WorkbookName
@@ -104,14 +106,27 @@
             with get() = _wsn
             and set(value) = _wsn <- value
         default self.InsideRef(ref: Reference) = false
-        default self.Resolve(ws: Worksheet) =
-            // set if worksheet is unset, but only
-            // if the workbook is also unset
-            _wsn <- match _wsn with
-                    | Some(ws) -> _wsn
-                    | None -> match _wbn with
-                              | Some(wb) -> _wsn
-                              | None -> Some ws.Name
+//        default self.Resolve(wb: Workbook, ws: Worksheet) =
+//            // set if worksheet is unset, but only
+//            // if the workbook is also unset
+//            _wsn <- match _wsn with
+//                    | Some(ws) -> _wsn
+//                    | None -> match _wbn with
+//                              | Some(wb) -> _wsn
+//                              | None -> Some ws.Name
+        default self.Resolve(wb: Workbook)(ws: Worksheet) : unit =
+            // always resolve the workbook name when it is missing
+            // but only resolve the worksheet name when the
+            // workbook name is not set
+            _wbn <- match self.WorkbookName with
+                    | Some(wbn) -> Some wbn
+                    | None -> Some wb.Name
+            _wsn <- match self.WorksheetName with
+                    | Some(wsn) -> Some wsn
+                    | None ->
+                        match self.WorkbookName with
+                        | Some(wbn) -> None
+                        | None -> Some ws.Name
 
     and ReferenceRange(wsname: string option, rng: Range) =
         inherit Reference(wsname)
@@ -126,16 +141,29 @@
             | :? ReferenceRange as rr -> rng.InsideRange(rr.Range)
             | _ -> failwith "Unknown Reference subclass."
         member self.Range = rng
-        override self.Resolve(ws: Worksheet) =
-            // set if worksheet is unset, but only
-            // if the workbook is also unset
-            self.WorksheetName <-
-                match self.WorksheetName with
-                    | Some(ws) -> Some(ws)
-                    | None -> match self.WorksheetName with
-                              | Some(wb) -> self.WorksheetName
-                              | None -> Some ws.Name
-            rng.SetWorksheetName(Some ws.Name)
+        override self.Resolve(wb: Workbook)(ws: Worksheet) =
+            // always resolve the workbook name when it is missing
+            // but only resolve the worksheet name when the
+            // workbook name is not set
+            self.WorkbookName <- match self.WorkbookName with
+                                 // If we know it, we also pass the wbname
+                                 // down to ranges and addresses
+                                 | Some(wbn) ->
+                                      rng.SetWorkbookName(Some wbn)
+                                      Some wbn
+                                 | None ->
+                                      rng.SetWorkbookName(Some wb.Name)
+                                      Some wb.Name
+            self.WorksheetName <- match self.WorksheetName with
+                                  | Some(wsn) ->
+                                      rng.SetWorksheetName(Some wsn)
+                                      Some wsn
+                                  | None ->
+                                      match self.WorkbookName with
+                                      | Some(wbn) -> None
+                                      | None ->
+                                          rng.SetWorksheetName(Some ws.Name)
+                                          Some ws.Name
 
     and ReferenceAddress(wsname: string option, addr: Address) =
         inherit Reference(wsname)
@@ -150,18 +178,39 @@
             | :? ReferenceAddress as ar -> addr.InsideAddr(ar.Address)
             | :? ReferenceRange as rr -> addr.InsideRange(rr.Range)
             | _ -> failwith "Invalid Reference subclass."
-        override self.Resolve(ws: Worksheet) =
-            self.WorksheetName <- Some ws.Name
-            addr.WorkbookName <- Some ws.Name
+        override self.Resolve(wb: Workbook)(ws: Worksheet) =
+            // always resolve the workbook name when it is missing
+            // but only resolve the worksheet name when the
+            // workbook name is not set
+            self.WorkbookName <- match self.WorkbookName with
+                                 // If we know it, we also pass the wbname
+                                 // down to ranges and addresses
+                                 | Some(wbn) ->
+                                      addr.WorkbookName <- Some wbn
+                                      Some wbn
+                                 | None ->
+                                      addr.WorkbookName <- Some wb.Name
+                                      Some wb.Name
+            self.WorksheetName <- match self.WorksheetName with
+                                  | Some(wsn) ->
+                                      addr.WorksheetName <- Some wsn
+                                      Some wsn
+                                  | None ->
+                                      match self.WorkbookName with
+                                      | Some(wbn) -> None
+                                      | None ->
+                                          addr.WorksheetName <- Some ws.Name
+                                          Some ws.Name
 
     and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
         inherit Reference(wsname)
         override self.ToString() =
             fnname + "(" + String.Join(",", (List.map (fun arg -> arg.ToString()) arglist)) + ")"
-        override self.Resolve(ws: Worksheet) =
-            self.WorksheetName <- Some ws.Name
+        override self.Resolve(wb: Workbook)(ws: Worksheet) =
+            // pass wb and ws information down to arguments
+            // wb and ws names do not matter for functions
             for arg in arglist do
-                arg.Resolve(ws)
+                arg.Resolve wb ws
 
     and ReferenceNamed(wsname: string option, varname: string) =
         inherit Reference(wsname)

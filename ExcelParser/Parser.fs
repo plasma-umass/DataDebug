@@ -1,7 +1,10 @@
 ﻿module ExcelParser
     open FParsec
     open AST
+    open Microsoft.Office.Interop.Excel
 
+    type Workbook = Microsoft.Office.Interop.Excel.Workbook
+    type Worksheet = Microsoft.Office.Interop.Excel.Worksheet
     type UserState = unit
     type Parser<'t> = Parser<'t, UserState>
 
@@ -36,6 +39,7 @@
 
     // References
     // References consist of the following parts:
+    //   An optional workbook name prefix
     //   An optional worksheet name prefix
     //   A single-cell ("Address") or multi-cell address ("Range")
     let RangeReferenceWorksheet = pipe2 (WorksheetName .>> pstring "!") RangeAny (fun wsname rng -> ReferenceRange(Some(wsname), rng) :> Reference)
@@ -67,7 +71,7 @@
     let Formula = pstring "=" >>. Expression .>> eof
 
     // Resolve all undefined references to the current worksheet and workbook
-    let AddrResolve(ref: Reference)(ws: Worksheet) = ref.Resolve(ws)
+    let AddrResolve(ref: Reference)(wb: Workbook)(ws: Worksheet) = ref.Resolve wb ws
 
     // monadic wrapper for success/failure
     let test p str =
@@ -75,20 +79,33 @@
         | Success(result, _, _)   -> printfn "Success: %A" result
         | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
 
-    let GetAddress str ws: Address =
+    let GetAddress(str: string, wb: Workbook, ws: Worksheet): Address =
         match run (AddrR1C1 .>> eof) str with
-        | Success(addr, _, _) -> addr
+        | Success(addr, _, _) ->
+            addr.WorkbookName <- Some wb.Name
+            addr.WorksheetName <- Some ws.Name
+            addr
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let GetRange str ws: Range option =
+    let GetRange str ws: AST.Range option =
         match run (RangeR1C1 .>> eof) str with
         | Success(range, _, _) -> Some(range)
         | Failure(errorMsg, _, _) -> None
 
-    let GetReference str ws: Reference option =
+    let GetReference str wb ws: Reference option =
         match run (Reference .>> eof) str with
-        | Success(reference, _, _) -> Some(reference)
+        | Success(reference, _, _) ->
+            AddrResolve reference wb ws
+            Some(reference)
         | Failure(errorMsg, _, _) -> None
 
-    // helper function for mortals to comprehend; note that Formula looks for EOF
+    let ParseFormula(str, wb, ws): Reference option =
+        match run (Formula .>> eof) str with
+        | Success(formula, _, _) ->
+            AddrResolve formula wb ws
+            Some(formula)
+        | Failure(errorMsg, _, _) -> None
+
+    // The parser REPL calls this; note that the
+    // Formula parser looks for EOF
     let ConsoleTest(s: string) = test Formula s
