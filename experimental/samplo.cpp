@@ -66,7 +66,7 @@ int main()
   }
 
   // Add an anomalous value.
-  original[2] = 180; // 4; // 180; // 640; // 64;
+  original[2] = 300; // 4; // 180; // 640; // 64;
    
 #else
 
@@ -134,11 +134,6 @@ int main()
       if (!includedPosition[k]) {
 	excludes[k].push_back (i);
       }
-    }
-
-    // Sort the excludes array. We will use this in subsequent steps.
-    for (auto k = 0; k < N; k++) {
-      sort (excludes[k].begin(), excludes[k].end());
     }
 
   }
