@@ -89,6 +89,9 @@ namespace stats {
     sort (a.begin(), a.end());
     sort (b.begin(), b.end());
 
+    auto N = a.size() + b.size();
+    auto MaxRank = N * (N + 1) / 2.0;
+
     int count = rankCount<TYPE> (a, b);
 
     cout << "count = " << count << endl;
@@ -108,10 +111,8 @@ namespace stats {
       
       vector<TYPE> firstVector (combined.begin(), combined.begin() + a.size());
       vector<TYPE> secondVector (combined.begin() + a.size(), combined.end());
-      int cnt = rankCount<TYPE>(firstVector, secondVector);
-
-      if (cnt < count) {
-	//	cout << "cnt = " << cnt << endl;
+      int r = rankCount<TYPE>(firstVector, secondVector);
+      if ((r < count) || (r > MaxRank-count)) {
 	freq++;
       }
     }

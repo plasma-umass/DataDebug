@@ -105,6 +105,31 @@ int main()
     //    cout << bootOriginal[i] << " # " << __FILE__ << ":" << __LINE__ << endl;
   }
 
+#if 1
+  vector<int> excludes[NELEMENTS];
+  float boots[NBOOTSTRAPS];
+  const auto N = NELEMENTS;
+  for (int i = 0; i < NBOOTSTRAPS; i++) {
+    vector<float> out;
+    out.resize (NELEMENTS);
+
+    vector<bool> includedPosition;
+    includedPosition.resize (NELEMENTS);
+    bootstrap::completeTracked (original, out, includedPosition);
+    boots[i] = poly (b);
+    for (auto k = 0; k < N; k++) {
+      if (!includedPosition[k]) {
+	excludes[k].push_back (i);
+      }
+    }
+  }
+
+  for (auto k = 0; k < N; k++) {
+    cout << "size excluding index " << k << " = " << excludes[k].size() << endl;
+  }
+
+#endif
+
   // For each index, check to see whether the distribution without it
   // is significantly different from the distribution with it (the
   // original).
@@ -122,6 +147,7 @@ int main()
 
     //    cout << "overlap fraction = " << overlapFraction (bootOriginal, bootWithout) << endl;
 
+    
 #if 0
     auto f = confidencePermutationTest (bootOriginal, bootWithout, 10000);
     cout << "f value = " << f << endl;
