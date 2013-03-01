@@ -14,7 +14,7 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 20;
+const auto NELEMENTS = 500;
 const auto NBOOTSTRAPS = 2000;
 
 // = (1-alpha) confidence interval
@@ -67,7 +67,8 @@ int main()
 
   // Add an anomalous value.
   original[2] = 300; // 4; // 180; // 640; // 64;
-   
+  original[3] = 300;
+
 #else
 
   // Generate a random vector.
@@ -108,7 +109,7 @@ int main()
 #if 1
   vector<bool> significant;
   significant.resize (NELEMENTS);
-  withAndWithoutYou (original, poly, significant, NBOOTSTRAPS);
+  withAndWithoutYou (original, poly, significant, NBOOTSTRAPS, 0.5);
   for (auto i = 0; i < original.size(); i++) {
     if (significant[i]) {
       cout << "element " << i << " significantly different.\n";
