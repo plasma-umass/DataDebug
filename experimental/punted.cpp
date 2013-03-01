@@ -119,3 +119,69 @@ bool significant (const int k,
   cout << "# avg without = " << average (bootWithout) << endl;
   return result;
 }
+
+
+  vector<int> excludes[NELEMENTS];
+  float boots[NBOOTSTRAPS];
+  const auto N = NELEMENTS;
+  auto overallSum = 0.0;
+
+  // Build up the boots (bootstrap) array of values
+  // from the original distribution.
+
+  // At the same time, organize them so that each index of the
+  // excludes array comprises all of the bootstrapped values that do
+  // NOT contain a given indexed value.
+  for (int i = 0; i < NBOOTSTRAPS; i++) {
+    vector<float> out;
+    out.resize (NELEMENTS);
+
+    vector<bool> includedPosition;
+    includedPosition.resize (NELEMENTS);
+    bootstrap::completeTracked (original, out, includedPosition);
+    auto result = poly (out);
+    boots[i] = result;
+    overallSum += result;
+    
+    // Check each included position index and update excludes
+    // accordingly.
+    for (auto k = 0; k < N; k++) {
+      if (!includedPosition[k]) {
+	excludes[k].push_back (i);
+      }
+    }
+  }
+
+  auto overallAvg = overallSum / NBOOTSTRAPS;
+
+  cout << "overall avg = " << overallAvg << endl;
+
+  for (auto k = 0; k < N; k++) {
+    // Compute the mean without this index.
+    auto sum = 0.0;
+    for (auto ind : excludes[k]) {
+      sum += boots[ind];
+    }
+    auto avg = sum / (float) excludes[k].size();
+    cout << "avg WITHOUT element " << k << "= " << avg << endl;
+
+    // Now compute the distribution of values WITH this element...
+    vector<float> distrib;
+    auto excIndex = 0;
+    for (auto i = 0; i < NBOOTSTRAPS; i++) {
+      if ((excIndex < excludes[k].size()) && (i == excludes[k][excIndex])) {
+	excIndex++;
+      } else {
+	distrib.push_back (boots[i]);
+      }
+    }
+    sort (distrib.begin(), distrib.end());
+
+    auto const sz = distrib.size();
+    cout << "[" << distrib[0.025 * sz] << "," << distrib[0.975 * sz] << "]" << endl;
+
+    if ((avg < distrib[0.025 * sz]) || (avg > distrib[0.975 * sz])) {
+      cout << "SIGNIFICANT!!" << endl;
+    }
+  }
+
