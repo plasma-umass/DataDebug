@@ -349,10 +349,6 @@ namespace stats {
       }
     }
     
-    auto overallAvg = overallSum / nBootstraps;
-    
-    //  cout << "overall avg = " << overallAvg << endl;
-    
     for (auto k = 0; k < N; k++) {
       // Compute the mean without this index.
       auto sum = 0.0;
