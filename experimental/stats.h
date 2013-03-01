@@ -10,6 +10,8 @@
 #include <algorithm>
 using namespace std;
 
+#include "bootstrap.h"
+
 /*
  * Some basic stats functions over vectors.
  *
@@ -307,6 +309,81 @@ namespace stats {
     return (KS > criticalValue);
   }
 
+
+  template <class TYPE>
+  void withAndWithoutYou (const vector<TYPE>& original,
+			  TYPE func (const vector<TYPE>&),
+			  vector<bool>& significant,
+			  const int nBootstraps = 2000,
+			  const float significanceLevel = 0.05)
+  {
+    vector<vector<int>> excludes;
+    excludes.resize (original.size());
+    TYPE boots[nBootstraps];
+    const auto N = original.size();
+    auto overallSum = 0.0;
+    
+    // Build up the boots (bootstrap) array of values
+    // from the original distribution.
+    
+    // At the same time, organize them so that each index of the
+    // excludes array comprises all of the bootstrapped values that do
+    // NOT contain a given indexed value.
+    for (int i = 0; i < nBootstraps; i++) {
+      vector<TYPE> out;
+      out.resize (original.size());
+      
+      vector<bool> includedPosition;
+      includedPosition.resize (original.size());
+      bootstrap::completeTracked (original, out, includedPosition);
+      auto result = func (out);
+      boots[i] = result;
+      overallSum += result;
+      
+      // Check each included position index and update excludes
+      // accordingly.
+      for (auto k = 0; k < N; k++) {
+	if (!includedPosition[k]) {
+	  excludes[k].push_back (i);
+	}
+      }
+    }
+    
+    auto overallAvg = overallSum / nBootstraps;
+    
+    //  cout << "overall avg = " << overallAvg << endl;
+    
+    for (auto k = 0; k < N; k++) {
+      // Compute the mean without this index.
+      auto sum = 0.0;
+      for (auto ind : excludes[k]) {
+	sum += boots[ind];
+      }
+      auto avg = sum / (float) excludes[k].size();
+      //    cout << "avg WITHOUT element " << k << "= " << avg << endl;
+      
+      // Now compute the distribution of values WITH this element...
+      vector<TYPE> distrib;
+      auto excIndex = 0;
+      for (auto i = 0; i < nBootstraps; i++) {
+	if ((excIndex < excludes[k].size()) && (i == excludes[k][excIndex])) {
+	  excIndex++;
+	} else {
+	  distrib.push_back (boots[i]);
+	}
+      }
+      sort (distrib.begin(), distrib.end());
+      
+      auto const sz = distrib.size();
+      // cout << "[" << distrib[0.025 * sz] << "," << distrib[0.975 * sz] << "]" << endl;
+      
+      if ((avg < distrib[significanceLevel / 2.0 * sz]) || (avg > distrib[(1.0 - significanceLevel / 2.0) * sz])) {
+	significant[k] = true;
+      } else {
+	significant[k] = false;
+      }
+    }
+  }
 
 }
 
