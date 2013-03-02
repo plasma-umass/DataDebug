@@ -440,16 +440,20 @@ namespace DataDebug
         //Button for testing random code :)
         private void button7_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show(Globals.ThisAddIn.Application.ActiveWorkbook.Path + "");
-            System.Windows.Forms.MessageBox.Show(Globals.ThisAddIn.Application.Workbooks[1] + "");
-            foreach (Excel.Chart chart in Globals.ThisAddIn.Application.Charts)
-            {
-                foreach (Excel.Series series in (Excel.SeriesCollection)chart.SeriesCollection(Type.Missing))
-                {
-                    string formula = series.Formula;  //The formula contained in the cell
-                    System.Windows.Forms.MessageBox.Show(formula);
-                }
-            }
+            //System.Windows.Forms.MessageBox.Show(Globals.ThisAddIn.Application.ActiveWorkbook.Path + "");
+            //System.Windows.Forms.MessageBox.Show(Globals.ThisAddIn.Application.Workbooks[1] + "");
+            //foreach (Excel.Chart chart in Globals.ThisAddIn.Application.Charts)
+            //{
+            //    foreach (Excel.Series series in (Excel.SeriesCollection)chart.SeriesCollection(Type.Missing))
+            //    {
+            //        string formula = series.Formula;  //The formula contained in the cell
+            //        System.Windows.Forms.MessageBox.Show(formula);
+            //    }
+            //}
+            //Form1 form = new Form1();
+            //form.Visible = true; // Show();
+            ProgBar pb = new ProgBar(0, 100);
+            pb.Show();
         }
 
         //Action for "Clear coloring" button
@@ -488,7 +492,7 @@ namespace DataDebug
             if (fn_cell.HasFormula)
             {
                 string formula = Convert.ToString(fn_cell.Formula);
-                IEnumerable<Excel.Range> ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
+                IEnumerable<Excel.Range> ranges = null; //ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
                 foreach (Excel.Range range in ranges)
                 {
                     foreach (Excel.Range cell in range)

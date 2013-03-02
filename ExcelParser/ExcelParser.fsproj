@@ -44,7 +44,6 @@
       <Isolated>False</Isolated>
       <WrapperTool>primary</WrapperTool>
     </COMReference>
-    <Compile Include="ExcelParserUtility.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
