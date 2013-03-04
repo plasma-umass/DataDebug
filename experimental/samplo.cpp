@@ -14,13 +14,13 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 500;
+const auto NELEMENTS = 2000;
 const auto NBOOTSTRAPS = 2000;
 
 // = (1-alpha) confidence interval
-// const auto ALPHA = 0.05; // 95% = 2 std devs
+const auto ALPHA = 0.05; // 95% = 2 std devs
 //const auto ALPHA = 0.003; // 99.7% = 3 std devs
-const auto ALPHA = 0.001;
+//const auto ALPHA = 0.001;
 
 #include "fyshuffle.h"
 #include "stats.h"
@@ -39,8 +39,7 @@ template <class TYPE>
 TYPE poly (const vector<TYPE>& in) {
   auto s = 0.0;
   for (auto const& x : in) {
-    s += x;
-    //    s += (x > 7.0) ? (x * 1.0) : (x * 0.0);
+    s += x; // (x > 1000.0) ? 1.0 :  0.1;
     // s += cos(x * x); // x * x;
   }
   return s; // sqrt(s); 
@@ -66,8 +65,8 @@ int main()
   }
 
   // Add an anomalous value.
-  original[2] = 300; // 4; // 180; // 640; // 64;
-  original[3] = 300;
+  // original[2] = 1001; // 4; // 180; // 640; // 64;
+  original[3] = 200;
 
 #else
 
@@ -91,6 +90,8 @@ int main()
       count++;
     }
   }
+  cout << "Function value = " << poly (original) << endl;
+
 #endif
   
   // Bootstrap from the original sample.
@@ -109,7 +110,7 @@ int main()
 #if 1
   vector<bool> significant;
   significant.resize (NELEMENTS);
-  withAndWithoutYou (original, poly, significant, NBOOTSTRAPS, 0.5);
+  withAndWithoutYou (original, poly, significant, NBOOTSTRAPS, 0.1); // ALPHA);
   for (auto i = 0; i < original.size(); i++) {
     if (significant[i]) {
       cout << "element " << i << " significantly different.\n";
