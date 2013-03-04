@@ -311,6 +311,125 @@ namespace stats {
 
 
   template <class TYPE>
+  void bs2 (const vector<TYPE>& original,
+	    TYPE func (const vector<TYPE>&),
+	    vector<bool>& significant,
+	    const int nBootstraps = 2000,
+	    const float significanceLevel = 0.05)
+  {
+    // All of the indices that do NOT contain the given element.
+    vector<vector<int>> excludes;
+    excludes.resize (original.size());
+
+    TYPE boots[nBootstraps];
+    const auto N = original.size();
+    auto overallSum = 0.0;
+
+    vector<pair<TYPE,vector<bool>>> bootstrap;
+    bootstrap.resize (nBootstraps);
+
+    // Build up the boots (bootstrap) array of values
+    // from the original distribution.
+    
+    // At the same time, organize them so that each index of the
+    // excludes array comprises all of the bootstrapped values that do
+    // NOT contain a given indexed value.
+    for (int i = 0; i < nBootstraps; i++) {
+      vector<TYPE> out;
+      out.resize (original.size());
+      
+      bootstrap[i].second.resize (original.size());
+
+      bootstrap::completeTracked (original, out, bootstrap[i].second);
+      auto result = func (out);
+      bootstrap[i].first = result;
+      overallSum += result;
+    }
+
+    sort (bootstrap.begin(), bootstrap.end());
+
+    for (auto i = 0; i < nBootstraps; i++) {
+
+      boots[i] = bootstrap[i].first;
+
+      // Check each included position index and update excludes
+      // accordingly.
+      for (auto k = 0; k < N; k++) {
+	if (!bootstrap[i].second[k]) {
+	  excludes[k].push_back (i);
+	}
+      }
+    }
+
+    for (auto k = 0; k < N; k++) {
+
+      vector<int> ind;
+      ind.resize (nBootstraps);
+      for (auto i = 0; i < nBootstraps; i++) {
+	ind[i] = i;
+      }
+
+      vector<float> meanDiff;
+      meanDiff.resize (1000);
+      for (auto i = 0; i < 1000; i++) {
+	// Repeatedly divy up all the indices into two sets,
+	// and record the difference of the means.
+	fyshuffle::inplace (ind);
+	auto sum_n1 = 0;
+	auto n1 = 0;
+	for (n1 = 0; n1 < excludes[k].size(); n1++) {
+	  sum_n1 += boots[ind[n1]];
+	}
+
+	auto sum_n2 = 0;
+	auto n2 = 0;
+	for (n2 = 0; n2 < nBootstraps - excludes[k].size(); n2++) {
+	  sum_n2 += boots[ind[n2+excludes[k].size()]];
+	}
+
+	meanDiff[i] = fabs((sum_n1 / (float) n1) - (sum_n2 / (float) n2));
+      }
+
+      // Compute the mean without this index.
+      auto sum = 0.0;
+      for (auto ind : excludes[k]) {
+	sum += boots[ind];
+      }
+      auto avgWithout = sum / (float) excludes[k].size();
+
+      // Now the mean WITH this index.
+      // Now compute the distribution of values WITH this element...
+      auto excIndex = 0;
+      sum = 0;
+      for (auto i = 0; i < nBootstraps; i++) {
+	if ((excIndex < excludes[k].size()) && (i == excludes[k][excIndex])) {
+	  excIndex++;
+	} else {
+	  sum += boots[i];
+	}
+      }
+      auto avgWith = sum / (float) (nBootstraps - excludes[k].size());
+      auto avgDiff = fabs (avgWith - avgWithout);
+
+      // Where does this fall in meanDiff?
+      sort (meanDiff.begin(), meanDiff.end());
+
+      auto const sz = 1000.0;
+      int leftInterval  = floor (significanceLevel / 2.0 * sz);
+      int rightInterval = ceil ((1.0 - significanceLevel / 2.0) * sz - 1);
+
+      if ((avgDiff < meanDiff[leftInterval]) || (avgDiff > meanDiff[rightInterval])) {
+	cout << "(" << k << ") avgDiff = " << avgDiff << ", interval = [" << meanDiff[leftInterval] << "," << meanDiff[rightInterval] << "]" << endl;
+
+	significant[k] = true;
+      } else {
+	significant[k] = false;
+      }
+    }
+  }
+
+
+  template <class TYPE>
   void withAndWithoutYou (const vector<TYPE>& original,
 			  TYPE func (const vector<TYPE>&),
 			  vector<bool>& significant,
@@ -382,7 +501,9 @@ namespace stats {
 
       auto const sz = distrib.size();
       auto leftInterval  = floor (significanceLevel / 2.0 * sz);
-      auto rightInterval = ceil ((1.0 - significanceLevel / 2.0) * sz);
+      auto rightInterval  = ceil ((1.0 - significanceLevel / 2.0) * sz - 1);
+
+      cout << "avg = " << avg << ", interval = [" << distrib[leftInterval] << "," << distrib[rightInterval] << "]" << endl;
 
       if ((avg < distrib[leftInterval]) || (avg > distrib[rightInterval])) {
 	significant[k] = true;
