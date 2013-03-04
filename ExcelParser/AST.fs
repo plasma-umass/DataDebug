@@ -15,16 +15,15 @@
         new(row: int, col: string, wsname: string option, wbname: string option) =
             Address(row, Address.CharColToInt(col), wsname, wbname)
         member self.A1(app: Application) : string =
-//            let r1c1 = self.R1C1
-//            let f' = app.ConvertFormula(r1c1, XLRefStyle.xlR1C1, XLRefStyle.xlA1, Microsoft.Office.Interop.Excel.Xl, Type.Missing)
-//            Convert.ToString(f')
-            failwith "Bleh."
+            let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
+            let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
+            wbstr + wsstr + Address.IntToColChars(self.Y) + self.X.ToString()
         member self.R1C1 =
             let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
             let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
             wbstr + wsstr + "R" + R.ToString() + "C" + C.ToString()
-        member self.X = C
-        member self.Y = R
+        member self.X: int = C
+        member self.Y: int = R
         member self.WorksheetName
             with get() = _wsn
             and set(value) = _wsn <- value
@@ -71,6 +70,14 @@
                 else
                     num + ccti(idx - 1)
             ccti(col.Length - 1)
+        static member IntToColChars(dividend: int) : string =
+            let quot = dividend / 26
+            let rem = dividend % 26
+            let ltr = char (64 + rem)
+            if quot = 0 then
+                ltr.ToString()
+            else
+                Address.IntToColChars(quot) + ltr.ToString()
 
     and Range(topleft: Address, bottomright: Address) =
         let _tl = topleft
@@ -223,9 +230,19 @@
             for arg in arglist do
                 arg.Resolve wb ws
 
+    and ReferenceConstant(wsname: string option, value: int) =
+        inherit Reference(wsname)
+        override self.ToString() = "Constant(" + value.ToString() + ")"
+
     and ReferenceNamed(wsname: string option, varname: string) =
         inherit Reference(wsname)
         override self.ToString() =
             match self.WorksheetName with
             | Some(wsn) -> "ReferenceName(" + wsn + ", " + varname + ")"
             | None -> "ReferenceName(None, " + varname + ")"
+
+    and Expression =
+    | ReferenceExpr of Reference
+    | BinOpExpr of char * Expression * Expression
+    | UnaryOpExpr of char * Expression
+    | ParensExpr of Expression

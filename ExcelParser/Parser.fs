@@ -8,6 +8,11 @@
     type UserState = unit
     type Parser<'t> = Parser<'t, UserState>
 
+    // Grammar forward references
+    let ArgumentList, ArgumentListImpl = createParserForwardedToRef()
+    let ExpressionSimple, ExpressionSimpleImpl = createParserForwardedToRef()
+    let ExpressionDecl, ExpressionDeclImpl = createParserForwardedToRef()
+
     // Addresses
     // We treat relative and absolute addresses the same-- they behave
     // exactly the same way unless you copy and paste them.
@@ -54,24 +59,48 @@
     let NamedReferenceLastChars = manySatisfy (fun c -> c = '_' || isLetter(c) || isDigit(c))
     let NamedReference = pipe2 NamedReferenceFirstChar NamedReferenceLastChars (fun c s -> ReferenceNamed(None, c.ToString() + s) :> Reference)
 
-    let ReferenceKinds  = (attempt RangeReference) <|> (attempt AddressReference) <|> NamedReference
+    let ConstantReference = pint32 |>> (fun r -> ReferenceConstant(None, r) :> Reference)
+
+    let ReferenceKinds = (attempt RangeReference) <|> (attempt AddressReference) <|> (attempt ConstantReference) <|> NamedReference
     let Reference = pipe2 Workbook ReferenceKinds (fun wbname ref -> ref.WorkbookName <- wbname; ref)
 
     // Functions
-    let ArgumentList, ArgumentListImpl = createParserForwardedToRef()
-    let FunctionName = many1Satisfy (fun c -> c <> '(' && c <> ')')
+    let FunctionName = many1Satisfy (fun c -> isLetter(c))
     let Function = pipe2 (FunctionName .>> pstring "(") (ArgumentList .>> pstring ")") (fun fname arglist -> ReferenceFunction(None, fname, arglist) :> Reference)
     let Argument = (attempt Function) <|> Reference
     do ArgumentListImpl := sepBy Reference (pstring ",")
 
+    // Binary arithmetic operators
+    let BinOpChar = satisfy (fun c -> c = '+' || c = '-' || c = '/' || c = '*')
+    let BinOp = pipe2 BinOpChar ExpressionDecl (fun op rhs -> (op, rhs))
+
+    // Unary operators
+    let UnaryOpChar = satisfy (fun c -> c = '+' || c = '-')
+
     // Expressions
-    let Expression = (attempt Function) <|> Reference
+    let ParensExpr = (between (pstring "(") (pstring ")") ExpressionDecl) |>> ParensExpr
+    let ExpressionAtom = ((attempt Function) <|> Reference) |>> ReferenceExpr
+    do ExpressionSimpleImpl := ExpressionAtom <|> ParensExpr
+    let UnaryOpExpr = pipe2 UnaryOpChar ExpressionDecl (fun op rhs -> UnaryOpExpr(op, rhs))
+    let BinOpExpr = pipe2 ExpressionSimple BinOp (fun lhs (op, rhs) -> BinOpExpr(op, lhs, rhs))
+    do ExpressionDeclImpl := (attempt UnaryOpExpr) <|> (attempt BinOpExpr) <|> (attempt ExpressionSimple)
 
     // Formulas
-    let Formula = pstring "=" >>. Expression .>> eof
+    let Formula = pstring "=" >>. ExpressionDecl .>> eof
 
     // Resolve all undefined references to the current worksheet and workbook
-    let AddrResolve(ref: Reference)(wb: Workbook)(ws: Worksheet) = ref.Resolve wb ws
+    let RefAddrResolve(ref: Reference)(wb: Workbook)(ws: Worksheet) = ref.Resolve wb ws
+    let rec ExprAddrResolve(expr: Expression)(wb: Workbook)(ws: Worksheet) =
+        match expr with
+        | ReferenceExpr(r) ->
+            RefAddrResolve r wb ws
+        | BinOpExpr(op,e1,e2) ->
+            ExprAddrResolve e1 wb ws
+            ExprAddrResolve e2 wb ws
+        | UnaryOpExpr(op, e) ->
+            ExprAddrResolve e wb ws
+        | ParensExpr(e) ->
+            ExprAddrResolve e wb ws
 
     // monadic wrapper for success/failure
     let test p str =
@@ -95,14 +124,14 @@
     let GetReference str wb ws: Reference option =
         match run (Reference .>> eof) str with
         | Success(reference, _, _) ->
-            AddrResolve reference wb ws
+            RefAddrResolve reference wb ws
             Some(reference)
         | Failure(errorMsg, _, _) -> None
 
-    let ParseFormula(str, wb, ws): Reference option =
+    let ParseFormula(str, wb, ws): Expression option =
         match run Formula str with
         | Success(formula, _, _) ->
-            AddrResolve formula wb ws
+            ExprAddrResolve formula wb ws
             Some(formula)
         | Failure(errorMsg, _, _) -> None
 

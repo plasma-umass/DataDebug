@@ -492,7 +492,7 @@ namespace DataDebug
             if (fn_cell.HasFormula)
             {
                 string formula = Convert.ToString(fn_cell.Formula);
-                IEnumerable<Excel.Range> ranges = null; //ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
+                IEnumerable<Excel.Range> ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
                 foreach (Excel.Range range in ranges)
                 {
                     foreach (Excel.Range cell in range)
