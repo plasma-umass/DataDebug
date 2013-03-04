@@ -16,8 +16,9 @@
             Address(row, Address.CharColToInt(col), wsname, wbname)
         member self.A1(app: Application) : string =
             let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
-            let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
-            wbstr + wsstr + Address.IntToColChars(self.Y) + self.X.ToString()
+//            let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
+
+            wsstr + Address.IntToColChars(self.X) + self.Y.ToString()
         member self.R1C1 =
             let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
             let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
