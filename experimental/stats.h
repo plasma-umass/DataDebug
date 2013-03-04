@@ -317,12 +317,17 @@ namespace stats {
 			  const int nBootstraps = 2000,
 			  const float significanceLevel = 0.05)
   {
+    // All of the indices that do NOT contain the given element.
     vector<vector<int>> excludes;
     excludes.resize (original.size());
+
     TYPE boots[nBootstraps];
     const auto N = original.size();
     auto overallSum = 0.0;
-    
+
+    vector<pair<TYPE,vector<bool>>> bootstrap;
+    bootstrap.resize (nBootstraps);
+
     // Build up the boots (bootstrap) array of values
     // from the original distribution.
     
@@ -333,22 +338,29 @@ namespace stats {
       vector<TYPE> out;
       out.resize (original.size());
       
-      vector<bool> includedPosition;
-      includedPosition.resize (original.size());
-      bootstrap::completeTracked (original, out, includedPosition);
+      bootstrap[i].second.resize (original.size());
+
+      bootstrap::completeTracked (original, out, bootstrap[i].second);
       auto result = func (out);
-      boots[i] = result;
+      bootstrap[i].first = result;
       overallSum += result;
-      
+    }
+
+    sort (bootstrap.begin(), bootstrap.end());
+
+    for (auto i = 0; i < nBootstraps; i++) {
+
+      boots[i] = bootstrap[i].first;
+
       // Check each included position index and update excludes
       // accordingly.
       for (auto k = 0; k < N; k++) {
-	if (!includedPosition[k]) {
+	if (!bootstrap[i].second[k]) {
 	  excludes[k].push_back (i);
 	}
       }
     }
-    
+
     for (auto k = 0; k < N; k++) {
       // Compute the mean without this index.
       auto sum = 0.0;
@@ -356,7 +368,6 @@ namespace stats {
 	sum += boots[ind];
       }
       auto avg = sum / (float) excludes[k].size();
-      //    cout << "avg WITHOUT element " << k << "= " << avg << endl;
       
       // Now compute the distribution of values WITH this element...
       vector<TYPE> distrib;
@@ -368,12 +379,12 @@ namespace stats {
 	  distrib.push_back (boots[i]);
 	}
       }
-      sort (distrib.begin(), distrib.end());
-      
+
       auto const sz = distrib.size();
-      // cout << "[" << distrib[0.025 * sz] << "," << distrib[0.975 * sz] << "]" << endl;
-      
-      if ((avg < distrib[significanceLevel / 2.0 * sz]) || (avg > distrib[(1.0 - significanceLevel / 2.0) * sz])) {
+      auto leftInterval  = floor (significanceLevel / 2.0 * sz);
+      auto rightInterval = ceil ((1.0 - significanceLevel / 2.0) * sz);
+
+      if ((avg < distrib[leftInterval]) || (avg > distrib[rightInterval])) {
 	significant[k] = true;
       } else {
 	significant[k] = false;
