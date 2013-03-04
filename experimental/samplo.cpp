@@ -14,13 +14,14 @@ using namespace std;
 #include <math.h>
 #include <stdlib.h>
 
-const auto NELEMENTS = 2000;
+const auto NELEMENTS = 75;
 const auto NBOOTSTRAPS = 2000;
 
-// = (1-alpha) confidence interval
+// = (1-alpha) confidence interval/
+//const auto ALPHA = 0.1; // 95% = 2 std devs
 const auto ALPHA = 0.05; // 95% = 2 std devs
-//const auto ALPHA = 0.003; // 99.7% = 3 std devs
-//const auto ALPHA = 0.001;
+// const auto ALPHA = 0.003; // 99.7% = 3 std devs
+// const auto ALPHA = 0.001;
 
 #include "fyshuffle.h"
 #include "stats.h"
@@ -66,7 +67,7 @@ int main()
 
   // Add an anomalous value.
   // original[2] = 1001; // 4; // 180; // 640; // 64;
-  original[3] = 200;
+  original[3] = 500;
 
 #else
 
@@ -110,7 +111,8 @@ int main()
 #if 1
   vector<bool> significant;
   significant.resize (NELEMENTS);
-  withAndWithoutYou (original, poly, significant, NBOOTSTRAPS, 0.1); // ALPHA);
+  withAndWithoutYou (original, poly, significant, NBOOTSTRAPS, ALPHA);
+  //   bs2 (original, poly, significant, NBOOTSTRAPS, ALPHA);
   for (auto i = 0; i < original.size(); i++) {
     if (significant[i]) {
       cout << "element " << i << " significantly different.\n";
