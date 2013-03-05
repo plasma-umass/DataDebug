@@ -38,6 +38,7 @@ namespace DataDebug
         int formula_cells_count;
         System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
         string stats_text = "";
+        ProgBar pb;
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -56,6 +57,7 @@ namespace DataDebug
          */
         private void constructTree()
         {
+            pb.SetProgress(0);
             TimeSpan impact_scoring_timespan = global_stopwatch.Elapsed;
             TimeSpan swapping_timespan = global_stopwatch.Elapsed;
             input_cells_in_computation_count = 0;
@@ -149,7 +151,7 @@ namespace DataDebug
             
             //Tree building stopwatch
             TimeSpan tree_building_timespan = global_stopwatch.Elapsed;
-
+            pb.SetProgress(25);
             //Disable screen updating during perturbation to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -226,7 +228,7 @@ namespace DataDebug
                 {
                     reachable_impacts_grid_array[i] = reachable_impacts_grid[i].ToArray();
                 }
-
+                pb.SetProgress(40);
                 ConstructTree.SwappingProcedure(swap_domain, ref input_cells_in_computation_count, ref min_max_delta_outputs, ref impacts_grid, ref times_perturbed, ref output_cells, ref reachable_grid, ref starting_outputs, ref reachable_impacts_grid_array);
                 //string text = "REACHABLE IMPACTS GRID ARRAY: \n";
                 //foreach (double[][] outputReachableList in reachable_impacts_grid_array)
@@ -244,10 +246,11 @@ namespace DataDebug
 
                 //Stop timing swapping procedure:
                 swapping_timespan = global_stopwatch.Elapsed;
-
+                pb.SetProgress(80);
                 ConstructTree.ComputeZScoresAndFindOutliers(output_cells, reachable_impacts_grid_array, impacts_grid, times_perturbed, Globals.ThisAddIn.Application.Worksheets, outliers_count);
                 //Stop timing the zscore computation and outlier finding
                 impact_scoring_timespan = global_stopwatch.Elapsed;
+                pb.SetProgress(100); 
             }
 
             Globals.ThisAddIn.Application.ScreenUpdating = true;
@@ -454,6 +457,8 @@ namespace DataDebug
                     originalColorNodes.Add(n);
                 }
             }
+            pb = new ProgBar(0, 100);
+            pb.Show();
             constructTree();    
         }
 

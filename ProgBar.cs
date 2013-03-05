@@ -65,8 +65,14 @@ namespace DataDebug
         {
         }
 
+        public void SetProgress(int progress)
+        {
+            progressBar1.Value = progress;
+        }
+
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+            /*
             global_stopwatch.Reset();
             global_stopwatch.Start();
             stats_text = "";
@@ -93,12 +99,20 @@ namespace DataDebug
                     originalColorNodes.Add(n);
                 }
             }
-            constructTree(); 
+            constructTree();
             backgroundWorker1.ReportProgress(20);
             perturbationAnalysis();
             backgroundWorker1.ReportProgress(80);
             outlierAnalysis();
             backgroundWorker1.ReportProgress(100);
+            showResults();
+            */
+            while (progressBar1.Value != 100)
+            {
+                Thread.Sleep(50);
+                backgroundWorker1.ReportProgress(progressBar1.Value);
+            }
+            
             //HERE WE WILL CALL THE FUNCTIONS TO DO THE ANALYSIS
             // 1. CONSTRUCT TREE ==> report progress
             // 2. PERTURBATIONS ==> report progress
@@ -115,7 +129,7 @@ namespace DataDebug
             progressBar1.Value = e.ProgressPercentage;
             if (progressBar1.Value == progressBar1.Maximum)
             {
-                Close();
+                Hide();
             }
         }
 
@@ -313,6 +327,10 @@ namespace DataDebug
 
             Globals.ThisAddIn.Application.ScreenUpdating = true;
 
+            
+        }
+        private void showResults()
+        {
             // Format and display the TimeSpan value. 
             string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
             string swapping_time = (swapping_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", swapping_timespan.Minutes, swapping_timespan.Seconds, swapping_timespan.Milliseconds / 10);
