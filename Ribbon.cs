@@ -249,8 +249,9 @@ namespace DataDebug
                 pb.SetProgress(80);
                 ConstructTree.ComputeZScoresAndFindOutliers(output_cells, reachable_impacts_grid_array, impacts_grid, times_perturbed, Globals.ThisAddIn.Application.Worksheets, outliers_count);
                 //Stop timing the zscore computation and outlier finding
+                pb.SetProgress(pb.progressBar1.Maximum);
+                pb.Close();
                 impact_scoring_timespan = global_stopwatch.Elapsed;
-                pb.SetProgress(100); 
             }
 
             Globals.ThisAddIn.Application.ScreenUpdating = true;
@@ -458,7 +459,6 @@ namespace DataDebug
                 }
             }
             pb = new ProgBar(0, 100);
-            pb.Show();
             constructTree();    
         }
 
@@ -475,8 +475,8 @@ namespace DataDebug
             //        System.Windows.Forms.MessageBox.Show(formula);
             //    }
             //}
-            ProgBar pb = new ProgBar(0, 100);
-            pb.Show();
+            //ProgBar pb = new ProgBar(0, 100);
+            //pb.Show();
         }
 
         //Action for "Clear coloring" button
