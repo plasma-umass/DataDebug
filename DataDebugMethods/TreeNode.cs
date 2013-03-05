@@ -11,7 +11,7 @@ namespace DataDebugMethods
     /// There are three types of nodes: normal cells, ranges, and charts
     /// The different types are distinguished by the name
     /// For normal cells, the name is just the address of the cell
-    /// For ranges, the name is of the format <EndCell>_to_<EndCell>, such as "A1_to_A5"
+    /// For ranges, the name is of the format <EndCell>:<EndCell>, such as "A1:A5"
     /// For chart nodes, the name begins with the string "Chart", followed by the name of the chart object from Excel, with the white spaces stripped
     /// </summary>
     public class TreeNode
@@ -19,7 +19,7 @@ namespace DataDebugMethods
         Excel.Workbook _workbook;
         private List<TreeNode> _parents;  //these are the TreeNodes that feed into the current cell
         private List<TreeNode> _children;    //these are the TreeNodes that the current cell feeds into
-        private string _name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>_to_<EndCell>; for charts it is "Chart<Name of chart>"
+        private string _name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>:<EndCell>; for charts it is "Chart<Name of chart>"
         private string _worksheet_name;  //This keeps track of the worksheet where this cell/range/chart is located
         private Excel.Worksheet _worksheet; // A reference to the actual worksheet where this TreeNode is located
         private double _weight;  //The weight of the node as computed by propagating values down the tree
@@ -27,7 +27,8 @@ namespace DataDebugMethods
         private bool _is_formula; //this indicates whether this node is a formula
         private System.Drawing.Color originalColor;
         //private int originalColor;  //For using ColorIndex property instead of Color property
-        private int colorBit = 0; 
+        private int colorBit = 0;
+        private string _formula; 
         //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
         public TreeNode(string n, Excel.Worksheet ws, Excel.Workbook wb)
         {
@@ -160,11 +161,12 @@ namespace DataDebugMethods
                 return true;
         }
 
-        //By convention, we name ranges with the string "_to_" separating the end cells, such as "A1_to_A5"
+        //By convention, we name ranges with the string ":" separating the end cells, such as "A1:A5"
         //If the name contains an underscore, and it is not a Chart node, then it is a Range node
         public bool isRange()
         {
-            if (_name.Contains("_") && !isChart())
+            //if (_name.Contains("_") && !isChart())
+            if (_name.Contains(":") && !isChart())
                 return true;
             else
                 return false;
@@ -323,6 +325,16 @@ namespace DataDebugMethods
                     propagateWeightUp(child, 1.0, originalNode, output_cells, reachable_grid, reachable_impacts_grid);
                 }
             }
+        }
+
+        internal void setFormula(string formula)
+        {
+            _formula = formula;
+        }
+
+        public string getFormula()
+        {
+            return _formula;
         }
     }
 }
