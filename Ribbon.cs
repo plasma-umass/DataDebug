@@ -398,24 +398,6 @@ namespace DataDebug
             nodelist = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
             ranges = new List<TreeNode>();        //This is a list holding all the ranges of TreeNodes in the Excel file
             
-            //Compile regular expressions
-            if (toggle_compile_regex.Checked)
-            {
-                regex_array = new Regex[Globals.ThisAddIn.Application.Worksheets.Count * 4 + 2];
-                int worksheet_index = 0;
-                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                {
-                    string worksheet_name = worksheet.Name.Replace("+", @"\+").Replace("^", @"\^").Replace("$", @"\$").Replace(".", @"\."); //Escape certain characters in the regular expression
-                    regex_array[worksheet_index*4] = new Regex(@"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    regex_array[worksheet_index*4 + 1] = new Regex(@"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    regex_array[worksheet_index*4 + 2] = new Regex(@"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    regex_array[worksheet_index*4 + 3] = new Regex(@"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    worksheet_index++;
-                }
-                regex_array[regex_array.Length - 2] = new Regex(@"(\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                regex_array[regex_array.Length - 1] = new Regex(@"(\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-            }
-
             for (int i = 0; i < originalColorNodes.Count; i++)
             {
                 if (originalColorNodes[i].getWorkbookObject() == Globals.ThisAddIn.Application.ActiveWorkbook)
