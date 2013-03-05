@@ -26,7 +26,8 @@ namespace DataDebug
         double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
         bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
         double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
-        List<TreeNode> ranges;  //This is a list of all the ranges we have identified
+        //List<TreeNode> ranges;  //This is a list of all the ranges we have identified
+        List<TreeNode> ranges;
         List<StartValue> starting_outputs; //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
         List<TreeNode> output_cells; //This will store all the output nodes at the start of the fuzzing procedure
         List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
@@ -80,7 +81,7 @@ namespace DataDebug
             nodes = ConstructTree.CreateFormulaNodes(formulaRanges, Globals.ThisAddIn.Application);
             
             //This is the list of all ranges referenced in formulas
-            List<Excel.Range> referencedRangesList = new List<Excel.Range>();
+            ArrayList referencedRangesList = new ArrayList();
             
             int formulaNodesCount = nodes.Count;
             //Now we parse the formulas in nodes to extract any range and cell references
@@ -92,45 +93,9 @@ namespace DataDebug
                 //For each of the ranges found in the formula by the parser, do the following:
                 foreach (Excel.Range range in ExcelParserUtility.GetReferencesFromFormula(node.getFormula(), node.getWorkbookObject(), node.getWorksheetObject()))
                 {
-                    TreeNode rangeNode = null;
-                    //See if there is an existing node for this range already in referencedRangesNodeList; if there is, do not add it again - just grab the existing one
-                    foreach (TreeNode existingNode in ranges)
-                    {
-                        if (existingNode.getName().Equals(range.Address))
-                        {
-                            rangeNode = existingNode;
-                            break;
-                        }
-                    }
-                    if (rangeNode == null)
-                    {
-                        //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF range, WHICH SHOULD COME FROM GetReferencesFromFormula
-                        rangeNode = new TreeNode(range.Address, range.Worksheet, node.getWorkbookObject());
-                        referencedRangesList.Add(range);
-                        ranges.Add(rangeNode);
-                    }
+                    TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(ranges, range, node);
 
-                    foreach (Excel.Range cell in range)
-                    {
-                        TreeNode cellNode = null;
-                        //See if there is an existing node for this cell already in nodes; if there is, do not add it again - just grab the existing one
-                        if (nodes.TryGetValue(ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], node.getWorkbookObject(), cell.Worksheet), out cellNode))
-                        {
-                            //cellNode is set to the value found in the dictionary: no need to do the following:
-                            //cellNode = nodes[ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], node.getWorkbookObject(), cell.Worksheet)];
-                        }
-                        //if there isn't, create a node and add it to nodes and to referencedRangesList
-                        else
-                        {
-                            //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
-                            var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], node.getWorkbookObject(), cell.Worksheet);
-                            cellNode = new TreeNode(cell.Address, cell.Worksheet, node.getWorkbookObject());
-                            nodes.Add(addr, cellNode);
-                        }
-                        rangeNode.addParent(cellNode);
-                        cellNode.addChild(node);
-                        node.addParent(cellNode);
-                    }
+                    ConstructTree.CreateCellNodesFromRange(range, rangeNode, node, nodes);
                 }
             }
 

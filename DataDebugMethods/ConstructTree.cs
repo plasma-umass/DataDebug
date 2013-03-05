@@ -598,5 +598,49 @@ namespace DataDebugMethods
             }
 
         }
-    }
-}
+
+
+        public static void CreateCellNodesFromRange(Excel.Range range, TreeNode rangeNode, TreeNode formulaNode, TreeDict nodes)
+        {
+            foreach (Excel.Range cell in range)
+            {
+                TreeNode cellNode = null;
+                //See if there is an existing node for this cell already in nodes; if there is, do not add it again - just grab the existing one
+                if (!nodes.TryGetValue(ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet), out cellNode))
+                {
+                    //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
+                    var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet);
+                    cellNode = new TreeNode(cell.Address, cell.Worksheet, formulaNode.getWorkbookObject());
+                    nodes.Add(addr, cellNode);
+                }
+                rangeNode.addParent(cellNode);
+                cellNode.addChild(formulaNode);
+                formulaNode.addParent(cellNode);
+            }
+        } // DoStuff ends here
+
+
+        public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
+        {
+            TreeNode rangeNode = null;
+            //See if there is an existing node for this range already in referencedRangesNodeList; if there is, do not add it again - just grab the existing one
+            foreach (TreeNode existingNode in ranges)
+            {
+                if (existingNode.getName().Equals(range.Address))
+                {
+                    rangeNode = existingNode;
+                    break;
+                }
+            }
+            if (rangeNode == null)
+            {
+                //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF range, WHICH SHOULD COME FROM GetReferencesFromFormula
+                rangeNode = new TreeNode(range.Address, range.Worksheet, node.getWorkbookObject());
+                ranges.Add(rangeNode);
+            }
+
+            return rangeNode;
+        }
+
+    } // ConstructTree class ends here
+} // namespace ends here
