@@ -14,11 +14,17 @@
         let mutable _wbn = wbname
         new(row: int, col: string, wsname: string option, wbname: string option) =
             Address(row, Address.CharColToInt(col), wsname, wbname)
-        member self.A1(app: Application) : string =
-            let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
-//            let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
-
-            wsstr + Address.IntToColChars(self.X) + self.Y.ToString()
+        member self.A1Local() : string = Address.IntToColChars(self.X) + self.Y.ToString()
+        member self.A1Worksheet() : string =
+            match _wsn with
+                        | Some(ws) -> ws
+                        | None -> failwith "Worksheet string should never be unset."
+        member self.A1Workbook() : string =
+            match _wbn with
+                        | Some(wb) -> wb
+                        | None -> failwith "Workbook string should never be unset."
+        member self.A1FullyQualified() : string =
+            "[" + self.A1Workbook() + "]" + self.A1Worksheet() + "!" + self.A1Local()
         member self.R1C1 =
             let wsstr = match _wsn with | Some(ws) -> ws + "!" | None -> ""
             let wbstr = match _wbn with | Some(wb) -> "[" + wb + "]" | None -> ""
@@ -59,7 +65,10 @@
         member self.InsideAddr(addr: Address) : bool =
             self.X = addr.X && self.Y = addr.Y
         member self.GetCOMObject(app: Application) : XLRange =
-            app.Range(self.A1(app), self.A1(app))
+            let wb: Workbook = app.Workbooks.Item(self.A1Workbook())
+            let ws: Worksheet = wb.Worksheets.Item(self.A1Worksheet()) :?> Worksheet
+            let cell: XLRange = ws.Range(self.A1Local())
+            cell
         override self.ToString() =
             "(" + self.Y.ToString() + "," + self.X.ToString() + ")"
         static member CharColToInt(col: string) : int =
@@ -110,9 +119,11 @@
             _tl.WorkbookName <- wbname
             _br.WorkbookName <- wbname
         member self.GetCOMObject(app: Application) : XLRange =
-            let tla1 = _tl.A1(app)
-            let bra1 = _br.A1(app)
-            app.Range(tla1, bra1)
+            // tl and br must share workbook and worksheet (I think)
+            let wb: Workbook = app.Workbooks.Item(_tl.A1Workbook())
+            let ws: Worksheet = wb.Worksheets.Item(_tl.A1Worksheet()) :?> Worksheet
+            let range: XLRange = ws.Range(_tl.A1Local(), _br.A1Local())
+            range
 
     type Reference(wsname: string option) =
         let mutable _wbn: string option = None
@@ -130,21 +141,15 @@
             and set(value) = _wsn <- value
         default self.InsideRef(ref: Reference) = false
         default self.Resolve(wb: Workbook)(ws: Worksheet) : unit =
-            // always resolve the workbook name when it is missing
-            // but only resolve the worksheet name when the
-            // workbook name is not set
+            // we assume that missing workbook and worksheet
+            // names mean that the address is local to the current
+            // workbook and worksheet
             _wbn <- match self.WorkbookName with
                     | Some(wbn) -> Some wbn
-                    | None -> if wb.Name <> "" then
-                                  Some wb.Name
-                              else
-                                  None
+                    | None -> Some wb.Name
             _wsn <- match self.WorksheetName with
                     | Some(wsn) -> Some wsn
-                    | None ->
-                        match self.WorkbookName with
-                        | Some(wbn) -> None
-                        | None -> Some ws.Name
+                    | None -> Some ws.Name
 
     and ReferenceRange(wsname: string option, rng: Range) =
         inherit Reference(wsname)
@@ -160,9 +165,9 @@
             | _ -> failwith "Unknown Reference subclass."
         member self.Range = rng
         override self.Resolve(wb: Workbook)(ws: Worksheet) =
-            // always resolve the workbook name when it is missing
-            // but only resolve the worksheet name when the
-            // workbook name is not set
+            // we assume that missing workbook and worksheet
+            // names mean that the address is local to the current
+            // workbook and worksheet
             self.WorkbookName <- match self.WorkbookName with
                                  // If we know it, we also pass the wbname
                                  // down to ranges and addresses
@@ -177,11 +182,8 @@
                                       rng.SetWorksheetName(Some wsn)
                                       Some wsn
                                   | None ->
-                                      match self.WorkbookName with
-                                      | Some(wbn) -> None
-                                      | None ->
-                                          rng.SetWorksheetName(Some ws.Name)
-                                          Some ws.Name
+                                      rng.SetWorksheetName(Some ws.Name)
+                                      Some ws.Name
 
     and ReferenceAddress(wsname: string option, addr: Address) =
         inherit Reference(wsname)
@@ -214,11 +216,8 @@
                                       addr.WorksheetName <- Some wsn
                                       Some wsn
                                   | None ->
-                                      match self.WorkbookName with
-                                      | Some(wbn) -> None
-                                      | None ->
-                                          addr.WorksheetName <- Some ws.Name
-                                          Some ws.Name
+                                      addr.WorksheetName <- Some ws.Name
+                                      Some ws.Name
 
     and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
         inherit Reference(wsname)

@@ -33,8 +33,7 @@ namespace DataDebug
         List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
         double[][][] reachable_impacts_grid_array; //This will store impacts for cells reachable from a particular output in array form
         int input_cells_in_computation_count = 0;
-        int raw_input_cells_in_computation_count = 0; 
-        private Regex[] regex_array;
+        int raw_input_cells_in_computation_count = 0;
         int formula_cells_count;
         System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
         string stats_text = "";
