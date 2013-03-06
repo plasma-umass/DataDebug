@@ -44,6 +44,17 @@ namespace CheckCellTests
             public Excel.Workbook GetWorkbook() { return wb; }
             public Excel.Sheets GetWorksheets() { return ws; }
             public Excel.Worksheet GetWorksheet(int idx) { return (Excel.Worksheet)ws[idx]; }
+            public static int TestGetRanges(string formula)
+            {
+                // mock workbook object
+                var mwb = new MockWorkbook();
+                Excel.Workbook wb = mwb.GetWorkbook();
+                Excel.Worksheet ws = mwb.GetWorksheet(1);
+
+                var ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
+
+                return ranges.Count();
+            }
         }
 
         [TestMethod]
@@ -121,17 +132,30 @@ namespace CheckCellTests
         [TestMethod]
         public void TestGetRanges1()
         {
-            // mock workbook object and test formula
-            var mwb = new MockWorkbook();
-            Excel.Workbook wb = mwb.GetWorkbook();
-            Excel.Worksheet ws = mwb.GetWorksheet(1);
-            var teststr = "=A1";
-
-            var ranges = ExcelParserUtility.GetReferencesFromFormula(teststr, wb, ws);
-
-            if (ranges.Count() > 0)
+            var f = "=A1";
+            if (MockWorkbook.TestGetRanges(f) != 0)
             {
-                throw new Exception("Formula should contain no ranges!");
+                throw new Exception("GetReferencesFromFormula should return no ranges for " + f);
+            }
+        }
+
+        [TestMethod]
+        public void TestGetRanges2()
+        {
+            var f = "=A1:B3";
+            if (MockWorkbook.TestGetRanges(f) != 1)
+            {
+                throw new Exception("GetReferencesFromFormula should return 1 range for " + f);
+            }
+        }
+
+        [TestMethod]
+        public void TestGetRanges3()
+        {
+            var f = "=SUM(A1:B3)+AVERAGE(C2:C8)";
+            if (MockWorkbook.TestGetRanges(f) != 2)
+            {
+                throw new Exception("GetReferencesFromFormula should return 2 ranges for " + f);
             }
         }
     }
