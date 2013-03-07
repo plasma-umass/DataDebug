@@ -342,5 +342,11 @@ namespace DataDebugMethods
         {
             _COM = range;
         }
+
+        public Excel.Range getCOMObject()
+        {
+            return _COM;
+        }
+
     }
 }
