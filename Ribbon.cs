@@ -33,8 +33,7 @@ namespace DataDebug
         List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
         double[][][] reachable_impacts_grid_array; //This will store impacts for cells reachable from a particular output in array form
         int input_cells_in_computation_count = 0;
-        int raw_input_cells_in_computation_count = 0; 
-        private Regex[] regex_array;
+        int raw_input_cells_in_computation_count = 0;
         int formula_cells_count;
         System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
         string stats_text = "";
@@ -395,24 +394,6 @@ namespace DataDebug
             nodelist = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
             ranges = new List<TreeNode>();        //This is a list holding all the ranges of TreeNodes in the Excel file
             
-            //Compile regular expressions
-            if (toggle_compile_regex.Checked)
-            {
-                regex_array = new Regex[Globals.ThisAddIn.Application.Worksheets.Count * 4 + 2];
-                int worksheet_index = 0;
-                foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-                {
-                    string worksheet_name = worksheet.Name.Replace("+", @"\+").Replace("^", @"\^").Replace("$", @"\$").Replace(".", @"\."); //Escape certain characters in the regular expression
-                    regex_array[worksheet_index*4] = new Regex(@"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    regex_array[worksheet_index*4 + 1] = new Regex(@"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    regex_array[worksheet_index*4 + 2] = new Regex(@"('" + worksheet_name + @"'!\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    regex_array[worksheet_index*4 + 3] = new Regex(@"(" + worksheet_name + @"!\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                    worksheet_index++;
-                }
-                regex_array[regex_array.Length - 2] = new Regex(@"(\$?[A-Z]+\$?[1-9]\d*:\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-                regex_array[regex_array.Length - 1] = new Regex(@"(\$?[A-Z]+\$?[1-9]\d*)", RegexOptions.Compiled);
-            }
-
             for (int i = 0; i < originalColorNodes.Count; i++)
             {
                 if (originalColorNodes[i].getWorkbookObject() == Globals.ThisAddIn.Application.ActiveWorkbook)

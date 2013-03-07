@@ -13,30 +13,57 @@ namespace CheckCellTests
     [TestClass]
     public class CheckCellTests
     {
+        public class MockWorkbook
+        {
+            Excel.Application app;
+            Excel.Workbook wb;
+            Excel.Sheets ws;
+
+            public MockWorkbook()
+            {
+                // worksheet indices; watch out! the second index here is the NUMBER of elements, NOT the max value!
+                var e = Enumerable.Range(1, 10);
+
+                // new Excel instance
+                app = new Excel.Application();
+
+                // create new workbook
+                wb = app.Workbooks.Add();
+
+                // get a reference to the worksheet array
+                // By default, workbooks have three blank worksheets.
+                ws = wb.Worksheets;
+
+                // add some worksheets
+                foreach (int i in e)
+                {
+                    ws.Add(Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+                }
+            }
+            public Excel.Application GetApplication() { return app; }
+            public Excel.Workbook GetWorkbook() { return wb; }
+            public Excel.Sheets GetWorksheets() { return ws; }
+            public Excel.Worksheet GetWorksheet(int idx) { return (Excel.Worksheet)ws[idx]; }
+            public static int TestGetRanges(string formula)
+            {
+                // mock workbook object
+                var mwb = new MockWorkbook();
+                Excel.Workbook wb = mwb.GetWorkbook();
+                Excel.Worksheet ws = mwb.GetWorksheet(1);
+
+                var ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
+
+                return ranges.Count();
+            }
+        }
+
         [TestMethod]
         public void TestGetFormulaRanges()
         {
-            // worksheet indices; watch out! the second index here is the NUMBER of elements, NOT the max value!
-            var e = Enumerable.Range(1,10);
+            var mwb = new MockWorkbook();
 
             // rnd, for random formulae assignment
             Random rand = new Random();
-
-            // new Excel instance
-            Excel.Application app = new Excel.Application();
-
-            // create new workbook
-            Excel.Workbook wb = app.Workbooks.Add();
-
-            // get a reference to the worksheet array
-            // By default, workbooks have three blank worksheets.
-            Excel.Sheets ws = wb.Worksheets;
-            
-            // add some worksheets
-            foreach (int i in e)
-            {
-                ws.Add(Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-            }
 
             // gin up some formulae
             Tuple<string,string>[] fs = {new Tuple<string,string>("B4", "=COUNT(A1:A5)"),
@@ -48,7 +75,7 @@ namespace CheckCellTests
             var d = new System.Collections.Generic.Dictionary<Excel.Worksheet, System.Collections.Generic.List<Tuple<string, string>>>();
 
             // add the formulae to the worksheets, randomly
-            foreach (Excel.Worksheet w in ws)
+            foreach (Excel.Worksheet w in mwb.GetWorksheets())
             {
                 // init list for each worksheet
                 d[w] = new System.Collections.Generic.List<Tuple<string,string>>();
@@ -71,12 +98,12 @@ namespace CheckCellTests
             }
 
             // get the formulae; 1 formula per worksheet
-            ArrayList fs_rs = ConstructTree.GetFormulaRanges(ws, app);
+            ArrayList fs_rs = ConstructTree.GetFormulaRanges(mwb.GetWorksheets(), mwb.GetApplication());
 
             // there should be e.Count + 3 entries
             // don't forget: workbooks have 3 blank worksheets by default
-            if (fs_rs.Count != e.Count() + 3) {
-                throw new Exception("ConstructTree.GetFormulaRanges() should return " + e.Count().ToString() + " elements.");
+            if (fs_rs.Count != mwb.GetWorksheets().Count) {
+                throw new Exception("ConstructTree.GetFormulaRanges() should return " + mwb.GetWorksheets().Count.ToString() + " elements.");
             }
 
             // make sure that each worksheet's range has the formulae that it should
@@ -99,6 +126,36 @@ namespace CheckCellTests
 
             if (!all_ok) {
                 throw new Exception("ConstructTree.GetFormulaRanges() failed to return all of the formulae that were added.");
+            }
+        } // end test
+
+        [TestMethod]
+        public void TestGetRanges1()
+        {
+            var f = "=A1";
+            if (MockWorkbook.TestGetRanges(f) != 0)
+            {
+                throw new Exception("GetReferencesFromFormula should return no ranges for " + f);
+            }
+        }
+
+        [TestMethod]
+        public void TestGetRanges2()
+        {
+            var f = "=A1:B3";
+            if (MockWorkbook.TestGetRanges(f) != 1)
+            {
+                throw new Exception("GetReferencesFromFormula should return 1 range for " + f);
+            }
+        }
+
+        [TestMethod]
+        public void TestGetRanges3()
+        {
+            var f = "=SUM(A1:B3)+AVERAGE(C2:C8)";
+            if (MockWorkbook.TestGetRanges(f) != 2)
+            {
+                throw new Exception("GetReferencesFromFormula should return 2 ranges for " + f);
             }
         }
     }
