@@ -181,12 +181,12 @@ namespace DataDebugMethods
             }
         }
 
-        public static string GenerateGraphVizTree(TreeList nodes)
+        public static string GenerateGraphVizTree(TreeDict nodes)
         {
             string tree = "";
-            foreach (TreeNode node in nodes)
+            foreach (TreeDictPair nodePair in nodes)
             {
-                tree += node.toGVString(0.0) + "\n";
+                tree += nodePair.Value.toGVString(0.0) + "\n";
             }
             return "digraph g{" + tree + "}"; 
         }
@@ -641,6 +641,8 @@ namespace DataDebugMethods
 
             return rangeNode;
         }
+
+    public static void 
 
     } // ConstructTree class ends here
 } // namespace ends here

@@ -94,20 +94,9 @@ namespace DataDebug
                 foreach (Excel.Range range in ExcelParserUtility.GetReferencesFromFormula(node.getFormula(), node.getWorkbookObject(), node.getWorksheetObject()))
                 {
                     TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(ranges, range, node);
-
                     ConstructTree.CreateCellNodesFromRange(range, rangeNode, node, nodes);
                 }
             }
-
-            //string tree = "";
-            //foreach (KeyValuePair<AST.Address, TreeNode> nodePair in nodes)
-            //{   
-            //    tree += nodePair.Value.toGVString(0.0) + "\n";
-            //}
-            //tree = "digraph g{" + tree + "}";
-            //Display disp = new Display();
-            //disp.textBox1.Text = tree;
-            //disp.ShowDialog();
 
             //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
             //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
@@ -118,6 +107,14 @@ namespace DataDebug
             
             //Tree building stopwatch
             tree_building_timespan = global_stopwatch.Elapsed;
+        }
+
+        private void DisplayGraphvizTree()
+        {
+            string gvstr = ConstructTree.GenerateGraphVizTree(nodes);
+            Display disp = new Display();
+            disp.textBox1.Text = gvstr;
+            disp.ShowDialog();
         }
 
         private void perturbationAnalysis()
