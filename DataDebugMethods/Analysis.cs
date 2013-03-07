@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using Range = Microsoft.Office.Interop.Excel.Range;
 
 namespace DataDebugMethods
 {
@@ -152,5 +154,40 @@ namespace DataDebugMethods
             //timeDisplay.ShowDialog();
 
         } //outlierAnalysis ends here
+
+        public static string[,] Bootstrap(int num_bootstraps, ArrayList outputs, ArrayList inputs)
+        {
+            // first idx: the input range idx in "inputs"
+            // second idx: the ith bootstrap
+            var bootstraps = new string[inputs.Count, num_bootstraps];
+
+            // we save initial inputs here
+            // first idx: the input range idx in "inputs"
+            // second idx: the idx in the input pointed to by the first index
+            string[][] initial_inputs = new string[inputs.Count][];
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                Range r = ((Range)(inputs[i]));
+                initial_inputs[i] = new string[r.Count];
+                var j = 0;
+                foreach (TreeNode t in r)
+                {
+                    initial_inputs[i][j] = System.Convert.ToString(r.Value2);
+                    j++;
+                }
+            }
+
+            // populate bootstrap array
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                for (var j = 0; j < num_bootstraps; j++)
+                {
+                    // TODO
+                }
+            }
+
+
+            return bootstraps;
+        }
     }
 }
