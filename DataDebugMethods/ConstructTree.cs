@@ -636,6 +636,7 @@ namespace DataDebugMethods
             {
                 //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF range, WHICH SHOULD COME FROM GetReferencesFromFormula
                 rangeNode = new TreeNode(range.Address, range.Worksheet, node.getWorkbookObject());
+                rangeNode.addCOM(range);
                 ranges.Add(rangeNode);
             }
 

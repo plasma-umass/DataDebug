@@ -28,7 +28,8 @@ namespace DataDebugMethods
         private System.Drawing.Color originalColor;
         //private int originalColor;  //For using ColorIndex property instead of Color property
         private int colorBit = 0;
-        private string _formula; 
+        private string _formula;
+        private Excel.Range _COM;
         //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
         public TreeNode(string n, Excel.Worksheet ws, Excel.Workbook wb)
         {
@@ -335,6 +336,11 @@ namespace DataDebugMethods
         public string getFormula()
         {
             return _formula;
+        }
+
+        public void addCOM(Excel.Range range)
+        {
+            _COM = range;
         }
     }
 }
