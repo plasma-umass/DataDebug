@@ -8,7 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading;
 
-namespace DataDebug
+namespace DataDebugMethods
 {
     public partial class ProgBar : Form
     {
@@ -34,6 +34,11 @@ namespace DataDebug
         public void SetProgress(int progress)
         {
             progressBar1.Value = progress;
+        }
+
+        public int maxProgress()
+        {
+            return progressBar1.Maximum;
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)

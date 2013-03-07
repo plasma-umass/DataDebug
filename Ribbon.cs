@@ -14,6 +14,7 @@ using TreeNode = DataDebugMethods.TreeNode;
 using System.Diagnostics;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using DataDebugMethods;
 
 namespace DataDebug
 {
@@ -116,146 +117,6 @@ namespace DataDebug
             disp.ShowDialog();
         }
 
-        private void perturbationAnalysis()
-        {
-            pb.SetProgress(25);
-            //Disable screen updating during perturbation to speed things up
-            Globals.ThisAddIn.Application.ScreenUpdating = false;
-
-            //Grids for storing influences
-            double[][][] influences_grid = null;
-            times_perturbed = null;
-            //influences_grid and times_perturbed are passed by reference so that they can be modified in the setUpGrids method
-            ConstructTree.setUpGrids(ref influences_grid, ref times_perturbed, Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application.Charts);
-            
-            outliers_count = 0; 
-            //Procedure for swapping values within ranges, one cell at a time
-            //if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked (not checked by default)
-            //{
-            List<TreeNode> swap_domain;
-            swap_domain = ranges;
-                
-            //Initialize min_max_delta_outputs
-            min_max_delta_outputs = new double[output_cells.Count][];
-            for (int i = 0; i < output_cells.Count; i++)
-            {
-                min_max_delta_outputs[i] = new double[2];
-                min_max_delta_outputs[i][0] = -1.0;
-                min_max_delta_outputs[i][1] = 0.0;
-            }
-
-            //Initialize impacts_grid 
-            //Initialize reachable_grid
-            impacts_grid = new double[Globals.ThisAddIn.Application.Worksheets.Count][][][];
-            reachable_grid = new bool[Globals.ThisAddIn.Application.Worksheets.Count][][][];
-            foreach (Excel.Worksheet worksheet in Globals.ThisAddIn.Application.Worksheets)
-            {
-                impacts_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
-                reachable_grid[worksheet.Index - 1] = new bool[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
-                for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
-                {
-                    impacts_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
-                    reachable_grid[worksheet.Index - 1][row] = new bool[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
-                    for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
-                    {
-                        impacts_grid[worksheet.Index - 1][row][col] = new double[output_cells.Count];
-                        reachable_grid[worksheet.Index - 1][row][col] = new bool[output_cells.Count];
-                        for (int i = 0; i < output_cells.Count; i++)
-                        {
-                            impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
-                            reachable_grid[worksheet.Index - 1][row][col][i] = false;
-                        }
-                    }
-                }
-            }
-                
-            //Initialize reachable_impacts_grid
-            reachable_impacts_grid = new List<double[]>[output_cells.Count];
-            for (int i = 0; i < output_cells.Count; i++)
-            {
-                reachable_impacts_grid[i] = new List<double[]>();
-            }
-
-            //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-            foreach (TreeDictPair tdp in nodes)
-            {
-                var node = tdp.Value;
-                if (!node.hasParents())
-                {
-                    node.setWeight(1.0);  //Set the weight of all input nodes to 1.0 to start
-                    //Now we propagate it's weight to all of it's children
-                    TreeNode.propagateWeightUp(node, 1.0, node, output_cells, reachable_grid, reachable_impacts_grid);
-                    raw_input_cells_in_computation_count++;
-                }
-            }
-
-            //Convert reachable_impacts_grid to array form
-            reachable_impacts_grid_array = new double[output_cells.Count][][];
-            for (int i = 0; i < output_cells.Count; i++)
-            {
-                reachable_impacts_grid_array[i] = reachable_impacts_grid[i].ToArray();
-            }
-            pb.SetProgress(40);
-            ConstructTree.SwappingProcedure(swap_domain, ref input_cells_in_computation_count, ref min_max_delta_outputs, ref impacts_grid, ref times_perturbed, ref output_cells, ref reachable_grid, ref starting_outputs, ref reachable_impacts_grid_array);
-            //string text = "REACHABLE IMPACTS GRID ARRAY: \n";
-            //foreach (double[][] outputReachableList in reachable_impacts_grid_array)
-            //{
-            //    foreach (double[] input in outputReachableList)
-            //    {
-            //        text += " " + input[3];
-            //    }
-            //    text += "\n";
-            //}
-
-            //Display dd = new Display();
-            //dd.textBox1.Text = text;
-            //dd.ShowDialog();
-
-            //Stop timing swapping procedure:
-            swapping_timespan = global_stopwatch.Elapsed;
-            pb.SetProgress(80);
-        }
-
-        private void outlierAnalysis()
-        {
-            ConstructTree.ComputeZScoresAndFindOutliers(output_cells, reachable_impacts_grid_array, impacts_grid, times_perturbed, Globals.ThisAddIn.Application.Worksheets, outliers_count);
-            //Stop timing the zscore computation and outlier finding
-            pb.SetProgress(pb.progressBar1.Maximum);
-            pb.Close();
-            impact_scoring_timespan = global_stopwatch.Elapsed;
-            //}
-
-            Globals.ThisAddIn.Application.ScreenUpdating = true;
-            
-            // Format and display the TimeSpan value. 
-            string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
-            string swapping_time = (swapping_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", swapping_timespan.Minutes, swapping_timespan.Seconds, swapping_timespan.Milliseconds / 10);
-            string impact_scoring_time = (impact_scoring_timespan.TotalSeconds - swapping_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", z_score_timespan.Minutes, z_score_timespan.Seconds, z_score_timespan.Milliseconds / 10);
-            global_stopwatch.Stop();
-            // Get the elapsed time as a TimeSpan value.
-            TimeSpan global_timespan = global_stopwatch.Elapsed;
-            //string global_time = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", global_timespan.Hours, global_timespan.Minutes, global_timespan.Seconds, global_timespan.Milliseconds / 10);
-            string global_time = global_timespan.TotalSeconds + ""; //(tree_building_timespan.TotalSeconds + swapping_timespan.TotalSeconds + z_score_timespan.TotalSeconds + average_z_score_timespan.TotalSeconds + outlier_detection_timespan.TotalSeconds + outlier_coloring_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}",
-            
-            Display timeDisplay = new Display();
-            stats_text += "" //+ "Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\t"
-            //  + "Outlier Detection (s):\tOutlier Coloring (s):\t"
-            //+ "Outliers found:\n"
-                //"Formula cells:\t" + formula_cells_count + "\n"
-                //+ "Number of input cells involved in computations:\t" + input_cells_in_computation_count
-                //+ "\nExecution times (seconds): "
-                + Globals.ThisAddIn.Application.ActiveWorkbook.Name + "\t"
-                + formula_cells_count + "\t"
-                + raw_input_cells_in_computation_count + "\t"
-                + input_cells_in_computation_count + "\t"
-                + global_time + "\t"
-                + tree_building_time + "\t"
-                + swapping_time + "\t"
-                + impact_scoring_time + "\t"
-                + outliers_count;
-            timeDisplay.textBox1.Text = stats_text;
-            timeDisplay.ShowDialog();
-        }
             /*
             //Procedure for swapping values within ranges, replacing all repeated values at once
             if (checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked
@@ -412,9 +273,38 @@ namespace DataDebug
                 }
             }
             pb = new ProgBar(0, 100);
+            
             constructTree();
-            perturbationAnalysis();
-            outlierAnalysis();
+
+            //Disable screen updating during perturbation and analysis to speed things up
+            Globals.ThisAddIn.Application.ScreenUpdating = false;
+
+            Analysis.perturbationAnalysis(pb,
+                                            ref times_perturbed,
+                                            Globals.ThisAddIn.Application.Worksheets,
+                                            Globals.ThisAddIn.Application.Charts,
+                                            outliers_count,
+                                            ranges,
+                                            ref min_max_delta_outputs,
+                                            output_cells,
+                                            ref impacts_grid,
+                                            ref reachable_grid,
+                                            ref reachable_impacts_grid,
+                                            ref reachable_impacts_grid_array,
+                                            nodes,
+                                            ref raw_input_cells_in_computation_count,
+                                            starting_outputs,
+                                            ref input_cells_in_computation_count);
+            
+            Analysis.outlierAnalysis(pb, 
+                                            times_perturbed, 
+                                            Globals.ThisAddIn.Application.Worksheets, 
+                                            outliers_count, 
+                                            output_cells, 
+                                            impacts_grid, 
+                                            reachable_impacts_grid_array);
+            //Enable screen updating when we're done
+            Globals.ThisAddIn.Application.ScreenUpdating = true;
         }
 
         //Button for testing random code :)

@@ -640,9 +640,7 @@ namespace DataDebugMethods
             }
 
             return rangeNode;
-        }
-
-    public static void 
+        } 
 
     } // ConstructTree class ends here
 } // namespace ends here
