@@ -265,14 +265,53 @@ namespace DataDebugMethods
             }
         }
 
-        // num_bootstraps: the number of bootstrap samples to get
-        // outputs: a list of outputs; each TreeNode represents a function
-        // inputs: a list of inputs; each TreeNode represents an entire input range
-        public static Dictionary<TreeNode,FunctionOutput[]> Bootstrap(int num_bootstraps, List<TreeNode> outputs, List<TreeNode> inputs)
+        private static FunctionOutput[,] ComputeBootstraps(int num_bootstraps,
+                                                           List<TreeNode> inputs,
+                                                           List<TreeNode> outputs,
+                                                           Dictionary<TreeNode, InputSample> initial_inputs,
+                                                           InputSample[][] resamples)
         {
-            // first idx: the input range idx in "inputs"
+            // first idx: the output range idx in "outputs"
             // second idx: the ith bootstrap
             var bootstraps = new FunctionOutput[outputs.Count, num_bootstraps];
+
+            // compute function outputs for each bootstrap
+            // each input
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                var t = inputs[i];
+                var com = t.getCOMObject();
+
+                // replace the values of the COM object with each
+                // bootstrap and save all function outputs
+                for (var j = 0; j < num_bootstraps; j++)
+                {
+                    // replace the COM value
+                    ReplaceExcelRange(com, resamples[i][j]);
+
+                    // grab all outputs
+                    for (var k = 0; k < outputs.Count; k++)
+                    {
+                        // save the output
+                        bootstraps[k, j] = new FunctionOutput(outputs[k].getCOMValueAsString(), resamples[i][j].GetExcludes());
+                    }
+
+                    // reset the COM value to its original state
+                    ReplaceExcelRange(com, initial_inputs[t]);
+                }
+            }
+
+            return bootstraps;
+        }
+
+        // num_bootstraps: the number of bootstrap samples to get
+        // inputs: a list of inputs; each TreeNode represents an entire input range
+        // outputs: a list of outputs; each TreeNode represents a function
+        
+        public static FunctionOutput[,] Bootstrap(int num_bootstraps, List<TreeNode> inputs, List<TreeNode> outputs)
+        {
+            // first idx: the index of the TreeNode in the "inputs" array
+            // second idx: the ith bootstrap
             var resamples = new InputSample[inputs.Count][];
 
             // RNG for sampling
@@ -291,27 +330,9 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
 
-            // compute function outputs for each bootstrap
-            // each input
-            for (var i = 0; i < inputs.Count; i++)
-            {
-                var t = inputs[i];
-                var com = t.getCOMObject();
-
-                // replace the values of the COM object with each
-                // bootstrap and save all function outputs
-                for (var j = 0; j < num_bootstraps; j++)
-                {
-                    // replace the COM value
-                    ReplaceExcelRange(com, resamples[i][j]);
-
-                    // grab all outputs
-
-                    // reset the COM value to its original state
-                }
-            }
-
-            return null;
+            // replace each input range with a resample and
+            // gather all outputs
+            return ComputeBootstraps(num_bootstraps, inputs, outputs, initial_inputs, resamples);
         }
     }
 }

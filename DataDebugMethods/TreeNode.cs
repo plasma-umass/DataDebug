@@ -348,5 +348,9 @@ namespace DataDebugMethods
             return _COM;
         }
 
+        public string getCOMValueAsString()
+        {
+            return System.Convert.ToString(this.getCOMObject().Value2);
+        }
     }
 }
