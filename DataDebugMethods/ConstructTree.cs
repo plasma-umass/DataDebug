@@ -639,9 +639,8 @@ namespace DataDebugMethods
                 rangeNode.addCOM(range);
                 ranges.Add(rangeNode);
             }
-
             return rangeNode;
-        } 
+        }
 
     } // ConstructTree class ends here
 } // namespace ends here
