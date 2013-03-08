@@ -7,6 +7,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 using Range = Microsoft.Office.Interop.Excel.Range;
+using System.Diagnostics;
 
 namespace DataDebugMethods
 {
@@ -155,39 +156,134 @@ namespace DataDebugMethods
 
         } //outlierAnalysis ends here
 
-        public static string[,] Bootstrap(int num_bootstraps, ArrayList outputs, ArrayList inputs)
+        private static Dictionary<TreeNode,string[]> CopyInputs(List<TreeNode> inputs)
+        {
+            var d = new Dictionary<TreeNode, string[]>();
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                TreeNode r = inputs[i];
+                List<TreeNode> cells = r.getParents();
+                string[] cell_strings = new string[cells.Count];
+
+                var j = 0;
+                foreach (TreeNode t in cells)
+                {
+                    cell_strings[j] = System.Convert.ToString(t.getCOMObject().Value2);
+                    j++;
+                }
+                d.Add(r, cell_strings);
+            }
+            return d;
+        }
+
+        public class FunctionOutput
+        {
+            private string _value;
+            private BitArray _excludes;
+            public FunctionOutput(string value, BitArray excludes)
+            {
+                _value = value;
+                _excludes = excludes;
+            }
+        }
+
+        public class InputSample
+        {
+            private int _i = 0;
+            private string[] _input_array;
+
+            public InputSample(int size)
+            {
+                _input_array = new string[size];
+            }
+            public void Add(string value)
+            {
+                Debug.Assert(_i < _input_array.Length);
+                _input_array[_i] = value;
+                _i++;
+            }
+            public string GetInput(int num)
+            {
+                Debug.Assert(num < _input_array.Length);
+                return _input_array[num];
+            }
+        }
+
+        public static InputSample[] Resample(int num_bootstraps, string[] values, Random rng)
+        {
+            var ss = new InputSample[num_bootstraps];
+
+            // sample with replacement to get i
+            // bootstrapped samples
+            for (var i = 0; i < num_bootstraps; i++)
+            {
+                var s = new InputSample(values.Length);
+
+                // randomly sample j values, with replacement
+                for (var j = 0; j < values.Length; j++)
+                {
+                    string value = values[rng.Next(0, values.Length)];
+                    s.Add(value);
+                }
+            }
+
+            return ss;
+        }
+
+        public static void ReplaceExcelRange(Range com, InputSample input)
+        {
+            var i = 0;
+            foreach (Range cell in com)
+            {
+                cell.Value2 = input.GetInput(i);
+                i++;
+            }
+        }
+
+        public static Dictionary<TreeNode,FunctionOutput[]> Bootstrap(int num_bootstraps, List<TreeNode> outputs, List<TreeNode> inputs)
         {
             // first idx: the input range idx in "inputs"
             // second idx: the ith bootstrap
-            var bootstraps = new string[inputs.Count, num_bootstraps];
+            var bootstraps = new FunctionOutput[outputs.Count, num_bootstraps];
+            var resamples = new InputSample[inputs.Count][];
+
+            // RNG for sampling
+            var rng = new Random();
 
             // we save initial inputs here
-            // first idx: the input range idx in "inputs"
-            // second idx: the idx in the input pointed to by the first index
-            string[][] initial_inputs = new string[inputs.Count][];
-            for (var i = 0; i < inputs.Count; i++)
-            {
-                Range r = ((Range)(inputs[i]));
-                initial_inputs[i] = new string[r.Count];
-                var j = 0;
-                foreach (TreeNode t in r)
-                {
-                    initial_inputs[i][j] = System.Convert.ToString(r.Value2);
-                    j++;
-                }
-            }
+            var initial_inputs = CopyInputs(inputs);
 
             // populate bootstrap array
+            // for each input range (a TreeNode)
             for (var i = 0; i < inputs.Count; i++)
             {
+                // this TreeNode
+                var t = inputs[i];
+                // resample
+                resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
+            }
+
+            // compute function outputs for each bootstrap
+            // each input
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                var t = inputs[i];
+                var com = t.getCOMObject();
+
+                // replace the values of the COM object with each
+                // bootstrap and save all function outputs
                 for (var j = 0; j < num_bootstraps; j++)
                 {
-                    // TODO
+                    // replace the COM value
+                    ReplaceExcelRange(com, resamples[i][j]);
+
+                    // grab all outputs
+
+                    // reset the COM value to its original state
                 }
             }
 
-
-            return bootstraps;
+            return null;
         }
     }
 }

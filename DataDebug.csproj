@@ -204,7 +204,9 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Ribbon.cs" />
+    <Compile Include="Ribbon.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Ribbon.Designer.cs">
       <DependentUpon>Ribbon.cs</DependentUpon>
     </Compile>
