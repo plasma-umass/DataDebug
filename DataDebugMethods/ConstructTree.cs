@@ -93,6 +93,8 @@ namespace DataDebugMethods
                         if (cell.HasFormula)
                         {
                             n.setIsFormula();
+                            if (cell.Formula == null)
+                                System.Windows.Forms.MessageBox.Show("null formula!!! argh!!!");
                             n.setFormula(cell.Formula);
                             nodes.Add(addr, n);
                         }
@@ -130,20 +132,20 @@ namespace DataDebugMethods
             }
         }
 
-        public static void StoreOutputs(System.Collections.Generic.List<StartValue> starting_outputs, TreeList output_cells, TreeDict nodes)
+        public static void StoreOutputs(AnalysisData analysisData)
         {
             // Collect output values
-            foreach (TreeDictPair tdp in nodes)
+            foreach (TreeDictPair tdp in analysisData.nodes)
             {
                 var node = tdp.Value;
                 if (!node.hasChildren() && node.hasParents()) //Nodes that do not feed into any other nodes are considered output, unless nothing feeds into them either. 
                 {
-                    output_cells.Add(node);
+                    analysisData.output_cells.Add(node);
                 }
             }
 
             //This part stores all the output values before any perturbations are applied
-            foreach (TreeNode n in output_cells)
+            foreach (TreeNode n in analysisData.output_cells)
             {
                 // If the TreeNode is a chart
                 if (n.isChart())
@@ -157,7 +159,7 @@ namespace DataDebugMethods
                     }
                     double average = sum / parent_range.getParents().Count;
                     StartValue sv = new StartValue(average);
-                    starting_outputs.Add(sv);
+                    analysisData.starting_outputs.Add(sv);
 
                 }
                 // If the TreeNode is a cell
@@ -169,13 +171,13 @@ namespace DataDebugMethods
                     {
                         double d = (double)nodeWorksheet.get_Range(n.getName()).Value;
                         StartValue sv = new StartValue(d);
-                        starting_outputs.Add(sv); //Try adding it as a number
+                        analysisData.starting_outputs.Add(sv); //Try adding it as a number
                     }
                     catch   //If the output is a string
                     {
                         string s = (string)nodeWorksheet.get_Range(n.getName()).Value.ToString();
                         StartValue sv = new StartValue(s);
-                        starting_outputs.Add(sv); //If it doesn't work, it must be a string output
+                        analysisData.starting_outputs.Add(sv); //If it doesn't work, it must be a string output
                     }
                 }
             }
@@ -191,30 +193,30 @@ namespace DataDebugMethods
             return "digraph g{" + tree + "}"; 
         }
 
-        public static void setUpGrids(ref double[][][] influences_grid, ref int[][][] times_perturbed, Excel.Sheets worksheets, Excel.Sheets charts)
+        public static void setUpGrids(AnalysisData analysisData)
         {
-            influences_grid = new double[worksheets.Count + charts.Count][][];
-            times_perturbed = new int[worksheets.Count + charts.Count][][];
-            foreach (Excel.Worksheet worksheet in worksheets)
+            analysisData.influences_grid = new double[analysisData.worksheets.Count + analysisData.charts.Count][][];
+            analysisData.times_perturbed = new int[analysisData.worksheets.Count + analysisData.charts.Count][][];
+            foreach (Excel.Worksheet worksheet in analysisData.worksheets)
             {
-                influences_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
-                times_perturbed[worksheet.Index - 1] = new int[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
+                analysisData.influences_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
+                analysisData.times_perturbed[worksheet.Index - 1] = new int[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
                 for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
                 {
-                    influences_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
-                    times_perturbed[worksheet.Index - 1][row] = new int[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
+                    analysisData.influences_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
+                    analysisData.times_perturbed[worksheet.Index - 1][row] = new int[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
                     for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
                     {
-                        influences_grid[worksheet.Index - 1][row][col] = 0.0;
-                        times_perturbed[worksheet.Index - 1][row][col] = 0;
+                        analysisData.influences_grid[worksheet.Index - 1][row][col] = 0.0;
+                        analysisData.times_perturbed[worksheet.Index - 1][row][col] = 0;
                     }
                 }
             }
         }
 
-        public static void SwappingProcedure(TreeList swap_domain, ref int input_cells_in_computation_count, ref double[][] min_max_delta_outputs, ref double[][][][] impacts_grid, ref int[][][] times_perturbed, ref TreeList output_cells, ref bool[][][][] reachable_grid, ref System.Collections.Generic.List<StartValue> starting_outputs, ref double[][][] reachable_impacts_grid_array)
+        public static void SwappingProcedure(AnalysisData analysisData)
         {
-            foreach (TreeNode range_node in swap_domain)
+            foreach (TreeNode range_node in analysisData.ranges)
             {
                 //If this node is not a range, continue to the next node because no perturbations can be done on this node.
                 //if (!range_node.isRange())
@@ -240,7 +242,7 @@ namespace DataDebugMethods
                     {
                         continue;
                     }
-                    input_cells_in_computation_count++;
+                    analysisData.input_cells_in_computation_count++;
 
                     //Generate 30 random indices for swapping with siblings
                     int[] indices = new int[swaps_per_range];
@@ -294,7 +296,7 @@ namespace DataDebugMethods
 
                         try
                         {
-                            times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
+                            analysisData.times_perturbed[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1]++;
                         }
                         catch
                         {
@@ -304,12 +306,12 @@ namespace DataDebugMethods
                         cell.Value = sibling_cell.Value; //This is the swap -- we assign the value of the sibling cell to the value of our cell
                         delta = 0.0;
                         //foreach (TreeNode n in output_cells)
-                        for (int i = 0; i < output_cells.Count; i++)
+                        for (int i = 0; i < analysisData.output_cells.Count; i++)
                         {
                             try
                             {
                                 //If this output is not reachable from this cell, continue
-                                if (reachable_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][i] == false)
+                                if (analysisData.reachable_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][i] == false)
                                 {
                                     continue;
                                 }
@@ -318,12 +320,12 @@ namespace DataDebugMethods
                             {
                                 continue;
                             }
-                            TreeNode n = output_cells[i];
-                            if (starting_outputs[i].get_string() == null) // If the output is not a string
+                            TreeNode n = analysisData.output_cells[i];
+                            if (analysisData.starting_outputs[i].get_string() == null) // If the output is not a string
                             {
                                 if (!n.isChart())   //If the output is not a chart, it must be a number
                                 {
-                                    delta = Math.Abs(starting_outputs[i].get_double() - (double)n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
+                                    delta = Math.Abs(analysisData.starting_outputs[i].get_double() - (double)n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
                                 }
                                 else  // The node is a chart
                                 {
@@ -334,12 +336,12 @@ namespace DataDebugMethods
                                         sum = sum + (double)par.getWorksheetObject().get_Range(par.getName()).Value;
                                     }
                                     double average = sum / parent_range.getParents().Count;
-                                    delta = Math.Abs(starting_outputs[i].get_double() - average);
+                                    delta = Math.Abs(analysisData.starting_outputs[i].get_double() - average);
                                 }
                             }
                             else  // If the output is a string
                             {
-                                if (String.Equals(starting_outputs[i].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
+                                if (String.Equals(analysisData.starting_outputs[i].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
                                 {
                                     delta = 0.0;
                                 }
@@ -349,22 +351,22 @@ namespace DataDebugMethods
                                 }
                             }
                             //Add to the impact of the cell for this output
-                            impacts_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][i] += delta;
+                            analysisData.impacts_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][i] += delta;
                             //Compare the min/max values for this output to this delta
-                            if (min_max_delta_outputs[i][0] == -1.0)
+                            if (analysisData.min_max_delta_outputs[i][0] == -1.0)
                             {
-                                min_max_delta_outputs[i][0] = delta;
+                                analysisData.min_max_delta_outputs[i][0] = delta;
                             }
                             else
                             {
-                                if (min_max_delta_outputs[i][0] > delta)
+                                if (analysisData.min_max_delta_outputs[i][0] > delta)
                                 {
-                                    min_max_delta_outputs[i][0] = delta;
+                                    analysisData.min_max_delta_outputs[i][0] = delta;
                                 }
                             }
-                            if (min_max_delta_outputs[i][1] < delta)
+                            if (analysisData.min_max_delta_outputs[i][1] < delta)
                             {
-                                min_max_delta_outputs[i][1] = delta;
+                                analysisData.min_max_delta_outputs[i][1] = delta;
                             }
                             //index++;
                             total_delta = total_delta + delta;
@@ -391,42 +393,42 @@ namespace DataDebugMethods
             }
 
             //Populate reachable_impacts_grid_array from impacts_grid
-            for (int i = 0; i < output_cells.Count; i++)
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
-                for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
+                for (int d = 0; d < analysisData.reachable_impacts_grid_array[i].Length; d++)
                 {
-                    reachable_impacts_grid_array[i][d] = new double[4] { reachable_impacts_grid_array[i][d][0], 
-                            reachable_impacts_grid_array[i][d][1], 
-                            reachable_impacts_grid_array[i][d][2], 
-                            impacts_grid[(int)reachable_impacts_grid_array[i][d][0]][(int)reachable_impacts_grid_array[i][d][1]][(int)reachable_impacts_grid_array[i][d][2]][i] };
+                    analysisData.reachable_impacts_grid_array[i][d] = new double[4] { analysisData.reachable_impacts_grid_array[i][d][0], 
+                            analysisData.reachable_impacts_grid_array[i][d][1], 
+                            analysisData.reachable_impacts_grid_array[i][d][2], 
+                            analysisData.impacts_grid[(int)analysisData.reachable_impacts_grid_array[i][d][0]][(int)analysisData.reachable_impacts_grid_array[i][d][1]][(int)analysisData.reachable_impacts_grid_array[i][d][2]][i] };
                 }
             }
 
         }
 
-        public static void ComputeZScoresAndFindOutliers(TreeList output_cells, double[][][] reachable_impacts_grid_array, double[][][][] impacts_grid, int[][][] times_perturbed, Excel.Sheets worksheets, int outliers_count)
+        public static void ComputeZScoresAndFindOutliers(AnalysisData analysisData)
         {
             //Now for each output, compute the z-score of the impact of each input
-            for (int i = 0; i < output_cells.Count; i++)
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
                 //Find the mean for the output
                 double output_sum = 0.0;
 
-                for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
+                for (int d = 0; d < analysisData.reachable_impacts_grid_array[i].Length; d++)
                 {
-                    int worksheet_ind = (int)reachable_impacts_grid_array[i][d][0];
-                    int row = (int)reachable_impacts_grid_array[i][d][1];
-                    int col = (int)reachable_impacts_grid_array[i][d][2];
-                    if (times_perturbed[worksheet_ind][row][col] != 0)
+                    int worksheet_ind = (int)analysisData.reachable_impacts_grid_array[i][d][0];
+                    int row = (int)analysisData.reachable_impacts_grid_array[i][d][1];
+                    int col = (int)analysisData.reachable_impacts_grid_array[i][d][2];
+                    if (analysisData.times_perturbed[worksheet_ind][row][col] != 0)
                     {
-                        output_sum += impacts_grid[worksheet_ind][row][col][i];
+                        output_sum += analysisData.impacts_grid[worksheet_ind][row][col][i];
                     }
                 }
 
                 double output_average = 0.0;
-                if (reachable_impacts_grid_array[i].Length != 0)
+                if (analysisData.reachable_impacts_grid_array[i].Length != 0)
                 {
-                    output_average = output_sum / (double)reachable_impacts_grid_array[i].Length;
+                    output_average = output_sum / (double)analysisData.reachable_impacts_grid_array[i].Length;
                 }
                 else  //if none of the entries can reach this output, all impacts must be equal to 0.
                 {
@@ -435,67 +437,67 @@ namespace DataDebugMethods
                 //Find the sample standard deviation for this output
                 double variance = 0.0;
 
-                for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
+                for (int d = 0; d < analysisData.reachable_impacts_grid_array[i].Length; d++)
                 {
-                    int worksheet_ind = (int)reachable_impacts_grid_array[i][d][0];
-                    int row = (int)reachable_impacts_grid_array[i][d][1];
-                    int col = (int)reachable_impacts_grid_array[i][d][2];
-                    if (times_perturbed[worksheet_ind][row][col] != 0)
+                    int worksheet_ind = (int)analysisData.reachable_impacts_grid_array[i][d][0];
+                    int row = (int)analysisData.reachable_impacts_grid_array[i][d][1];
+                    int col = (int)analysisData.reachable_impacts_grid_array[i][d][2];
+                    if (analysisData.times_perturbed[worksheet_ind][row][col] != 0)
                     {
-                        variance += Math.Pow(output_average - impacts_grid[worksheet_ind][row][col][i], 2) / (double)reachable_impacts_grid_array[i].Length;
+                        variance += Math.Pow(output_average - analysisData.impacts_grid[worksheet_ind][row][col][i], 2) / (double)analysisData.reachable_impacts_grid_array[i].Length;
                     }
                 }
                 double std_dev = Math.Sqrt(variance);
 
-                for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
+                for (int d = 0; d < analysisData.reachable_impacts_grid_array[i].Length; d++)
                 {
-                    int worksheet_ind = (int)reachable_impacts_grid_array[i][d][0];
-                    int row = (int)reachable_impacts_grid_array[i][d][1];
-                    int col = (int)reachable_impacts_grid_array[i][d][2];
-                    if (times_perturbed[worksheet_ind][row][col] != 0)
+                    int worksheet_ind = (int)analysisData.reachable_impacts_grid_array[i][d][0];
+                    int row = (int)analysisData.reachable_impacts_grid_array[i][d][1];
+                    int col = (int)analysisData.reachable_impacts_grid_array[i][d][2];
+                    if (analysisData.times_perturbed[worksheet_ind][row][col] != 0)
                     {
                         if (std_dev != 0.0)
                         {
-                            reachable_impacts_grid_array[i][d][3] = Math.Abs((impacts_grid[worksheet_ind][row][col][i] - output_average) / std_dev);
+                            analysisData.reachable_impacts_grid_array[i][d][3] = Math.Abs((analysisData.impacts_grid[worksheet_ind][row][col][i] - output_average) / std_dev);
                         }
                         else  //std_dev == 0.0
                         {
                             //If the standard deviation is zero, then all the impacts were the same and we shouldn't flag any entries, so set their z-scores to 0.0
-                            reachable_impacts_grid_array[i][d][3] = 0.0;
+                            analysisData.reachable_impacts_grid_array[i][d][3] = 0.0;
                         }
                     }
                 }
             }
 
             //Repopulate impacts_grid with the z-scores from reachable_impacts_grid_array
-            foreach (Excel.Worksheet worksheet in worksheets)
+            foreach (Excel.Worksheet worksheet in analysisData.worksheets)
             {
                 Excel.Range used_range = worksheet.get_Range("A1");
                 for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
                 {
                     for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
                     {
-                        for (int i = 0; i < output_cells.Count; i++)
+                        for (int i = 0; i < analysisData.output_cells.Count; i++)
                         {
-                            impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
+                            analysisData.impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
                         }
                     }
                 }
             }
-            for (int i = 0; i < output_cells.Count; i++)
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
-                for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
+                for (int d = 0; d < analysisData.reachable_impacts_grid_array[i].Length; d++)
                 {
-                    int worksheet_ind = (int)reachable_impacts_grid_array[i][d][0];
-                    int row = (int)reachable_impacts_grid_array[i][d][1];
-                    int col = (int)reachable_impacts_grid_array[i][d][2];
-                    impacts_grid[worksheet_ind][row][col][i] = reachable_impacts_grid_array[i][d][3];
+                    int worksheet_ind = (int)analysisData.reachable_impacts_grid_array[i][d][0];
+                    int row = (int)analysisData.reachable_impacts_grid_array[i][d][1];
+                    int col = (int)analysisData.reachable_impacts_grid_array[i][d][2];
+                    analysisData.impacts_grid[worksheet_ind][row][col][i] = analysisData.reachable_impacts_grid_array[i][d][3];
                 }
             }
 
             //Now we want to average the z-score of every input and store it
-            double[][][] average_z_scores = new double[worksheets.Count][][];
-            foreach (Excel.Worksheet worksheet in worksheets)
+            double[][][] average_z_scores = new double[analysisData.worksheets.Count][][];
+            foreach (Excel.Worksheet worksheet in analysisData.worksheets)
             {
                 average_z_scores[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][];
                 for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
@@ -503,7 +505,7 @@ namespace DataDebugMethods
                     average_z_scores[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column];
                 }
             }
-            foreach (Excel.Worksheet worksheet in worksheets)
+            foreach (Excel.Worksheet worksheet in analysisData.worksheets)
             {
                 for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
                 {
@@ -512,14 +514,14 @@ namespace DataDebugMethods
                         //If this cell has been perturbed, find it's average z-score
                         double total_z_score = 0.0;
                         double total_output_weight = 0.0;
-                        if (times_perturbed[worksheet.Index - 1][row][col] != 0)
+                        if (analysisData.times_perturbed[worksheet.Index - 1][row][col] != 0)
                         {
-                            for (int i = 0; i < output_cells.Count; i++)
+                            for (int i = 0; i < analysisData.output_cells.Count; i++)
                             {
-                                total_output_weight += output_cells[i].getWeight();
-                                if (impacts_grid[worksheet.Index - 1][row][col][i] != 0)
+                                total_output_weight += analysisData.output_cells[i].getWeight();
+                                if (analysisData.impacts_grid[worksheet.Index - 1][row][col][i] != 0)
                                 {
-                                    total_z_score += impacts_grid[worksheet.Index - 1][row][col][i] * output_cells[i].getWeight();
+                                    total_z_score += analysisData.impacts_grid[worksheet.Index - 1][row][col][i] * analysisData.output_cells[i].getWeight();
                                 }
                             }
                             if (total_output_weight != 0.0)
@@ -533,18 +535,18 @@ namespace DataDebugMethods
             
             //Look for outliers:
             System.Collections.Generic.List<int[]> outliers = new System.Collections.Generic.List<int[]>();
-            for (int i = 0; i < output_cells.Count; i++)
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
                 //int outliers_for_this_output = 0; 
-                for (int d = 0; d < reachable_impacts_grid_array[i].Length; d++)
+                for (int d = 0; d < analysisData.reachable_impacts_grid_array[i].Length; d++)
                 {
                     //input_cells_in_computation_count++;
-                    int worksheet_ind = (int)reachable_impacts_grid_array[i][d][0];
-                    int row = (int)reachable_impacts_grid_array[i][d][1];
-                    int col = (int)reachable_impacts_grid_array[i][d][2];
+                    int worksheet_ind = (int)analysisData.reachable_impacts_grid_array[i][d][0];
+                    int row = (int)analysisData.reachable_impacts_grid_array[i][d][1];
+                    int col = (int)analysisData.reachable_impacts_grid_array[i][d][2];
                     //Standard deviations cutoff: 
                     double standard_deviations_cutoff = 2.0;
-                    if (reachable_impacts_grid_array[i][d][3] > standard_deviations_cutoff)
+                    if (analysisData.reachable_impacts_grid_array[i][d][3] > standard_deviations_cutoff)
                     {
                         int[] outlier = new int[3];
                         bool already_added = false;
@@ -570,7 +572,7 @@ namespace DataDebugMethods
             //Find the highest weighted average z-score among the outliers
             double max_weighted_z_score = 0.0;
             int[][] outliers_array = outliers.ToArray();
-            outliers_count = outliers_array.Length;
+            analysisData.outliers_count = outliers_array.Length;
             for (int i = 0; i < outliers_array.Length; i++)
             {
                 if (average_z_scores[outliers_array[i][0]][outliers_array[i][1]][outliers_array[i][2]] > max_weighted_z_score)
@@ -586,7 +588,7 @@ namespace DataDebugMethods
                 int row = outliers_array[i][1];
                 int col = outliers_array[i][2];
                 //Find the worksheet where this outlier resides
-                foreach (Excel.Worksheet ws in worksheets)
+                foreach (Excel.Worksheet ws in analysisData.worksheets)
                 {
                     if (ws.Index - 1 == outliers_array[i][0])
                     {

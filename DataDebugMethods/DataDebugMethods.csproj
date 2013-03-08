@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analysis.cs" />
+    <Compile Include="AnalysisData.cs" />
     <Compile Include="ConstructTree.cs" />
     <Compile Include="ProgBar.cs">
       <SubType>Form</SubType>

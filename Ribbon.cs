@@ -14,7 +14,6 @@ using TreeNode = DataDebugMethods.TreeNode;
 using System.Diagnostics;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
-using DataDebugMethods;
 
 namespace DataDebug
 {
@@ -23,27 +22,26 @@ namespace DataDebug
         private int TRANSPARENT_COLOR_INDEX = -4142;  //-4142 is the transparent default background
         //private bool toolHasNotRun = true; //this is to keep track of whether the tool has already run without having cleared the colorings
         List<TreeNode> originalColorNodes = new List<TreeNode>(); //List for storing the original colors for all nodes
-        List<TreeNode> nodelist;        //This is a list holding all the TreeNodes in the Excel file
-        double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
-        bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
-        double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
-        List<TreeNode> ranges;      // This is a list of input ranges, with each Excel.Range COM object encapsulated in a TreeNode
-        List<StartValue> starting_outputs; //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
-        List<TreeNode> output_cells; //This will store all the output nodes at the start of the fuzzing procedure
-        List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
-        double[][][] reachable_impacts_grid_array; //This will store impacts for cells reachable from a particular output in array form
-        int input_cells_in_computation_count = 0;
-        int raw_input_cells_in_computation_count = 0;
-        int formula_cells_count;
-        System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
-        string stats_text = "";
-        ProgBar pb;
-        TreeDict nodes;
-        TimeSpan tree_building_timespan;
-        TimeSpan impact_scoring_timespan;
-        TimeSpan swapping_timespan;
-        int outliers_count;
-        int[][][] times_perturbed;
+        //List<TreeNode> nodelist;        //This is a list holding all the TreeNodes in the Excel file
+        //double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
+        //bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
+        //double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
+        //List<TreeNode> ranges;      // This is a list of input ranges, with each Excel.Range COM object encapsulated in a TreeNode
+        //List<StartValue> starting_outputs; //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
+        //List<TreeNode> output_cells; //This will store all the output nodes at the start of the fuzzing procedure
+        //List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
+        //double[][][] reachable_impacts_grid_array; //This will store impacts for cells reachable from a particular output in array form
+        //int input_cells_in_computation_count = 0;
+        //int raw_input_cells_in_computation_count = 0;
+        //int formula_cells_count;
+        //System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
+        //ProgBar pb;
+        //TreeDict nodes;
+        //TimeSpan tree_building_timespan;
+        //TimeSpan impact_scoring_timespan;
+        //TimeSpan swapping_timespan;
+        //int outliers_count; //This gets assigned and updated in the Analysis class
+        //int[][][] times_perturbed;
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -60,51 +58,51 @@ namespace DataDebug
          * This method also contains the perturbation procedure and outlier analysis logic.
          * In the end, a text representation of the dependency graph is given in GraphViz format. It includes the entire graph and the weights of the nodes.
          */
-        private void constructTree()
+        private void constructTree(AnalysisData analysisData)
         {
-            pb.SetProgress(0);
-            impact_scoring_timespan = global_stopwatch.Elapsed;
-            swapping_timespan = global_stopwatch.Elapsed;
-            input_cells_in_computation_count = 0;
-            raw_input_cells_in_computation_count = 0;
+            analysisData.pb.SetProgress(0);
+            analysisData.impact_scoring_timespan = analysisData.global_stopwatch.Elapsed;
+            analysisData.swapping_timespan = analysisData.global_stopwatch.Elapsed;
+            analysisData.input_cells_in_computation_count = 0;
+            analysisData.raw_input_cells_in_computation_count = 0;
 
             // Get a range representing the formula cells for each worksheet in each workbook
             ArrayList formulaRanges = ConstructTree.GetFormulaRanges(Globals.ThisAddIn.Application.Worksheets, Globals.ThisAddIn.Application);
-            formula_cells_count = ConstructTree.CountFormulaCells(formulaRanges);
-
+            analysisData.formula_cells_count = ConstructTree.CountFormulaCells(formulaRanges);
+            
             // Create nodes for every cell containing a formula
-            nodes = ConstructTree.CreateFormulaNodes(formulaRanges, Globals.ThisAddIn.Application);
+            analysisData.nodes = ConstructTree.CreateFormulaNodes(formulaRanges, Globals.ThisAddIn.Application);
             
             //Now we parse the formulas in nodes to extract any range and cell references
-            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            for (int nodeIndex = 0; nodeIndex < analysisData.nodes.Count; nodeIndex++)
             {
-                TreeNode node = nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
+                TreeNode node = analysisData.nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
 
                 // For each of the ranges found in the formula by the parser, do the following:
                 foreach (Excel.Range range in ExcelParserUtility.GetReferencesFromFormula(node.getFormula(), node.getWorkbookObject(), node.getWorksheetObject()))
                 {
                     // Make a TreeNode for the Excel range COM object
-                    TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(ranges, range, node);
+                    TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(analysisData.ranges, range, node);
                     // Create TreeNodes for each range's Cell and add them as
                     // parents to THIS range's TreeNode
-                    ConstructTree.CreateCellNodesFromRange(rangeNode, node, nodes);
+                    ConstructTree.CreateCellNodesFromRange(rangeNode, node, analysisData.nodes);
                 }
             }
 
             //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
             //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
-            starting_outputs = new List<StartValue>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
-            output_cells = new List<TreeNode>(); //This will store all the output nodes at the start of the fuzzing procedure
+            analysisData.starting_outputs = new List<StartValue>(); //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
+            analysisData.output_cells = new List<TreeNode>(); //This will store all the output nodes at the start of the fuzzing procedure
 
-            ConstructTree.StoreOutputs(starting_outputs, output_cells, nodes);
+            ConstructTree.StoreOutputs(analysisData);
             
             //Tree building stopwatch
-            tree_building_timespan = global_stopwatch.Elapsed;
+            analysisData.tree_building_timespan = analysisData.global_stopwatch.Elapsed;
         }
 
-        private void DisplayGraphvizTree()
+        private void DisplayGraphvizTree(AnalysisData analysisData)
         {
-            string gvstr = ConstructTree.GenerateGraphVizTree(nodes);
+            string gvstr = ConstructTree.GenerateGraphVizTree(analysisData.nodes);
             Display disp = new Display();
             disp.textBox1.Text = gvstr;
             disp.ShowDialog();
@@ -240,13 +238,17 @@ namespace DataDebug
         //Action for "Analyze Worksheet" button
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
-            global_stopwatch.Reset();
-            global_stopwatch.Start();
-            stats_text = "";
-            
+            //If tool is running for the first time, make a new analysisData object
+            AnalysisData analysisData = new AnalysisData();
+            //If the tool has already run, update the existing instance (so that the colors from the previous run can still be cleared)
+                //UPDATE analysisData here
+            analysisData.worksheets = Globals.ThisAddIn.Application.Worksheets;
+            analysisData.global_stopwatch.Reset();
+            analysisData.global_stopwatch.Start();
+
             //Construct a new tree every time the tool is run
-            nodelist = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
-            ranges = new List<TreeNode>();        //This is a list holding all the ranges of TreeNodes in the Excel file
+            analysisData.nodelist = new List<TreeNode>();        //This is a list holding all the TreeNodes in the Excel file
+            analysisData.ranges = new List<TreeNode>();        //This is a list holding all the ranges of TreeNodes in the Excel file
             
             for (int i = 0; i < originalColorNodes.Count; i++)
             {
@@ -265,37 +267,16 @@ namespace DataDebug
                     originalColorNodes.Add(n);
                 }
             }
-            pb = new ProgBar(0, 100);
+            analysisData.pb = new ProgBar(0, 100);
             
-            constructTree();
+            constructTree(analysisData);
 
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
-            Analysis.perturbationAnalysis(pb,
-                                            ref times_perturbed,
-                                            Globals.ThisAddIn.Application.Worksheets,
-                                            Globals.ThisAddIn.Application.Charts,
-                                            outliers_count,
-                                            ranges,
-                                            ref min_max_delta_outputs,
-                                            output_cells,
-                                            ref impacts_grid,
-                                            ref reachable_grid,
-                                            ref reachable_impacts_grid,
-                                            ref reachable_impacts_grid_array,
-                                            nodes,
-                                            ref raw_input_cells_in_computation_count,
-                                            starting_outputs,
-                                            ref input_cells_in_computation_count);
+            Analysis.perturbationAnalysis(analysisData);
             
-            Analysis.outlierAnalysis(pb, 
-                                            times_perturbed, 
-                                            Globals.ThisAddIn.Application.Worksheets, 
-                                            outliers_count, 
-                                            output_cells, 
-                                            impacts_grid, 
-                                            reachable_impacts_grid_array);
+            Analysis.outlierAnalysis(analysisData);
             //Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
         }

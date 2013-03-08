@@ -13,117 +13,94 @@ namespace DataDebugMethods
 {
     public class Analysis
     {
-        public static void perturbationAnalysis(ProgBar pb, 
-                                            ref int[][][] times_perturbed, 
-                                            Excel.Sheets worksheets, 
-                                            Excel.Sheets charts, 
-                                            int outliers_count, 
-                                            List<TreeNode> ranges, 
-                                            ref double[][] min_max_delta_outputs, 
-                                            List<TreeNode> output_cells, 
-                                            ref double[][][][] impacts_grid, 
-                                            ref bool[][][][] reachable_grid,
-                                            ref List<double[]>[] reachable_impacts_grid, 
-                                            ref double[][][] reachable_impacts_grid_array, 
-                                            TreeDict nodes,
-                                            ref int raw_input_cells_in_computation_count, 
-                                            List<StartValue> starting_outputs, 
-                                            ref int input_cells_in_computation_count)
+        public static void perturbationAnalysis(AnalysisData analysisData)
         {
-            pb.SetProgress(25);
+            analysisData.pb.SetProgress(25);
 
             //Grids for storing influences
-            double[][][] influences_grid = null;
-            times_perturbed = null;
+            analysisData.influences_grid = null;
+            analysisData.times_perturbed = null;
             //influences_grid and times_perturbed are passed by reference so that they can be modified in the setUpGrids method
-            ConstructTree.setUpGrids(ref influences_grid, ref times_perturbed, worksheets, charts);
+            ConstructTree.setUpGrids(analysisData);
 
-            outliers_count = 0;
+            analysisData.outliers_count = 0;
             //Procedure for swapping values within ranges, one cell at a time
             //if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked (not checked by default)
             //{
-            List<TreeNode> swap_domain;
-            swap_domain = ranges;
 
             //Initialize min_max_delta_outputs
-            min_max_delta_outputs = new double[output_cells.Count][];
-            for (int i = 0; i < output_cells.Count; i++)
+            analysisData.min_max_delta_outputs = new double[analysisData.output_cells.Count][];
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
-                min_max_delta_outputs[i] = new double[2];
-                min_max_delta_outputs[i][0] = -1.0;
-                min_max_delta_outputs[i][1] = 0.0;
+                analysisData.min_max_delta_outputs[i] = new double[2];
+                analysisData.min_max_delta_outputs[i][0] = -1.0;
+                analysisData.min_max_delta_outputs[i][1] = 0.0;
             }
 
             //Initialize impacts_grid 
             //Initialize reachable_grid
-            impacts_grid = new double[worksheets.Count][][][];
-            reachable_grid = new bool[worksheets.Count][][][];
-            foreach (Excel.Worksheet worksheet in worksheets)
+            analysisData.impacts_grid = new double[analysisData.worksheets.Count][][][];
+            analysisData.reachable_grid = new bool[analysisData.worksheets.Count][][][];
+            foreach (Excel.Worksheet worksheet in analysisData.worksheets)
             {
-                impacts_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
-                reachable_grid[worksheet.Index - 1] = new bool[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
+                analysisData.impacts_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
+                analysisData.reachable_grid[worksheet.Index - 1] = new bool[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
                 for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
                 {
-                    impacts_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
-                    reachable_grid[worksheet.Index - 1][row] = new bool[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
+                    analysisData.impacts_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
+                    analysisData.reachable_grid[worksheet.Index - 1][row] = new bool[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
                     for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
                     {
-                        impacts_grid[worksheet.Index - 1][row][col] = new double[output_cells.Count];
-                        reachable_grid[worksheet.Index - 1][row][col] = new bool[output_cells.Count];
-                        for (int i = 0; i < output_cells.Count; i++)
+                        analysisData.impacts_grid[worksheet.Index - 1][row][col] = new double[analysisData.output_cells.Count];
+                        analysisData.reachable_grid[worksheet.Index - 1][row][col] = new bool[analysisData.output_cells.Count];
+                        for (int i = 0; i < analysisData.output_cells.Count; i++)
                         {
-                            impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
-                            reachable_grid[worksheet.Index - 1][row][col][i] = false;
+                            analysisData.impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
+                            analysisData.reachable_grid[worksheet.Index - 1][row][col][i] = false;
                         }
                     }
                 }
             }
 
             //Initialize reachable_impacts_grid
-            reachable_impacts_grid = new List<double[]>[output_cells.Count];
-            for (int i = 0; i < output_cells.Count; i++)
+            analysisData.reachable_impacts_grid = new List<double[]>[analysisData.output_cells.Count];
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
-                reachable_impacts_grid[i] = new List<double[]>();
+                analysisData.reachable_impacts_grid[i] = new List<double[]>();
             }
 
             //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-            foreach (TreeDictPair tdp in nodes)
+            foreach (TreeDictPair tdp in analysisData.nodes)
             {
                 var node = tdp.Value;
                 if (!node.hasParents())
                 {
                     node.setWeight(1.0);  //Set the weight of all input nodes to 1.0 to start
                     //Now we propagate it's weight to all of it's children
-                    TreeNode.propagateWeightUp(node, 1.0, node, output_cells, reachable_grid, reachable_impacts_grid);
-                    raw_input_cells_in_computation_count++;
+                    TreeNode.propagateWeightUp(node, 1.0, node, analysisData.output_cells, analysisData.reachable_grid, analysisData.reachable_impacts_grid);
+                    analysisData.raw_input_cells_in_computation_count++;
                 }
             }
 
             //Convert reachable_impacts_grid to array form
-            reachable_impacts_grid_array = new double[output_cells.Count][][];
-            for (int i = 0; i < output_cells.Count; i++)
+            analysisData.reachable_impacts_grid_array = new double[analysisData.output_cells.Count][][];
+            for (int i = 0; i < analysisData.output_cells.Count; i++)
             {
-                reachable_impacts_grid_array[i] = reachable_impacts_grid[i].ToArray();
+                analysisData.reachable_impacts_grid_array[i] = analysisData.reachable_impacts_grid[i].ToArray();
             }
-            pb.SetProgress(40);
-            ConstructTree.SwappingProcedure(swap_domain, ref input_cells_in_computation_count, ref min_max_delta_outputs, ref impacts_grid, ref times_perturbed, ref output_cells, ref reachable_grid, ref starting_outputs, ref reachable_impacts_grid_array);
+            analysisData.pb.SetProgress(40);
+            ConstructTree.SwappingProcedure(analysisData);
            
             //Stop timing swapping procedure:
-            pb.SetProgress(80);
+            analysisData.pb.SetProgress(80);
         } //perturbationAnalysis ends here
 
-        public static void outlierAnalysis(ProgBar pb, 
-                                            int[][][] times_perturbed, 
-                                            Excel.Sheets worksheets, 
-                                            int outliers_count, 
-                                            List<TreeNode> output_cells, 
-                                            double[][][][] impacts_grid, 
-                                            double[][][] reachable_impacts_grid_array)
+        public static void outlierAnalysis(AnalysisData analysisData)
         {
-            ConstructTree.ComputeZScoresAndFindOutliers(output_cells, reachable_impacts_grid_array, impacts_grid, times_perturbed, worksheets, outliers_count);
+            ConstructTree.ComputeZScoresAndFindOutliers(analysisData);
             //Stop timing the zscore computation and outlier finding
-            pb.SetProgress(pb.maxProgress());
-            pb.Close();
+            analysisData.pb.SetProgress(analysisData.pb.maxProgress());
+            analysisData.pb.Close();
             
             // Format and display the TimeSpan value. 
             //string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
