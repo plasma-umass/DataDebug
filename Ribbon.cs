@@ -27,8 +27,7 @@ namespace DataDebug
         double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
         bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
         double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
-        //List<TreeNode> ranges;  //This is a list of all the ranges we have identified
-        List<TreeNode> ranges;
+        List<TreeNode> ranges;      // This is a list of input ranges, with each Excel.Range COM object encapsulated in a TreeNode
         List<StartValue> starting_outputs; //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
         List<TreeNode> output_cells; //This will store all the output nodes at the start of the fuzzing procedure
         List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
@@ -74,27 +73,21 @@ namespace DataDebug
             formula_cells_count = ConstructTree.CountFormulaCells(formulaRanges);
 
             // Create nodes for every cell containing a formula
-            // old nodes_grid coordinates were:
-            //  1st: worksheet index
-            //  2nd: row
-            //  3rd: col
             nodes = ConstructTree.CreateFormulaNodes(formulaRanges, Globals.ThisAddIn.Application);
             
-            //This is the list of all ranges referenced in formulas
-            ArrayList referencedRangesList = new ArrayList();
-            
-            int formulaNodesCount = nodes.Count;
             //Now we parse the formulas in nodes to extract any range and cell references
-            for (int nodeIndex = 0; nodeIndex < formulaNodesCount; nodeIndex++)
-            //foreach (KeyValuePair<AST.Address, TreeNode> nodePair in nodes)
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
             {
                 TreeNode node = nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
 
-                //For each of the ranges found in the formula by the parser, do the following:
+                // For each of the ranges found in the formula by the parser, do the following:
                 foreach (Excel.Range range in ExcelParserUtility.GetReferencesFromFormula(node.getFormula(), node.getWorkbookObject(), node.getWorksheetObject()))
                 {
+                    // Make a TreeNode for the Excel range COM object
                     TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(ranges, range, node);
-                    ConstructTree.CreateCellNodesFromRange(range, rangeNode, node, nodes);
+                    // Create TreeNodes for each range's Cell and add them as
+                    // parents to THIS range's TreeNode
+                    ConstructTree.CreateCellNodesFromRange(rangeNode, node, nodes);
                 }
             }
 

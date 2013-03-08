@@ -156,22 +156,23 @@ namespace DataDebugMethods
 
         } //outlierAnalysis ends here
 
-        private static Dictionary<TreeNode,string[]> CopyInputs(List<TreeNode> inputs)
+        private static Dictionary<TreeNode, InputSample> StoreInputs(List<TreeNode> inputs)
         {
-            var d = new Dictionary<TreeNode, string[]>();
-            for (var i = 0; i < inputs.Count; i++)
+            var d = new Dictionary<TreeNode, InputSample>();
+            foreach (TreeNode input_range in inputs)
             {
-                TreeNode r = inputs[i];
-                List<TreeNode> cells = r.getParents();
-                string[] cell_strings = new string[cells.Count];
+                // the values are stored in this range's "parents"
+                // (i.e., the actual cells)
+                List<TreeNode> cells = input_range.getParents();
+                var s = new InputSample(cells.Count);
 
-                var j = 0;
-                foreach (TreeNode t in cells)
+                // store each input cell's contens
+                foreach (TreeNode c in cells)
                 {
-                    cell_strings[j] = System.Convert.ToString(t.getCOMObject().Value2);
-                    j++;
+                    s.Add(System.Convert.ToString(c.getCOMObject().Value2));
                 }
-                d.Add(r, cell_strings);
+                // add stored input to dict
+                d.Add(input_range, s);
             }
             return d;
         }
@@ -179,8 +180,8 @@ namespace DataDebugMethods
         public class FunctionOutput
         {
             private string _value;
-            private BitArray _excludes;
-            public FunctionOutput(string value, BitArray excludes)
+            private HashSet<int> _excludes;
+            public FunctionOutput(string value, HashSet<int> excludes)
             {
                 _value = value;
                 _excludes = excludes;
@@ -189,12 +190,14 @@ namespace DataDebugMethods
 
         public class InputSample
         {
-            private int _i = 0;
-            private string[] _input_array;
+            private int _i = 0;             // internal length counter
+            private string[] _input_array;  // the actual values of this array
+            private HashSet<int> _excludes;    // list of inputs excluded in this sample
 
             public InputSample(int size)
             {
                 _input_array = new string[size];
+                _excludes = new HashSet<int>(Enumerable.Range(0, size));
             }
             public void Add(string value)
             {
@@ -207,24 +210,46 @@ namespace DataDebugMethods
                 Debug.Assert(num < _input_array.Length);
                 return _input_array[num];
             }
+            public int Length()
+            {
+                return _i;
+            }
+            public HashSet<int> GetExcludes()
+            {
+                return _excludes;
+            }
+            public void SetExcludes(HashSet<int> exc)
+            {
+                _excludes = exc;
+            }
         }
 
-        public static InputSample[] Resample(int num_bootstraps, string[] values, Random rng)
+        public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
         {
+            // the resampled values go here
             var ss = new InputSample[num_bootstraps];
 
             // sample with replacement to get i
             // bootstrapped samples
             for (var i = 0; i < num_bootstraps; i++)
             {
-                var s = new InputSample(values.Length);
+                var s = new InputSample(orig_vals.Length());
+
+                // make a list of possibly-excluded indices
+                var exc = new HashSet<int>(Enumerable.Range(0, orig_vals.Length()));
 
                 // randomly sample j values, with replacement
-                for (var j = 0; j < values.Length; j++)
+                for (var j = 0; j < orig_vals.Length(); j++)
                 {
-                    string value = values[rng.Next(0, values.Length)];
+                    // randomly select a value from the original values
+                    int input_idx = rng.Next(0, orig_vals.Length());
+                    exc.Remove(input_idx);
+                    string value = orig_vals.GetInput(input_idx);
                     s.Add(value);
                 }
+
+                // indicate which indices are excluded
+                s.SetExcludes(exc);
             }
 
             return ss;
@@ -240,6 +265,9 @@ namespace DataDebugMethods
             }
         }
 
+        // num_bootstraps: the number of bootstrap samples to get
+        // outputs: a list of outputs; each TreeNode represents a function
+        // inputs: a list of inputs; each TreeNode represents an entire input range
         public static Dictionary<TreeNode,FunctionOutput[]> Bootstrap(int num_bootstraps, List<TreeNode> outputs, List<TreeNode> inputs)
         {
             // first idx: the input range idx in "inputs"
@@ -251,7 +279,7 @@ namespace DataDebugMethods
             var rng = new Random();
 
             // we save initial inputs here
-            var initial_inputs = CopyInputs(inputs);
+            var initial_inputs = StoreInputs(inputs);
 
             // populate bootstrap array
             // for each input range (a TreeNode)

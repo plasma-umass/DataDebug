@@ -599,10 +599,9 @@ namespace DataDebugMethods
 
         }
 
-
-        public static void CreateCellNodesFromRange(Excel.Range range, TreeNode rangeNode, TreeNode formulaNode, TreeDict nodes)
+        public static void CreateCellNodesFromRange(TreeNode rangeNode, TreeNode formulaNode, TreeDict nodes)
         {
-            foreach (Excel.Range cell in range)
+            foreach (Excel.Range cell in rangeNode.getCOMObject())
             {
                 TreeNode cellNode = null;
                 //See if there is an existing node for this cell already in nodes; if there is, do not add it again - just grab the existing one
@@ -623,7 +622,8 @@ namespace DataDebugMethods
         public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
         {
             TreeNode rangeNode = null;
-            //See if there is an existing node for this range already in referencedRangesNodeList; if there is, do not add it again - just grab the existing one
+            // See if there is an existing node for this range already in "ranges";
+            // if there is, do not add it again - just grab the existing one
             foreach (TreeNode existingNode in ranges)
             {
                 if (existingNode.getName().Equals(range.Address))
