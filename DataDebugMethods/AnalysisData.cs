@@ -33,5 +33,12 @@ namespace DataDebugMethods
         public int[][][] times_perturbed;
         public Excel.Sheets worksheets;
         public Excel.Sheets charts;
+
+        public AnalysisData(Excel.Application application)
+        {
+            worksheets = application.Worksheets;
+            charts = application.Charts;
+        }
+
     }
 }

@@ -74,7 +74,8 @@ namespace DataDebug
             analysisData.nodes = ConstructTree.CreateFormulaNodes(formulaRanges, Globals.ThisAddIn.Application);
             
             //Now we parse the formulas in nodes to extract any range and cell references
-            for (int nodeIndex = 0; nodeIndex < analysisData.nodes.Count; nodeIndex++)
+            int node_count = analysisData.nodes.Count; // we save this because nodes.Count grows in this loop
+            for (int nodeIndex = 0; nodeIndex < node_count; nodeIndex++)
             {
                 TreeNode node = analysisData.nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
 
@@ -239,7 +240,7 @@ namespace DataDebug
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
             //If tool is running for the first time, make a new analysisData object
-            AnalysisData analysisData = new AnalysisData();
+            AnalysisData analysisData = new AnalysisData(Globals.ThisAddIn.Application);
             //If the tool has already run, update the existing instance (so that the colors from the previous run can still be cleared)
                 //UPDATE analysisData here
             analysisData.worksheets = Globals.ThisAddIn.Application.Worksheets;
