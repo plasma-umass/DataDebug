@@ -76,7 +76,8 @@ namespace DataDebug
             nodes = ConstructTree.CreateFormulaNodes(formulaRanges, Globals.ThisAddIn.Application);
             
             //Now we parse the formulas in nodes to extract any range and cell references
-            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            var node_count = nodes.Count; // we save this because nodes.Count grows in this loop
+            for (int nodeIndex = 0; nodeIndex < node_count; nodeIndex++)
             {
                 TreeNode node = nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
 
