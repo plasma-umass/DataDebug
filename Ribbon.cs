@@ -113,9 +113,6 @@ namespace DataDebug
             // Construct a new tree every time the tool is run
             data.NewRun();
 
-            // Create a progress bar
-            data.pb = new ProgBar(0, 100);
-
             // reset colors
             DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
 
@@ -149,7 +146,40 @@ namespace DataDebug
 
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
+            // Disable screen updating during perturbation and analysis to speed things up
+            Globals.ThisAddIn.Application.ScreenUpdating = false;
 
+            // Get current app
+            Excel.Application app = Globals.ThisAddIn.Application;
+
+            // Make a new analysisData object
+            // TODO If the tool has already run, update the existing instance (so that the colors from the previous run can still be cleared)
+            // UPDATE analysisData here
+            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            data.worksheets = app.Worksheets;
+            data.global_stopwatch.Reset();
+            data.global_stopwatch.Start();
+
+            // Construct a new tree every time the tool is run
+            data.NewRun();
+
+            // reset colors
+            DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
+
+            // save colors
+            SaveColors(ref Colors, app.ActiveWorkbook);
+
+            // Build dependency graph (modifies data)
+            ConstructTree.constructTree(data, app);
+
+            // Perturb data (modifies data)
+            Analysis.perturbationAnalysis(data);
+
+            // Find outliers (modifies data)
+            Analysis.outlierAnalysis(data);
+
+            // Enable screen updating when we're done
+            Globals.ThisAddIn.Application.ScreenUpdating = true;
         }
     }
 }

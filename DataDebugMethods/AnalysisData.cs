@@ -51,6 +51,9 @@ namespace DataDebugMethods
             ranges = new List<TreeNode>();
             starting_outputs = new List<StartValue>();
             output_cells = new List<TreeNode>();
+
+            // Create a progress bar
+            pb = new ProgBar(0, 100);
         }
     }
 }
