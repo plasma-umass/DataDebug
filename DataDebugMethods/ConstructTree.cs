@@ -12,6 +12,56 @@ namespace DataDebugMethods
 {
     public static class ConstructTree
     {
+        /*
+         * This method constructs the dependency graph from the worksheet.
+         * It analyzes formulas and looks for references to cells or ranges of cells.
+         * It also looks for any charts, and adds those to the dependency graph as well. 
+         * After the dependency graph is constructed, we use it to determine and propagate weights to all nodes in the graph. 
+         * This method also contains the perturbation procedure and outlier analysis logic.
+         * In the end, a text representation of the dependency graph is given in GraphViz format. It includes the entire graph and the weights of the nodes.
+         */
+        public static void constructTree(AnalysisData analysisData, Excel.Application app)
+        {
+            Excel.Sheets ws = app.Worksheets;
+
+            analysisData.pb.SetProgress(0);
+            analysisData.impact_scoring_timespan = analysisData.global_stopwatch.Elapsed;
+            analysisData.swapping_timespan = analysisData.global_stopwatch.Elapsed;
+            analysisData.input_cells_in_computation_count = 0;
+            analysisData.raw_input_cells_in_computation_count = 0;
+
+            // Get a range representing the formula cells for each worksheet in each workbook
+            ArrayList formulaRanges = ConstructTree.GetFormulaRanges(ws, app);
+            analysisData.formula_cells_count = ConstructTree.CountFormulaCells(formulaRanges);
+
+            // Create nodes for every cell containing a formula
+            analysisData.nodes = ConstructTree.CreateFormulaNodes(formulaRanges, app);
+
+            //Now we parse the formulas in nodes to extract any range and cell references
+            int node_count = analysisData.nodes.Count; // we save this because nodes.Count grows in this loop
+            for (int nodeIndex = 0; nodeIndex < node_count; nodeIndex++)
+            {
+                TreeNode node = analysisData.nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
+
+                // For each of the ranges found in the formula by the parser, do the following:
+                foreach (Excel.Range range in ExcelParserUtility.GetReferencesFromFormula(node.getFormula(), node.getWorkbookObject(), node.getWorksheetObject()))
+                {
+                    // Make a TreeNode for the Excel range COM object
+                    TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(analysisData.ranges, range, node);
+                    // Create TreeNodes for each range's Cell and add them as
+                    // parents to THIS range's TreeNode
+                    ConstructTree.CreateCellNodesFromRange(rangeNode, node, analysisData.nodes);
+                }
+            }
+
+            //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
+            //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
+            ConstructTree.StoreOutputs(analysisData);
+
+            //Tree building stopwatch
+            analysisData.tree_building_timespan = analysisData.global_stopwatch.Elapsed;
+        }
+
         public static int CountFormulaCells(ArrayList rs)
         {
             int count = 0;

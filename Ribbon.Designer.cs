@@ -47,7 +47,7 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.TestParser = this.Factory.CreateRibbonButton();
+            this.TestNewProcedure = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -65,7 +65,7 @@ namespace DataDebug
             this.group1.Items.Add(this.button1);
             this.group1.Items.Add(this.checkBox2);
             this.group1.Items.Add(this.button7);
-            this.group1.Items.Add(this.TestParser);
+            this.group1.Items.Add(this.TestNewProcedure);
             this.group1.Items.Add(this.button8);
             this.group1.Items.Add(this.toggle_compile_regex);
             this.group1.Items.Add(this.toggle_weighted_average);
@@ -139,11 +139,11 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
-            // TestParser
+            // TestNewProcedure
             // 
-            this.TestParser.Label = "Parse";
-            this.TestParser.Name = "TestParser";
-            this.TestParser.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestParser_Click);
+            this.TestNewProcedure.Label = "Test New Procedure";
+            this.TestNewProcedure.Name = "TestNewProcedure";
+            this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
             // 
             // Ribbon
             // 
@@ -175,7 +175,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button8;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton TestParser;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton TestNewProcedure;
     }
 
     partial class ThisRibbonCollection

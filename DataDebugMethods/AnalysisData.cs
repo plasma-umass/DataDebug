@@ -38,7 +38,19 @@ namespace DataDebugMethods
         {
             worksheets = application.Worksheets;
             charts = application.Charts;
+            nodelist = new List<TreeNode>();            // holds all the TreeNodes in the Excel file
+            ranges = new List<TreeNode>();              // holds all the input ranges of TreeNodes in the Excel file
+            starting_outputs = new List<StartValue>();  // holds the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
+            output_cells = new List<TreeNode>();        // holds the output nodes at the start of the fuzzing procedure
         }
 
+        public void NewRun()
+        {
+            // reset lists
+            nodelist = new List<TreeNode>();
+            ranges = new List<TreeNode>();
+            starting_outputs = new List<StartValue>();
+            output_cells = new List<TreeNode>();
+        }
     }
 }
