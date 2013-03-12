@@ -173,7 +173,7 @@ namespace DataDebug
             ConstructTree.constructTree(data, app);
 
             // Get bootstraps
-            var outputs = Analysis.Bootstrap(1000, data.ranges, data.output_cells);
+            var outputs = Analysis.Bootstrap(100, data);
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;

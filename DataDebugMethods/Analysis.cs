@@ -16,7 +16,7 @@ namespace DataDebugMethods
     {
         public static void perturbationAnalysis(AnalysisData analysisData)
         {
-            analysisData.pb.SetProgress(25);
+            analysisData.SetProgress(25);
 
             //Grids for storing influences
             analysisData.influences_grid = null;
@@ -89,19 +89,19 @@ namespace DataDebugMethods
             {
                 analysisData.reachable_impacts_grid_array[i] = analysisData.reachable_impacts_grid[i].ToArray();
             }
-            analysisData.pb.SetProgress(40);
+            analysisData.SetProgress(40);
             ConstructTree.SwappingProcedure(analysisData);
            
             //Stop timing swapping procedure:
-            analysisData.pb.SetProgress(80);
+            analysisData.SetProgress(80);
         } //perturbationAnalysis ends here
 
         public static void outlierAnalysis(AnalysisData analysisData)
         {
             ConstructTree.ComputeZScoresAndFindOutliers(analysisData);
             //Stop timing the zscore computation and outlier finding
-            analysisData.pb.SetProgress(analysisData.pb.maxProgress());
-            analysisData.pb.Close();
+            analysisData.SetProgress(analysisData.pb.maxProgress());
+            analysisData.KillPB();
             
             // Format and display the TimeSpan value. 
             //string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
@@ -157,101 +157,6 @@ namespace DataDebugMethods
             return d;
         }
 
-        public class FunctionOutput
-        {
-            private string _value;
-            private HashSet<int> _excludes;
-            public FunctionOutput(string value, HashSet<int> excludes)
-            {
-                _value = value;
-                _excludes = excludes;
-            }
-        }
-
-        public class InputSample
-        {
-            private int _i = 0;             // internal length counter
-            private string[] _input_array;  // the actual values of this array
-            private HashSet<int> _excludes;    // list of inputs excluded in this sample
-
-            public InputSample(int size)
-            {
-                _input_array = new string[size];
-                _excludes = new HashSet<int>(Enumerable.Range(0, size));
-            }
-            public void Add(string value)
-            {
-                Debug.Assert(_i < _input_array.Length);
-                _input_array[_i] = value;
-                _i++;
-            }
-            public string GetInput(int num)
-            {
-                Debug.Assert(num < _input_array.Length);
-                return _input_array[num];
-            }
-            public int Length()
-            {
-                return _i;
-            }
-            public HashSet<int> GetExcludes()
-            {
-                return _excludes;
-            }
-            public void SetExcludes(HashSet<int> exc)
-            {
-                _excludes = exc;
-            }
-            public override int GetHashCode()
-            {
-                // apply Knuth hash to every string in input array
-                // and sum
-                // fast and deterministic but not guaranteed to be unique
-                return Enumerable.Aggregate(Enumerable.Select(_input_array, str => CalculateHash(str)), (acc, value) => acc + value);
-            }
-            public override bool Equals(object obj)
-            {
-                InputSample other = (InputSample)obj;
-                
-                // first check the length
-                if (_i != other.Length())
-                {
-                    return false;
-                }
-
-                // now check each input cell
-                for (var i = 0; i < _i; i++)
-                {
-                    if (!_input_array[i].Equals(other.GetInput(i), StringComparison.Ordinal))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        }
-
-        // performs a Knuth hash on each char
-        static int CalculateHash(string s)
-        {
-            var sum = 0;
-            for (int i = 0; i < s.Length; i++)
-            {
-                sum = unchecked(sum + CalculateHash(s[i]));
-            }
-            return sum;
-        }
-
-        // Knuth hash
-        static int CalculateHash(char c)
-        {
-            // we convert to unsigned int to take advantage of overflow
-            var r1 = unchecked(System.Convert.ToUInt32(c) * System.Convert.ToUInt32(2654435761));
-            var r2 = unchecked((int)r1);
-            return r2;
-        }
-
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
         {
             // the resampled values go here
@@ -265,26 +170,30 @@ namespace DataDebugMethods
                 // DEBUG test
                 var s2 = new InputSample(orig_vals.Length());
 
-                // make a list of possibly-excluded indices
-                var exc = new HashSet<int>(Enumerable.Range(0, orig_vals.Length()));
+                // make a vector of index counters
+                var inc_count = new int[orig_vals.Length()];
 
                 // randomly sample j values, with replacement
                 for (var j = 0; j < orig_vals.Length(); j++)
                 {
                     // randomly select a value from the original values
                     int input_idx = rng.Next(0, orig_vals.Length());
-                    exc.Remove(input_idx);
+                    inc_count[input_idx] += 1;
                     string value = orig_vals.GetInput(input_idx);
                     s.Add(value);
                     s2.Add(value);
                 }
 
                 // indicate which indices are excluded
-                s.SetExcludes(exc);
-                s2.SetExcludes(exc);
+                s.SetIncludes(inc_count);
+                s2.SetIncludes(inc_count);
 
                 // DEBUG
                 if (s.GetHashCode() != s2.GetHashCode())
+                {
+                    throw new Exception("These two should be equal!");
+                }
+                if (!s.Equals(s2))
                 {
                     throw new Exception("These two should be equal!");
                 }
@@ -296,75 +205,28 @@ namespace DataDebugMethods
             return ss;
         }
 
-        public static void ReplaceExcelRange(Range com, InputSample input)
-        {
-            var i = 0;
-            foreach (Range cell in com)
-            {
-                cell.Value2 = input.GetInput(i);
-                i++;
-            }
-        }
-
-        public class BootMemo
-        {
-            private Dictionary<InputSample, FunctionOutput[]> _d;
-            public BootMemo()
-            {
-                _d = new Dictionary<InputSample, FunctionOutput[]>();
-            }
-            public FunctionOutput[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits)
-            {
-                FunctionOutput[] fo_arr;
-                if (!_d.TryGetValue(sample, out fo_arr))
-                {
-                    // replace the COM value
-                    ReplaceExcelRange(com, sample);
-
-                    // initialize array
-                    fo_arr = new FunctionOutput[outputs.Length];
-
-                    // grab all outputs
-                    for (var k = 0; k < outputs.Length; k++)
-                    {
-                        // save the output
-                        fo_arr[k] = new FunctionOutput(outputs[k].getCOMValueAsString(), sample.GetExcludes());
-                    }
-
-                    // Add function values to cache
-                    _d.Add(sample, fo_arr);
-
-                    // restore the COM value
-                    ReplaceExcelRange(com, original);
-                }
-                else
-                {
-                    hits += 1;
-                }
-                return fo_arr;
-            }
-        }
-
         private static FunctionOutput[,] ComputeBootstraps(int num_bootstraps,
-                                                           List<TreeNode> inputs,
-                                                           List<TreeNode> outputs,
                                                            Dictionary<TreeNode, InputSample> initial_inputs,
-                                                           InputSample[][] resamples)
+                                                           InputSample[][] resamples,
+                                                           AnalysisData data)
         {
+            // convert both inputs and outputs into arrays for fast random access
+            var input_arr = data.ranges.ToArray<TreeNode>();
+            var output_arr = data.output_cells.ToArray<TreeNode>();
+
             // first idx: the output range idx in "outputs"
             // second idx: the ith bootstrap
-            var bootstraps = new FunctionOutput[outputs.Count, num_bootstraps];
+            var bootstraps = new FunctionOutput[output_arr.Length, num_bootstraps];
 
-            // convert both inputs and outputs into arrays for fast random access
-            var input_arr = inputs.ToArray<TreeNode>();
-            var output_arr = outputs.ToArray<TreeNode>();
+            // Set progress bar max
+            int maxcount = num_bootstraps * input_arr.Length;
+            data.SetPBMax(maxcount);
 
             // init bootstrap memo
             var bootsaver = new BootMemo();
 
             // DEBUG
             var hits = 0;
-            var lookups = 0;
             var sw = new Stopwatch();
             sw.Start();
 
@@ -382,28 +244,20 @@ namespace DataDebugMethods
                 {
                     // use memo DB
                     FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][j], output_arr, ref hits);
+                    //FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][j], output_arr);
                     for (var k = 0; k < output_arr.Length; k++)
                     {
                         bootstraps[k, j] = fos[k];
                     }
-                    lookups += 1;
-                    //// replace the COM value
-                    //ReplaceExcelRange(com, resamples[i][j]);
-
-                    //// grab all outputs
-                    //for (var k = 0; k < output_arr.Length; k++)
-                    //{
-                    //    // save the output
-                    //    bootstraps[k, j] = new FunctionOutput(output_arr[k].getCOMValueAsString(), resamples[i][j].GetExcludes());
-                    //}
-
-                    //// reset the COM value to its original state
-                    //ReplaceExcelRange(com, initial_inputs[t]);
+                    data.PokePB();
                 }
             }
 
+            // Kill progress bar
+            data.KillPB();
+
             sw.Stop();
-            System.Windows.Forms.MessageBox.Show("Time to perturb: " + sw.ElapsedMilliseconds.ToString() + " ms, hit rate: " + (System.Convert.ToDouble(hits) / System.Convert.ToDouble(lookups)).ToString() + "%");
+            //System.Windows.Forms.MessageBox.Show("Time to perturb: " + sw.ElapsedMilliseconds.ToString() + " ms, hit rate: " + (System.Convert.ToDouble(hits) / System.Convert.ToDouble(maxcount) * 100).ToString() + "%");
 
             return bootstraps;
         }
@@ -412,31 +266,34 @@ namespace DataDebugMethods
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
         
-        public static FunctionOutput[,] Bootstrap(int num_bootstraps, List<TreeNode> inputs, List<TreeNode> outputs)
+        public static FunctionOutput[,] Bootstrap(int num_bootstraps, AnalysisData data)
         {
+            // grab the fields from AnalysisData that I care about
+            List<TreeNode> outputs = data.output_cells;
+
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
-            var resamples = new InputSample[inputs.Count][];
+            var resamples = new InputSample[data.ranges.Count][];
 
             // RNG for sampling
             var rng = new Random();
 
             // we save initial inputs here
-            var initial_inputs = StoreInputs(inputs);
+            var initial_inputs = StoreInputs(data.ranges);
 
             // populate bootstrap array
             // for each input range (a TreeNode)
-            for (var i = 0; i < inputs.Count; i++)
+            for (var i = 0; i < data.ranges.Count; i++)
             {
                 // this TreeNode
-                var t = inputs[i];
+                var t = data.ranges[i];
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
 
             // replace each input range with a resample and
             // gather all outputs
-            return ComputeBootstraps(num_bootstraps, inputs, outputs, initial_inputs, resamples);
+            return ComputeBootstraps(num_bootstraps, initial_inputs, resamples, data);
         }
     }
 }

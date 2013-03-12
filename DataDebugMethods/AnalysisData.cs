@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
+using System.Diagnostics;
 
 namespace DataDebugMethods
 {
@@ -34,6 +35,12 @@ namespace DataDebugMethods
         public Excel.Sheets worksheets;
         public Excel.Sheets charts;
 
+        public const int PROGRESS_LOW = 0;
+        public const int PROGRESS_HIGH = 100;
+
+        private int _pb_max;
+        private int _pb_count = 0;
+
         public AnalysisData(Excel.Application application)
         {
             worksheets = application.Worksheets;
@@ -53,7 +60,30 @@ namespace DataDebugMethods
             output_cells = new List<TreeNode>();
 
             // Create a progress bar
-            pb = new ProgBar(0, 100);
+            pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
+        }
+
+        public void SetProgress(int i)
+        {
+            Debug.Assert(i >= PROGRESS_LOW && i <= PROGRESS_HIGH);
+            pb.SetProgress(i);
+        }
+
+        public void SetPBMax(int max)
+        {
+            _pb_max = max;
+        }
+
+        public void PokePB()
+        {
+            _pb_count += 1;
+            this.SetProgress(_pb_count * 100 / _pb_max);
+        }
+
+        public void KillPB()
+        {
+            // Kill progress bar
+            pb.Close();
         }
     }
 }
