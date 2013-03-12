@@ -111,7 +111,7 @@ namespace DataDebug
             data.global_stopwatch.Start();
 
             // Construct a new tree every time the tool is run
-            data.NewRun();
+            data.Reset();
 
             // reset colors
             DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
@@ -161,9 +161,9 @@ namespace DataDebug
             data.global_stopwatch.Start();
 
             // Construct a new tree every time the tool is run
-            data.NewRun();
+            data.Reset();
 
-            // reset colors
+            // discard any old colors for this workbook
             DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
 
             // save colors
@@ -172,11 +172,8 @@ namespace DataDebug
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
 
-            // Perturb data (modifies data)
-            Analysis.perturbationAnalysis(data);
-
-            // Find outliers (modifies data)
-            Analysis.outlierAnalysis(data);
+            // Get bootstraps
+            var outputs = Analysis.Bootstrap(1000, data.ranges, data.output_cells);
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;

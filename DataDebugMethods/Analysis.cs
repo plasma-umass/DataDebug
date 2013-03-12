@@ -8,6 +8,7 @@ using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMet
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace DataDebugMethods
 {
@@ -143,9 +144,11 @@ namespace DataDebugMethods
                 List<TreeNode> cells = input_range.getParents();
                 var s = new InputSample(cells.Count);
 
-                // store each input cell's contens
+                // store each input cell's contents
                 foreach (TreeNode c in cells)
                 {
+                    // if the cell contains nothing, replace the value
+                    // with an empty string
                     s.Add(System.Convert.ToString(c.getCOMObject().Value2));
                 }
                 // add stored input to dict
@@ -199,6 +202,54 @@ namespace DataDebugMethods
             {
                 _excludes = exc;
             }
+            public override int GetHashCode()
+            {
+                // apply Knuth hash to every string in input array
+                // and sum
+                // fast and deterministic but not guaranteed to be unique
+                return Enumerable.Aggregate(Enumerable.Select(_input_array, str => CalculateHash(str)), (acc, value) => acc + value);
+            }
+            public override bool Equals(object obj)
+            {
+                InputSample other = (InputSample)obj;
+                
+                // first check the length
+                if (_i != other.Length())
+                {
+                    return false;
+                }
+
+                // now check each input cell
+                for (var i = 0; i < _i; i++)
+                {
+                    if (!_input_array[i].Equals(other.GetInput(i), StringComparison.Ordinal))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        // performs a Knuth hash on each char
+        static int CalculateHash(string s)
+        {
+            var sum = 0;
+            for (int i = 0; i < s.Length; i++)
+            {
+                sum = unchecked(sum + CalculateHash(s[i]));
+            }
+            return sum;
+        }
+
+        // Knuth hash
+        static int CalculateHash(char c)
+        {
+            // we convert to unsigned int to take advantage of overflow
+            var r1 = unchecked(System.Convert.ToUInt32(c) * System.Convert.ToUInt32(2654435761));
+            var r2 = unchecked((int)r1);
+            return r2;
         }
 
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
@@ -211,6 +262,8 @@ namespace DataDebugMethods
             for (var i = 0; i < num_bootstraps; i++)
             {
                 var s = new InputSample(orig_vals.Length());
+                // DEBUG test
+                var s2 = new InputSample(orig_vals.Length());
 
                 // make a list of possibly-excluded indices
                 var exc = new HashSet<int>(Enumerable.Range(0, orig_vals.Length()));
@@ -223,10 +276,21 @@ namespace DataDebugMethods
                     exc.Remove(input_idx);
                     string value = orig_vals.GetInput(input_idx);
                     s.Add(value);
+                    s2.Add(value);
                 }
 
                 // indicate which indices are excluded
                 s.SetExcludes(exc);
+                s2.SetExcludes(exc);
+
+                // DEBUG
+                if (s.GetHashCode() != s2.GetHashCode())
+                {
+                    throw new Exception("These two should be equal!");
+                }
+
+                // add the new InputSample to the output array
+                ss[i] = s;
             }
 
             return ss;
@@ -242,6 +306,45 @@ namespace DataDebugMethods
             }
         }
 
+        public class BootMemo
+        {
+            private Dictionary<InputSample, FunctionOutput[]> _d;
+            public BootMemo()
+            {
+                _d = new Dictionary<InputSample, FunctionOutput[]>();
+            }
+            public FunctionOutput[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits)
+            {
+                FunctionOutput[] fo_arr;
+                if (!_d.TryGetValue(sample, out fo_arr))
+                {
+                    // replace the COM value
+                    ReplaceExcelRange(com, sample);
+
+                    // initialize array
+                    fo_arr = new FunctionOutput[outputs.Length];
+
+                    // grab all outputs
+                    for (var k = 0; k < outputs.Length; k++)
+                    {
+                        // save the output
+                        fo_arr[k] = new FunctionOutput(outputs[k].getCOMValueAsString(), sample.GetExcludes());
+                    }
+
+                    // Add function values to cache
+                    _d.Add(sample, fo_arr);
+
+                    // restore the COM value
+                    ReplaceExcelRange(com, original);
+                }
+                else
+                {
+                    hits += 1;
+                }
+                return fo_arr;
+            }
+        }
+
         private static FunctionOutput[,] ComputeBootstraps(int num_bootstraps,
                                                            List<TreeNode> inputs,
                                                            List<TreeNode> outputs,
@@ -252,31 +355,55 @@ namespace DataDebugMethods
             // second idx: the ith bootstrap
             var bootstraps = new FunctionOutput[outputs.Count, num_bootstraps];
 
+            // convert both inputs and outputs into arrays for fast random access
+            var input_arr = inputs.ToArray<TreeNode>();
+            var output_arr = outputs.ToArray<TreeNode>();
+
+            // init bootstrap memo
+            var bootsaver = new BootMemo();
+
+            // DEBUG
+            var hits = 0;
+            var lookups = 0;
+            var sw = new Stopwatch();
+            sw.Start();
+
             // compute function outputs for each bootstrap
-            // each input
-            for (var i = 0; i < inputs.Count; i++)
+            // inputs[i] is the ith input range
+            for (var i = 0; i < input_arr.Length; i++)
             {
-                var t = inputs[i];
+                var t = input_arr[i];
                 var com = t.getCOMObject();
 
-                // replace the values of the COM object with each
-                // bootstrap and save all function outputs
+                // replace the values of the COM object with the jth bootstrap,
+                // save all function outputs, and
+                // restore the original input
                 for (var j = 0; j < num_bootstraps; j++)
                 {
-                    // replace the COM value
-                    ReplaceExcelRange(com, resamples[i][j]);
-
-                    // grab all outputs
-                    for (var k = 0; k < outputs.Count; k++)
+                    // use memo DB
+                    FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][j], output_arr, ref hits);
+                    for (var k = 0; k < output_arr.Length; k++)
                     {
-                        // save the output
-                        bootstraps[k, j] = new FunctionOutput(outputs[k].getCOMValueAsString(), resamples[i][j].GetExcludes());
+                        bootstraps[k, j] = fos[k];
                     }
+                    lookups += 1;
+                    //// replace the COM value
+                    //ReplaceExcelRange(com, resamples[i][j]);
 
-                    // reset the COM value to its original state
-                    ReplaceExcelRange(com, initial_inputs[t]);
+                    //// grab all outputs
+                    //for (var k = 0; k < output_arr.Length; k++)
+                    //{
+                    //    // save the output
+                    //    bootstraps[k, j] = new FunctionOutput(output_arr[k].getCOMValueAsString(), resamples[i][j].GetExcludes());
+                    //}
+
+                    //// reset the COM value to its original state
+                    //ReplaceExcelRange(com, initial_inputs[t]);
                 }
             }
+
+            sw.Stop();
+            System.Windows.Forms.MessageBox.Show("Time to perturb: " + sw.ElapsedMilliseconds.ToString() + " ms, hit rate: " + (System.Convert.ToDouble(hits) / System.Convert.ToDouble(lookups)).ToString() + "%");
 
             return bootstraps;
         }

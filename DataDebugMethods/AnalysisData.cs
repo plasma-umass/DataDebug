@@ -44,7 +44,7 @@ namespace DataDebugMethods
             output_cells = new List<TreeNode>();        // holds the output nodes at the start of the fuzzing procedure
         }
 
-        public void NewRun()
+        public void Reset()
         {
             // reset lists
             nodelist = new List<TreeNode>();

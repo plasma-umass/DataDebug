@@ -135,7 +135,7 @@ namespace DataDebugMethods
             {
                 foreach (Excel.Range cell in worksheet_range)
                 {
-                    if (cell.Value != null)
+                    if (cell.Value2 != null)
                     {
                         var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], wb, cell.Worksheet);
                         var n = new TreeNode(cell.Address, cell.Worksheet, wb);
@@ -144,8 +144,11 @@ namespace DataDebugMethods
                         {
                             n.setIsFormula();
                             if (cell.Formula == null)
-                                System.Windows.Forms.MessageBox.Show("null formula!!! argh!!!");
+                            {
+                                throw new Exception("null formula!!! argh!!!");
+                            }
                             n.setFormula(cell.Formula);
+                            n.addCOM(cell);     // add a reference to the COM object
                             nodes.Add(addr, n);
                         }
                     }
@@ -662,13 +665,22 @@ namespace DataDebugMethods
                     //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
                     var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet);
                     cellNode = new TreeNode(cell.Address, cell.Worksheet, formulaNode.getWorkbookObject());
+                    
                     nodes.Add(addr, cellNode);
                 }
+                // add a reference to the COM object if it is missing
+                if (cellNode.getCOMObject() == null)
+                {
+                    cellNode.addCOM(cell);
+                }
+                // register this cell as an input to the rangeNode
                 rangeNode.addParent(cellNode);
+                // register the range as an output of this input cell
                 cellNode.addChild(formulaNode);
+                // register this cell as an input to the formulaNode
                 formulaNode.addParent(cellNode);
             }
-        } // DoStuff ends here
+        } // CreateCellNodesFromRange ends here
 
 
         public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
