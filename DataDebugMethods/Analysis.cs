@@ -205,7 +205,85 @@ namespace DataDebugMethods
             return ss;
         }
 
-        private static FunctionOutput[,,] ComputeBootstraps(int num_bootstraps,
+
+        // num_bootstraps: the number of bootstrap samples to get
+        // inputs: a list of inputs; each TreeNode represents an entire input range
+        // outputs: a list of outputs; each TreeNode represents a function
+        public static void Bootstrap(int num_bootstraps, AnalysisData data)
+        {
+            // counts
+            int num_functions = data.output_cells.Count;
+            int num_inputs = data.ranges.Count;
+
+            // first idx: the index of the TreeNode in the "inputs" array
+            // second idx: the ith bootstrap
+            var resamples = new InputSample[num_inputs][];
+
+            // RNG for sampling
+            var rng = new Random();
+
+            // we save initial inputs here
+            var initial_inputs = StoreInputs(data.ranges);
+
+            // populate bootstrap array
+            // for each input range (a TreeNode)
+            for (var i = 0; i < num_inputs; i++)
+            {
+                // this TreeNode
+                var t = data.ranges[i];
+                // resample
+                resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
+            }
+
+            // replace each input range with a resample and
+            // gather all outputs
+            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, data);
+
+            // partition numeric-only and string string bootstraps
+            var num_boots = new Dictionary<KeyValuePair<int, int>, FunctionOutput<double>[]>();
+            var str_boots = new Dictionary<KeyValuePair<int, int>, FunctionOutput<string>[]>();
+
+            // convert bootstraps to numeric, if possible
+            for (int f = 0; f < num_functions; f++)
+            {
+                for (int i = 0; i < num_inputs; i++)
+                {
+                    try
+                    {
+                        var b = ConvertToNumericOutput(boots[f][i]);
+                        num_boots.Add(new KeyValuePair<int, int>(f, i), b);
+                    }
+                    catch
+                    {
+                        str_boots.Add(new KeyValuePair<int, int>(f, i), boots[f][i]);
+                    }
+                }
+            }
+
+            System.Windows.Forms.MessageBox.Show("num_boots size: " + num_boots.Count + "; str_boots size: " + str_boots.Count);
+
+            // sort bootstraps
+
+            // partition bootstraps 
+
+        }
+
+        // initializes the first and second dimensions
+        private static FunctionOutput<string>[][][] InitJagged3DBootstrapArray(int fn_idx_sz, int o_idx_sz, int b_idx_sz)
+        {
+            var bs = new FunctionOutput<string>[fn_idx_sz][][];
+            for (int f = 0; f < fn_idx_sz; f++)
+            {
+                bs[f] = new FunctionOutput<string>[o_idx_sz][];
+                for (int o = 0; o < o_idx_sz; o++)
+                {
+                    bs[f][o] = new FunctionOutput<string>[b_idx_sz];
+                }
+            }
+            return bs;
+        }
+
+        private static FunctionOutput<string>[][][] ComputeBootstraps(int num_bootstraps,
                                                            Dictionary<TreeNode, InputSample> initial_inputs,
                                                            InputSample[][] resamples,
                                                            AnalysisData data)
@@ -214,10 +292,10 @@ namespace DataDebugMethods
             var input_arr = data.ranges.ToArray<TreeNode>();
             var output_arr = data.output_cells.ToArray<TreeNode>();
 
-            // first idx: the output range idx in "outputs"
+            // first idx: the fth function output
             // second idx: the ith input
-            // second idx: the jth bootstrap
-            var bootstraps = new FunctionOutput[output_arr.Length, input_arr.Length, num_bootstraps];
+            // third idx: the bth bootstrap
+            var bootstraps = InitJagged3DBootstrapArray(output_arr.Length, input_arr.Length, num_bootstraps);
 
             // Set progress bar max
             int maxcount = num_bootstraps * input_arr.Length;
@@ -244,11 +322,10 @@ namespace DataDebugMethods
                 for (var b = 0; b < num_bootstraps; b++)
                 {
                     // use memo DB
-                    FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits);
-                    //FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][j], output_arr);
+                    FunctionOutput<string>[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits);
                     for (var f = 0; f < output_arr.Length; f++)
                     {
-                        bootstraps[f, i, b] = fos[f];
+                        bootstraps[f][i][b] = fos[f];
                     }
                     data.PokePB();
                 }
@@ -263,40 +340,22 @@ namespace DataDebugMethods
             return bootstraps;
         }
 
-        // num_bootstraps: the number of bootstrap samples to get
-        // inputs: a list of inputs; each TreeNode represents an entire input range
-        // outputs: a list of outputs; each TreeNode represents a function
-        public static FunctionOutput[,,] Bootstrap(int num_bootstraps, AnalysisData data)
+        // attempts to convert all of the bootstraps for FunctionOutput[function_idx, input_idx, _] to doubles
+        public static FunctionOutput<double>[] ConvertToNumericOutput(FunctionOutput<string>[] boots)
         {
-            // grab the fields from AnalysisData that I care about
-            List<TreeNode> outputs = data.output_cells;
+            var fi_boots = new FunctionOutput<double>[boots.Length];
 
-            // first idx: the index of the TreeNode in the "inputs" array
-            // second idx: the ith bootstrap
-            var resamples = new InputSample[data.ranges.Count][];
-
-            // RNG for sampling
-            var rng = new Random();
-
-            // we save initial inputs here
-            var initial_inputs = StoreInputs(data.ranges);
-
-            // populate bootstrap array
-            // for each input range (a TreeNode)
-            for (var i = 0; i < data.ranges.Count; i++)
+            for (int b = 0; b < boots.Length; b++)
             {
-                // this TreeNode
-                var t = data.ranges[i];
-                // resample
-                resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
+                FunctionOutput<string> boot = boots[b];
+                double value = System.Convert.ToDouble(boot.GetValue());
+                fi_boots[b] = new FunctionOutput<double>(value, boot.GetExcludes());
             }
-
-            // replace each input range with a resample and
-            // gather all outputs
-            return ComputeBootstraps(num_bootstraps, initial_inputs, resamples, data);
+            return fi_boots;
         }
 
-        public static FunctionOutput[,,] BootstrapSort(FunctionOutput[,,] boots)
+        // returns a FunctionOutput[f,i,b] sorted along the b axis, from smallest to largest f value
+        public static FunctionOutput<double>[] NumericBootstrapSort(FunctionOutput<double>[] boots)
         {
             return null;
         }

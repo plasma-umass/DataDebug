@@ -9,27 +9,27 @@ namespace DataDebugMethods
 {
     public class BootMemo
     {
-        private Dictionary<InputSample, FunctionOutput[]> _d;
+        private Dictionary<InputSample, FunctionOutput<string>[]> _d;
         public BootMemo()
         {
-            _d = new Dictionary<InputSample, FunctionOutput[]>();
+            _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
         }
-        public FunctionOutput[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits)
+        public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits)
         {
-            FunctionOutput[] fo_arr;
+            FunctionOutput<string>[] fo_arr;
             if (!_d.TryGetValue(sample, out fo_arr))
             {
                 // replace the COM value
                 ReplaceExcelRange(com, sample);
 
                 // initialize array
-                fo_arr = new FunctionOutput[outputs.Length];
+                fo_arr = new FunctionOutput<string>[outputs.Length];
 
                 // grab all outputs
                 for (var k = 0; k < outputs.Length; k++)
                 {
                     // save the output
-                    fo_arr[k] = new FunctionOutput(outputs[k].getCOMValueAsString(), sample.GetExcludes());
+                    fo_arr[k] = new FunctionOutput<string>(outputs[k].getCOMValueAsString(), sample.GetExcludes());
                 }
 
                 // Add function values to cache
