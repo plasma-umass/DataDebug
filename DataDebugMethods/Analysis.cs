@@ -205,7 +205,7 @@ namespace DataDebugMethods
             return ss;
         }
 
-        private static FunctionOutput[,] ComputeBootstraps(int num_bootstraps,
+        private static FunctionOutput[,,] ComputeBootstraps(int num_bootstraps,
                                                            Dictionary<TreeNode, InputSample> initial_inputs,
                                                            InputSample[][] resamples,
                                                            AnalysisData data)
@@ -215,8 +215,9 @@ namespace DataDebugMethods
             var output_arr = data.output_cells.ToArray<TreeNode>();
 
             // first idx: the output range idx in "outputs"
-            // second idx: the ith bootstrap
-            var bootstraps = new FunctionOutput[output_arr.Length, num_bootstraps];
+            // second idx: the ith input
+            // second idx: the jth bootstrap
+            var bootstraps = new FunctionOutput[output_arr.Length, input_arr.Length, num_bootstraps];
 
             // Set progress bar max
             int maxcount = num_bootstraps * input_arr.Length;
@@ -240,14 +241,14 @@ namespace DataDebugMethods
                 // replace the values of the COM object with the jth bootstrap,
                 // save all function outputs, and
                 // restore the original input
-                for (var j = 0; j < num_bootstraps; j++)
+                for (var b = 0; b < num_bootstraps; b++)
                 {
                     // use memo DB
-                    FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][j], output_arr, ref hits);
+                    FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits);
                     //FunctionOutput[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][j], output_arr);
-                    for (var k = 0; k < output_arr.Length; k++)
+                    for (var f = 0; f < output_arr.Length; f++)
                     {
-                        bootstraps[k, j] = fos[k];
+                        bootstraps[f, i, b] = fos[f];
                     }
                     data.PokePB();
                 }
@@ -265,8 +266,7 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        
-        public static FunctionOutput[,] Bootstrap(int num_bootstraps, AnalysisData data)
+        public static FunctionOutput[,,] Bootstrap(int num_bootstraps, AnalysisData data)
         {
             // grab the fields from AnalysisData that I care about
             List<TreeNode> outputs = data.output_cells;
@@ -294,6 +294,11 @@ namespace DataDebugMethods
             // replace each input range with a resample and
             // gather all outputs
             return ComputeBootstraps(num_bootstraps, initial_inputs, resamples, data);
+        }
+
+        public static FunctionOutput[,,] BootstrapSort(FunctionOutput[,,] boots)
+        {
+            return null;
         }
     }
 }
