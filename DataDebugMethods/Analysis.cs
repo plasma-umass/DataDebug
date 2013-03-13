@@ -9,6 +9,7 @@ using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDe
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
+using Microsoft.FSharp.Core;
 
 namespace DataDebugMethods
 {
@@ -157,6 +158,19 @@ namespace DataDebugMethods
             return d;
         }
 
+        private static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
+        {
+            var d = new Dictionary<TreeNode, string>();
+            foreach (TreeNode output_fn in outputs)
+            {
+                // we want to save the actual value of the function
+                // since we don't know whether the function is string or numeric
+                // until later, leave it as string for now
+                d.Add(output_fn, output_fn.getCOMValueAsString());
+            }
+            return d;
+        }
+
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
         {
             // the resampled values go here
@@ -202,23 +216,20 @@ namespace DataDebugMethods
             var output_arr = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
             var input_arr = data.ranges.Where(range => !range.GetDontPerturb()).ToArray();
 
-            // counts
-            int num_functions = output_arr.Length;
-            int num_inputs = input_arr.Length;
-
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
-            var resamples = new InputSample[num_inputs][];
+            var resamples = new InputSample[input_arr.Length][];
 
             // RNG for sampling
             var rng = new Random();
 
             // we save initial inputs here
             var initial_inputs = StoreInputs(input_arr);
+            var initial_outputs = StoreOutputs(output_arr);
 
             // populate bootstrap array
             // for each input range (a TreeNode)
-            for (var i = 0; i < num_inputs; i++)
+            for (var i = 0; i < input_arr.Length; i++)
             {
                 // this TreeNode
                 var t = input_arr[i];
@@ -231,29 +242,26 @@ namespace DataDebugMethods
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_arr, output_arr, data);
 
             // partition numeric-only and string string bootstraps
-            var num_boots = new Dictionary<KeyValuePair<int, int>, FunctionOutput<double>[]>();
-            var str_boots = new Dictionary<KeyValuePair<int, int>, FunctionOutput<string>[]>();
+            var num_boots = new Dictionary<Tuple<int, int>, FunctionOutput<double>[]>();
+            var str_boots = new Dictionary<Tuple<int, int>, FunctionOutput<string>[]>();
 
-            // convert bootstraps to numeric, if possible
-            for (int f = 0; f < num_functions; f++)
+            // convert bootstraps to numeric, if possible and sort in ascending order
+            for (int f = 0; f < output_arr.Length; f++)
             {
-                for (int i = 0; i < num_inputs; i++)
+                for (int i = 0; i < input_arr.Length; i++)
                 {
                     try
                     {
-                        var b = ConvertToNumericOutput(boots[f][i]);
-                        num_boots.Add(new KeyValuePair<int, int>(f, i), b);
+                        var b = SortBootstraps(ConvertToNumericOutput(boots[f][i]));
+                        num_boots.Add(new Tuple<int, int>(f, i), b);
                     }
                     catch
                     {
-                        str_boots.Add(new KeyValuePair<int, int>(f, i), boots[f][i]);
+                        // TODO sort string boots
+                        str_boots.Add(new Tuple<int, int>(f, i), boots[f][i]);
                     }
                 }
             }
-
-            // sort bootstraps
-
-            // partition bootstraps 
 
         }
 
@@ -346,5 +354,12 @@ namespace DataDebugMethods
         {
             return null;
         }
+
+        // Sort numeric bootstrap values
+        public static FunctionOutput<double>[] SortBootstraps(FunctionOutput<double>[] boots)
+        {
+            return boots.OrderBy(b => b.GetValue()).ToArray();
+        }
+
     }
 }
