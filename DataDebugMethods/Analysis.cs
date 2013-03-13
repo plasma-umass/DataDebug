@@ -361,5 +361,29 @@ namespace DataDebugMethods
             return boots.OrderBy(b => b.GetValue()).ToArray();
         }
 
+        // Exclude a specified input index, compute quantiles, and check position of original input
+        public static bool RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index)
+        {
+            // include bootstraps which exclude exclude_index
+            var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
+
+            // index for value greater than 2.5% of the lowest values
+            var low_index = System.Convert.ToInt32(Math.Ceiling(100 / ((float)(boots_exc.Length)) * 2.5));
+            // index for value greater than 97.5% of the lowest values
+            var high_index = System.Convert.ToInt32(Math.Ceiling(100 / ((float)(boots_exc.Length)) * 97.5));
+
+            var low_value = boots_exc[low_index].GetValue();
+            var high_value = boots_exc[high_index].GetValue();
+
+            var original_output_d = System.Convert.ToDouble(original_output);
+
+            // keep or reject H_0
+            if (original_output_d < low_value || original_output_d > high_value)
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }
