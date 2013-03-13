@@ -157,33 +157,33 @@ namespace DataDebugMethods
             return nodes;
         }
 
-        public static void StripLookups(string formula)
-        {
-            Regex hlookup_regex = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-            Regex hlookup_regex_1 = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-            Regex vlookup_regex = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-            Regex vlookup_regex_1 = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-            MatchCollection matchedLookups = hlookup_regex.Matches(formula);
-            foreach (Match match in matchedLookups)
-            {
-                formula = formula.Replace(match.Value, "");
-            }
-            matchedLookups = hlookup_regex_1.Matches(formula);
-            foreach (Match match in matchedLookups)
-            {
-                formula = formula.Replace(match.Value, "");
-            }
-            matchedLookups = vlookup_regex.Matches(formula);
-            foreach (Match match in matchedLookups)
-            {
-                formula = formula.Replace(match.Value, "");
-            }
-            matchedLookups = vlookup_regex_1.Matches(formula);
-            foreach (Match match in matchedLookups)
-            {
-                formula = formula.Replace(match.Value, "");
-            }
-        }
+        //public static void StripLookups(string formula)
+        //{
+        //    Regex hlookup_regex = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+        //    Regex hlookup_regex_1 = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+        //    Regex vlookup_regex = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+        //    Regex vlookup_regex_1 = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
+        //    MatchCollection matchedLookups = hlookup_regex.Matches(formula);
+        //    foreach (Match match in matchedLookups)
+        //    {
+        //        formula = formula.Replace(match.Value, "");
+        //    }
+        //    matchedLookups = hlookup_regex_1.Matches(formula);
+        //    foreach (Match match in matchedLookups)
+        //    {
+        //        formula = formula.Replace(match.Value, "");
+        //    }
+        //    matchedLookups = vlookup_regex.Matches(formula);
+        //    foreach (Match match in matchedLookups)
+        //    {
+        //        formula = formula.Replace(match.Value, "");
+        //    }
+        //    matchedLookups = vlookup_regex_1.Matches(formula);
+        //    foreach (Match match in matchedLookups)
+        //    {
+        //        formula = formula.Replace(match.Value, "");
+        //    }
+        //}
 
         public static void StoreOutputs(AnalysisData analysisData)
         {
@@ -672,6 +672,13 @@ namespace DataDebugMethods
                 if (cellNode.getCOMObject() == null)
                 {
                     cellNode.addCOM(cell);
+                }
+
+                // check whether this cell is a formula; if it is, set the "don't perturb" bit on the range
+                if (cell.HasFormula)
+                {
+                    // TODO: check for constant formulas... if that's the case, then we again consider the input to be a formula
+                    rangeNode.DontPerturb();
                 }
                 // register this cell as an input to the rangeNode
                 rangeNode.addParent(cellNode);

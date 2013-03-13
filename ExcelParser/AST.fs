@@ -222,6 +222,7 @@
     and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
         inherit Reference(wsname)
         member self.ArgumentList = arglist
+        member self.FunctionName = fnname
         override self.ToString() =
             fnname + "(" + String.Join(",", (List.map (fun arg -> arg.ToString()) arglist)) + ")"
         override self.Resolve(wb: Workbook)(ws: Worksheet) =

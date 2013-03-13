@@ -8,7 +8,7 @@ namespace DataDebugMethods
 {
     public class InputSample
     {
-        private int _i = 0;             // internal length counter
+        private int _i = 0;             // internal length counter for Add
         private string[] _input_array;  // the actual values of this array
         private HashSet<int> _excludes;    // list of inputs excluded in this sample
         private int[] _includes;         // a counter of values included by this sample
@@ -31,7 +31,7 @@ namespace DataDebugMethods
         }
         public int Length()
         {
-            return _i;
+            return _input_array.Length;
         }
         public HashSet<int> GetExcludes()
         {

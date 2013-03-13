@@ -134,7 +134,7 @@ namespace DataDebugMethods
 
         } //outlierAnalysis ends here
 
-        private static Dictionary<TreeNode, InputSample> StoreInputs(List<TreeNode> inputs)
+        private static Dictionary<TreeNode, InputSample> StoreInputs(TreeNode[] inputs)
         {
             var d = new Dictionary<TreeNode, InputSample>();
             foreach (TreeNode input_range in inputs)
@@ -149,7 +149,7 @@ namespace DataDebugMethods
                 {
                     // if the cell contains nothing, replace the value
                     // with an empty string
-                    s.Add(System.Convert.ToString(c.getCOMObject().Value2));
+                    s.Add(System.Convert.ToString(c.getCOMValueAsString()));
                 }
                 // add stored input to dict
                 d.Add(input_range, s);
@@ -167,8 +167,6 @@ namespace DataDebugMethods
             for (var i = 0; i < num_bootstraps; i++)
             {
                 var s = new InputSample(orig_vals.Length());
-                // DEBUG test
-                var s2 = new InputSample(orig_vals.Length());
 
                 // make a vector of index counters
                 var inc_count = new int[orig_vals.Length()];
@@ -179,24 +177,13 @@ namespace DataDebugMethods
                     // randomly select a value from the original values
                     int input_idx = rng.Next(0, orig_vals.Length());
                     inc_count[input_idx] += 1;
+                    Debug.Assert(input_idx < orig_vals.Length());
                     string value = orig_vals.GetInput(input_idx);
                     s.Add(value);
-                    s2.Add(value);
                 }
 
                 // indicate which indices are excluded
                 s.SetIncludes(inc_count);
-                s2.SetIncludes(inc_count);
-
-                // DEBUG
-                if (s.GetHashCode() != s2.GetHashCode())
-                {
-                    throw new Exception("These two should be equal!");
-                }
-                if (!s.Equals(s2))
-                {
-                    throw new Exception("These two should be equal!");
-                }
 
                 // add the new InputSample to the output array
                 ss[i] = s;
@@ -211,9 +198,13 @@ namespace DataDebugMethods
         // outputs: a list of outputs; each TreeNode represents a function
         public static void Bootstrap(int num_bootstraps, AnalysisData data)
         {
+            // filter out non-terminal functions
+            var output_arr = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
+            var input_arr = data.ranges.Where(range => !range.GetDontPerturb()).ToArray();
+
             // counts
-            int num_functions = data.output_cells.Count;
-            int num_inputs = data.ranges.Count;
+            int num_functions = output_arr.Length;
+            int num_inputs = input_arr.Length;
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
@@ -223,21 +214,21 @@ namespace DataDebugMethods
             var rng = new Random();
 
             // we save initial inputs here
-            var initial_inputs = StoreInputs(data.ranges);
+            var initial_inputs = StoreInputs(input_arr);
 
             // populate bootstrap array
             // for each input range (a TreeNode)
             for (var i = 0; i < num_inputs; i++)
             {
                 // this TreeNode
-                var t = data.ranges[i];
+                var t = input_arr[i];
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
 
             // replace each input range with a resample and
             // gather all outputs
-            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, data);
+            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_arr, output_arr, data);
 
             // partition numeric-only and string string bootstraps
             var num_boots = new Dictionary<KeyValuePair<int, int>, FunctionOutput<double>[]>();
@@ -259,8 +250,6 @@ namespace DataDebugMethods
                     }
                 }
             }
-
-            System.Windows.Forms.MessageBox.Show("num_boots size: " + num_boots.Count + "; str_boots size: " + str_boots.Count);
 
             // sort bootstraps
 
@@ -286,12 +275,10 @@ namespace DataDebugMethods
         private static FunctionOutput<string>[][][] ComputeBootstraps(int num_bootstraps,
                                                            Dictionary<TreeNode, InputSample> initial_inputs,
                                                            InputSample[][] resamples,
+                                                           TreeNode[] input_arr,
+                                                           TreeNode[] output_arr,
                                                            AnalysisData data)
         {
-            // convert both inputs and outputs into arrays for fast random access
-            var input_arr = data.ranges.ToArray<TreeNode>();
-            var output_arr = data.output_cells.ToArray<TreeNode>();
-
             // first idx: the fth function output
             // second idx: the ith input
             // third idx: the bth bootstrap
@@ -315,7 +302,7 @@ namespace DataDebugMethods
             {
                 var t = input_arr[i];
                 var com = t.getCOMObject();
-
+                            
                 // replace the values of the COM object with the jth bootstrap,
                 // save all function outputs, and
                 // restore the original input

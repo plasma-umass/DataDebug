@@ -3,10 +3,20 @@
     type Worksheet = Microsoft.Office.Interop.Excel.Worksheet
     type XLRange = Microsoft.Office.Interop.Excel.Range
 
+    let PuntedFunction(fnname: string) : bool =
+        match fnname with
+        | "INDEX" -> true
+        | "HLOOKUP" -> true
+        | "VLOOKUP" -> true
+        | _ -> false
+
     let rec GetRangeReferenceRanges(ref: AST.ReferenceRange) : AST.Range list = [ref.Range]
 
     and GetFunctionRanges(ref: AST.ReferenceFunction) : AST.Range list =
-        List.map (fun arg -> GetRanges(arg)) ref.ArgumentList |> List.concat
+        if PuntedFunction(ref.FunctionName) then
+            []
+        else
+            List.map (fun arg -> GetRanges(arg)) ref.ArgumentList |> List.concat
         
     and GetExprRanges(expr: AST.Expression) : AST.Range list =
         match expr with
