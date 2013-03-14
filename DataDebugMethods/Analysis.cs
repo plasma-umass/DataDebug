@@ -241,28 +241,30 @@ namespace DataDebugMethods
             // gather all outputs
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_arr, output_arr, data);
 
-            // partition numeric-only and string string bootstraps
-            var num_boots = new Dictionary<Tuple<int, int>, FunctionOutput<double>[]>();
-            var str_boots = new Dictionary<Tuple<int, int>, FunctionOutput<string>[]>();
+            // array to store outcomes
+            var os = new bool[output_arr.Length,input_arr.Length];
 
-            // convert bootstraps to numeric, if possible and sort in ascending order
+            // convert bootstraps to numeric, if possible, sort in ascending order
+            // then compute quantiles and test whether an input is an outlier
             for (int f = 0; f < output_arr.Length; f++)
             {
                 for (int i = 0; i < input_arr.Length; i++)
                 {
                     try
                     {
-                        var b = SortBootstraps(ConvertToNumericOutput(boots[f][i]));
-                        num_boots.Add(new Tuple<int, int>(f, i), b);
+                        os[f, i] = RejectNullHypothesis(SortBootstraps(ConvertToNumericOutput(boots[f][i])), initial_outputs[output_arr[f]], i);
+                        // what we really want to do is to add the WEIGHT to this array
                     }
                     catch
                     {
                         // TODO sort string boots
-                        str_boots.Add(new Tuple<int, int>(f, i), boots[f][i]);
+                        // TODO null hypothesis test
                     }
                 }
             }
 
+            // sum weights for each index, then assign color accordingly
+            System.Windows.Forms.MessageBox.Show(os.ToString());
         }
 
         // initializes the first and second dimensions
@@ -281,11 +283,11 @@ namespace DataDebugMethods
         }
 
         private static FunctionOutput<string>[][][] ComputeBootstraps(int num_bootstraps,
-                                                           Dictionary<TreeNode, InputSample> initial_inputs,
-                                                           InputSample[][] resamples,
-                                                           TreeNode[] input_arr,
-                                                           TreeNode[] output_arr,
-                                                           AnalysisData data)
+                                                                      Dictionary<TreeNode, InputSample> initial_inputs,
+                                                                      InputSample[][] resamples,
+                                                                      TreeNode[] input_arr,
+                                                                      TreeNode[] output_arr,
+                                                                      AnalysisData data)
         {
             // first idx: the fth function output
             // second idx: the ith input
