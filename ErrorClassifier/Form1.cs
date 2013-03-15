@@ -76,6 +76,32 @@ namespace ErrorClassifier
             }
         }
 
+        private void extraDigit_Click(object sender, EventArgs e)
+        {
+            if (TestExtraDigit(enteredText.Text, originalText.Text))
+            {
+                MessageBox.Show("Extra digit: YES");
+            }
+            else
+            {
+                MessageBox.Show("Extra digit: NO");
+            }
+        }
+
+
+        private void wrongDigit_Click(object sender, EventArgs e)
+        {
+            if (TestWrongDigit(enteredText.Text, originalText.Text))
+            {
+                MessageBox.Show("Wrong digit: YES");
+            }
+            else
+            {
+                MessageBox.Show("Wrong digit: NO");
+            }
+        }
+
+
         private bool TestMisplacedDecimal(string enteredText, string originalText)
         {
             //Strings must contain at most one decimal point
@@ -301,5 +327,106 @@ namespace ErrorClassifier
             }
         } //End TestDigitOmission
 
+        private bool TestExtraDigit(string enteredText, string originalText)
+        {
+            string originalString = originalText;
+            string enteredString = enteredText;
+            bool startTheSame = false;
+            bool endTheSame = false;
+            //If the strings are different and original string is shorter than entered string
+            if (!originalText.Equals(enteredText) && originalText.Length < enteredText.Length)
+            {
+                //Strings have to start and end with the same characters; only the middle has to be different
+                //If the characters at the starting index are the same, remove them
+                while (originalString.Length != 0 && originalString[0].Equals(enteredString[0]))
+                {
+                    //Remove the first characters of originalString and enteredString
+                    startTheSame = true;
+                    originalString = originalString.Remove(0, 1);
+                    enteredString = enteredString.Remove(0, 1);
+                }
+                //If the characters at the ending index are the same
+                while (originalString.Length != 0 && originalString[originalString.Length - 1].Equals(enteredString[enteredString.Length - 1]))
+                {
+                    //Remove the last characters of originalString and enteredString
+                    endTheSame = true;
+                    originalString = originalString.Remove(originalString.Length - 1);
+                    enteredString = enteredString.Remove(enteredString.Length - 1);
+                }
+                if (!(startTheSame || endTheSame))
+                {
+                    return false;
+                }
+                //Check if the middle part is a single repeated digit which is the same as the digit right before the start of the difference
+                //If a digit was repeated, originalString should now be blank (""), and enteredString should have length at least 1
+                if (originalString.Length != 0 || enteredString.Length < 1)
+                {
+                    //MessageBox.Show("Digit repeat: NO");
+                    return false;
+                }
+                //Check if the middle part is composed of the same repeated digit
+                for (int i = 0; i < enteredString.Length; i++)
+                {
+                    if (!enteredString[0].Equals(enteredString[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        } //End TestExtraDigit
+
+
+        private bool TestWrongDigit(string enteredText, string originalText)
+        {
+            string originalString = originalText;
+            string enteredString = enteredText;
+            bool startTheSame = false;
+            bool endTheSame = false;
+            //If the strings are different and original string is shorter than entered string
+            if (!originalText.Equals(enteredText) && originalText.Length == enteredText.Length)
+            {
+                //Strings have to start and end with the same characters; only the middle has to be different
+                //If the characters at the starting index are the same, remove them
+                while (enteredString.Length != 0 && originalString[0].Equals(enteredString[0]))
+                {
+                    //Remove the first characters of originalString and enteredString
+                    startTheSame = true;
+                    originalString = originalString.Remove(0, 1);
+                    enteredString = enteredString.Remove(0, 1);
+                }
+                //If the characters at the ending index are the same
+                while (enteredString.Length != 0 && originalString[originalString.Length - 1].Equals(enteredString[enteredString.Length - 1]))
+                {
+                    //Remove the last characters of originalString and enteredString
+                    endTheSame = true;
+                    originalString = originalString.Remove(originalString.Length - 1);
+                    enteredString = enteredString.Remove(enteredString.Length - 1);
+                }
+                //They have to either start the same or end the same
+                if (!(startTheSame || endTheSame))
+                {
+                    return false;
+                }
+                //Check if the middle part is a single repeated digit which is the same as the digit right before the start of the difference
+                //If a digit was repeated, originalString should now be blank (""), and enteredString should have length at least 1
+                if (originalString.Length == 1 && enteredString.Length == 1)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        } //End TestWrongDigit
     }
 }

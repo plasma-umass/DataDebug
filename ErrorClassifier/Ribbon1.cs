@@ -18,6 +18,5 @@ namespace ErrorClassifier
             Form1 form = new Form1();
             form.ShowDialog();
         }
-
     }
 }
