@@ -10,13 +10,13 @@ namespace DataDebugMethods
     {
         private int _i = 0;             // internal length counter for Add
         private string[] _input_array;  // the actual values of this array
-        private HashSet<int> _excludes;    // list of inputs excluded in this sample
-        private int[] _includes;         // a counter of values included by this sample
+        private HashSet<int> _excludes; // list of inputs excluded in this sample
+        private int[] _includes;        // a counter of values included by this sample
 
         public InputSample(int size)
         {
             _input_array = new string[size];
-            _excludes = new HashSet<int>(Enumerable.Range(0, size));
+            _excludes = new HashSet<int>();
         }
         public void Add(string value)
         {

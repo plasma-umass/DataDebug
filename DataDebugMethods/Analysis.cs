@@ -10,6 +10,7 @@ using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
 using Microsoft.FSharp.Core;
+using ExtensionMethods;
 
 namespace DataDebugMethods
 {
@@ -241,8 +242,8 @@ namespace DataDebugMethods
             // gather all outputs
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_arr, output_arr, data);
 
-            // array to store outcomes
-            var os = new bool[output_arr.Length,input_arr.Length];
+            // array to store outcomes for each input
+            var os = new int[input_arr.Length];
 
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
@@ -252,8 +253,11 @@ namespace DataDebugMethods
                 {
                     try
                     {
-                        os[f, i] = RejectNullHypothesis(SortBootstraps(ConvertToNumericOutput(boots[f][i])), initial_outputs[output_arr[f]], i);
                         // what we really want to do is to add the WEIGHT to this array
+                        if (RejectNullHypothesis(SortBootstraps(ConvertToNumericOutput(boots[f][i])), initial_outputs[output_arr[f]], i))
+                        {
+                            os[i] += 1;
+                        }
                     }
                     catch
                     {
@@ -264,7 +268,30 @@ namespace DataDebugMethods
             }
 
             // sum weights for each index, then assign color accordingly
-            System.Windows.Forms.MessageBox.Show(os.ToString());
+            //System.Windows.Forms.MessageBox.Show(String.Join(", ", os));
+            ColorOutputs(os, input_arr);
+        }
+
+        private static void ColorOutputs(int[] input_ranks, TreeNode[] inputs)
+        {
+            // find value of the max element; we use this to calibrate our scale
+            double lowval = input_ranks.Min();  // low value is always zero
+            double maxval = input_ranks.Max();  // largest value we've seen
+            
+            for(int i = 0; i < inputs.Length; i++)
+            {
+                int cval;
+                if (maxval - lowval == 0)
+                {
+                    cval = 0;
+                }
+                else
+                {
+                    cval = (int)(255 * input_ranks[i] / (maxval - lowval));
+                }
+                var color = System.Drawing.Color.FromArgb(cval, 255, 255);
+                inputs[i].getCOMObject().Interior.Color = color;
+            }
         }
 
         // initializes the first and second dimensions
@@ -369,10 +396,10 @@ namespace DataDebugMethods
             // include bootstraps which exclude exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
 
-            // index for value greater than 2.5% of the lowest values
-            var low_index = System.Convert.ToInt32(Math.Ceiling(100 / ((float)(boots_exc.Length)) * 2.5));
-            // index for value greater than 97.5% of the lowest values
-            var high_index = System.Convert.ToInt32(Math.Ceiling(100 / ((float)(boots_exc.Length)) * 97.5));
+            // index for value greater than 2.5% of the lowest values; we want to round down here
+            var low_index = System.Convert.ToInt32(Math.Floor(((float)boots_exc.Length / 100) * 2.5));
+            // index for value greater than 97.5% of the lowest values; we want to round up here
+            var high_index = System.Convert.ToInt32(Math.Ceiling(((float)boots_exc.Length / 100) * 97.5));
 
             var low_value = boots_exc[low_index].GetValue();
             var high_value = boots_exc[high_index].GetValue();
