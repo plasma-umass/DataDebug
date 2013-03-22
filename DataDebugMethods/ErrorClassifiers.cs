@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DataDebugMethods
 {
-    static class ErrorClassifiers
+    public static class ErrorClassifiers
     {
         public static bool TestMisplacedDecimal(string enteredText, string originalText)
         {
@@ -285,7 +285,7 @@ namespace DataDebugMethods
             }
         } //End TestWrongDigit
 
-        private bool TestDigitOmission(string enteredText, string originalText)
+        public static bool TestDigitOmission(string enteredText, string originalText)
         {
             string originalString = originalText;
             string enteredString = enteredText;
