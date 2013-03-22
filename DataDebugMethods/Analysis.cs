@@ -16,8 +16,29 @@ namespace DataDebugMethods
 {
     public class Analysis
     {
+        public static TreeDict DictMerge(TreeDict d1, TreeDict d2)
+        {
+            var d3 = new TreeDict();
+            foreach(TreeDictPair pair in d1) {
+                var a = pair.Key;
+                var tn = pair.Value;
+                d3.Add(a, tn);
+            }
+            foreach (TreeDictPair pair in d2)
+            {
+                var a = pair.Key;
+                var tn = pair.Value;
+                if (!d3.ContainsKey(a))
+                {
+                    d3.Add(a, tn);
+                }
+            }
+            return d3;
+        }
+
         public static void perturbationAnalysis(AnalysisData analysisData)
         {
+            var single_nodes = DictMerge(analysisData.formula_nodes, analysisData.cell_nodes);
             analysisData.SetProgress(25);
 
             //Grids for storing influences
@@ -28,8 +49,6 @@ namespace DataDebugMethods
 
             analysisData.outliers_count = 0;
             //Procedure for swapping values within ranges, one cell at a time
-            //if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked (not checked by default)
-            //{
 
             //Initialize min_max_delta_outputs
             analysisData.min_max_delta_outputs = new double[analysisData.output_cells.Count][];
@@ -73,7 +92,7 @@ namespace DataDebugMethods
             }
 
             //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-            foreach (TreeDictPair tdp in analysisData.nodes)
+            foreach (TreeDictPair tdp in single_nodes)
             {
                 var node = tdp.Value;
                 if (!node.hasParents())
@@ -216,7 +235,7 @@ namespace DataDebugMethods
             // filter out non-terminal functions
             var output_fns = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
             // filter out non-terminal inputs
-            var input_rngs = data.ranges.Where(range => !range.GetDontPerturb() || !range.isFormula()).ToArray();
+            var input_rngs = data.input_ranges.Where(range => !range.GetDontPerturb() || !range.isFormula()).ToArray();
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap

@@ -14,7 +14,7 @@ namespace DataDebug
 
         public static void DisplayGraphvizTree(AnalysisData analysisData)
         {
-            string gvstr = ConstructTree.GenerateGraphVizTree(analysisData.nodes);
+            string gvstr = ConstructTree.GenerateGraphVizTree(analysisData.formula_nodes);
             Display disp = new Display();
             disp.textBox1.Text = gvstr;
             disp.ShowDialog();

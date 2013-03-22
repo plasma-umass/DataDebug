@@ -15,7 +15,7 @@ namespace DataDebugMethods
         public double[][][][] impacts_grid; //This is a multi-dimensional array of doubles that will hold each cell's impact on each of the outputs
         public bool[][][][] reachable_grid; //This is a multi-dimensional array of bools that will indicate whether a certain output is reachable from a certain cell
         public double[][] min_max_delta_outputs; //This keeps the min and max delta for each output; first index indicates the output index; second index 0 is the min delta, 1 is the max delta for that output
-        public List<TreeNode> ranges;      // This is a list of input ranges, with each Excel.Range COM object encapsulated in a TreeNode
+        public List<TreeNode> input_ranges;      // This is a list of input ranges, with each Excel.Range COM object encapsulated in a TreeNode
         public List<StartValue> starting_outputs; //This will store the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
         public List<TreeNode> output_cells; //This will store all the output nodes at the start of the fuzzing procedure
         public List<double[]>[] reachable_impacts_grid;  //This will store impacts for cells reachable from a particular output
@@ -26,7 +26,8 @@ namespace DataDebugMethods
         public int formula_cells_count;
         public System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
         public ProgBar pb;
-        public TreeDict nodes;
+        public TreeDict formula_nodes;
+        public TreeDict cell_nodes;
         public TimeSpan tree_building_timespan;
         public TimeSpan impact_scoring_timespan;
         public TimeSpan swapping_timespan;
@@ -46,18 +47,20 @@ namespace DataDebugMethods
             worksheets = application.Worksheets;
             charts = application.Charts;
             nodelist = new List<TreeNode>();            // holds all the TreeNodes in the Excel file
-            ranges = new List<TreeNode>();              // holds all the input ranges of TreeNodes in the Excel file
+            input_ranges = new List<TreeNode>();              // holds all the input ranges of TreeNodes in the Excel file
             starting_outputs = new List<StartValue>();  // holds the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
             output_cells = new List<TreeNode>();        // holds the output nodes at the start of the fuzzing procedure
+            cell_nodes = new TreeDict();
         }
 
         public void Reset()
         {
             // reset lists
             nodelist = new List<TreeNode>();
-            ranges = new List<TreeNode>();
+            input_ranges = new List<TreeNode>();
             starting_outputs = new List<StartValue>();
             output_cells = new List<TreeNode>();
+            cell_nodes = new TreeDict();
 
             // Create a progress bar
             pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
