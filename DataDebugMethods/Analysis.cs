@@ -308,7 +308,10 @@ namespace DataDebugMethods
                     try
                     {
                         // this function output treenode
-                        var t = output_fns[f];
+                        var t_fn = output_fns[f];
+
+                        // this function's input range treenode
+                        var t_rng = input_rngs[i];
 
                         // number of inputs in input range
                         var input_sz = input_rngs[i].getParents().Count();
@@ -319,6 +322,9 @@ namespace DataDebugMethods
                         // try converting to numeric
                         var numeric_boots = ConvertToNumericOutput(boots[f][i]);
 
+                        // initial output
+                        var initial_output = initial_outputs[t_fn];
+
                         // sort
                         var sorted_num_boots = SortBootstraps(numeric_boots);
 
@@ -326,18 +332,18 @@ namespace DataDebugMethods
                         // falls outside our bootstrap confidence bounds
                         for (int x = 0; x < input_sz; x++)
                         {
-                            System.Windows.Forms.MessageBox.Show("Testing index " + x + " of input range " + input_rngs[i].getCOMObject().Address + " for output function " + t.getCOMObject().Address);
+                            System.Windows.Forms.MessageBox.Show("Testing index " + x + " of input range " + t_rng.getCOMObject().Address + " for output function " + t_fn.getCOMObject().Address);
                             // add 1 to score if this fails
                             // TODO: we really want to add weighted scores here so that
                             //       important values are colored more brightly
-                            if (RejectNullHypothesis(sorted_num_boots, initial_outputs[t], x))
+                            if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
                             {
                                 iscores[i][x] += 1;
                             }
                         }
 
                         // sum weights for each index, then assign color accordingly
-                        ColorOutputs(iscores[i], t);
+                        ColorOutputs(iscores[i], t_rng);
                     }
                     catch
                     {
@@ -348,19 +354,19 @@ namespace DataDebugMethods
             }
         }
 
-        private static void ColorOutputs(int[] input_scores, TreeNode input_rng)
+        private static void ColorOutputs(int[] exclusion_score_vect, TreeNode input_rng)
         {
             // find value of the max element; we use this to calibrate our scale
-            double low_score = input_scores.Min();  // low value is always zero
-            double max_score = input_scores.Max();  // largest value we've seen
+            double low_score = exclusion_score_vect.Min();  // low value is always zero
+            double max_score = exclusion_score_vect.Max();  // largest value we've seen
 
             // convert cells list to array
             TreeNode[] cells = input_rng.getParents().ToArray();
 
             // calculate the color of each cell
-            for (int i = 0; i < cells.Length; i++)
+            for (int x = 0; x < cells.Length; x++)
             {
-                var cell = cells[i];
+                var cell = cells[x];
 
                 int cval;
                 // this happens when there are no suspect inputs.
@@ -370,7 +376,7 @@ namespace DataDebugMethods
                 }
                 else
                 {
-                    cval = (int)(255 * (input_scores[i] - low_score) / (max_score - low_score));
+                    cval = (int)(255 * (exclusion_score_vect[x] - low_score) / (max_score - low_score));
                 }
                 // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
                 var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
@@ -490,14 +496,14 @@ namespace DataDebugMethods
 
             var original_output_d = System.Convert.ToDouble(original_output);
 
-            // keep or reject H_0
+            // reject or fail to reject H_0
             if (original_output_d < low_value || original_output_d > high_value)
             {
-                System.Windows.Forms.MessageBox.Show("FAIL: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " but the original value was " + original_output_d);
+                System.Windows.Forms.MessageBox.Show("REJECT: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " but the original value was " + original_output_d);
                 return true;
             }
 
-            System.Windows.Forms.MessageBox.Show("PASS: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " and the original value was " + original_output_d);
+            System.Windows.Forms.MessageBox.Show("OK: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " and the original value was " + original_output_d);
             return false;
         }
     }
