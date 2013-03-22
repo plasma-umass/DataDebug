@@ -226,6 +226,37 @@ namespace DataDebugMethods
             return ss;
         }
 
+        private static TreeNode[] OnlyTerminalFormulaNodes(List<TreeNode> output_cells)
+        {
+            return output_cells.Where(cn => cn.getChildren().Count == 0).ToArray();
+        }
+
+        private static TreeNode[] OnlyTerminalInputNodes(List<TreeNode> input_ranges)
+        {
+            // this should filter out the following two cases:
+            // 1. input range is intermediate (acts as input to a formula
+            //    and also contains a formula which consumes input from
+            //    another range).
+            // 2. the range is actually a formula cell
+            return input_ranges.Where(rn => !rn.GetDontPerturb()).ToArray();
+        }
+
+        private static bool InputSanityCheck(TreeNode[] input_ranges)
+        {
+            // these input ranges should be terminal, i.e.,
+            // none of their cells contain formulae
+            foreach (TreeNode input_range in input_ranges)
+            {
+                foreach (TreeNode input_cell in input_range.getParents())
+                {
+                    if (input_cell.isFormula())
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
 
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
@@ -233,9 +264,10 @@ namespace DataDebugMethods
         public static void Bootstrap(int num_bootstraps, AnalysisData data)
         {
             // filter out non-terminal functions
-            var output_fns = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
+            var output_fns = OnlyTerminalFormulaNodes(data.output_cells);
             // filter out non-terminal inputs
-            var input_rngs = data.input_ranges.Where(range => !range.GetDontPerturb() || !range.isFormula()).ToArray();
+            var input_rngs = OnlyTerminalInputNodes(data.input_ranges);
+            Debug.Assert(InputSanityCheck(input_rngs));
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
