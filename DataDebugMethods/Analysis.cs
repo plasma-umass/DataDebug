@@ -332,7 +332,7 @@ namespace DataDebugMethods
                         // falls outside our bootstrap confidence bounds
                         for (int x = 0; x < input_sz; x++)
                         {
-                            System.Windows.Forms.MessageBox.Show("Testing index " + x + " of input range " + t_rng.getCOMObject().Address + " for output function " + t_fn.getCOMObject().Address);
+                            //System.Windows.Forms.MessageBox.Show("Testing index " + x + " of input range " + t_rng.getCOMObject().Address + " for output function " + t_fn.getCOMObject().Address);
                             // add 1 to score if this fails
                             // TODO: we really want to add weighted scores here so that
                             //       important values are colored more brightly
@@ -436,13 +436,16 @@ namespace DataDebugMethods
                 for (var b = 0; b < num_bootstraps; b++)
                 {
                     // use memo DB
-                    FunctionOutput<string>[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits);
+                    FunctionOutput<string>[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits, false);
                     for (var f = 0; f < output_arr.Length; f++)
                     {
                         bootstraps[f][i][b] = fos[f];
                     }
                     data.PokePB();
                 }
+
+                // restore the COM value; faster to do once, at the end (this saves n-1 replacements)
+                BootMemo.ReplaceExcelRange(com, initial_inputs[t]);
             }
 
             // Kill progress bar
@@ -499,11 +502,11 @@ namespace DataDebugMethods
             // reject or fail to reject H_0
             if (original_output_d < low_value || original_output_d > high_value)
             {
-                System.Windows.Forms.MessageBox.Show("REJECT: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " but the original value was " + original_output_d);
+                //System.Windows.Forms.MessageBox.Show("REJECT: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " but the original value was " + original_output_d);
                 return true;
             }
 
-            System.Windows.Forms.MessageBox.Show("OK: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " and the original value was " + original_output_d);
+            //System.Windows.Forms.MessageBox.Show("OK: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " and the original value was " + original_output_d);
             return false;
         }
     }

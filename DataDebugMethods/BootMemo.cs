@@ -15,7 +15,7 @@ namespace DataDebugMethods
         {
             _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
         }
-        public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits)
+        public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits, bool replace_original)
         {
             FunctionOutput<string>[] fo_arr;
             if (!_d.TryGetValue(sample, out fo_arr))
@@ -37,7 +37,10 @@ namespace DataDebugMethods
                 _d.Add(sample, fo_arr);
 
                 // restore the COM value
-                ReplaceExcelRange(com, original);
+                if (replace_original)
+                {
+                    ReplaceExcelRange(com, original);
+                }
             }
             else
             {
@@ -45,7 +48,7 @@ namespace DataDebugMethods
             }
             return fo_arr;
         }
-        private static void ReplaceExcelRange(Range com, InputSample input)
+        public static void ReplaceExcelRange(Range com, InputSample input)
         {
             var i = 0;
             var sz = com.Cells.Count;
