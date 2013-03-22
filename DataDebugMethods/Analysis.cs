@@ -214,50 +214,79 @@ namespace DataDebugMethods
         public static void Bootstrap(int num_bootstraps, AnalysisData data)
         {
             // filter out non-terminal functions
-            var output_arr = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
-            var input_arr = data.ranges.Where(range => !range.GetDontPerturb()).ToArray();
+            var output_fns = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
+            // filter out non-terminal inputs
+            var input_rngs = data.ranges.Where(range => !range.GetDontPerturb() || !range.isFormula()).ToArray();
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
-            var resamples = new InputSample[input_arr.Length][];
+            var resamples = new InputSample[input_rngs.Length][];
 
             // RNG for sampling
             var rng = new Random();
 
             // we save initial inputs here
-            var initial_inputs = StoreInputs(input_arr);
-            var initial_outputs = StoreOutputs(output_arr);
+            var initial_inputs = StoreInputs(input_rngs);
+            var initial_outputs = StoreOutputs(output_fns);
 
             // populate bootstrap array
             // for each input range (a TreeNode)
-            for (var i = 0; i < input_arr.Length; i++)
+            for (var i = 0; i < input_rngs.Length; i++)
             {
                 // this TreeNode
-                var t = input_arr[i];
+                var t = input_rngs[i];
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
 
             // replace each input range with a resample and
             // gather all outputs
-            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_arr, output_arr, data);
+            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
 
-            // array to store outcomes for each input
-            var os = new int[input_arr.Length];
+            // array to store scores for each input
+            var iscores = new int[input_rngs.Length][];
 
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
-            for (int f = 0; f < output_arr.Length; f++)
+            // f is the index of the function in the output array; a SINGLE CELL
+            for (int f = 0; f < output_fns.Length; f++)
             {
-                for (int i = 0; i < input_arr.Length; i++)
+                // i is the index of the range in the input array; an ARRAY of CELLS
+                for (int i = 0; i < input_rngs.Length; i++)
                 {
                     try
                     {
-                        // what we really want to do is to add the WEIGHT to this array
-                        if (RejectNullHypothesis(SortBootstraps(ConvertToNumericOutput(boots[f][i])), initial_outputs[output_arr[f]], i))
+                        // this function output treenode
+                        var t = output_fns[f];
+
+                        // number of inputs in input range
+                        var input_sz = input_rngs[i].getParents().Count();
+
+                        // allocate the appropriate number of counters for this input range
+                        iscores[i] = new int[input_sz];
+
+                        // try converting to numeric
+                        var numeric_boots = ConvertToNumericOutput(boots[f][i]);
+
+                        // sort
+                        var sorted_num_boots = SortBootstraps(numeric_boots);
+
+                        // for each excluded index, test whether the original input
+                        // falls outside our bootstrap confidence bounds
+                        for (int x = 0; x < input_sz; x++)
                         {
-                            os[i] += 1;
+                            System.Windows.Forms.MessageBox.Show("Testing index " + x + " of input range " + input_rngs[i].getCOMObject().Address + " for output function " + t.getCOMObject().Address);
+                            // add 1 to score if this fails
+                            // TODO: we really want to add weighted scores here so that
+                            //       important values are colored more brightly
+                            if (RejectNullHypothesis(sorted_num_boots, initial_outputs[t], x))
+                            {
+                                iscores[i][x] += 1;
+                            }
                         }
+
+                        // sum weights for each index, then assign color accordingly
+                        ColorOutputs(iscores[i], t);
                     }
                     catch
                     {
@@ -266,31 +295,35 @@ namespace DataDebugMethods
                     }
                 }
             }
-
-            // sum weights for each index, then assign color accordingly
-            //System.Windows.Forms.MessageBox.Show(String.Join(", ", os));
-            ColorOutputs(os, input_arr);
         }
 
-        private static void ColorOutputs(int[] input_ranks, TreeNode[] inputs)
+        private static void ColorOutputs(int[] input_scores, TreeNode input_rng)
         {
             // find value of the max element; we use this to calibrate our scale
-            double lowval = input_ranks.Min();  // low value is always zero
-            double maxval = input_ranks.Max();  // largest value we've seen
-            
-            for(int i = 0; i < inputs.Length; i++)
+            double low_score = input_scores.Min();  // low value is always zero
+            double max_score = input_scores.Max();  // largest value we've seen
+
+            // convert cells list to array
+            TreeNode[] cells = input_rng.getParents().ToArray();
+
+            // calculate the color of each cell
+            for (int i = 0; i < cells.Length; i++)
             {
+                var cell = cells[i];
+
                 int cval;
-                if (maxval - lowval == 0)
+                // this happens when there are no suspect inputs.
+                if (max_score - low_score == 0)
                 {
                     cval = 0;
                 }
                 else
                 {
-                    cval = (int)(255 * input_ranks[i] / (maxval - lowval));
+                    cval = (int)(255 * (input_scores[i] - low_score) / (max_score - low_score));
                 }
-                var color = System.Drawing.Color.FromArgb(cval, 255, 255);
-                inputs[i].getCOMObject().Interior.Color = color;
+                // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
+                var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
+                cell.getCOMObject().Interior.Color = color;
             }
         }
 
@@ -409,9 +442,11 @@ namespace DataDebugMethods
             // keep or reject H_0
             if (original_output_d < low_value || original_output_d > high_value)
             {
+                System.Windows.Forms.MessageBox.Show("FAIL: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " but the original value was " + original_output_d);
                 return true;
             }
 
+            System.Windows.Forms.MessageBox.Show("PASS: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " and the original value was " + original_output_d);
             return false;
         }
     }
