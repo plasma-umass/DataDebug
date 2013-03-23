@@ -67,5 +67,9 @@ namespace DataDebugMethods
             InputSample other = (InputSample)obj;
             return _includes.SequenceEqual(other.GetIncludes());
         }
+        public override string ToString()
+        {
+            return String.Join(",", _input_array);
+        }
     }
 }

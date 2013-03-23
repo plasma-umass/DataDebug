@@ -191,6 +191,29 @@ namespace DataDebugMethods
             return d;
         }
 
+        public static bool OnlyInputsInResample(InputSample orig_vals, InputSample resample)
+        {
+
+            for (var i = 0; i < resample.Length(); i++)
+            {
+                var o = 0;
+                var found = false;
+                while (!found && o < orig_vals.Length())
+                {
+                    if (resample.GetInput(i) == orig_vals.GetInput(o))
+                    {
+                        found = true;
+                    }
+                    o++;
+                }
+                if (!found)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
         {
             // the resampled values go here
@@ -215,6 +238,8 @@ namespace DataDebugMethods
                     string value = orig_vals.GetInput(input_idx);
                     s.Add(value);
                 }
+
+                Debug.Assert(OnlyInputsInResample(orig_vals, s));
 
                 // indicate which indices are excluded
                 s.SetIncludes(inc_count);
@@ -292,6 +317,9 @@ namespace DataDebugMethods
 
             // replace each input range with a resample and
             // gather all outputs
+            // first idx: the fth function output
+            // second idx: the ith input
+            // third idx: the bth bootstrap
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
 
             // array to store scores for each input
@@ -313,14 +341,14 @@ namespace DataDebugMethods
                         // this function's input range treenode
                         var t_rng = input_rngs[i];
 
+                        // try converting to numeric
+                        var numeric_boots = ConvertToNumericOutput(boots[f][i]);
+
                         // number of inputs in input range
                         var input_sz = input_rngs[i].getParents().Count();
 
                         // allocate the appropriate number of counters for this input range
                         iscores[i] = new int[input_sz];
-
-                        // try converting to numeric
-                        var numeric_boots = ConvertToNumericOutput(boots[f][i]);
 
                         // initial output
                         var initial_output = initial_outputs[t_fn];
@@ -345,8 +373,9 @@ namespace DataDebugMethods
                         // sum weights for each index, then assign color accordingly
                         ColorOutputs(iscores[i], t_rng);
                     }
-                    catch
+                    catch(Exception e)
                     {
+                        System.Windows.Forms.MessageBox.Show("String functions currently unhandled: " + e.Message);
                         // TODO sort string boots
                         // TODO null hypothesis test
                     }
@@ -416,7 +445,7 @@ namespace DataDebugMethods
             data.SetPBMax(maxcount);
 
             // init bootstrap memo
-            var bootsaver = new BootMemo();
+            var bootsaver = new BootMemo[input_arr.Length];
 
             // DEBUG
             var hits = 0;
@@ -429,6 +458,7 @@ namespace DataDebugMethods
             {
                 var t = input_arr[i];
                 var com = t.getCOMObject();
+                bootsaver[i] = new BootMemo();
                             
                 // replace the values of the COM object with the jth bootstrap,
                 // save all function outputs, and
@@ -436,7 +466,7 @@ namespace DataDebugMethods
                 for (var b = 0; b < num_bootstraps; b++)
                 {
                     // use memo DB
-                    FunctionOutput<string>[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits, false);
+                    FunctionOutput<string>[] fos = bootsaver[i].FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits, false);
                     for (var f = 0; f < output_arr.Length; f++)
                     {
                         bootstraps[f][i][b] = fos[f];
@@ -490,9 +520,9 @@ namespace DataDebugMethods
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
 
             // index for value greater than 2.5% of the lowest values; we want to round down here
-            var low_index = System.Convert.ToInt32(Math.Floor(((float)boots_exc.Length / 100) * 2.5));
+            var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * .025));
             // index for value greater than 97.5% of the lowest values; we want to round up here
-            var high_index = System.Convert.ToInt32(Math.Ceiling(((float)boots_exc.Length / 100) * 97.5));
+            var high_index = System.Convert.ToInt32(Math.Ceiling((float)(boots_exc.Length - 1) * 0.975));
 
             var low_value = boots_exc[low_index].GetValue();
             var high_value = boots_exc[high_index].GetValue();
