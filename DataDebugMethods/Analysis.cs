@@ -318,25 +318,25 @@ namespace DataDebugMethods
                 // i is the index of the range in the input array; an ARRAY of CELLS
                 for (int i = 0; i < input_rngs.Length; i++)
                 {
+                    // this function output treenode
+                    var t_fn = output_fns[f];
+
+                    // this function's input range treenode
+                    var t_rng = input_rngs[i];
+
+                    // number of inputs in input range
+                    var input_sz = input_rngs[i].getParents().Count();
+
+                    // allocate the appropriate number of counters for this input range
+                    iscores[i] = new int[input_sz];
+
+                    // initial output
+                    var initial_output = initial_outputs[t_fn];
+
                     try
                     {
-                        // this function output treenode
-                        var t_fn = output_fns[f];
-
-                        // this function's input range treenode
-                        var t_rng = input_rngs[i];
-
                         // try converting to numeric
                         var numeric_boots = ConvertToNumericOutput(boots[f][i]);
-
-                        // number of inputs in input range
-                        var input_sz = input_rngs[i].getParents().Count();
-
-                        // allocate the appropriate number of counters for this input range
-                        iscores[i] = new int[input_sz];
-
-                        // initial output
-                        var initial_output = initial_outputs[t_fn];
 
                         // sort
                         var sorted_num_boots = SortBootstraps(numeric_boots);
@@ -345,7 +345,6 @@ namespace DataDebugMethods
                         // falls outside our bootstrap confidence bounds
                         for (int x = 0; x < input_sz; x++)
                         {
-                            //System.Windows.Forms.MessageBox.Show("Testing index " + x + " of input range " + t_rng.getCOMObject().Address + " for output function " + t_fn.getCOMObject().Address);
                             // add 1 to score if this fails
                             // TODO: we really want to add weighted scores here so that
                             //       important values are colored more brightly
@@ -354,15 +353,23 @@ namespace DataDebugMethods
                                 iscores[i][x] += 1;
                             }
                         }
-
-                        // sum weights for each index, then assign color accordingly
-                        ColorOutputs(iscores[i], t_rng);
                     }
-                    catch(Exception e)
+                    catch(FormatException)
                     {
-                        // TODO sort string boots
-                        // TODO null hypothesis test
+                        for (int x = 0; x < input_sz; x++)
+                        {
+                            // add 1 to score if this fails
+                            // TODO: we really want to add weighted scores here so that
+                            //       important values are colored more brightly
+                            if (RejectNullHypothesis(boots[f][i], initial_output, x))
+                            {
+                                iscores[i][x] += 1;
+                            }
+                        }
                     }
+
+                    // sum weights for each index, then assign color accordingly
+                    ColorOutputs(iscores[i], t_rng);
                 }
             }
         }
@@ -485,22 +492,65 @@ namespace DataDebugMethods
             return fi_boots;
         }
 
-        // returns a FunctionOutput[f,i,b] sorted along the b axis, from smallest to largest f value
-        public static FunctionOutput<double>[] NumericBootstrapSort(FunctionOutput<double>[] boots)
-        {
-            return null;
-        }
-
         // Sort numeric bootstrap values
         public static FunctionOutput<double>[] SortBootstraps(FunctionOutput<double>[] boots)
         {
             return boots.OrderBy(b => b.GetValue()).ToArray();
         }
 
+        // Count instances of unique string output values and return bar chart
+        public static Dictionary<string, double> BootstrapFrequency(FunctionOutput<string>[] boots)
+        {
+            var counts = new Dictionary<string, int>();
+
+            foreach (FunctionOutput<string> boot in boots)
+            {
+                string key = boot.GetValue();
+                int count;
+                if (counts.TryGetValue(key, out count))
+                {
+                    counts[key] = count + 1;
+                }
+                else
+                {
+                    counts.Add(key, 1);
+                }
+            }
+
+            var p_values = new Dictionary<string,double>();
+
+            foreach (KeyValuePair<string,int> pair in counts)
+            {
+                p_values.Add(pair.Key, pair.Value / boots.Length);
+            }
+
+            return p_values;
+        }
+
+        // Exclude specified input index, compute multinomial probabilty vector, and return true if probability is below threshold
+        public static bool RejectNullHypothesis(FunctionOutput<string>[] boots, string original_output, int exclude_index)
+        {
+            // filter bootstraps which include exclude_index
+            var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
+
+            // get p_value vector
+            var freq = BootstrapFrequency(boots_exc);
+
+            // what is the probability of seeing the original output?
+            double p_val;
+            if (!freq.TryGetValue(original_output, out p_val))
+            {
+                p_val = 0.0;
+            }
+
+            // test H_0
+            return p_val >= 0.05;
+        }
+
         // Exclude a specified input index, compute quantiles, and check position of original input
         public static bool RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index)
         {
-            // include bootstraps which exclude exclude_index
+            // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
 
             // index for value greater than 2.5% of the lowest values; we want to round down here
@@ -516,11 +566,8 @@ namespace DataDebugMethods
             // reject or fail to reject H_0
             if (original_output_d < low_value || original_output_d > high_value)
             {
-                //System.Windows.Forms.MessageBox.Show("REJECT: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " but the original value was " + original_output_d);
                 return true;
             }
-
-            //System.Windows.Forms.MessageBox.Show("OK: 95% of the bootstrapped values excluding index " + exclude_index + " range from " + low_value + " to " + high_value + " and the original value was " + original_output_d);
             return false;
         }
     }
