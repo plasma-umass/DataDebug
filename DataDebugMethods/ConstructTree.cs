@@ -48,8 +48,30 @@ namespace DataDebugMethods
                 // 2. make TreeNodes for each of the cells in that range
                 foreach (Excel.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
                 {
+                    // this function both creates a TreeNode and adds it to AnalysisData.input_ranges
                     TreeNode range_node = ConstructTree.MakeRangeTreeNode(analysisData.input_ranges, input_range, formula_node);
+                    // this function both creates cell TreeNodes for a range and adds it to AnalysisData.cell_nodes
                     ConstructTree.CreateCellNodesFromRange(range_node, formula_node, analysisData.formula_nodes, analysisData.cell_nodes);
+                }
+
+                // For each single-cell input found in the formula by the parser,
+                // link to output TreeNode if the input cell is a formula. This allows
+                // us to consider functions with single-cell inputs as outputs.
+                foreach (AST.Address input_addr in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
+                {
+                    // Find the input cell's TreeNode; if there isn't one, move on.
+                    // We don't care about scalar inputs that are not functions
+                    TreeNode tn;
+                    if (analysisData.formula_nodes.TryGetValue(input_addr, out tn))
+                    {
+                        // sanity check-- should be a formula
+                        if (tn.isFormula())
+                        {
+                            // link input to output formula node
+                            tn.addChild(formula_node);
+                            formula_node.addParent(tn);
+                        }
+                    }
                 }
             }
 

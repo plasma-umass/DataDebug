@@ -251,21 +251,6 @@ namespace DataDebugMethods
             return ss;
         }
 
-        private static TreeNode[] OnlyTerminalFormulaNodes(List<TreeNode> output_cells)
-        {
-            return output_cells.Where(cn => cn.getChildren().Count == 0).ToArray();
-        }
-
-        private static TreeNode[] OnlyTerminalInputNodes(List<TreeNode> input_ranges)
-        {
-            // this should filter out the following two cases:
-            // 1. input range is intermediate (acts as input to a formula
-            //    and also contains a formula which consumes input from
-            //    another range).
-            // 2. the range is actually a formula cell
-            return input_ranges.Where(rn => !rn.GetDontPerturb()).ToArray();
-        }
-
         private static bool InputSanityCheck(TreeNode[] input_ranges)
         {
             // these input ranges should be terminal, i.e.,
@@ -289,9 +274,9 @@ namespace DataDebugMethods
         public static void Bootstrap(int num_bootstraps, AnalysisData data)
         {
             // filter out non-terminal functions
-            var output_fns = OnlyTerminalFormulaNodes(data.output_cells);
+            var output_fns = data.TerminalFormulaNodes();
             // filter out non-terminal inputs
-            var input_rngs = OnlyTerminalInputNodes(data.input_ranges);
+            var input_rngs = data.TerminalInputNodes();
             Debug.Assert(InputSanityCheck(input_rngs));
 
             // first idx: the index of the TreeNode in the "inputs" array
@@ -375,7 +360,6 @@ namespace DataDebugMethods
                     }
                     catch(Exception e)
                     {
-                        System.Windows.Forms.MessageBox.Show("String functions currently unhandled: " + e.Message);
                         // TODO sort string boots
                         // TODO null hypothesis test
                     }

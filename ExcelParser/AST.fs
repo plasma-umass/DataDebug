@@ -219,7 +219,7 @@
                                       addr.WorksheetName <- Some ws.Name
                                       Some ws.Name
 
-    and ReferenceFunction(wsname: string option, fnname: string, arglist: Reference list) =
+    and ReferenceFunction(wsname: string option, fnname: string, arglist: Expression list) =
         inherit Reference(wsname)
         member self.ArgumentList = arglist
         member self.FunctionName = fnname
@@ -228,12 +228,16 @@
         override self.Resolve(wb: Workbook)(ws: Worksheet) =
             // pass wb and ws information down to arguments
             // wb and ws names do not matter for functions
-            for arg in arglist do
-                arg.Resolve wb ws
+            for expr in arglist do
+                expr.Resolve wb ws
 
     and ReferenceConstant(wsname: string option, value: int) =
         inherit Reference(wsname)
         override self.ToString() = "Constant(" + value.ToString() + ")"
+
+    and ReferenceString(wsname: string option, value: string) =
+        inherit Reference(wsname)
+        override self.ToString() = "String(" + value + ")"
 
     and ReferenceNamed(wsname: string option, varname: string) =
         inherit Reference(wsname)
@@ -244,6 +248,16 @@
 
     and Expression =
     | ReferenceExpr of Reference
-    | BinOpExpr of char * Expression * Expression
+    | BinOpExpr of string * Expression * Expression
     | UnaryOpExpr of char * Expression
     | ParensExpr of Expression
+        member self.Resolve(wb: Workbook)(ws: Worksheet) =
+            match self with
+            | ReferenceExpr(r) -> r.Resolve wb ws
+            | BinOpExpr(op,e1,e2) ->
+                e1.Resolve wb ws
+                e2.Resolve wb ws
+            | UnaryOpExpr(op, e) ->
+                e.Resolve wb ws
+            | ParensExpr(e) ->
+                e.Resolve wb ws

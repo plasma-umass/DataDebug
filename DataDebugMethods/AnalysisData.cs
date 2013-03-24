@@ -88,5 +88,24 @@ namespace DataDebugMethods
             // Kill progress bar
             pb.Close();
         }
+
+        public TreeNode[] TerminalFormulaNodes()
+        {
+            // return only the formula nodes which do not provide
+            // input to any other cell and which are also not
+            // in our list of excluded functions
+            return formula_nodes.Where(pair => pair.Value.getChildren().Count == 0)
+                                .Select(pair => pair.Value).ToArray();
+        }
+
+        public TreeNode[] TerminalInputNodes()
+        {
+            // this should filter out the following two cases:
+            // 1. input range is intermediate (acts as input to a formula
+            //    and also contains a formula which consumes input from
+            //    another range).
+            // 2. the range is actually a formula cell
+            return input_ranges.Where(rn => !rn.GetDontPerturb()).ToArray();
+        }
     }
 }
