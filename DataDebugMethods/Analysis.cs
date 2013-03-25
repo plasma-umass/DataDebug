@@ -271,6 +271,7 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
+        // All of this is pretty ugly.
         public static void Bootstrap(int num_bootstraps, AnalysisData data)
         {
             // filter out non-terminal functions
@@ -309,14 +310,16 @@ namespace DataDebugMethods
 
             // array to store scores for each input
             var iscores = new int[input_rngs.Length][];
+            // dict of scores for each input CELL
+            var iscoresd = new Dictionary<TreeNode, int>();
 
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
-            // f is the index of the function in the output array; a SINGLE CELL
-            for (int f = 0; f < output_fns.Length; f++)
+            // i is the index of the range in the input array; an ARRAY of CELLS
+            for (int i = 0; i < input_rngs.Length; i++)
             {
-                // i is the index of the range in the input array; an ARRAY of CELLS
-                for (int i = 0; i < input_rngs.Length; i++)
+                // f is the index of the function in the output array; a SINGLE CELL
+                for (int f = 0; f < output_fns.Length; f++)
                 {
                     // this function output treenode
                     var t_fn = output_fns[f];
@@ -326,6 +329,8 @@ namespace DataDebugMethods
 
                     // number of inputs in input range
                     var input_sz = input_rngs[i].getParents().Count();
+
+                    var input_cells = t_rng.getParents().ToArray();
 
                     // allocate the appropriate number of counters for this input range
                     iscores[i] = new int[input_sz];
@@ -348,9 +353,27 @@ namespace DataDebugMethods
                             // add 1 to score if this fails
                             // TODO: we really want to add weighted scores here so that
                             //       important values are colored more brightly
+                            TreeNode xtree = input_cells[x];
+                            int count;
                             if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
                             {
-                                iscores[i][x] += 1;
+                                // get the xth indexed input in input_rng i
+                                if (iscoresd.TryGetValue(xtree, out count))
+                                {
+                                    iscoresd[xtree] += 1;
+                                }
+                                else
+                                {
+                                    iscoresd.Add(xtree, 1);
+                                }
+                            }
+                            else
+                            {
+                                // we need to at least add the value to the tree
+                                if (!iscoresd.TryGetValue(xtree, out count))
+                                {
+                                    iscoresd.Add(xtree, 0);
+                                }
                             }
                         }
                     }
@@ -361,32 +384,46 @@ namespace DataDebugMethods
                             // add 1 to score if this fails
                             // TODO: we really want to add weighted scores here so that
                             //       important values are colored more brightly
+                            TreeNode xtree = input_cells[x];
+                            int count;
                             if (RejectNullHypothesis(boots[f][i], initial_output, x))
                             {
-                                iscores[i][x] += 1;
+                                
+                                if (iscoresd.TryGetValue(xtree, out count))
+                                {
+                                    iscoresd[xtree] += 1;
+                                }
+                                else
+                                {
+                                    iscoresd.Add(xtree, 1);
+                                }
+                            }
+                            else
+                            {
+                                // we need to at least add the value to the tree
+                                if (!iscoresd.TryGetValue(xtree, out count))
+                                {
+                                    iscoresd.Add(xtree, 0);
+                                }
                             }
                         }
                     }
-
-                    // sum weights for each index, then assign color accordingly
-                    ColorOutputs(iscores[i], t_rng);
                 }
             }
+            // sum weights for each index, then assign color accordingly
+            ColorOutputs(iscoresd);
         }
 
-        private static void ColorOutputs(int[] exclusion_score_vect, TreeNode input_rng)
+        private static void ColorOutputs(Dictionary<TreeNode,int> exclusion_score_vect)
         {
             // find value of the max element; we use this to calibrate our scale
-            double low_score = exclusion_score_vect.Min();  // low value is always zero
-            double max_score = exclusion_score_vect.Max();  // largest value we've seen
-
-            // convert cells list to array
-            TreeNode[] cells = input_rng.getParents().ToArray();
+            double low_score = exclusion_score_vect.Select(pair => pair.Value).Min();  // low value is always zero
+            double max_score = exclusion_score_vect.Select(pair => pair.Value).Max();  // largest value we've seen
 
             // calculate the color of each cell
-            for (int x = 0; x < cells.Length; x++)
+            foreach(KeyValuePair<TreeNode,int> pair in exclusion_score_vect)
             {
-                var cell = cells[x];
+                var cell = pair.Key;
 
                 int cval;
                 // this happens when there are no suspect inputs.
@@ -396,7 +433,7 @@ namespace DataDebugMethods
                 }
                 else
                 {
-                    cval = (int)(255 * (exclusion_score_vect[x] - low_score) / (max_score - low_score));
+                    cval = (int)(255 * (pair.Value - low_score) / (max_score - low_score));
                 }
                 // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
                 var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
@@ -521,7 +558,7 @@ namespace DataDebugMethods
 
             foreach (KeyValuePair<string,int> pair in counts)
             {
-                p_values.Add(pair.Key, pair.Value / boots.Length);
+                p_values.Add(pair.Key, (double)pair.Value / (double)boots.Length);
             }
 
             return p_values;
@@ -544,7 +581,7 @@ namespace DataDebugMethods
             }
 
             // test H_0
-            return p_val >= 0.05;
+            return p_val < 0.05;
         }
 
         // Exclude a specified input index, compute quantiles, and check position of original input
