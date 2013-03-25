@@ -96,7 +96,7 @@ namespace DataDebug
             ConstructTree.constructTree(data, app);
 
             // Get bootstraps
-            var scores = Analysis.Bootstrap(50, data);
+            var scores = Analysis.Bootstrap((int)(Math.Ceiling(1000 * Math.Exp(1.0))), data, this.weighted.Checked);
 
             // Color outputs
             Analysis.ColorOutputs(scores);

@@ -273,13 +273,15 @@ namespace DataDebugMethods
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
         // All of this is pretty ugly.
-        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data)
+        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, bool weighted)
         {
+            // this modifies the weights of each node
+            PropagateWeights(data);
+
             // filter out non-terminal functions
             var output_fns = data.TerminalFormulaNodes();
             // filter out non-terminal inputs
             var input_rngs = data.TerminalInputNodes();
-            Debug.Assert(InputSanityCheck(input_rngs));
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
@@ -334,6 +336,9 @@ namespace DataDebugMethods
                     // initial output
                     var initial_output = initial_outputs[t_fn];
 
+                    // default weight
+                    int weight = 1;
+
                     try
                     {
                         // try converting to numeric
@@ -346,21 +351,23 @@ namespace DataDebugMethods
                         // falls outside our bootstrap confidence bounds
                         for (int x = 0; x < input_sz; x++)
                         {
-                            // add 1 to score if this fails
-                            // TODO: we really want to add weighted scores here so that
-                            //       important values are colored more brightly
+                            // add weight to score if this fails
                             TreeNode xtree = input_cells[x];
+                            if (weighted)
+                            {
+                                weight = (int)xtree.getWeight();
+                            }
                             int count;
                             if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
                             {
                                 // get the xth indexed input in input_rng i
                                 if (iexc_scores.TryGetValue(xtree, out count))
                                 {
-                                    iexc_scores[xtree] += 1;
+                                    iexc_scores[xtree] += weight;
                                 }
                                 else
                                 {
-                                    iexc_scores.Add(xtree, 1);
+                                    iexc_scores.Add(xtree, weight);
                                 }
                             }
                             else
@@ -377,21 +384,23 @@ namespace DataDebugMethods
                     {
                         for (int x = 0; x < input_sz; x++)
                         {
-                            // add 1 to score if this fails
-                            // TODO: we really want to add weighted scores here so that
-                            //       important values are colored more brightly
+                            // add weight to score if this fails
                             TreeNode xtree = input_cells[x];
+                            if (weighted)
+                            {
+                                weight = (int)xtree.getWeight();
+                            }
                             int count;
                             if (RejectNullHypothesis(boots[f][i], initial_output, x))
                             {
                                 
                                 if (iexc_scores.TryGetValue(xtree, out count))
                                 {
-                                    iexc_scores[xtree] += 1;
+                                    iexc_scores[xtree] += weight;
                                 }
                                 else
                                 {
-                                    iexc_scores.Add(xtree, 1);
+                                    iexc_scores.Add(xtree, weight);
                                 }
                             }
                             else
@@ -602,6 +611,42 @@ namespace DataDebugMethods
                 return true;
             }
             return false;
+        }
+
+        // Propagate weights
+        private static void PropagateWeights(AnalysisData data)
+        {
+            // starting set of functions; roots in the forest
+            var functions = data.TerminalFormulaNodes();
+
+            // for each forest
+            foreach (TreeNode fn in functions)
+            {
+                fn.setWeight(PropagateTreeNodeWeight(fn));
+            }
+        }
+
+        private static int PropagateTreeNodeWeight(TreeNode t)
+        {
+            var inputs = t.getParents();
+            // if we have no inputs, then we ARE an input
+            if (inputs.Count() == 0)
+            {
+                t.setWeight(1);
+                return 1;
+            }
+            // otherwise we have inputs, recursively compute their weights
+            // and add to this one
+            else
+            {
+                var weight = 0;
+                foreach (var input in inputs)
+                {
+                    weight += PropagateTreeNodeWeight(input);
+                }
+                t.setWeight(weight);
+                return weight;
+            }
         }
     }
 }
