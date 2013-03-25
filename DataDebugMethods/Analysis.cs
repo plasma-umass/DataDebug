@@ -6,6 +6,7 @@ using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -272,7 +273,7 @@ namespace DataDebugMethods
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
         // All of this is pretty ugly.
-        public static void Bootstrap(int num_bootstraps, AnalysisData data)
+        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data)
         {
             // filter out non-terminal functions
             var output_fns = data.TerminalFormulaNodes();
@@ -308,10 +309,8 @@ namespace DataDebugMethods
             // third idx: the bth bootstrap
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
 
-            // array to store scores for each input
-            var iscores = new int[input_rngs.Length][];
-            // dict of scores for each input CELL
-            var iscoresd = new Dictionary<TreeNode, int>();
+            // dict of exclusion scores for each input CELL TreeNode
+            var iexc_scores = new Dictionary<TreeNode, int>();
 
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
@@ -331,9 +330,6 @@ namespace DataDebugMethods
                     var input_sz = input_rngs[i].getParents().Count();
 
                     var input_cells = t_rng.getParents().ToArray();
-
-                    // allocate the appropriate number of counters for this input range
-                    iscores[i] = new int[input_sz];
 
                     // initial output
                     var initial_output = initial_outputs[t_fn];
@@ -358,21 +354,21 @@ namespace DataDebugMethods
                             if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
                             {
                                 // get the xth indexed input in input_rng i
-                                if (iscoresd.TryGetValue(xtree, out count))
+                                if (iexc_scores.TryGetValue(xtree, out count))
                                 {
-                                    iscoresd[xtree] += 1;
+                                    iexc_scores[xtree] += 1;
                                 }
                                 else
                                 {
-                                    iscoresd.Add(xtree, 1);
+                                    iexc_scores.Add(xtree, 1);
                                 }
                             }
                             else
                             {
                                 // we need to at least add the value to the tree
-                                if (!iscoresd.TryGetValue(xtree, out count))
+                                if (!iexc_scores.TryGetValue(xtree, out count))
                                 {
-                                    iscoresd.Add(xtree, 0);
+                                    iexc_scores.Add(xtree, 0);
                                 }
                             }
                         }
@@ -389,21 +385,21 @@ namespace DataDebugMethods
                             if (RejectNullHypothesis(boots[f][i], initial_output, x))
                             {
                                 
-                                if (iscoresd.TryGetValue(xtree, out count))
+                                if (iexc_scores.TryGetValue(xtree, out count))
                                 {
-                                    iscoresd[xtree] += 1;
+                                    iexc_scores[xtree] += 1;
                                 }
                                 else
                                 {
-                                    iscoresd.Add(xtree, 1);
+                                    iexc_scores.Add(xtree, 1);
                                 }
                             }
                             else
                             {
                                 // we need to at least add the value to the tree
-                                if (!iscoresd.TryGetValue(xtree, out count))
+                                if (!iexc_scores.TryGetValue(xtree, out count))
                                 {
-                                    iscoresd.Add(xtree, 0);
+                                    iexc_scores.Add(xtree, 0);
                                 }
                             }
                         }
@@ -411,17 +407,17 @@ namespace DataDebugMethods
                 }
             }
             // sum weights for each index, then assign color accordingly
-            ColorOutputs(iscoresd);
+            return iexc_scores;
         }
 
-        private static void ColorOutputs(Dictionary<TreeNode,int> exclusion_score_vect)
+        public static void ColorOutputs(TreeScore input_exclusion_scores)
         {
             // find value of the max element; we use this to calibrate our scale
-            double low_score = exclusion_score_vect.Select(pair => pair.Value).Min();  // low value is always zero
-            double max_score = exclusion_score_vect.Select(pair => pair.Value).Max();  // largest value we've seen
+            double low_score = input_exclusion_scores.Select(pair => pair.Value).Min();  // low value is always zero
+            double max_score = input_exclusion_scores.Select(pair => pair.Value).Max();  // largest value we've seen
 
             // calculate the color of each cell
-            foreach(KeyValuePair<TreeNode,int> pair in exclusion_score_vect)
+            foreach(KeyValuePair<TreeNode,int> pair in input_exclusion_scores)
             {
                 var cell = pair.Key;
 

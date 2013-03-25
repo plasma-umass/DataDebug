@@ -5,6 +5,7 @@ using Microsoft.Office.Tools.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
+using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
 
 namespace DataDebug
@@ -95,7 +96,10 @@ namespace DataDebug
             ConstructTree.constructTree(data, app);
 
             // Get bootstraps
-            Analysis.Bootstrap(50, data);
+            var scores = Analysis.Bootstrap(50, data);
+
+            // Color outputs
+            Analysis.ColorOutputs(scores);
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
