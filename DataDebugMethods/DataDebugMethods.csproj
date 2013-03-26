@@ -63,6 +63,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StartValue.cs" />
     <Compile Include="TreeNode.cs" />
+    <Compile Include="TurkJob.cs" />
     <Compile Include="Utility.cs" />
   </ItemGroup>
   <ItemGroup>

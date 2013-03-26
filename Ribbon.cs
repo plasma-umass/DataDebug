@@ -7,6 +7,7 @@ using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
+using System.Xml;
 
 namespace DataDebug
 {
@@ -57,10 +58,36 @@ namespace DataDebug
             Globals.ThisAddIn.Application.ScreenUpdating = true;
         }
 
-        // Button for testing random code :)
+        // Button for outputting MTurk HIT CSVs
         private void button7_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("Does nothing.");
+            // get MTurk jobs
+            var turkjobs = ConstructTree.DataForMTurk(Globals.ThisAddIn.Application);
+
+            // get workbook name
+            var wbname = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
+
+            // prompt for filename
+            var saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            saveFileDialog1.FileName = wbname + ".arr";
+            saveFileDialog1.Filter = "DataDebug Data File|*.arr";
+            saveFileDialog1.Title = "Save a Data File";
+            saveFileDialog1.ShowDialog();
+
+            // If the file name is not an empty string open it for saving.
+            if (saveFileDialog1.FileName != "")
+            {
+                TurkJob.SerializeArray(saveFileDialog1.FileName, turkjobs);
+
+                //// sanity check
+                //TurkJob[] fromfile = TurkJob.DeserializeArray(saveFileDialog1.FileName);
+                //string csv = "job_id,cell1,cell2,cell3,cell4,cell5,cell6,cell7,cell8,cell9,cell10\n";
+                //foreach (TurkJob job in turkjobs)
+                //{
+                //    csv += job.ToCSVLine();
+                //}
+                //System.Windows.Forms.MessageBox.Show("This is what I got back:\n\n" + csv);
+            }
         }
 
         // Action for "Clear coloring" button

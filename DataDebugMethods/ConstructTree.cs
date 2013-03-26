@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -659,10 +660,18 @@ namespace DataDebugMethods
                     //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
                     var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet);
                     cellNode = new TreeNode(cell.Address, cell.Worksheet, formulaNode.getWorkbookObject());
-                    
+
                     // Add to cell_nodes, not formula_nodes
-                    cell_nodes.Add(addr, cellNode);
+                    if (!cell_nodes.ContainsKey(addr))
+                    {
+                        cell_nodes.Add(addr, cellNode);
+                    }
+                    else
+                    {
+                        cellNode = cell_nodes[addr];
+                    }
                 }
+
                 // add a reference to the COM object if it is missing
                 if (cellNode.getCOMObject() == null)
                 {
@@ -684,7 +693,6 @@ namespace DataDebugMethods
             }
         } // CreateCellNodesFromRange ends here
 
-
         public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
         {
             TreeNode rangeNode = null;
@@ -705,6 +713,85 @@ namespace DataDebugMethods
                 ranges.Add(rangeNode);
             }
             return rangeNode;
+        }
+
+        public static TurkJob[] DataForMTurk(Excel.Application app)
+        {
+            const int TRUNCLEN = 20;
+            const int WIDTH = 10;
+
+            AnalysisData data = new AnalysisData(app);
+            data.Reset();
+            ConstructTree.constructTree(data, app);
+            data.pb.Close();
+
+            int rows;
+            if (data.cell_nodes.Count % WIDTH > 0)
+            {
+                rows = data.cell_nodes.Count / WIDTH + 1;
+            }
+            else
+            {
+                rows = data.cell_nodes.Count / WIDTH;
+            }
+            var output = new string[rows][];
+            var addrs = new string[rows][];
+
+            var j = 0;
+            var i = 0;
+            addrs[i] = new string[WIDTH];
+            output[i] = new string[WIDTH];
+            foreach (KeyValuePair<AST.Address,TreeNode> pair in data.cell_nodes)
+            {
+                var t = pair.Value;
+                output[i][j] = Truncate(t.getCOMValueAsString(), TRUNCLEN);
+                addrs[i][j] = t.getCOMObject().Address;
+                j = (j + 1) % WIDTH;
+                if (j == 0)
+                {
+                    i++;
+                    output[i] = new string[WIDTH];
+                    addrs[i] = new string[WIDTH];
+                }
+            }
+
+            // pad with empties
+            while (j != 0)
+            {
+                output[i][j] = "";
+                addrs[i][j] = "ZAA221";
+                j = (j + 1) % WIDTH;
+            }
+
+            return ToMTurkJob(output, addrs);
+        }
+
+        public static string Truncate(string str, int len)
+        {
+            if (str.Length <= len)
+            {
+                return str;
+            }
+            else
+            {
+                return str.Substring(0, len);
+            }
+        }
+
+        public static TurkJob[] ToMTurkJob(string[][] data, string[][] addrs)
+        {
+            var jobs = new TurkJob[data.Length];
+
+            for (var job_id = 0; job_id < data.Length; job_id++)
+            {
+                var tj = new TurkJob();
+                tj.SetJobId(job_id);
+                tj.SetCells(data[job_id]);
+                tj.SetAddrs(addrs[job_id]);
+                jobs[job_id] = tj;
+            }
+
+            return jobs;
         }
 
     } // ConstructTree class ends here

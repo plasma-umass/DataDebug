@@ -88,7 +88,7 @@ namespace DataDebug
             // 
             // button7
             // 
-            this.button7.Label = "button7";
+            this.button7.Label = "Output MTurk Data";
             this.button7.Name = "button7";
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
@@ -100,7 +100,7 @@ namespace DataDebug
             // 
             // TestNewProcedure
             // 
-            this.TestNewProcedure.Label = "Test New Procedure";
+            this.TestNewProcedure.Label = "Bootstrap";
             this.TestNewProcedure.Name = "TestNewProcedure";
             this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
             // 
