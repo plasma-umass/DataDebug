@@ -7,6 +7,7 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Drawing;
 
 namespace DataDebugMethods
 {
@@ -42,6 +43,26 @@ namespace DataDebugMethods
             TurkJob[] obj = (TurkJob[])formatter.Deserialize(stream);
             stream.Close();
             return obj;
+        }
+        private Bitmap[] ToImages()
+        {
+            var half = _cells.Length / 2;
+            var str1 = String.Join(",", _cells.Take(half));
+            var str2 = String.Join(",", _cells.Skip(half).Take(half));
+            var output = new Bitmap[2];
+            output[0] = DataDebugMethods.Utility.CreateBitmapImage(str1, 12);
+            output[1] = DataDebugMethods.Utility.CreateBitmapImage(str2, 12);
+            return output;
+        }
+        public void WriteAsImages(string path, string basename)
+        {
+            var bitmaps = this.ToImages();
+            for (var i = 0; i < bitmaps.Length; i++)
+            {
+                var b = bitmaps[i];
+                var filename = Path.Combine(path, basename + "_" + _job_id + "_" + i + ".png");
+                b.Save(filename);
+            }
         }
     }
 }

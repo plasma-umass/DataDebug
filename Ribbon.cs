@@ -7,8 +7,8 @@ using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
-using System.Xml;
 using Microsoft.FSharp.Core;
+using System.IO;
 
 namespace DataDebug
 {
@@ -81,17 +81,22 @@ namespace DataDebug
             // get workbook name
             var wbname = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
 
-            // prompt for filename
-            var saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            saveFileDialog1.FileName = wbname + ".arr";
-            saveFileDialog1.Filter = "DataDebug Data File|*.arr";
-            saveFileDialog1.Title = "Save a Data File";
-            saveFileDialog1.ShowDialog();
+            // prompt for folder name
+            var sFD = new System.Windows.Forms.FolderBrowserDialog();
+            sFD.ShowDialog();
 
-            // If the file name is not an empty string open it for saving.
-            if (saveFileDialog1.FileName != "")
+            // If the path is not an empty string, go ahead
+            if (sFD.SelectedPath != "")
             {
-                TurkJob.SerializeArray(saveFileDialog1.FileName, turkjobs);
+                // write file
+                var outfile = Path.Combine(sFD.SelectedPath, wbname + ".arr");
+                TurkJob.SerializeArray(outfile, turkjobs);
+
+                // write images, 2 for each TurkJob
+                foreach (TurkJob tj in turkjobs)
+                {
+                    tj.WriteAsImages(sFD.SelectedPath, wbname);
+                }
 
                 //// sanity check
                 //TurkJob[] fromfile = TurkJob.DeserializeArray(saveFileDialog1.FileName);
