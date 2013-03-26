@@ -11,7 +11,7 @@
     // Grammar forward references
     let ArgumentList, ArgumentListImpl = createParserForwardedToRef()
     let ExpressionSimple, ExpressionSimpleImpl = createParserForwardedToRef()
-    let ExpressionDecl, ExpressionDeclImpl = createParserForwardedToRef()
+    let (ExpressionDecl: Parser<Expression,unit>, ExpressionDeclImpl) = createParserForwardedToRef()
 
     // Addresses
     // We treat relative and absolute addresses the same-- they behave
@@ -59,30 +59,35 @@
     let NamedReferenceLastChars = manySatisfy (fun c -> c = '_' || isLetter(c) || isDigit(c))
     let NamedReference = pipe2 NamedReferenceFirstChar NamedReferenceLastChars (fun c s -> ReferenceNamed(None, c.ToString() + s) :> Reference)
 
+    let StringReference = between (pstring "\"") (pstring "\"") (many1Satisfy ((<>) '"')) |>> (fun s -> ReferenceString(None, s) :> Reference)
+
     let ConstantReference = pint32 |>> (fun r -> ReferenceConstant(None, r) :> Reference)
 
-    let ReferenceKinds = (attempt RangeReference) <|> (attempt AddressReference) <|> (attempt ConstantReference) <|> NamedReference
+    let ReferenceKinds = (attempt RangeReference) <|> (attempt AddressReference) <|> (attempt ConstantReference) <|> (attempt StringReference) <|> NamedReference
     let Reference = pipe2 Workbook ReferenceKinds (fun wbname ref -> ref.WorkbookName <- wbname; ref)
 
     // Functions
     let FunctionName = many1Satisfy (fun c -> isLetter(c))
     let Function = pipe2 (FunctionName .>> pstring "(") (ArgumentList .>> pstring ")") (fun fname arglist -> ReferenceFunction(None, fname, arglist) :> Reference)
-    let Argument = (attempt Function) <|> Reference
-    do ArgumentListImpl := sepBy Reference (pstring ",")
+//    do ArgumentListImpl := sepBy Reference (pstring ",")
+    do ArgumentListImpl := sepBy ExpressionDecl (pstring ",")
 
     // Binary arithmetic operators
-    let BinOpChar = satisfy (fun c -> c = '+' || c = '-' || c = '/' || c = '*')
-    let BinOp = pipe2 BinOpChar ExpressionDecl (fun op rhs -> (op, rhs))
+    let BinOpChar = satisfy (fun c -> c = '+' || c = '-' || c = '/' || c = '*' || c = '<' || c = '>')
+    let BinOp2Char = regex "<="
+    let BinOpLong: Parser<string*Expression,unit> = pipe2 BinOp2Char ExpressionDecl (fun op rhs -> (op, rhs))
+    let BinOpShort: Parser<string*Expression,unit> = pipe2 BinOpChar ExpressionDecl (fun op rhs -> (op.ToString(), rhs))
+    let BinOp: Parser<string*Expression,unit> = (attempt BinOpLong) <|> BinOpShort
 
     // Unary operators
     let UnaryOpChar = satisfy (fun c -> c = '+' || c = '-')
 
     // Expressions
-    let ParensExpr = (between (pstring "(") (pstring ")") ExpressionDecl) |>> ParensExpr
-    let ExpressionAtom = ((attempt Function) <|> Reference) |>> ReferenceExpr
+    let ParensExpr: Parser<Expression,unit> = (between (pstring "(") (pstring ")") ExpressionDecl) |>> ParensExpr
+    let ExpressionAtom: Parser<Expression,unit> = ((attempt Function) <|> Reference) |>> ReferenceExpr
     do ExpressionSimpleImpl := ExpressionAtom <|> ParensExpr
-    let UnaryOpExpr = pipe2 UnaryOpChar ExpressionDecl (fun op rhs -> UnaryOpExpr(op, rhs))
-    let BinOpExpr = pipe2 ExpressionSimple BinOp (fun lhs (op, rhs) -> BinOpExpr(op, lhs, rhs))
+    let UnaryOpExpr: Parser<Expression,unit> = pipe2 UnaryOpChar ExpressionDecl (fun op rhs -> UnaryOpExpr(op, rhs))
+    let BinOpExpr: Parser<Expression,unit> = pipe2 ExpressionSimple BinOp (fun lhs (op, rhs) -> BinOpExpr(op, lhs, rhs))
     do ExpressionDeclImpl := (attempt UnaryOpExpr) <|> (attempt BinOpExpr) <|> (attempt ExpressionSimple)
 
     // Formulas
@@ -102,14 +107,18 @@
         | ParensExpr(e) ->
             ExprAddrResolve e wb ws
 
+    // strip spaces before parsing; this makes parsing easier however
+    // it does change the formula semantics somewhat
+    let no_ws s = System.Text.RegularExpressions.Regex(" ").Replace(s,"")
+
     // monadic wrapper for success/failure
     let test p str =
-        match run p str with
+        match run p (no_ws str) with
         | Success(result, _, _)   -> printfn "Success: %A" result
         | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
 
     let GetAddress(str: string, wb: Workbook, ws: Worksheet): Address =
-        match run (AddrR1C1 .>> eof) str with
+        match run (AddrR1C1 .>> eof) (no_ws str) with
         | Success(addr, _, _) ->
             addr.WorkbookName <- Some wb.Name
             addr.WorksheetName <- Some ws.Name
@@ -117,19 +126,19 @@
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
     let GetRange str ws: AST.Range option =
-        match run (RangeR1C1 .>> eof) str with
+        match run (RangeR1C1 .>> eof) (no_ws str) with
         | Success(range, _, _) -> Some(range)
         | Failure(errorMsg, _, _) -> None
 
     let GetReference str wb ws: Reference option =
-        match run (Reference .>> eof) str with
+        match run (Reference .>> eof) (no_ws str) with
         | Success(reference, _, _) ->
             RefAddrResolve reference wb ws
             Some(reference)
         | Failure(errorMsg, _, _) -> None
 
     let ParseFormula(str, wb, ws): Expression option =
-        match run Formula str with
+        match run Formula (no_ws str) with
         | Success(formula, _, _) ->
             ExprAddrResolve formula wb ws
             Some(formula)

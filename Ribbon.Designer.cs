@@ -39,6 +39,8 @@ namespace DataDebug
             this.button1 = this.Factory.CreateRibbonButton();
             this.checkBox2 = this.Factory.CreateRibbonCheckBox();
             this.button7 = this.Factory.CreateRibbonButton();
+            this.weighted = this.Factory.CreateRibbonCheckBox();
+            this.TestNewProcedure = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
@@ -47,7 +49,6 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.TestNewProcedure = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -65,6 +66,7 @@ namespace DataDebug
             this.group1.Items.Add(this.button1);
             this.group1.Items.Add(this.checkBox2);
             this.group1.Items.Add(this.button7);
+            this.group1.Items.Add(this.weighted);
             this.group1.Items.Add(this.TestNewProcedure);
             this.group1.Items.Add(this.button8);
             this.group1.Items.Add(this.toggle_compile_regex);
@@ -86,9 +88,21 @@ namespace DataDebug
             // 
             // button7
             // 
-            this.button7.Label = "button7";
+            this.button7.Label = "Output MTurk Data";
             this.button7.Name = "button7";
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
+            // 
+            // weighted
+            // 
+            this.weighted.Checked = true;
+            this.weighted.Label = "Use Weights";
+            this.weighted.Name = "weighted";
+            // 
+            // TestNewProcedure
+            // 
+            this.TestNewProcedure.Label = "Bootstrap";
+            this.TestNewProcedure.Name = "TestNewProcedure";
+            this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
             // 
             // button8
             // 
@@ -139,12 +153,6 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
-            // TestNewProcedure
-            // 
-            this.TestNewProcedure.Label = "Test New Procedure";
-            this.TestNewProcedure.Name = "TestNewProcedure";
-            this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
-            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -176,6 +184,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton TestNewProcedure;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox weighted;
     }
 
     partial class ThisRibbonCollection

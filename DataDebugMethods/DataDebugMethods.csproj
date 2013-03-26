@@ -50,6 +50,7 @@
     <Compile Include="AnalysisData.cs" />
     <Compile Include="BootMemo.cs" />
     <Compile Include="ConstructTree.cs" />
+    <Compile Include="ErrorClassifiers.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FunctionOutput.cs" />
     <Compile Include="InputSample.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StartValue.cs" />
     <Compile Include="TreeNode.cs" />
+    <Compile Include="TurkJob.cs" />
     <Compile Include="Utility.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -6,6 +6,7 @@ using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -16,8 +17,29 @@ namespace DataDebugMethods
 {
     public class Analysis
     {
+        public static TreeDict DictMerge(TreeDict d1, TreeDict d2)
+        {
+            var d3 = new TreeDict();
+            foreach(TreeDictPair pair in d1) {
+                var a = pair.Key;
+                var tn = pair.Value;
+                d3.Add(a, tn);
+            }
+            foreach (TreeDictPair pair in d2)
+            {
+                var a = pair.Key;
+                var tn = pair.Value;
+                if (!d3.ContainsKey(a))
+                {
+                    d3.Add(a, tn);
+                }
+            }
+            return d3;
+        }
+
         public static void perturbationAnalysis(AnalysisData analysisData)
         {
+            var single_nodes = DictMerge(analysisData.formula_nodes, analysisData.cell_nodes);
             analysisData.SetProgress(25);
 
             //Grids for storing influences
@@ -28,8 +50,6 @@ namespace DataDebugMethods
 
             analysisData.outliers_count = 0;
             //Procedure for swapping values within ranges, one cell at a time
-            //if (!checkBox2.Checked) //Checks if the option for swapping values simultaneously is checked (not checked by default)
-            //{
 
             //Initialize min_max_delta_outputs
             analysisData.min_max_delta_outputs = new double[analysisData.output_cells.Count][];
@@ -73,7 +93,7 @@ namespace DataDebugMethods
             }
 
             //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-            foreach (TreeDictPair tdp in analysisData.nodes)
+            foreach (TreeDictPair tdp in single_nodes)
             {
                 var node = tdp.Value;
                 if (!node.hasParents())
@@ -172,6 +192,29 @@ namespace DataDebugMethods
             return d;
         }
 
+        public static bool OnlyInputsInResample(InputSample orig_vals, InputSample resample)
+        {
+
+            for (var i = 0; i < resample.Length(); i++)
+            {
+                var o = 0;
+                var found = false;
+                while (!found && o < orig_vals.Length())
+                {
+                    if (resample.GetInput(i) == orig_vals.GetInput(o))
+                    {
+                        found = true;
+                    }
+                    o++;
+                }
+                if (!found)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
         {
             // the resampled values go here
@@ -197,6 +240,8 @@ namespace DataDebugMethods
                     s.Add(value);
                 }
 
+                Debug.Assert(OnlyInputsInResample(orig_vals, s));
+
                 // indicate which indices are excluded
                 s.SetIncludes(inc_count);
 
@@ -207,90 +252,218 @@ namespace DataDebugMethods
             return ss;
         }
 
+        private static bool InputSanityCheck(TreeNode[] input_ranges)
+        {
+            // these input ranges should be terminal, i.e.,
+            // none of their cells contain formulae
+            foreach (TreeNode input_range in input_ranges)
+            {
+                foreach (TreeNode input_cell in input_range.getParents())
+                {
+                    if (input_cell.isFormula())
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
 
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        public static void Bootstrap(int num_bootstraps, AnalysisData data)
+        // All of this is pretty ugly.
+        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, bool weighted)
         {
+            // this modifies the weights of each node
+            PropagateWeights(data);
+
             // filter out non-terminal functions
-            var output_arr = data.output_cells.Where(cell => cell.getChildren().Count == 0).ToArray();
-            var input_arr = data.ranges.Where(range => !range.GetDontPerturb()).ToArray();
+            var output_fns = data.TerminalFormulaNodes();
+            // filter out non-terminal inputs
+            var input_rngs = data.TerminalInputNodes();
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
-            var resamples = new InputSample[input_arr.Length][];
+            var resamples = new InputSample[input_rngs.Length][];
 
             // RNG for sampling
             var rng = new Random();
 
             // we save initial inputs here
-            var initial_inputs = StoreInputs(input_arr);
-            var initial_outputs = StoreOutputs(output_arr);
+            var initial_inputs = StoreInputs(input_rngs);
+            var initial_outputs = StoreOutputs(output_fns);
 
             // populate bootstrap array
             // for each input range (a TreeNode)
-            for (var i = 0; i < input_arr.Length; i++)
+            for (var i = 0; i < input_rngs.Length; i++)
             {
                 // this TreeNode
-                var t = input_arr[i];
+                var t = input_rngs[i];
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
 
-            // replace each input range with a resample and
-            // gather all outputs
-            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_arr, output_arr, data);
+            // first idx: the fth function output
+            // second idx: the ith input
+            // third idx: the bth bootstrap
+            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
 
-            // array to store outcomes for each input
-            var os = new int[input_arr.Length];
+            // do appropriate hypothesis test, and add weighted test scores, and return result dict
+            return ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted);
+        }
+
+        public static TreeScore ScoreInputs(TreeNode[] input_rngs, TreeNode[] output_fns, Dictionary<TreeNode,string> initial_outputs, FunctionOutput<string>[][][] boots, bool weighted)
+        {
+            // dict of exclusion scores for each input CELL TreeNode
+            var iexc_scores = new TreeScore();
 
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
-            for (int f = 0; f < output_arr.Length; f++)
+            // i is the index of the range in the input array; an ARRAY of CELLS
+            for (int i = 0; i < input_rngs.Length; i++)
             {
-                for (int i = 0; i < input_arr.Length; i++)
+                // f is the index of the function in the output array; a SINGLE CELL
+                for (int f = 0; f < output_fns.Length; f++)
                 {
+                    // this function output treenode
+                    var t_fn = output_fns[f];
+
+                    // this function's input range treenode
+                    var t_rng = input_rngs[i];
+
+                    var input_cells = t_rng.getParents().ToArray();
+
+                    // number of inputs in input range
+                    var input_sz = input_cells.Length;
+
+                    // initial output
+                    var initial_output = initial_outputs[t_fn];
+
+                    // This is ugly because C# does not support specialization
+                    // of generic functions. TODO: make pretty.
                     try
                     {
-                        // what we really want to do is to add the WEIGHT to this array
-                        if (RejectNullHypothesis(SortBootstraps(ConvertToNumericOutput(boots[f][i])), initial_outputs[output_arr[f]], i))
+                        // try converting to numeric
+                        var numeric_boots = ConvertToNumericOutput(boots[f][i]);
+
+                        // sort
+                        var sorted_num_boots = SortBootstraps(numeric_boots);
+
+                        // for each excluded index, test whether the original input
+                        // falls outside our bootstrap confidence bounds
+                        for (int x = 0; x < input_sz; x++)
                         {
-                            os[i] += 1;
+                            // default weight
+                            int weight = 1;
+
+                            // add weight to score if test fails
+                            TreeNode xtree = input_cells[x];
+                            if (weighted)
+                            {
+                                // the weight of the function value of interest
+                                weight = (int)t_fn.getWeight();
+                            }
+
+                            if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
+                            {
+                                // get the xth indexed input in input_rng i
+                                if (iexc_scores.ContainsKey(xtree))
+                                {
+                                    iexc_scores[xtree] += weight;
+                                }
+                                else
+                                {
+                                    iexc_scores.Add(xtree, weight);
+                                }
+                            }
+                            else
+                            {
+                                // we need to at least add the value to the tree
+                                if (!iexc_scores.ContainsKey(xtree))
+                                {
+                                    iexc_scores.Add(xtree, 0);
+                                }
+                            }
                         }
                     }
-                    catch
+                    catch (FormatException)
                     {
-                        // TODO sort string boots
-                        // TODO null hypothesis test
+                        for (int x = 0; x < input_sz; x++)
+                        {
+                            // default weight
+                            int weight = 1;
+
+                            // add weight to score if test fails
+                            TreeNode xtree = input_cells[x];
+                            if (weighted)
+                            {
+                                // the weight of the function value of interest
+                                weight = (int)t_fn.getWeight();
+                            }
+
+                            if (RejectNullHypothesis(boots[f][i], initial_output, x))
+                            {
+
+                                if (iexc_scores.ContainsKey(xtree))
+                                {
+                                    iexc_scores[xtree] += weight;
+                                }
+                                else
+                                {
+                                    iexc_scores.Add(xtree, weight);
+                                }
+                            }
+                            else
+                            {
+                                // we need to at least add the value to the tree
+                                if (!iexc_scores.ContainsKey(xtree))
+                                {
+                                    iexc_scores.Add(xtree, 0);
+                                }
+                            }
+                        }
                     }
                 }
             }
-
-            // sum weights for each index, then assign color accordingly
-            //System.Windows.Forms.MessageBox.Show(String.Join(", ", os));
-            ColorOutputs(os, input_arr);
+            return iexc_scores;
         }
 
-        private static void ColorOutputs(int[] input_ranks, TreeNode[] inputs)
+        public static string TreeWeightsAsString(TreeNode root)
+        {
+            string treeweights = "";
+            foreach (TreeNode input in root.getParents())
+            {
+                treeweights += TreeWeightsAsString(input);
+            }
+            treeweights += root.getCOMObject().Address + " -> " + root.getWeight() + "\n";
+            return treeweights;
+        }
+
+        public static void ColorOutputs(TreeScore input_exclusion_scores)
         {
             // find value of the max element; we use this to calibrate our scale
-            double lowval = input_ranks.Min();  // low value is always zero
-            double maxval = input_ranks.Max();  // largest value we've seen
-            
-            for(int i = 0; i < inputs.Length; i++)
+            double low_score = input_exclusion_scores.Select(pair => pair.Value).Min();  // low value is always zero
+            double max_score = input_exclusion_scores.Select(pair => pair.Value).Max();  // largest value we've seen
+
+            // calculate the color of each cell
+            foreach(KeyValuePair<TreeNode,int> pair in input_exclusion_scores)
             {
+                var cell = pair.Key;
+
                 int cval;
-                if (maxval - lowval == 0)
+                // this happens when there are no suspect inputs.
+                if (max_score - low_score == 0)
                 {
                     cval = 0;
                 }
                 else
                 {
-                    cval = (int)(255 * input_ranks[i] / (maxval - lowval));
+                    cval = (int)(255 * (pair.Value - low_score) / (max_score - low_score));
                 }
-                var color = System.Drawing.Color.FromArgb(cval, 255, 255);
-                inputs[i].getCOMObject().Interior.Color = color;
+                // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
+                var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
+                cell.getCOMObject().Interior.Color = color;
             }
         }
 
@@ -326,7 +499,7 @@ namespace DataDebugMethods
             data.SetPBMax(maxcount);
 
             // init bootstrap memo
-            var bootsaver = new BootMemo();
+            var bootsaver = new BootMemo[input_arr.Length];
 
             // DEBUG
             var hits = 0;
@@ -339,6 +512,7 @@ namespace DataDebugMethods
             {
                 var t = input_arr[i];
                 var com = t.getCOMObject();
+                bootsaver[i] = new BootMemo();
                             
                 // replace the values of the COM object with the jth bootstrap,
                 // save all function outputs, and
@@ -346,13 +520,16 @@ namespace DataDebugMethods
                 for (var b = 0; b < num_bootstraps; b++)
                 {
                     // use memo DB
-                    FunctionOutput<string>[] fos = bootsaver.FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits);
+                    FunctionOutput<string>[] fos = bootsaver[i].FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits, false);
                     for (var f = 0; f < output_arr.Length; f++)
                     {
                         bootstraps[f][i][b] = fos[f];
                     }
                     data.PokePB();
                 }
+
+                // restore the COM value; faster to do once, at the end (this saves n-1 replacements)
+                BootMemo.ReplaceExcelRange(com, initial_inputs[t]);
             }
 
             // Kill progress bar
@@ -378,41 +555,119 @@ namespace DataDebugMethods
             return fi_boots;
         }
 
-        // returns a FunctionOutput[f,i,b] sorted along the b axis, from smallest to largest f value
-        public static FunctionOutput<double>[] NumericBootstrapSort(FunctionOutput<double>[] boots)
-        {
-            return null;
-        }
-
         // Sort numeric bootstrap values
         public static FunctionOutput<double>[] SortBootstraps(FunctionOutput<double>[] boots)
         {
             return boots.OrderBy(b => b.GetValue()).ToArray();
         }
 
+        // Count instances of unique string output values and return bar chart
+        public static Dictionary<string, double> BootstrapFrequency(FunctionOutput<string>[] boots)
+        {
+            var counts = new Dictionary<string, int>();
+
+            foreach (FunctionOutput<string> boot in boots)
+            {
+                string key = boot.GetValue();
+                int count;
+                if (counts.TryGetValue(key, out count))
+                {
+                    counts[key] = count + 1;
+                }
+                else
+                {
+                    counts.Add(key, 1);
+                }
+            }
+
+            var p_values = new Dictionary<string,double>();
+
+            foreach (KeyValuePair<string,int> pair in counts)
+            {
+                p_values.Add(pair.Key, (double)pair.Value / (double)boots.Length);
+            }
+
+            return p_values;
+        }
+
+        // Exclude specified input index, compute multinomial probabilty vector, and return true if probability is below threshold
+        public static bool RejectNullHypothesis(FunctionOutput<string>[] boots, string original_output, int exclude_index)
+        {
+            // filter bootstraps which include exclude_index
+            var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
+
+            // get p_value vector
+            var freq = BootstrapFrequency(boots_exc);
+
+            // what is the probability of seeing the original output?
+            double p_val;
+            if (!freq.TryGetValue(original_output, out p_val))
+            {
+                p_val = 0.0;
+            }
+
+            // test H_0
+            return p_val < 0.05;
+        }
+
         // Exclude a specified input index, compute quantiles, and check position of original input
         public static bool RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index)
         {
-            // include bootstraps which exclude exclude_index
+            // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
 
             // index for value greater than 2.5% of the lowest values; we want to round down here
-            var low_index = System.Convert.ToInt32(Math.Floor(((float)boots_exc.Length / 100) * 2.5));
+            var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * .025));
             // index for value greater than 97.5% of the lowest values; we want to round up here
-            var high_index = System.Convert.ToInt32(Math.Ceiling(((float)boots_exc.Length / 100) * 97.5));
+            var high_index = System.Convert.ToInt32(Math.Ceiling((float)(boots_exc.Length - 1) * 0.975));
 
             var low_value = boots_exc[low_index].GetValue();
             var high_value = boots_exc[high_index].GetValue();
 
             var original_output_d = System.Convert.ToDouble(original_output);
 
-            // keep or reject H_0
+            // reject or fail to reject H_0
             if (original_output_d < low_value || original_output_d > high_value)
             {
                 return true;
             }
-
             return false;
+        }
+
+        // Propagate weights
+        private static void PropagateWeights(AnalysisData data)
+        {
+            // starting set of functions; roots in the forest
+            var functions = data.TerminalFormulaNodes();
+
+            // for each forest
+            foreach (TreeNode fn in functions)
+            {
+                fn.setWeight(PropagateTreeNodeWeight(fn));
+            }
+        }
+
+        private static int PropagateTreeNodeWeight(TreeNode t)
+        {
+            var inputs = t.getParents();
+            // if we have no inputs, then we ARE an input
+            if (inputs.Count() == 0)
+            {
+                t.setWeight(1);
+                return 1;
+            }
+            // otherwise we have inputs, recursively compute their weights
+            // and add to this one
+            else
+            {
+                var weight = 0;
+                foreach (var input in inputs)
+                {
+                    weight += PropagateTreeNodeWeight(input);
+                }
+                t.setWeight(weight);
+                return weight;
+            }
         }
     }
 }

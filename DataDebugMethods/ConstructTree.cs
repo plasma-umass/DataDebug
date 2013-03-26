@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -35,22 +36,43 @@ namespace DataDebugMethods
             analysisData.formula_cells_count = ConstructTree.CountFormulaCells(formulaRanges);
 
             // Create nodes for every cell containing a formula
-            analysisData.nodes = ConstructTree.CreateFormulaNodes(formulaRanges, app);
+            analysisData.formula_nodes = ConstructTree.CreateFormulaNodes(formulaRanges, app);
 
             //Now we parse the formulas in nodes to extract any range and cell references
-            int node_count = analysisData.nodes.Count; // we save this because nodes.Count grows in this loop
-            for (int nodeIndex = 0; nodeIndex < node_count; nodeIndex++)
+            foreach(TreeDictPair pair in analysisData.formula_nodes)
             {
-                TreeNode node = analysisData.nodes.ElementAt(nodeIndex).Value; // nodePair.Value;
+                // This is a formula:
+                TreeNode formula_node = pair.Value;
 
-                // For each of the ranges found in the formula by the parser, do the following:
-                foreach (Excel.Range range in ExcelParserUtility.GetReferencesFromFormula(node.getFormula(), node.getWorkbookObject(), node.getWorksheetObject()))
+                // For each of the ranges found in the formula by the parser,
+                // 1. make a new TreeNode for the range
+                // 2. make TreeNodes for each of the cells in that range
+                foreach (Excel.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
                 {
-                    // Make a TreeNode for the Excel range COM object
-                    TreeNode rangeNode = ConstructTree.MakeRangeTreeNode(analysisData.ranges, range, node);
-                    // Create TreeNodes for each range's Cell and add them as
-                    // parents to THIS range's TreeNode
-                    ConstructTree.CreateCellNodesFromRange(rangeNode, node, analysisData.nodes);
+                    // this function both creates a TreeNode and adds it to AnalysisData.input_ranges
+                    TreeNode range_node = ConstructTree.MakeRangeTreeNode(analysisData.input_ranges, input_range, formula_node);
+                    // this function both creates cell TreeNodes for a range and adds it to AnalysisData.cell_nodes
+                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, analysisData.formula_nodes, analysisData.cell_nodes);
+                }
+
+                // For each single-cell input found in the formula by the parser,
+                // link to output TreeNode if the input cell is a formula. This allows
+                // us to consider functions with single-cell inputs as outputs.
+                foreach (AST.Address input_addr in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
+                {
+                    // Find the input cell's TreeNode; if there isn't one, move on.
+                    // We don't care about scalar inputs that are not functions
+                    TreeNode tn;
+                    if (analysisData.formula_nodes.TryGetValue(input_addr, out tn))
+                    {
+                        // sanity check-- should be a formula
+                        if (tn.isFormula())
+                        {
+                            // link input to output formula node
+                            tn.addChild(formula_node);
+                            formula_node.addParent(tn);
+                        }
+                    }
                 }
             }
 
@@ -143,6 +165,7 @@ namespace DataDebugMethods
                         if (cell.HasFormula)
                         {
                             n.setIsFormula();
+                            n.DontPerturb();
                             if (cell.Formula == null)
                             {
                                 throw new Exception("null formula!!! argh!!!");
@@ -157,38 +180,10 @@ namespace DataDebugMethods
             return nodes;
         }
 
-        //public static void StripLookups(string formula)
-        //{
-        //    Regex hlookup_regex = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-        //    Regex hlookup_regex_1 = new Regex(@"(HLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-        //    Regex vlookup_regex = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-        //    Regex vlookup_regex_1 = new Regex(@"(VLOOKUP\([A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+,[A-Za-z0-9_ :\$\f\n\r\t\v]+\))", RegexOptions.Compiled);
-        //    MatchCollection matchedLookups = hlookup_regex.Matches(formula);
-        //    foreach (Match match in matchedLookups)
-        //    {
-        //        formula = formula.Replace(match.Value, "");
-        //    }
-        //    matchedLookups = hlookup_regex_1.Matches(formula);
-        //    foreach (Match match in matchedLookups)
-        //    {
-        //        formula = formula.Replace(match.Value, "");
-        //    }
-        //    matchedLookups = vlookup_regex.Matches(formula);
-        //    foreach (Match match in matchedLookups)
-        //    {
-        //        formula = formula.Replace(match.Value, "");
-        //    }
-        //    matchedLookups = vlookup_regex_1.Matches(formula);
-        //    foreach (Match match in matchedLookups)
-        //    {
-        //        formula = formula.Replace(match.Value, "");
-        //    }
-        //}
-
         public static void StoreOutputs(AnalysisData analysisData)
         {
             // Collect output values
-            foreach (TreeDictPair tdp in analysisData.nodes)
+            foreach (TreeDictPair tdp in analysisData.formula_nodes)
             {
                 var node = tdp.Value;
                 if (!node.hasChildren() && node.hasParents()) //Nodes that do not feed into any other nodes are considered output, unless nothing feeds into them either. 
@@ -269,7 +264,7 @@ namespace DataDebugMethods
 
         public static void SwappingProcedure(AnalysisData analysisData)
         {
-            foreach (TreeNode range_node in analysisData.ranges)
+            foreach (TreeNode range_node in analysisData.input_ranges)
             {
                 //If this node is not a range, continue to the next node because no perturbations can be done on this node.
                 //if (!range_node.isRange())
@@ -654,20 +649,29 @@ namespace DataDebugMethods
 
         }
 
-        public static void CreateCellNodesFromRange(TreeNode rangeNode, TreeNode formulaNode, TreeDict nodes)
+        public static void CreateCellNodesFromRange(TreeNode rangeNode, TreeNode formulaNode, TreeDict formula_nodes, TreeDict cell_nodes)
         {
             foreach (Excel.Range cell in rangeNode.getCOMObject())
             {
                 TreeNode cellNode = null;
                 //See if there is an existing node for this cell already in nodes; if there is, do not add it again - just grab the existing one
-                if (!nodes.TryGetValue(ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet), out cellNode))
+                if (!formula_nodes.TryGetValue(ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet), out cellNode))
                 {
                     //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
                     var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet);
                     cellNode = new TreeNode(cell.Address, cell.Worksheet, formulaNode.getWorkbookObject());
-                    
-                    nodes.Add(addr, cellNode);
+
+                    // Add to cell_nodes, not formula_nodes
+                    if (!cell_nodes.ContainsKey(addr))
+                    {
+                        cell_nodes.Add(addr, cellNode);
+                    }
+                    else
+                    {
+                        cellNode = cell_nodes[addr];
+                    }
                 }
+
                 // add a reference to the COM object if it is missing
                 if (cellNode.getCOMObject() == null)
                 {
@@ -689,7 +693,6 @@ namespace DataDebugMethods
             }
         } // CreateCellNodesFromRange ends here
 
-
         public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
         {
             TreeNode rangeNode = null;
@@ -705,12 +708,90 @@ namespace DataDebugMethods
             }
             if (rangeNode == null)
             {
-                //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF range, WHICH SHOULD COME FROM GetReferencesFromFormula
                 rangeNode = new TreeNode(range.Address, range.Worksheet, node.getWorkbookObject());
                 rangeNode.addCOM(range);
                 ranges.Add(rangeNode);
             }
             return rangeNode;
+        }
+
+        public static TurkJob[] DataForMTurk(Excel.Application app)
+        {
+            const int TRUNCLEN = 20;
+            const int WIDTH = 10;
+
+            AnalysisData data = new AnalysisData(app);
+            data.Reset();
+            ConstructTree.constructTree(data, app);
+            data.pb.Close();
+
+            int rows;
+            if (data.cell_nodes.Count % WIDTH > 0)
+            {
+                rows = data.cell_nodes.Count / WIDTH + 1;
+            }
+            else
+            {
+                rows = data.cell_nodes.Count / WIDTH;
+            }
+            var output = new string[rows][];
+            var addrs = new string[rows][];
+
+            var j = 0;
+            var i = 0;
+            addrs[i] = new string[WIDTH];
+            output[i] = new string[WIDTH];
+            foreach (KeyValuePair<AST.Address,TreeNode> pair in data.cell_nodes)
+            {
+                var t = pair.Value;
+                output[i][j] = Truncate(t.getCOMValueAsString(), TRUNCLEN);
+                addrs[i][j] = t.getCOMObject().Address;
+                j = (j + 1) % WIDTH;
+                if (j == 0)
+                {
+                    i++;
+                    output[i] = new string[WIDTH];
+                    addrs[i] = new string[WIDTH];
+                }
+            }
+
+            // pad with empties
+            while (j != 0)
+            {
+                output[i][j] = "";
+                addrs[i][j] = "ZAA221";
+                j = (j + 1) % WIDTH;
+            }
+
+            return ToMTurkJob(output, addrs);
+        }
+
+        public static string Truncate(string str, int len)
+        {
+            if (str.Length <= len)
+            {
+                return str;
+            }
+            else
+            {
+                return str.Substring(0, len);
+            }
+        }
+
+        public static TurkJob[] ToMTurkJob(string[][] data, string[][] addrs)
+        {
+            var jobs = new TurkJob[data.Length];
+
+            for (var job_id = 0; job_id < data.Length; job_id++)
+            {
+                var tj = new TurkJob();
+                tj.SetJobId(job_id);
+                tj.SetCells(data[job_id]);
+                tj.SetAddrs(addrs[job_id]);
+                jobs[job_id] = tj;
+            }
+
+            return jobs;
         }
 
     } // ConstructTree class ends here

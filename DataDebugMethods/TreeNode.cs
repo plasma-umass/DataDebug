@@ -22,7 +22,7 @@ namespace DataDebugMethods
         private string _name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>:<EndCell>; for charts it is "Chart<Name of chart>"
         private string _worksheet_name;  //This keeps track of the worksheet where this cell/range/chart is located
         private Excel.Worksheet _worksheet; // A reference to the actual worksheet where this TreeNode is located
-        private double _weight;  //The weight of the node as computed by propagating values down the tree
+        private double _weight = 0.0;  //The weight of the node as computed by propagating values down the tree
         private bool _chart;
         private bool _is_formula; //this indicates whether this node is a formula
         private System.Drawing.Color originalColor;

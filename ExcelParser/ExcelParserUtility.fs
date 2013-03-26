@@ -17,7 +17,7 @@
         if PuntedFunction(ref.FunctionName) then
             []
         else
-            List.map (fun arg -> GetRanges(arg)) ref.ArgumentList |> List.concat
+            List.map (fun arg -> GetExprRanges(arg)) ref.ArgumentList |> List.concat
         
     and GetExprRanges(expr: AST.Expression) : AST.Range list =
         match expr with
@@ -33,6 +33,7 @@
         | :? AST.ReferenceNamed -> []   // TODO: symbol table lookup
         | :? AST.ReferenceFunction as r -> GetFunctionRanges(r)
         | :? AST.ReferenceConstant -> []
+        | :? AST.ReferenceString -> []
         | _ -> failwith "Unknown reference type."
 
     let GetReferencesFromFormula(formula: string, wb: Workbook, ws: Worksheet) : seq<XLRange> =
@@ -41,4 +42,37 @@
         | Some(tree) ->
             let refs = GetExprRanges(tree)
             List.map (fun (r: AST.Range) -> r.GetCOMObject(wb.Application)) refs |> Seq.ofList
+        | None -> [] |> Seq.ofList
+
+    // single-cell variants:
+
+    let rec GetSCExprRanges(expr: AST.Expression) : AST.Address list =
+        match expr with
+        | AST.ReferenceExpr(r) -> GetSCRanges(r)
+        | AST.BinOpExpr(op, e1, e2) -> GetSCExprRanges(e1) @ GetSCExprRanges(e2)
+        | AST.UnaryOpExpr(op, e) -> GetSCExprRanges(e)
+        | AST.ParensExpr(e) -> GetSCExprRanges(e)
+
+    and GetSCRanges(ref: AST.Reference) : AST.Address list =
+        match ref with
+        | :? AST.ReferenceRange -> []
+        | :? AST.ReferenceAddress as r -> GetSCAddressReferenceRanges(r)
+        | :? AST.ReferenceNamed -> []   // TODO: symbol table lookup
+        | :? AST.ReferenceFunction as r -> GetSCFunctionRanges(r)
+        | :? AST.ReferenceConstant -> []
+        | :? AST.ReferenceString -> []
+        | _ -> failwith "Unknown reference type."
+
+    and GetSCAddressReferenceRanges(ref: AST.ReferenceAddress) : AST.Address list = [ref.Address]
+
+    and GetSCFunctionRanges(ref: AST.ReferenceFunction) : AST.Address list =
+        if PuntedFunction(ref.FunctionName) then
+            []
+        else
+            List.map (fun arg -> GetSCExprRanges(arg)) ref.ArgumentList |> List.concat
+
+    let GetSingleCellReferencesFromFormula(formula: string, wb: Workbook, ws: Worksheet) : seq<AST.Address> =
+        let app = wb.Application
+        match ExcelParser.ParseFormula(formula, wb, ws) with
+        | Some(tree) -> GetSCExprRanges(tree) |> Seq.ofList
         | None -> [] |> Seq.ofList
