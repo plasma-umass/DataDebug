@@ -23,13 +23,13 @@ namespace DataDebugMethods
         public void SetJobId(int job_id) { _job_id = job_id; }
         public void SetCells(string[] cells) { _cells = cells; }
         public void SetAddrs(string[] addrs) { _addrs = addrs; }
-        public string ToCSVHeaderLine()
+        public string ToCSVHeaderLine(string wbname)
         {
-            return "job_id," + String.Join(",", Enumerable.Range(0, _cells.Length).Select(num => "cell" + num));
+            return "wbname,job_id," + String.Join(",", Enumerable.Range(0, _cells.Length).Select(num => "cell" + num));
         }
-        public string ToCSVLine()
+        public string ToCSVLine(string wbname)
         {
-            return _job_id + "," + String.Join(",", _cells.Select(str => '"' + r.Replace(str, "\\\"") + '"'));
+            return wbname + "," + _job_id + "," + String.Join(",", _cells.Select(str => '"' + r.Replace(str, "\\\"") + '"'));
         }
         public string GetValueAt(int index) { return _cells[index]; }
         public string GetAddrAt(int index) { return _addrs[index];  }
@@ -64,7 +64,7 @@ namespace DataDebugMethods
             for (var i = 0; i < bitmaps.Length; i++)
             {
                 var b = bitmaps[i];
-                var filename = Path.Combine(path, basename + "_" + _job_id + "_" + i + ".png");
+                var filename = Path.Combine(path, basename + "_" + _job_id + "_" + (i + 1) + ".png");
                 b.Save(filename);
             }
         }

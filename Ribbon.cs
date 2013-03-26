@@ -102,8 +102,8 @@ namespace DataDebug
                 // write CSV
                 var csvfile = Path.Combine(sFD.SelectedPath, wbname + ".csv");
                 var lines = new List<string>();
-                lines.Add(turkjobs[0].ToCSVHeaderLine());
-                lines.AddRange(turkjobs.Select(turkjob => turkjob.ToCSVLine()));
+                lines.Add(turkjobs[0].ToCSVHeaderLine(wbname));
+                lines.AddRange(turkjobs.Select(turkjob => turkjob.ToCSVLine(wbname)));
                 File.WriteAllLines(csvfile, lines);
 
                 //// sanity check
