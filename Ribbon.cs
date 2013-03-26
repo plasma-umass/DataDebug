@@ -9,6 +9,7 @@ using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNod
 using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
 using Microsoft.FSharp.Core;
 using System.IO;
+using System.Linq;
 
 namespace DataDebug
 {
@@ -88,7 +89,7 @@ namespace DataDebug
             // If the path is not an empty string, go ahead
             if (sFD.SelectedPath != "")
             {
-                // write file
+                // write key file
                 var outfile = Path.Combine(sFD.SelectedPath, wbname + ".arr");
                 TurkJob.SerializeArray(outfile, turkjobs);
 
@@ -97,6 +98,13 @@ namespace DataDebug
                 {
                     tj.WriteAsImages(sFD.SelectedPath, wbname);
                 }
+
+                // write CSV
+                var csvfile = Path.Combine(sFD.SelectedPath, wbname + ".csv");
+                var lines = new List<string>();
+                lines.Add(turkjobs[0].ToCSVHeaderLine());
+                lines.AddRange(turkjobs.Select(turkjob => turkjob.ToCSVLine()));
+                File.WriteAllLines(csvfile, lines);
 
                 //// sanity check
                 //TurkJob[] fromfile = TurkJob.DeserializeArray(saveFileDialog1.FileName);

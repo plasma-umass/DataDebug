@@ -23,9 +23,13 @@ namespace DataDebugMethods
         public void SetJobId(int job_id) { _job_id = job_id; }
         public void SetCells(string[] cells) { _cells = cells; }
         public void SetAddrs(string[] addrs) { _addrs = addrs; }
+        public string ToCSVHeaderLine()
+        {
+            return "job_id," + String.Join(",", Enumerable.Range(0, _cells.Length).Select(num => "cell" + num));
+        }
         public string ToCSVLine()
         {
-            return _job_id + "," + String.Join(",", _cells.Select(str => '"' + r.Replace(str, "\\\"") + '"')) + "\n";
+            return _job_id + "," + String.Join(",", _cells.Select(str => '"' + r.Replace(str, "\\\"") + '"'));
         }
         public string GetValueAt(int index) { return _cells[index]; }
         public string GetAddrAt(int index) { return _addrs[index];  }
