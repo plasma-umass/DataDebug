@@ -304,15 +304,19 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
 
-            // replace each input range with a resample and
-            // gather all outputs
             // first idx: the fth function output
             // second idx: the ith input
             // third idx: the bth bootstrap
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
 
+            // do appropriate hypothesis test, and add weighted test scores, and return result dict
+            return ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted);
+        }
+
+        public static TreeScore ScoreInputs(TreeNode[] input_rngs, TreeNode[] output_fns, Dictionary<TreeNode,string> initial_outputs, FunctionOutput<string>[][][] boots, bool weighted)
+        {
             // dict of exclusion scores for each input CELL TreeNode
-            var iexc_scores = new Dictionary<TreeNode, int>();
+            var iexc_scores = new TreeScore();
 
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
@@ -328,17 +332,16 @@ namespace DataDebugMethods
                     // this function's input range treenode
                     var t_rng = input_rngs[i];
 
-                    // number of inputs in input range
-                    var input_sz = input_rngs[i].getParents().Count();
-
                     var input_cells = t_rng.getParents().ToArray();
+
+                    // number of inputs in input range
+                    var input_sz = input_cells.Length;
 
                     // initial output
                     var initial_output = initial_outputs[t_fn];
 
-                    // default weight
-                    int weight = 1;
-
+                    // This is ugly because C# does not support specialization
+                    // of generic functions. TODO: make pretty.
                     try
                     {
                         // try converting to numeric
@@ -351,17 +354,21 @@ namespace DataDebugMethods
                         // falls outside our bootstrap confidence bounds
                         for (int x = 0; x < input_sz; x++)
                         {
-                            // add weight to score if this fails
+                            // default weight
+                            int weight = 1;
+
+                            // add weight to score if test fails
                             TreeNode xtree = input_cells[x];
                             if (weighted)
                             {
-                                weight = (int)xtree.getWeight();
+                                // the weight of the function value of interest
+                                weight = (int)t_fn.getWeight();
                             }
-                            int count;
+
                             if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
                             {
                                 // get the xth indexed input in input_rng i
-                                if (iexc_scores.TryGetValue(xtree, out count))
+                                if (iexc_scores.ContainsKey(xtree))
                                 {
                                     iexc_scores[xtree] += weight;
                                 }
@@ -373,28 +380,32 @@ namespace DataDebugMethods
                             else
                             {
                                 // we need to at least add the value to the tree
-                                if (!iexc_scores.TryGetValue(xtree, out count))
+                                if (!iexc_scores.ContainsKey(xtree))
                                 {
                                     iexc_scores.Add(xtree, 0);
                                 }
                             }
                         }
                     }
-                    catch(FormatException)
+                    catch (FormatException)
                     {
                         for (int x = 0; x < input_sz; x++)
                         {
-                            // add weight to score if this fails
+                            // default weight
+                            int weight = 1;
+
+                            // add weight to score if test fails
                             TreeNode xtree = input_cells[x];
                             if (weighted)
                             {
-                                weight = (int)xtree.getWeight();
+                                // the weight of the function value of interest
+                                weight = (int)t_fn.getWeight();
                             }
-                            int count;
+
                             if (RejectNullHypothesis(boots[f][i], initial_output, x))
                             {
-                                
-                                if (iexc_scores.TryGetValue(xtree, out count))
+
+                                if (iexc_scores.ContainsKey(xtree))
                                 {
                                     iexc_scores[xtree] += weight;
                                 }
@@ -406,7 +417,7 @@ namespace DataDebugMethods
                             else
                             {
                                 // we need to at least add the value to the tree
-                                if (!iexc_scores.TryGetValue(xtree, out count))
+                                if (!iexc_scores.ContainsKey(xtree))
                                 {
                                     iexc_scores.Add(xtree, 0);
                                 }
@@ -415,8 +426,18 @@ namespace DataDebugMethods
                     }
                 }
             }
-            // sum weights for each index, then assign color accordingly
             return iexc_scores;
+        }
+
+        public static string TreeWeightsAsString(TreeNode root)
+        {
+            string treeweights = "";
+            foreach (TreeNode input in root.getParents())
+            {
+                treeweights += TreeWeightsAsString(input);
+            }
+            treeweights += root.getCOMObject().Address + " -> " + root.getWeight() + "\n";
+            return treeweights;
         }
 
         public static void ColorOutputs(TreeScore input_exclusion_scores)

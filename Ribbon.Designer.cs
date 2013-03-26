@@ -39,6 +39,7 @@ namespace DataDebug
             this.button1 = this.Factory.CreateRibbonButton();
             this.checkBox2 = this.Factory.CreateRibbonCheckBox();
             this.button7 = this.Factory.CreateRibbonButton();
+            this.weighted = this.Factory.CreateRibbonCheckBox();
             this.TestNewProcedure = this.Factory.CreateRibbonButton();
             this.button8 = this.Factory.CreateRibbonButton();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
@@ -48,7 +49,6 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.weighted = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -91,6 +91,12 @@ namespace DataDebug
             this.button7.Label = "button7";
             this.button7.Name = "button7";
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
+            // 
+            // weighted
+            // 
+            this.weighted.Checked = true;
+            this.weighted.Label = "Use Weights";
+            this.weighted.Name = "weighted";
             // 
             // TestNewProcedure
             // 
@@ -146,11 +152,6 @@ namespace DataDebug
             // 
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
-            // 
-            // weighted
-            // 
-            this.weighted.Label = "Use Weights";
-            this.weighted.Name = "weighted";
             // 
             // Ribbon
             // 
