@@ -8,6 +8,7 @@ using TreeNode = DataDebugMethods.TreeNode;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
 using System.Xml;
+using Microsoft.FSharp.Core;
 
 namespace DataDebug
 {
@@ -61,8 +62,21 @@ namespace DataDebug
         // Button for outputting MTurk HIT CSVs
         private void button7_Click(object sender, RibbonControlEventArgs e)
         {
-            // get MTurk jobs
-            var turkjobs = ConstructTree.DataForMTurk(Globals.ThisAddIn.Application);
+            // the longest input field we can represent on MTurk
+            const int MAXLEN = 20;
+
+            // get MTurk jobs or fail is spreadsheet data cells are too long
+            TurkJob[] turkjobs;
+            var turkjobs_opt = ConstructTree.DataForMTurk(Globals.ThisAddIn.Application, MAXLEN);
+            if (FSharpOption<TurkJob[]>.get_IsSome(turkjobs_opt))
+            {
+                turkjobs = turkjobs_opt.Value;
+            }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet contains data items with lengths longer than " + MAXLEN + " characters and cannot be converted into an MTurk job.");
+                return;
+            }
 
             // get workbook name
             var wbname = Globals.ThisAddIn.Application.ActiveWorkbook.Name;

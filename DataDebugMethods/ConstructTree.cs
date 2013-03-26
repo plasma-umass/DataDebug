@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeList = System.Collections.Generic.List<DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using Microsoft.FSharp.Core;
 
 namespace DataDebugMethods
 {
@@ -715,9 +716,20 @@ namespace DataDebugMethods
             return rangeNode;
         }
 
-        public static TurkJob[] DataForMTurk(Excel.Application app)
+        public static bool AllValuesBelowLength(int len, TreeDict ts)
         {
-            const int TRUNCLEN = 20;
+            foreach (KeyValuePair<AST.Address, TreeNode> pair in ts)
+            {
+                if (pair.Value.getCOMValueAsString().Length > len)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public static FSharpOption<TurkJob[]> DataForMTurk(Excel.Application app, int maxlen)
+        {
             const int WIDTH = 10;
 
             AnalysisData data = new AnalysisData(app);
@@ -725,6 +737,13 @@ namespace DataDebugMethods
             ConstructTree.constructTree(data, app);
             data.pb.Close();
 
+            // sanity check
+            if (!AllValuesBelowLength(maxlen, data.cell_nodes))
+            {
+                return FSharpOption<TurkJob[]>.None;
+            }
+
+            // determine # of rows
             int rows;
             if (data.cell_nodes.Count % WIDTH > 0)
             {
@@ -737,6 +756,7 @@ namespace DataDebugMethods
             var output = new string[rows][];
             var addrs = new string[rows][];
 
+            // split data
             var j = 0;
             var i = 0;
             addrs[i] = new string[WIDTH];
@@ -744,7 +764,7 @@ namespace DataDebugMethods
             foreach (KeyValuePair<AST.Address,TreeNode> pair in data.cell_nodes)
             {
                 var t = pair.Value;
-                output[i][j] = Truncate(t.getCOMValueAsString(), TRUNCLEN);
+                output[i][j] = Truncate(t.getCOMValueAsString(), maxlen);
                 addrs[i][j] = t.getCOMObject().Address;
                 j = (j + 1) % WIDTH;
                 if (j == 0)
@@ -755,7 +775,7 @@ namespace DataDebugMethods
                 }
             }
 
-            // pad with empties
+            // pad with empties, if necessary
             while (j != 0)
             {
                 output[i][j] = "";
@@ -763,7 +783,7 @@ namespace DataDebugMethods
                 j = (j + 1) % WIDTH;
             }
 
-            return ToMTurkJob(output, addrs);
+            return FSharpOption<TurkJob[]>.Some(ToMTurkJob(output, addrs));
         }
 
         public static string Truncate(string str, int len)
