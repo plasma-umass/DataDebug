@@ -18,5 +18,11 @@ namespace ErrorClassifier
             Form1 form = new Form1();
             form.ShowDialog();
         }
+
+        private void buttonOpenParser_Click(object sender, RibbonControlEventArgs e)
+        {
+            ParseForm parseForm = new ParseForm();
+            parseForm.ShowDialog();
+        }
     }
 }

@@ -37,6 +37,7 @@
             this.tab1 = this.Factory.CreateRibbonTab();
             this.group1 = this.Factory.CreateRibbonGroup();
             this.buttonOpenDialog = this.Factory.CreateRibbonButton();
+            this.buttonOpenParser = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             // 
@@ -50,14 +51,21 @@
             // group1
             // 
             this.group1.Items.Add(this.buttonOpenDialog);
+            this.group1.Items.Add(this.buttonOpenParser);
             this.group1.Label = "Error Classifier";
             this.group1.Name = "group1";
             // 
             // buttonOpenDialog
             // 
-            this.buttonOpenDialog.Label = "Open Dialog";
+            this.buttonOpenDialog.Label = "Open Error Classifier Form";
             this.buttonOpenDialog.Name = "buttonOpenDialog";
             this.buttonOpenDialog.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonOpenDialog_Click);
+            // 
+            // buttonOpenParser
+            // 
+            this.buttonOpenParser.Label = "Open CSV Parser Dialog";
+            this.buttonOpenParser.Name = "buttonOpenParser";
+            this.buttonOpenParser.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonOpenParser_Click);
             // 
             // Ribbon1
             // 
@@ -77,6 +85,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonOpenDialog;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonOpenParser;
     }
 
     partial class ThisRibbonCollection
