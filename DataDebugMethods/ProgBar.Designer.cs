@@ -33,20 +33,20 @@
             // 
             // progressBar1
             // 
-            this.progressBar1.Location = new System.Drawing.Point(2, 0);
+            this.progressBar1.Location = new System.Drawing.Point(12, 10);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(533, 23);
+            this.progressBar1.Size = new System.Drawing.Size(507, 23);
             this.progressBar1.TabIndex = 0;
             // 
             // ProgBar
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(536, 25);
-            this.ControlBox = false;
+            this.ClientSize = new System.Drawing.Size(531, 45);
             this.Controls.Add(this.progressBar1);
             this.Name = "ProgBar";
-            this.Text = "Form1";
+            this.Text = "Looking for errors...";
+            this.Load += new System.EventHandler(this.ProgBar_Load);
             this.ResumeLayout(false);
 
         }
