@@ -35,6 +35,10 @@ namespace DataDebugMethods
             if (!originalText.Equals(enteredText) && originalText.Replace(".", "").Equals(enteredText.Replace(".", "")))
             {
                 //MessageBox.Show("Decimal point error: YES");
+                if (TestDecimalOmission(enteredText, originalText))
+                {
+                    return false;
+                }
                 return true;
             }
             else
@@ -228,6 +232,10 @@ namespace DataDebugMethods
                     {
                         return false;
                     }
+                }
+                if (TestDigitRepeat(enteredText, originalText))
+                {
+                    return false;
                 }
                 return true;
             }

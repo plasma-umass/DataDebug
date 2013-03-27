@@ -501,7 +501,7 @@ namespace ErrorClassifier
                     continue;
                 }
                 //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
-                textBox1.AppendText("Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine);
+                textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
@@ -510,7 +510,7 @@ namespace ErrorClassifier
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
-                textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine);
+                textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -534,23 +534,22 @@ namespace ErrorClassifier
 
                 // Enable screen updating when we're done
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
-                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex]);
+                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
-                    textBox3.AppendText("Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine);
-                    errorTypesLines[errorIndex + 1] += "\t1" + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + Environment.NewLine);
+                    errorTypesLines[errorIndex] += "\t1" + Environment.NewLine;
                 }
                 else
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    textBox3.AppendText("Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine);
-                    errorTypesLines[errorIndex + 1] += "\t0" + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + Environment.NewLine);
+                    errorTypesLines[errorIndex] += "\t0" + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
-                wb.Close(false);
-                errorIndex++;
+                wb.Close(true);
             }
             originalWB.Close(false);
             string outText = "";
