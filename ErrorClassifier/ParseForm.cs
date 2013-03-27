@@ -226,7 +226,8 @@ namespace ErrorClassifier
             Excel.Workbook wb = wbs[1];
             Excel.Worksheet ws = wb.Worksheets[1];
 
-            textBox1.Text += Environment.NewLine + "Parsing CSV file" + Environment.NewLine;
+            textBox1.Text += Environment.NewLine + Environment.NewLine + "Parsing CSV file." + Environment.NewLine;
+            
             //Parse csv file
             //Read in the file
             //string fileText = System.IO.File.ReadAllText(@openFileDialog.FileName);
@@ -238,7 +239,7 @@ namespace ErrorClassifier
             for (int i = 0; i < fileLines.Length; i++)
             {
                 string line = fileLines[i];
-                string lineTokens = "";
+                string lineTokens = "Headers: ";
                 List<string> tokenHeaders = new List<string>();
                 if (i == 0)
                 {
@@ -263,18 +264,19 @@ namespace ErrorClassifier
                         tokenIndex++;
                     }
                     lineTokens += Environment.NewLine;
-                    textBox1.Text += lineTokens;
+                    textBox1.Text += "\t" + lineTokens;
                     tokenHeadersArray = tokenHeaders.ToArray();
-                    textBox1.Text += Environment.NewLine + "inputIndices: ";
+                    textBox1.Text += Environment.NewLine + "\tinputIndices: ";
                     foreach (int inputIndex in inputIndices)
                     {
                         textBox1.Text += inputIndex + " ";
                     }
-                    textBox1.Text += Environment.NewLine + "answerIndices: ";
+                    textBox1.Text += Environment.NewLine + "\tanswerIndices: ";
                     foreach (int outputIndex in answerIndices)
                     {
                         textBox1.Text += outputIndex + " ";
                     }
+                    textBox1.Text += Environment.NewLine + Environment.NewLine + "Creating a new Excel file from each error:";
                 }                
                 else
                 {
@@ -289,7 +291,7 @@ namespace ErrorClassifier
                     string[] tokensArray = tokensList.ToArray();
 
                     jobID = int.Parse(tokensArray[jobIdIndex]);
-
+                    string createdFiles = "";
                     for (int index = 0; index < 10; index++)
                     {
                         //if the input and the answer are different
@@ -297,7 +299,7 @@ namespace ErrorClassifier
                         {
                             errorCount++;
                             //Create a new Excel file for this error
-                            string errorFileName = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + errorCount + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
+                            string errorFileName = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_fuzz_" + errorCount + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                             
                             // get error cell's address -- look it up in turkJobs
                             TurkJob t = turkJobs[jobID];
@@ -313,7 +315,7 @@ namespace ErrorClassifier
                             errorCell.Value = tokensArray[answerIndices[index]];
                             errorCell.Interior.Color = Color.Blue;
 
-                            textBox1.Text += "Created " + errorFileName + Environment.NewLine;
+                            createdFiles += "\tCreated file " + errorFileName + Environment.NewLine;
 
                             // save
                             wb.SaveAs(errorFileName);
@@ -396,12 +398,7 @@ namespace ErrorClassifier
                     {
                         textBox1.Text += tokensArray[answerIndices[ind]] + "\t";
                     }
-                    //foreach (string tok in tokensArray)
-                    //{
-                    //    lineTokens += tok + " | ";
-                    //}
-                    //textBox1.Text += lineTokens + Environment.NewLine;
-                    textBox1.Text += Environment.NewLine;
+                    textBox1.Text += Environment.NewLine + createdFiles + Environment.NewLine + Environment.NewLine;
                 }
             }
             textBox2.Text += errorTypesTable + Environment.NewLine;

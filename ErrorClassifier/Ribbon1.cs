@@ -19,7 +19,7 @@ namespace ErrorClassifier
             form.ShowDialog();
         }
 
-        private void buttonOpenParser_Click(object sender, RibbonControlEventArgs e)
+        private void buttonOpenTool_Click(object sender, RibbonControlEventArgs e)
         {
             ParseForm parseForm = new ParseForm();
             parseForm.ShowDialog();

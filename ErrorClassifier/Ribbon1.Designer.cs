@@ -37,7 +37,7 @@
             this.tab1 = this.Factory.CreateRibbonTab();
             this.group1 = this.Factory.CreateRibbonGroup();
             this.buttonOpenDialog = this.Factory.CreateRibbonButton();
-            this.buttonOpenParser = this.Factory.CreateRibbonButton();
+            this.buttonOpenTool = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             // 
@@ -51,7 +51,7 @@
             // group1
             // 
             this.group1.Items.Add(this.buttonOpenDialog);
-            this.group1.Items.Add(this.buttonOpenParser);
+            this.group1.Items.Add(this.buttonOpenTool);
             this.group1.Label = "Error Classifier";
             this.group1.Name = "group1";
             // 
@@ -61,11 +61,11 @@
             this.buttonOpenDialog.Name = "buttonOpenDialog";
             this.buttonOpenDialog.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonOpenDialog_Click);
             // 
-            // buttonOpenParser
+            // buttonOpenTool
             // 
-            this.buttonOpenParser.Label = "Open CSV Parser Dialog";
-            this.buttonOpenParser.Name = "buttonOpenParser";
-            this.buttonOpenParser.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonOpenParser_Click);
+            this.buttonOpenTool.Label = "Open Experiment Tool";
+            this.buttonOpenTool.Name = "buttonOpenTool";
+            this.buttonOpenTool.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonOpenTool_Click);
             // 
             // Ribbon1
             // 
@@ -85,7 +85,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonOpenDialog;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonOpenParser;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonOpenTool;
     }
 
     partial class ThisRibbonCollection
