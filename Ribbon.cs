@@ -7,7 +7,9 @@ using DataDebugMethods;
 using TreeNode = DataDebugMethods.TreeNode;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
-using System.Xml;
+using Microsoft.FSharp.Core;
+using System.IO;
+using System.Linq;
 
 namespace DataDebug
 {
@@ -61,23 +63,48 @@ namespace DataDebug
         // Button for outputting MTurk HIT CSVs
         private void button7_Click(object sender, RibbonControlEventArgs e)
         {
-            // get MTurk jobs
-            var turkjobs = ConstructTree.DataForMTurk(Globals.ThisAddIn.Application);
+            // the longest input field we can represent on MTurk
+            const int MAXLEN = 20;
+
+            // get MTurk jobs or fail is spreadsheet data cells are too long
+            TurkJob[] turkjobs;
+            var turkjobs_opt = ConstructTree.DataForMTurk(Globals.ThisAddIn.Application, MAXLEN);
+            if (FSharpOption<TurkJob[]>.get_IsSome(turkjobs_opt))
+            {
+                turkjobs = turkjobs_opt.Value;
+            }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet contains data items with lengths longer than " + MAXLEN + " characters and cannot be converted into an MTurk job.");
+                return;
+            }
 
             // get workbook name
             var wbname = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
 
-            // prompt for filename
-            var saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            saveFileDialog1.FileName = wbname + ".arr";
-            saveFileDialog1.Filter = "DataDebug Data File|*.arr";
-            saveFileDialog1.Title = "Save a Data File";
-            saveFileDialog1.ShowDialog();
+            // prompt for folder name
+            var sFD = new System.Windows.Forms.FolderBrowserDialog();
+            sFD.ShowDialog();
 
-            // If the file name is not an empty string open it for saving.
-            if (saveFileDialog1.FileName != "")
+            // If the path is not an empty string, go ahead
+            if (sFD.SelectedPath != "")
             {
-                TurkJob.SerializeArray(saveFileDialog1.FileName, turkjobs);
+                // write key file
+                var outfile = Path.Combine(sFD.SelectedPath, wbname + ".arr");
+                TurkJob.SerializeArray(outfile, turkjobs);
+
+                // write images, 2 for each TurkJob
+                foreach (TurkJob tj in turkjobs)
+                {
+                    tj.WriteAsImages(sFD.SelectedPath, wbname);
+                }
+
+                // write CSV
+                var csvfile = Path.Combine(sFD.SelectedPath, wbname + ".csv");
+                var lines = new List<string>();
+                lines.Add(turkjobs[0].ToCSVHeaderLine(wbname));
+                lines.AddRange(turkjobs.Select(turkjob => turkjob.ToCSVLine(wbname)));
+                File.WriteAllLines(csvfile, lines);
 
                 //// sanity check
                 //TurkJob[] fromfile = TurkJob.DeserializeArray(saveFileDialog1.FileName);
