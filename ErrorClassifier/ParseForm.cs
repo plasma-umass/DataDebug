@@ -76,21 +76,26 @@ namespace ErrorClassifier
                             tokenIndex++;
                         }
                         lineTokens += Environment.NewLine;
-                        textBox1.Text += lineTokens;
-                        textBox1.Text += Environment.NewLine + "inputIndices: ";
+                        //textBox1.Text += lineTokens;
+                        textBox1.AppendText(lineTokens);
+                        //textBox1.Text += Environment.NewLine + "inputIndices: ";
+                        textBox1.AppendText(Environment.NewLine + "inputIndices: ");
                         foreach (int inputIndex in inputIndices)
                         {
-                            textBox1.Text += inputIndex + ", ";
+                            //textBox1.Text += inputIndex + ", ";
+                            textBox1.AppendText(inputIndex + ", ");
                         }
                         textBox1.Text += Environment.NewLine + "outputIndices: ";
                         foreach (int outputIndex in outputIndices)
                         {
-                            textBox1.Text += outputIndex + ", ";
+                            //textBox1.Text += outputIndex + ", ";
+                            textBox1.AppendText(outputIndex + ", ");
                         }
                     }
                     else
                     {
-                        textBox1.Text += Environment.NewLine;
+                        //textBox1.Text += Environment.NewLine;
+                        textBox1.AppendText(Environment.NewLine);
                         List<string> tokensList = new List<string>();
                         while (line.Length > 0)
                         {
@@ -110,7 +115,8 @@ namespace ErrorClassifier
                         {
                             lineTokens += tok + " | ";
                         }
-                        textBox1.Text += lineTokens + Environment.NewLine;
+                        //textBox1.Text += lineTokens + Environment.NewLine;
+                        textBox1.AppendText(lineTokens + Environment.NewLine);
                     }
                 }
             }
@@ -160,7 +166,8 @@ namespace ErrorClassifier
             //newLine[0] = "";
             //Array.Resize(ref array1, numLines + 1);
             //Array.Copy(newLine, 0, array1, numLines, newLine.Length);
-            textBox1.Text += results[0] + Environment.NewLine;
+            //textBox1.Text += results[0] + Environment.NewLine;
+            textBox1.AppendText(results[0] + Environment.NewLine);
         }  //End chompButton_Click
 
         private void selectFolder_Click(object sender, EventArgs e)
@@ -173,12 +180,15 @@ namespace ErrorClassifier
             }
             //a folder was chosen 
             folderPath = @selectFolderDialog.SelectedPath;
-            textBox1.Text += Environment.NewLine + "Folder was selected: " + folderPath;
-            textBox1.Text += Environment.NewLine + "Checking for necessary files";
+            //textBox1.Text += Environment.NewLine + "Folder was selected: " + folderPath;
+            textBox1.AppendText(Environment.NewLine + "Folder was selected: " + folderPath);
+            //textBox1.Text += Environment.NewLine + "Checking for necessary files";
+            textBox1.AppendText(Environment.NewLine + "Checking for necessary files");
             string[] csvFilePaths = Directory.GetFiles(folderPath, "*.csv");
             if (csvFilePaths.Length == 0)
             {
-                textBox1.Text += Environment.NewLine + "ERROR: CSV file not found";
+                //textBox1.Text += Environment.NewLine + "ERROR: CSV file not found";
+                textBox1.AppendText(Environment.NewLine + "ERROR: CSV file not found");
                 return;
             }
             textBox1.Text += Environment.NewLine + "CSV: " + csvFilePaths[0];
@@ -186,10 +196,12 @@ namespace ErrorClassifier
             string[] arrFilePaths = Directory.GetFiles(folderPath, "*.arr");
             if (arrFilePaths.Length == 0)
             {
-                textBox1.Text += Environment.NewLine + "ERROR: Array file not found";
+                //textBox1.Text += Environment.NewLine + "ERROR: Array file not found";
+                textBox1.AppendText(Environment.NewLine + "ERROR: Array file not found");
                 return;
             }
-            textBox1.Text += Environment.NewLine + "Array file: " + arrFilePaths[0];
+            //textBox1.Text += Environment.NewLine + "Array file: " + arrFilePaths[0];
+            textBox1.AppendText(Environment.NewLine + "Array file: " + arrFilePaths[0]);
             arrFilePath = arrFilePaths[0];
 
             //Look for xls or xlsx
@@ -197,17 +209,20 @@ namespace ErrorClassifier
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
             if (xlsFilePaths.Length == 0 && xlsxFilePaths.Length == 0)
             {
-                textBox1.Text += Environment.NewLine + "ERROR: XLS/XLSX file not found";
+                //textBox1.Text += Environment.NewLine + "ERROR: XLS/XLSX file not found";
+                textBox1.AppendText(Environment.NewLine + "ERROR: XLS/XLSX file not found");
                 return;
             }
             if (xlsxFilePaths.Length != 0)
             {
-                textBox1.Text += Environment.NewLine + "Excel file: " + xlsxFilePaths[0];
+                //textBox1.Text += Environment.NewLine + "Excel file: " + xlsxFilePaths[0];
+                textBox1.AppendText(Environment.NewLine + "Excel file: " + xlsxFilePaths[0]);
                 xlsFilePath = xlsxFilePaths[0];
             }
             else
             {
-                textBox1.Text += Environment.NewLine + "Excel file: " + xlsFilePaths[0];
+                //textBox1.Text += Environment.NewLine + "Excel file: " + xlsFilePaths[0];
+                textBox1.AppendText(Environment.NewLine + "Excel file: " + xlsFilePaths[0]);
                 xlsFilePath = xlsFilePaths[0];
             }
         }  //End selectFolder_Click
@@ -218,7 +233,7 @@ namespace ErrorClassifier
             string[] tokenHeadersArray = null;
             TurkJob[] turkJobs = TurkJob.DeserializeArray(arrFilePath); //Indexed by jobID, this holds the addresses of all the cells
             errorCount = 0;
-            errorTypesTable = "Error Number\tJobID\tCell Index\tMisplaced Decimal\tSign Omission\tDecimal Point Omission\t" +
+            errorTypesTable = "Error Number\tJobID\tResponder\tCell Index\tMisplaced Decimal\tSign Omission\tDecimal Point Omission\t" +
             "Digit Repeat\tExtra Digit\tWrong Digit\tDigit Omission\tBlank Input\tOther" + Environment.NewLine;
             
             // create new file
@@ -226,7 +241,8 @@ namespace ErrorClassifier
             Excel.Workbook wb = wbs[1];
             Excel.Worksheet ws = wb.Worksheets[1];
 
-            textBox1.Text += Environment.NewLine + Environment.NewLine + "Parsing CSV file." + Environment.NewLine;
+            //textBox1.Text += Environment.NewLine + Environment.NewLine + "Parsing CSV file." + Environment.NewLine;
+            textBox1.AppendText(Environment.NewLine + Environment.NewLine + "Parsing CSV file." + Environment.NewLine);
             
             //Parse csv file
             //Read in the file
@@ -264,23 +280,30 @@ namespace ErrorClassifier
                         tokenIndex++;
                     }
                     lineTokens += Environment.NewLine;
-                    textBox1.Text += "\t" + lineTokens;
+                    //textBox1.Text += "\t" + lineTokens;
+                    textBox1.AppendText("\t" + lineTokens);
                     tokenHeadersArray = tokenHeaders.ToArray();
-                    textBox1.Text += Environment.NewLine + "\tinputIndices: ";
+                    //textBox1.Text += Environment.NewLine + "\tinputIndices: ";
+                    textBox1.AppendText(Environment.NewLine + "\tinputIndices: ");
                     foreach (int inputIndex in inputIndices)
                     {
-                        textBox1.Text += inputIndex + " ";
+                        //textBox1.Text += inputIndex + " ";
+                        textBox1.AppendText(inputIndex + " ");
                     }
-                    textBox1.Text += Environment.NewLine + "\tanswerIndices: ";
+                    //textBox1.Text += Environment.NewLine + "\tanswerIndices: ";
+                    textBox1.AppendText(Environment.NewLine + "\tanswerIndices: ");
                     foreach (int outputIndex in answerIndices)
                     {
-                        textBox1.Text += outputIndex + " ";
+                        //textBox1.Text += outputIndex + " ";
+                        textBox1.AppendText(outputIndex + " ");
                     }
-                    textBox1.Text += Environment.NewLine + Environment.NewLine + "Creating a new Excel file from each error:";
+                    //textBox1.Text += Environment.NewLine + Environment.NewLine + "Creating a new Excel file from each error:";
+                    textBox1.AppendText(Environment.NewLine + Environment.NewLine + "Creating a new Excel file from each error:");
                 }                
                 else
                 {
-                    textBox1.Text += Environment.NewLine + Environment.NewLine;
+                    //textBox1.Text += Environment.NewLine + Environment.NewLine;
+                    textBox1.AppendText(Environment.NewLine + Environment.NewLine);
                     List<string> tokensList = new List<string>();
                     int jobID = -1; 
                     while (line.Length > 0)
@@ -297,14 +320,21 @@ namespace ErrorClassifier
                         //if the input and the answer are different
                         if (!tokensArray[inputIndices[index]].Equals(tokensArray[answerIndices[index]]))
                         {
-                            errorCount++;
-                            //Create a new Excel file for this error
-                            string errorFileName = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_fuzz_" + errorCount + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
-                            
                             // get error cell's address -- look it up in turkJobs
                             TurkJob t = turkJobs[jobID];
                             string errorCellAddress = t.GetAddrAt(index);
+                            if (errorCellAddress.Equals("ZAA221"))
+                            {
+                                continue;
+                            }
+                            
+                            errorCount++;
+                            
+                            //Create a new Excel file for this error
+                            string errorFileName = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_fuzz_" + errorCount + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
+                            
                             errorAddresses.Add(errorCellAddress);
+                            
                             Excel.Range errorCell = ws.get_Range(errorCellAddress); //errorCellAddress);
                             
                             //Store original value
@@ -384,24 +414,30 @@ namespace ErrorClassifier
                                 }
                             }
                             errorTypesString = errorTypesString.Remove(errorTypesString.Length - 1);
-                            errorTypesTable += errorCount + "\t"+ jobID + "\t" + index + "\t" + errorTypesString + Environment.NewLine;
+                            errorTypesTable += errorCount + "\t"+ jobID + "\t" + i + "\t" + index + "\t" + errorTypesString + Environment.NewLine;
                             tokensArray[answerIndices[index]] = "<" + tokensArray[answerIndices[index]] + ">";
                         }
                     }
-                    textBox1.Text += "JobID " + jobID + ":" + Environment.NewLine + "Inputs:" + Environment.NewLine;
+                    //textBox1.Text += "JobID " + jobID + ":" + Environment.NewLine + "Inputs:" + Environment.NewLine;
+                    textBox1.AppendText("JobID " + jobID + ", Responder " + i + ":" + Environment.NewLine + "Inputs:" + Environment.NewLine);
                     for (int ind = 0; ind < 10; ind++)
                     {
-                        textBox1.Text += tokensArray[inputIndices[ind]] + "\t";
+                        //textBox1.Text += tokensArray[inputIndices[ind]] + "\t";
+                        textBox1.AppendText(tokensArray[inputIndices[ind]] + "\t");
                     }
-                    textBox1.Text += Environment.NewLine + "Answers:" + Environment.NewLine;
+                    //textBox1.Text += Environment.NewLine + "Answers:" + Environment.NewLine;
+                    textBox1.AppendText(Environment.NewLine + "Answers:" + Environment.NewLine);
                     for (int ind = 0; ind < 10; ind++)
                     {
-                        textBox1.Text += tokensArray[answerIndices[ind]] + "\t";
+                        //textBox1.Text += tokensArray[answerIndices[ind]] + "\t";
+                        textBox1.AppendText(tokensArray[answerIndices[ind]] + "\t");
                     }
-                    textBox1.Text += Environment.NewLine + createdFiles + Environment.NewLine + Environment.NewLine;
+                    //textBox1.Text += Environment.NewLine + createdFiles + Environment.NewLine + Environment.NewLine;
+                    textBox1.AppendText(Environment.NewLine + createdFiles + Environment.NewLine + Environment.NewLine);
                 }
             }
-            textBox2.Text += errorTypesTable + Environment.NewLine;
+            //textBox2.Text += errorTypesTable + Environment.NewLine;
+            textBox2.AppendText(errorTypesTable + Environment.NewLine);
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", errorTypesTable);
             wb.Close(false);
             wbs.Close();
@@ -416,11 +452,13 @@ namespace ErrorClassifier
 
         private void runTool_Click(object sender, EventArgs e)
         {
-            textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
+            //textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
+            textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-            textBox1.Text += "Running analysis." + Environment.NewLine;
+            //textBox1.Text += "Running analysis." + Environment.NewLine;
+            textBox1.AppendText("Running analysis." + Environment.NewLine);
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -444,28 +482,35 @@ namespace ErrorClassifier
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
-            textBox1.Text += "Done." + Environment.NewLine;
+            //textBox1.Text += "Done." + Environment.NewLine;
+            textBox1.AppendText("Done." + Environment.NewLine);
 
             string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
             errorTypesLines[0] += "\tDetected" + Environment.NewLine;
 
-            int errorIndex = 0;
+            //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
-            foreach (string file in xlsFilePaths)
+            
+            for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
+            //foreach (string file in xlsFilePaths)
             {
+                string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_fuzz_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                 if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
                 {
                     continue;
                 }
-                textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
-                textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
+                //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
+                textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
+                //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
+                textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
                 //Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
                 //Excel.Workbook wb = wbs[1];
                 Excel.Worksheet ws = wb.Worksheets[1];
 
-                textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
+                //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
+                textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -489,20 +534,24 @@ namespace ErrorClassifier
 
                 // Enable screen updating when we're done
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
-                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex]);
+                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
-                    textBox3.Text += "Error " + (errorIndex + 1) +" DETECTED." + Environment.NewLine;
-                    errorTypesLines[errorIndex + 1] += "\t1" + Environment.NewLine;
+                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + Environment.NewLine);
+                    errorTypesLines[errorIndex] += "\t1" + Environment.NewLine;
                 }
                 else
                 {
-                    textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    errorTypesLines[errorIndex + 1] += "\t0" + Environment.NewLine;
+                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + Environment.NewLine);
+                    errorTypesLines[errorIndex] += "\t0" + Environment.NewLine;
                 }
-                textBox1.Text += "Done." + Environment.NewLine;
-                errorIndex++;
+                //textBox1.Text += "Done." + Environment.NewLine;
+                textBox1.AppendText("Done." + Environment.NewLine);
+                wb.Close(true);
             }
+            originalWB.Close(false);
             string outText = "";
             foreach (string line in errorTypesLines)
             {
@@ -549,20 +598,20 @@ namespace ErrorClassifier
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            textBox1.SelectionStart = textBox1.Text.Length;
-            textBox1.ScrollToCaret();
+            //textBox1.SelectionStart = textBox1.Text.Length;
+            //textBox1.ScrollToCaret();
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
-            textBox2.SelectionStart = textBox2.Text.Length;
-            textBox2.ScrollToCaret();
+            //textBox2.SelectionStart = textBox2.Text.Length;
+            //textBox2.ScrollToCaret();
         }
 
         private void textBox3_TextChanged(object sender, EventArgs e)
         {
-            textBox3.SelectionStart = textBox3.Text.Length;
-            textBox3.ScrollToCaret();
+            //textBox3.SelectionStart = textBox3.Text.Length;
+            //textBox3.ScrollToCaret();
         }
     }
 }
