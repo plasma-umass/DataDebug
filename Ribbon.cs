@@ -22,7 +22,7 @@ namespace DataDebug
         }
 
         // Action for "Analyze Worksheet" button
-        private void button1_Click(object sender, RibbonControlEventArgs e)
+        public void button1_Click(object sender, RibbonControlEventArgs e)
         {
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;

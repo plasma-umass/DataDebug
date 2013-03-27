@@ -288,6 +288,16 @@ namespace DataDebugMethods
         public static bool TestDigitOmission(string enteredText, string originalText)
         {
             string originalString = originalText;
+            //If there is a sign omission, we want to compare the numeric part only
+            if (TestSignOmission(enteredText, originalText))
+            {
+                originalString = originalString.Substring(1);
+            }
+            //If there is a decimal omission, we want to compare the numeric part only
+            if (TestDecimalOmission(enteredText, originalText))
+            {
+                originalString = originalString.Replace(".", "");
+            }
             string enteredString = enteredText;
             bool startTheSame = false;
             bool endTheSame = false;
@@ -332,5 +342,17 @@ namespace DataDebugMethods
                 return false;
             }
         } //End TestDigitOmission
+
+        public static bool TestBlank(string enteredText, string originalText)
+        {
+            if (enteredText.Length == 0 && originalText.Length > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        } //End TestBlank
     }
 }
