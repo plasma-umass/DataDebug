@@ -149,6 +149,14 @@ namespace DataDebug
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
 
+            if (data.TerminalInputNodes().Length == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
+                data.pb.Close();
+                Globals.ThisAddIn.Application.ScreenUpdating = true;
+                return;
+            }
+
             // Get bootstraps
             var scores = Analysis.Bootstrap((int)(Math.Ceiling(1000 * Math.Exp(1.0))), data, this.weighted.Checked);
 

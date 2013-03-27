@@ -402,6 +402,13 @@ namespace DataDebugMethods
                                 weight = (int)t_fn.getWeight();
                             }
 
+                            
+
+                            if (xtree.getCOMObject().Address == "$B$4")
+                            {
+                                System.Windows.Forms.MessageBox.Show("Testing hypothesis for: " + xtree.getCOMObject().Address);
+                            }
+
                             if (RejectNullHypothesis(boots[f][i], initial_output, x))
                             {
 
