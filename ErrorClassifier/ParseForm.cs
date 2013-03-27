@@ -473,12 +473,31 @@ namespace ErrorClassifier
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
-
+            /*
             // Perturb data (modifies data)
-            Analysis.perturbationAnalysis(data);
+            //Analysis.perturbationAnalysis(data);
+
 
             // Find outliers (modifies data)
-            Analysis.outlierAnalysis(data);
+            //Analysis.outlierAnalysis(data);
+            */
+
+            if (data.TerminalInputNodes().Length == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
+                data.pb.Close();
+                Globals.ThisAddIn.Application.ScreenUpdating = true;
+                return;
+            }
+
+            // e * 1000
+            var NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+
+            // Get bootstraps
+            var scores = Analysis.Bootstrap(NBOOTS, data, true);
+
+            // Color outputs
+            Analysis.ColorOutputs(scores);
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
@@ -526,11 +545,30 @@ namespace ErrorClassifier
                 // Build dependency graph (modifies data)
                 ConstructTree.constructTree(data, app);
 
+                /*
                 // Perturb data (modifies data)
                 Analysis.perturbationAnalysis(data);
 
                 // Find outliers (modifies data)
                 Analysis.outlierAnalysis(data);
+                */
+
+                if (data.TerminalInputNodes().Length == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
+                    data.pb.Close();
+                    Globals.ThisAddIn.Application.ScreenUpdating = true;
+                    return;
+                }
+
+                // e * 1000
+                var NBOOTS1 = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+
+                // Get bootstraps
+                var scores1 = Analysis.Bootstrap(NBOOTS1, data, true);
+
+                // Color outputs
+                Analysis.ColorOutputs(scores1);
 
                 // Enable screen updating when we're done
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
