@@ -157,8 +157,11 @@ namespace DataDebug
                 return;
             }
 
+            // e * 1000
+            var NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+
             // Get bootstraps
-            var scores = Analysis.Bootstrap((int)(Math.Ceiling(1000 * Math.Exp(1.0))), data, this.weighted.Checked);
+            var scores = Analysis.Bootstrap(NBOOTS, data, this.weighted.Checked);
 
             // Color outputs
             Analysis.ColorOutputs(scores);
