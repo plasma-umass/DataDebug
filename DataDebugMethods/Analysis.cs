@@ -333,97 +333,141 @@ namespace DataDebugMethods
                     // this function's input range treenode
                     var t_rng = input_rngs[i];
 
+                    // this function's input cells
                     var input_cells = t_rng.getParents().ToArray();
 
-                    // number of inputs in input range
-                    var input_sz = input_cells.Length;
-
-                    // initial output
-                    var initial_output = initial_outputs[t_fn];
-
-                    // This is ugly because C# does not support specialization
-                    // of generic functions. TODO: make pretty.
-                    try
+                    // do the hypothesis test and then merge
+                    // the scores from previous tests
+                    TreeScore s;
+                    if (FunctionOutputsAreNumeric(boots[f][i]))
                     {
-                        // try converting to numeric
-                        var numeric_boots = ConvertToNumericOutput(boots[f][i]);
-
-                        // sort
-                        var sorted_num_boots = SortBootstraps(numeric_boots);
-
-                        // for each excluded index, test whether the original input
-                        // falls outside our bootstrap confidence bounds
-                        for (int x = 0; x < input_sz; x++)
-                        {
-                            // default weight
-                            int weight = 1;
-
-                            // add weight to score if test fails
-                            TreeNode xtree = input_cells[x];
-                            if (weighted)
-                            {
-                                // the weight of the function value of interest
-                                weight = (int)t_fn.getWeight();
-                            }
-
-                            if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
-                            {
-                                // get the xth indexed input in input_rng i
-                                if (iexc_scores.ContainsKey(xtree))
-                                {
-                                    iexc_scores[xtree] += weight;
-                                }
-                                else
-                                {
-                                    iexc_scores.Add(xtree, weight);
-                                }
-                            }
-                            else
-                            {
-                                // we need to at least add the value to the tree
-                                if (!iexc_scores.ContainsKey(xtree))
-                                {
-                                    iexc_scores.Add(xtree, 0);
-                                }
-                            }
-                        }
+                        s = NumericHypothesisTest(input_cells, boots[f][i], t_fn, initial_outputs[t_fn], weighted);
+                    } else {
+                        s = StringHypothesisTest(input_cells, boots[f][i], t_fn, initial_outputs[t_fn], weighted);
                     }
-                    catch (FormatException)
+                    iexc_scores = DictAdd(iexc_scores, s);
+                }
+            }
+            return iexc_scores;
+        }
+
+        public static TreeScore DictAdd(TreeScore d1, TreeScore d2)
+        {
+            var d3 = new TreeScore();
+            if (d1 != null)
+            {
+                foreach (KeyValuePair<TreeNode, int> pair in d1)
+                {
+                    d3.Add(pair.Key, pair.Value);
+                }
+            }
+            if (d2 != null)
+            {
+                foreach (KeyValuePair<TreeNode, int> pair in d2)
+                {
+                    int score;
+                    if (d3.TryGetValue(pair.Key, out score))
                     {
-                        for (int x = 0; x < input_sz; x++)
-                        {
-                            // default weight
-                            int weight = 1;
+                        d3[pair.Key] = score + pair.Value;
+                    }
+                    else
+                    {
+                        d3.Add(pair.Key, pair.Value);
+                    }
+                }
+            }
 
-                            // add weight to score if test fails
-                            TreeNode xtree = input_cells[x];
-                            if (weighted)
-                            {
-                                // the weight of the function value of interest
-                                weight = (int)t_fn.getWeight();
-                            }
+            return d3;
+        }
 
-                            if (RejectNullHypothesis(boots[f][i], initial_output, x))
-                            {
+        public static TreeScore StringHypothesisTest(TreeNode[] input_cells, FunctionOutput<string>[] boots, TreeNode t_fn, string initial_output, bool weighted)
+        {
+            // scores
+            var iexc_scores = new TreeScore();
 
-                                if (iexc_scores.ContainsKey(xtree))
-                                {
-                                    iexc_scores[xtree] += weight;
-                                }
-                                else
-                                {
-                                    iexc_scores.Add(xtree, weight);
-                                }
-                            }
-                            else
-                            {
-                                // we need to at least add the value to the tree
-                                if (!iexc_scores.ContainsKey(xtree))
-                                {
-                                    iexc_scores.Add(xtree, 0);
-                                }
-                            }
-                        }
+            // exclude each index, in turn
+            for (int x = 0; x < input_cells.Length; x++)
+            {
+                // default weight
+                int weight = 1;
+
+                // add weight to score if test fails
+                TreeNode xtree = input_cells[x];
+                if (weighted)
+                {
+                    // the weight of the function value of interest
+                    weight = (int)t_fn.getWeight();
+                }
+
+                if (RejectNullHypothesis(boots, initial_output, x))
+                {
+
+                    if (iexc_scores.ContainsKey(xtree))
+                    {
+                        iexc_scores[xtree] += weight;
+                    }
+                    else
+                    {
+                        iexc_scores.Add(xtree, weight);
+                    }
+                }
+                else
+                {
+                    // we need to at least add the value to the tree
+                    if (!iexc_scores.ContainsKey(xtree))
+                    {
+                        iexc_scores.Add(xtree, 0);
+                    }
+                }
+            }
+
+            return iexc_scores;
+        }
+
+        public static TreeScore NumericHypothesisTest(TreeNode[] input_cells, FunctionOutput<string>[] boots, TreeNode t_fn, string initial_output, bool weighted)
+        {
+            // scores
+            var iexc_scores = new TreeScore();
+
+            // convert to numeric
+            var numeric_boots = ConvertToNumericOutput(boots);
+
+            // sort
+            var sorted_num_boots = SortBootstraps(numeric_boots);
+
+            // for each excluded index, test whether the original input
+            // falls outside our bootstrap confidence bounds
+            for (int x = 0; x < input_cells.Length; x++)
+            {
+                // default weight
+                int weight = 1;
+
+                // add weight to score if test fails
+                TreeNode xtree = input_cells[x];
+                if (weighted)
+                {
+                    // the weight of the function value of interest
+                    weight = (int)t_fn.getWeight();
+                }
+
+                if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
+                {
+                    // get the xth indexed input in input_rng i
+                    if (iexc_scores.ContainsKey(xtree))
+                    {
+                        iexc_scores[xtree] += weight;
+                    }
+                    else
+                    {
+                        iexc_scores.Add(xtree, weight);
+                    }
+                }
+                else
+                {
+                    // we need to at least add the value to the tree
+                    if (!iexc_scores.ContainsKey(xtree))
+                    {
+                        iexc_scores.Add(xtree, 0);
                     }
                 }
             }

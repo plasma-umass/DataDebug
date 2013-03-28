@@ -49,7 +49,6 @@ namespace DataDebug
 
         void app_WorkbookBeforeClose(Excel.Workbook wb, ref bool cancel)
         {
-            System.Windows.Forms.MessageBox.Show("close");
             color_dict.Remove(wb);
             if (current_workbook == wb)
             {
@@ -186,7 +185,13 @@ namespace DataDebug
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, this.weighted.Checked);
 
-            System.Windows.Forms.MessageBox.Show(scores.Count + " outliers found.");
+            string s = "";
+            foreach (KeyValuePair<TreeNode, int> pair in scores)
+            {
+                s += pair.Key.getCOMObject().Address + " -> " + pair.Value + "\n";
+            }
+            s += "\n" + scores.Count + " outliers found.";
+            System.Windows.Forms.MessageBox.Show(s);
 
             // Color outputs
             Analysis.ColorOutputs(scores);

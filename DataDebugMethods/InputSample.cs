@@ -71,5 +71,9 @@ namespace DataDebugMethods
         {
             return String.Join(",", _input_array);
         }
+        public string[] GetInputArray()
+        {
+            return _input_array;
+        }
     }
 }
