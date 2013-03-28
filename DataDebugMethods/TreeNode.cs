@@ -32,7 +32,9 @@ namespace DataDebugMethods
         private Excel.Range _COM;
         private bool _dont_perturb = false; // this flag indicates that this is an input range which contains non-perturbable elements, like function outputs.  We assume, by default, that all treenodes are perturbable.
         //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
-        public TreeNode(string n, Excel.Worksheet ws, Excel.Workbook wb)
+        private int _height = 1;
+        private int _width = 1;
+        public TreeNode(Excel.Range com, string n, Excel.Worksheet ws, Excel.Workbook wb)
         {
             _parents = new List<TreeNode>();
             _children = new List<TreeNode>();
@@ -50,8 +52,12 @@ namespace DataDebugMethods
             _weight = 0.0;
             _chart = false;
             _is_formula = false;
+            _COM = com;
+            _height = com.Rows.Count;
+            _width = com.Columns.Count;
         }
-
+        public int Columns() { return _width; }
+        public int Rows() { return _height; }
         public void DontPerturb()
         {
             _dont_perturb = true;
@@ -349,10 +355,10 @@ namespace DataDebugMethods
             return _formula;
         }
 
-        public void addCOM(Excel.Range range)
-        {
-            _COM = range;
-        }
+        //public void addCOM(Excel.Range range)
+        //{
+        //    _COM = range;
+        //}
 
         public Excel.Range getCOMObject()
         {

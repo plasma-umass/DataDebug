@@ -161,7 +161,7 @@ namespace DataDebugMethods
                     if (cell.Value2 != null)
                     {
                         var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], wb, cell.Worksheet);
-                        var n = new TreeNode(cell.Address, cell.Worksheet, wb);
+                        var n = new TreeNode(cell, cell.Address, cell.Worksheet, wb);
                         
                         if (cell.HasFormula)
                         {
@@ -172,7 +172,6 @@ namespace DataDebugMethods
                                 throw new Exception("null formula!!! argh!!!");
                             }
                             n.setFormula(cell.Formula);
-                            n.addCOM(cell);     // add a reference to the COM object
                             nodes.Add(addr, n);
                         }
                     }
@@ -660,7 +659,7 @@ namespace DataDebugMethods
                 {
                     //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
                     var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet);
-                    cellNode = new TreeNode(cell.Address, cell.Worksheet, formulaNode.getWorkbookObject());
+                    cellNode = new TreeNode(cell, cell.Address, cell.Worksheet, formulaNode.getWorkbookObject());
 
                     // Add to cell_nodes, not formula_nodes
                     if (!cell_nodes.ContainsKey(addr))
@@ -671,12 +670,6 @@ namespace DataDebugMethods
                     {
                         cellNode = cell_nodes[addr];
                     }
-                }
-
-                // add a reference to the COM object if it is missing
-                if (cellNode.getCOMObject() == null)
-                {
-                    cellNode.addCOM(cell);
                 }
 
                 // check whether this cell is a formula; if it is, set the "don't perturb" bit on the range
@@ -709,8 +702,7 @@ namespace DataDebugMethods
             }
             if (rangeNode == null)
             {
-                rangeNode = new TreeNode(range.Address, range.Worksheet, node.getWorkbookObject());
-                rangeNode.addCOM(range);
+                rangeNode = new TreeNode(range, range.Address, range.Worksheet, node.getWorkbookObject());
                 ranges.Add(rangeNode);
             }
             return rangeNode;

@@ -162,18 +162,22 @@ namespace DataDebugMethods
             foreach (TreeNode input_range in inputs)
             {
                 var com = input_range.getCOMObject();
-                var s = new InputSample(com.Count);
+                var s = new InputSample(input_range.Rows(), input_range.Columns());
 
-                // store each input cell's contents
-                foreach (Excel.Range cell in com)
-                {
-                    if (cell.HasFormula)
-                    {
-                        throw new Exception("StoreInputs should never encounter a formula.");
-                    }
-                    // save as a string
-                    s.Add(cell.Value2.ToString());
-                }
+                // store the entire COM array as a multiarray
+                // in one swell foop.
+                s.AddArray(com.Value2);
+
+                //// store each input cell's contents
+                //foreach (Excel.Range cell in com)
+                //{
+                //    if (cell.HasFormula)
+                //    {
+                //        throw new Exception("StoreInputs should never encounter a formula.");
+                //    }
+                //    // save as a string
+                //    s.Add(cell.Value2.ToString());
+                //}
                 // add stored input to dict
                 d.Add(input_range, s);
 
@@ -229,7 +233,7 @@ namespace DataDebugMethods
             // bootstrapped samples
             for (var i = 0; i < num_bootstraps; i++)
             {
-                var s = new InputSample(orig_vals.Length());
+                var s = new InputSample(orig_vals.Rows(), orig_vals.Columns());
 
                 // make a vector of index counters
                 var inc_count = new int[orig_vals.Length()];
@@ -451,10 +455,6 @@ namespace DataDebugMethods
 
                 // add weight to score if test fails
                 TreeNode xtree = input_cells[x];
-                if (xtree.getCOMObject().Address == "$C$13")
-                {
-                    var foo = "bar";
-                }
                 if (weighted)
                 {
                     // the weight of the function value of interest
@@ -518,8 +518,12 @@ namespace DataDebugMethods
                     cval = (int)(255 * (pair.Value - low_score) / (max_score - low_score));
                 }
                 // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
-                var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
-                cell.getCOMObject().Interior.Color = color;
+                // if cval == 0, skip, because otherwise we end up coloring it white
+                if (cval != 0)
+                {
+                    var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
+                    cell.getCOMObject().Interior.Color = color;
+                }
             }
         }
 
