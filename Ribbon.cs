@@ -19,6 +19,7 @@ namespace DataDebug
         Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
         Excel.Application app;
         Excel.Workbook current_workbook;
+        AnalysisData crap;
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -170,6 +171,17 @@ namespace DataDebug
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
+            if (crap == null)
+            {
+                crap = data;
+            }
+            else
+            {
+                if (!data.compare(crap))
+                {
+                    System.Windows.Forms.MessageBox.Show("Bah.");
+                }
+            }
 
             if (data.TerminalInputNodes().Length == 0)
             {

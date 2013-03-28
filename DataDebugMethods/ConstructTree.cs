@@ -720,9 +720,10 @@ namespace DataDebugMethods
         {
             foreach (KeyValuePair<AST.Address, TreeNode> pair in ts)
             {
-                if (pair.Value.getCOMValueAsString().Length > len)
+                if (pair.Value.getCOMValueAsString() != null &&
+                    pair.Value.getCOMValueAsString().Length > len)
                 {
-                    return false;
+                     return false;
                 }
             }
             return true;
@@ -753,33 +754,42 @@ namespace DataDebugMethods
             {
                 rows = data.cell_nodes.Count / WIDTH;
             }
-            var output = new string[rows][];
-            var addrs = new string[rows][];
+            var output = new string[rows, WIDTH];
+            var addrs = new string[rows, WIDTH];
+            //var output = new string[rows][];
+            //var addrs = new string[rows][];
 
             // split data
             var j = 0;
             var i = 0;
-            addrs[i] = new string[WIDTH];
-            output[i] = new string[WIDTH];
+            //addrs[i] = new string[WIDTH];
+            //output[i] = new string[WIDTH];
             foreach (KeyValuePair<AST.Address,TreeNode> pair in data.cell_nodes)
             {
                 var t = pair.Value;
-                output[i][j] = Truncate(t.getCOMValueAsString(), maxlen);
-                addrs[i][j] = t.getCOMObject().Address;
+                if (t.getCOMValueAsString() != null)
+                {
+                    output[i,j] = t.getCOMValueAsString();
+                }
+                else
+                {
+                    output[i,j] = "";
+                }
+                addrs[i,j] = t.getCOMObject().Address;
                 j = (j + 1) % WIDTH;
                 if (j == 0)
                 {
                     i++;
-                    output[i] = new string[WIDTH];
-                    addrs[i] = new string[WIDTH];
+                    //output[i] = new string[WIDTH];
+                    //addrs[i] = new string[WIDTH];
                 }
             }
 
             // pad with empties, if necessary
             while (j != 0)
             {
-                output[i][j] = "ABRAHAMLINCOLN";
-                addrs[i][j] = "ZAA221";
+                output[i,j] = "ABRAHAMLINCOLN";
+                addrs[i,j] = "ZAA221";
                 j = (j + 1) % WIDTH;
             }
 
@@ -798,16 +808,23 @@ namespace DataDebugMethods
             }
         }
 
-        public static TurkJob[] ToMTurkJob(string[][] data, string[][] addrs)
+        public static TurkJob[] ToMTurkJob(string[,] data, string[,] addrs)
         {
-            var jobs = new TurkJob[data.Length];
+            var jobs = new TurkJob[data.GetLength(0)];
 
-            for (var job_id = 0; job_id < data.Length; job_id++)
+            for (var job_id = 0; job_id < data.GetLength(0); job_id++)
             {
                 var tj = new TurkJob();
                 tj.SetJobId(job_id);
-                tj.SetCells(data[job_id]);
-                tj.SetAddrs(addrs[job_id]);
+                var tjdata = new string[data.GetLength(1)];
+                var tjaddrs = new string[addrs.GetLength(1)];
+                for(var i = 0; i < data.GetLength(1); i++)
+                {
+                    tjdata[i] = data[job_id, i];
+                    tjaddrs[i] = addrs[job_id, i];
+                }
+                tj.SetCells(tjdata);
+                tj.SetAddrs(tjaddrs);
                 jobs[job_id] = tj;
             }
 

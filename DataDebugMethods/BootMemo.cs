@@ -48,21 +48,20 @@ namespace DataDebugMethods
             }
             return fo_arr;
         }
+
         public static void ReplaceExcelRange(Range com, InputSample input)
         {
             var i = 0;
-            //var sz = com.Cells.Count;
-            //com.Value2 = input.GetInputArray();
             foreach (Range cell in com)
             {
-                //if (i >= input.Length())
-                //{
-                //    System.Windows.Forms.MessageBox.Show("The parent COM range object has " + sz + " cells, but the saved input sample only has " + input.Length());
-                //}
-                //Debug.Assert(i < input.Length());
                 cell.Value2 = input.GetInput(i);
                 i++;
             }
         }
+
+        //public static void ReplaceExcelRange(Range com, InputSample input)
+        //{
+        //    com.Value2 = input.GetInputArray();
+        //}
     }
 }
