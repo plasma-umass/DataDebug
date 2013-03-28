@@ -49,7 +49,6 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.WhatTheFuck = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -67,7 +66,6 @@ namespace DataDebug
             this.group1.Items.Add(this.button1);
             this.group1.Items.Add(this.checkBox2);
             this.group1.Items.Add(this.button7);
-            this.group1.Items.Add(this.WhatTheFuck);
             this.group1.Items.Add(this.weighted);
             this.group1.Items.Add(this.TestNewProcedure);
             this.group1.Items.Add(this.button8);
@@ -155,12 +153,6 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
-            // WhatTheFuck
-            // 
-            this.WhatTheFuck.Label = "WhatTheFuck";
-            this.WhatTheFuck.Name = "WhatTheFuck";
-            this.WhatTheFuck.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.WhatTheFuck_Click);
-            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -193,7 +185,6 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton TestNewProcedure;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox weighted;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton WhatTheFuck;
     }
 
     partial class ThisRibbonCollection

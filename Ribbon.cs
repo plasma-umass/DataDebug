@@ -16,24 +16,60 @@ namespace DataDebug
     public partial class Ribbon
     {
         List<TreeNode> originalColorNodes = new List<TreeNode>(); //List for storing the original colors for all nodes
-        ColorDict Colors = new ColorDict();  // list for storing colors
+        Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
+        Excel.Application app;
+        Excel.Workbook current_workbook;
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
+            // init color storage
+            color_dict = new Dictionary<Excel.Workbook, List<RibbonHelper.CellColor>>();
 
+            // Get current app
+            app = Globals.ThisAddIn.Application;
+
+            // Get current workbook
+            current_workbook = app.ActiveWorkbook;
+            if (current_workbook != null)
+            {
+                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+            }
+
+            // register event handlers
+            app.WorkbookOpen += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookOpenEventHandler(app_WorkbookOpen);
+            app.WorkbookBeforeClose += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookBeforeCloseEventHandler(app_WorkbookBeforeClose);
+            app.WorkbookActivate += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookActivateEventHandler(app_WorkbookActivate);
+        }
+
+        void app_WorkbookOpen(Excel.Workbook wb)
+        {
+            current_workbook = wb;
+            color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+        }
+
+        void app_WorkbookBeforeClose(Excel.Workbook wb, ref bool cancel)
+        {
+            System.Windows.Forms.MessageBox.Show("close");
+            color_dict.Remove(wb);
+            if (current_workbook == wb)
+            {
+                current_workbook = null;
+            }
+        }
+
+        void app_WorkbookActivate(Excel.Workbook wb)
+        {
+            current_workbook = wb;
         }
 
         // Action for "Analyze Worksheet" button
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
             //Disable screen updating during perturbation and analysis to speed things up
-            Globals.ThisAddIn.Application.ScreenUpdating = false;
-
-            // Get current app
-            Excel.Application app = Globals.ThisAddIn.Application;
+            app.ScreenUpdating = false;
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            AnalysisData data = new AnalysisData(app);
             data.worksheets = app.Worksheets;
             data.global_stopwatch.Reset();
             data.global_stopwatch.Start();
@@ -42,10 +78,7 @@ namespace DataDebug
             data.Reset();
 
             // reset colors
-            RibbonHelper.DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
-
-            // save colors
-            RibbonHelper.SaveColors(ref Colors, app.ActiveWorkbook);
+            RibbonHelper.RestoreColors2(color_dict[current_workbook]);
             
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
@@ -57,7 +90,7 @@ namespace DataDebug
             Analysis.outlierAnalysis(data);
 
             // Enable screen updating when we're done
-            Globals.ThisAddIn.Application.ScreenUpdating = true;
+            app.ScreenUpdating = true;
         }
 
         // Button for outputting MTurk HIT CSVs
@@ -80,7 +113,7 @@ namespace DataDebug
             }
 
             // get workbook name
-            var wbname = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
+            var wbname = app.ActiveWorkbook.Name;
 
             // prompt for folder name
             var sFD = new System.Windows.Forms.FolderBrowserDialog();
@@ -105,54 +138,36 @@ namespace DataDebug
                 lines.Add(turkjobs[0].ToCSVHeaderLine(wbname));
                 lines.AddRange(turkjobs.Select(turkjob => turkjob.ToCSVLine(wbname)));
                 File.WriteAllLines(csvfile, lines);
-
-                //// sanity check
-                //TurkJob[] fromfile = TurkJob.DeserializeArray(saveFileDialog1.FileName);
-                //string csv = "job_id,cell1,cell2,cell3,cell4,cell5,cell6,cell7,cell8,cell9,cell10\n";
-                //foreach (TurkJob job in turkjobs)
-                //{
-                //    csv += job.ToCSVLine();
-                //}
-                //System.Windows.Forms.MessageBox.Show("This is what I got back:\n\n" + csv);
             }
         }
 
         // Action for "Clear coloring" button
         private void button8_Click(object sender, RibbonControlEventArgs e)
         {
-            RibbonHelper.RestoreColorsForWorkbook(ref Colors, Globals.ThisAddIn.Application.ActiveWorkbook);
+            RibbonHelper.RestoreColors2(color_dict[current_workbook]);
         }
 
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
             // Disable screen updating during perturbation and analysis to speed things up
-            Globals.ThisAddIn.Application.ScreenUpdating = false;
-
-            // Get current app
-            Excel.Application app = Globals.ThisAddIn.Application;
+            app.ScreenUpdating = false;
 
             // DEBUG: first thing, save all values
-            //var w = (Excel.Worksheet)(Globals.ThisAddIn.Application.ActiveWorkbook.ActiveSheet);
-            //var saves = Utility.SaveAllInput(w.UsedRange);
-            //var saves_f = Utility.SaveAllFormulas(w.UsedRange);
+            var w = (Excel.Worksheet)(current_workbook.ActiveSheet);
+            var saves = Utility.SaveAllInput(w.UsedRange);
+            var saves_f = Utility.SaveAllFormulas(w.UsedRange);
 
             // reset colors
-            RibbonHelper.RestoreColorsForWorkbook(ref Colors, app.ActiveWorkbook);
-
-            // discard any old colors for this workbook
-            RibbonHelper.DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
+            RibbonHelper.RestoreColors2(color_dict[current_workbook]);
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            AnalysisData data = new AnalysisData(app);
             data.worksheets = app.Worksheets;
             data.global_stopwatch.Reset();
             data.global_stopwatch.Start();
 
             // Construct a new tree every time the tool is run
             data.Reset();
-
-            // save colors
-            RibbonHelper.SaveColors(ref Colors, app.ActiveWorkbook);
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
@@ -171,39 +186,20 @@ namespace DataDebug
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, this.weighted.Checked);
 
+            System.Windows.Forms.MessageBox.Show(scores.Count + " outliers found.");
+
             // Color outputs
             Analysis.ColorOutputs(scores);
 
             // Enable screen updating when we're done
-            Globals.ThisAddIn.Application.ScreenUpdating = true;
+            app.ScreenUpdating = true;
 
             // check our values again
-            //var saves2 = Utility.SaveAllInput(w.UsedRange);
-            //var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
+            var saves2 = Utility.SaveAllInput(w.UsedRange);
+            var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
 
-            //var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
-            //System.Windows.Forms.MessageBox.Show(diff);
-        }
-
-        private void WhatTheFuck_Click(object sender, RibbonControlEventArgs e)
-        {
-            // Get current app
-            Excel.Application app = Globals.ThisAddIn.Application;
-
-            // save all values
-            var w = (Excel.Worksheet)(Globals.ThisAddIn.Application.ActiveWorkbook.ActiveSheet);
-            var saves = Utility.SaveAllInput(w.UsedRange);
-            var saves_f = Utility.SaveAllFormulas(w.UsedRange);
-
-            // put them back
-            Utility.PutValuesBack(saves, w);
-
-            // check our values again
-            //var saves2 = Utility.SaveAllInput(w.UsedRange);
-            //var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
-
-            //var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
-            //System.Windows.Forms.MessageBox.Show(diff);
+            var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
+            System.Windows.Forms.MessageBox.Show(diff);
         }
     }
 }

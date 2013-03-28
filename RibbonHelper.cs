@@ -51,6 +51,42 @@ namespace DataDebug
             }
         }
 
+        public class CellColor
+        {
+            private Excel.Worksheet _ws;
+            private string _addr;
+            private int _colorindex;
+
+            public CellColor(Excel.Worksheet ws, string address, int colorindex)
+            {
+                _ws = ws;
+                _addr = address;
+                _colorindex = colorindex;
+            }
+            public void Restore() { _ws.get_Range(_addr).Interior.ColorIndex = _colorindex; }
+        }
+
+        public static List<CellColor> SaveColors2(Excel.Workbook wb)
+        {
+            var _l = new List<CellColor>();
+            foreach (Excel.Worksheet ws in wb.Worksheets)
+            {
+                foreach (Excel.Range cell in ws.UsedRange)
+                {
+                    _l.Add(new CellColor(ws, cell.Address, cell.Interior.ColorIndex));
+                }
+            }
+            return _l;
+        }
+
+        public static void RestoreColors2(List<CellColor> colors)
+        {
+            foreach (CellColor c in colors)
+            {
+                c.Restore();
+            }
+        }
+
         // Restore colors to saved value, if we saved them
         public static void RestoreColorsForWorkbook(ref ColorDict color_storage, Excel.Workbook wb)
         {
