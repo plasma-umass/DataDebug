@@ -184,7 +184,7 @@ namespace ErrorClassifier
             textBox1.AppendText(Environment.NewLine + "Folder was selected: " + folderPath);
             //textBox1.Text += Environment.NewLine + "Checking for necessary files";
             textBox1.AppendText(Environment.NewLine + "Checking for necessary files");
-            string[] csvFilePaths = Directory.GetFiles(folderPath, "*.csv");
+            string[] csvFilePaths = Directory.GetFiles(folderPath, "*_results.csv");
             if (csvFilePaths.Length == 0)
             {
                 //textBox1.Text += Environment.NewLine + "ERROR: CSV file not found";

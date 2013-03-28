@@ -191,7 +191,7 @@ namespace DataDebug
                 s += pair.Key.getCOMObject().Address + " -> " + pair.Value + "\n";
             }
             s += "\n" + scores.Count + " outliers found.";
-            System.Windows.Forms.MessageBox.Show(s);
+            //System.Windows.Forms.MessageBox.Show(s);
 
             // Color outputs
             Analysis.ColorOutputs(scores);
@@ -204,7 +204,7 @@ namespace DataDebug
             var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
 
             var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
-            System.Windows.Forms.MessageBox.Show(diff);
+            //System.Windows.Forms.MessageBox.Show(diff);
         }
     }
 }
