@@ -42,6 +42,97 @@ namespace DataDebugMethods
         private int _pb_max;
         private int _pb_count = 0;
 
+        private bool tlstmp(List<TreeNode> l1, List<TreeNode> l2)
+        {
+            if (l1.Count != l2.Count)
+            {
+                return false;
+            }
+            foreach (TreeNode n1 in l1)
+            {
+                var l2a = l2.ToArray();
+                bool found = false;
+                int i = 0;
+                while (!found && i < l2a.Length)
+                {
+                    if (n1.getCOMObject().Address == l2a[i].getCOMObject().Address)
+                    {
+                        found = true;
+                    }
+                    i++;
+                }
+                if (!found)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool tlstmp(List<StartValue> l1, List<StartValue> l2)
+        {
+            if (l1.Count != l2.Count)
+            {
+                System.Windows.Forms.MessageBox.Show("Startvalue lists are not the same length!");
+                return false;
+            }
+            foreach (StartValue n1 in l1)
+            {
+                var l2a = l2.ToArray();
+                bool found = false;
+                int i = 0;
+                while (!found && i < l2a.Length)
+                {
+                    if (n1.get_double() == l2a[i].get_double() && n1.get_string() == l2a[i].get_string())
+                    {
+                        found = true;
+                    }
+                    i++;
+                }
+                if (!found)
+                {
+                    System.Windows.Forms.MessageBox.Show("Couldn't find startvalue" + n1.get_string() + " or " + n1.get_double());
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public bool compare(AnalysisData data)
+        {
+            if (data == null)
+            {
+                return true;
+            }
+
+            // cmp nodelists
+            if (!tlstmp(nodelist, data.nodelist))
+            {
+                return false;
+            }
+            
+            // cmp input_ranges
+            if (!tlstmp(input_ranges, data.input_ranges))
+            {
+                return false;
+            }
+
+            // cmp output_cells
+            if (!tlstmp(output_cells, data.output_cells))
+            {
+                return false;
+            }
+
+            // not only do I not use these, but they are function values
+            //// cmp starting_outputs
+            //if (!tlstmp(starting_outputs, data.starting_outputs))
+            //{
+            //    return false;
+            //}
+
+            return true;
+        }
+
         public AnalysisData(Excel.Application application)
         {
             worksheets = application.Worksheets;
