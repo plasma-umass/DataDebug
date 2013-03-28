@@ -9,30 +9,64 @@ namespace DataDebugMethods
     public class InputSample
     {
         private int _i = 0;             // internal length counter for Add
-        private string[] _input_array;  // the actual values of this array
+        private object[,] _input_array; // this is stored in Excel ONE-BASED format, DANGER!!!
         private HashSet<int> _excludes; // list of inputs excluded in this sample
         private int[] _includes;        // a counter of values included by this sample
+        private int _rows;
+        private int _cols;
 
-        public InputSample(int size)
+        public InputSample(int rows, int cols)
         {
-            _input_array = new string[size];
+            _rows = rows;
+            _cols = cols;
             _excludes = new HashSet<int>();
         }
-        public void Add(string value)
-        {
-            Debug.Assert(_i < _input_array.Length);
-            _input_array[_i] = value;
+        public void Add(string datum) {
+            if (_i == 0)
+            {
+                // initialize _input_array
+                Int32[] lowerBounds = { 1, 1 };
+                Int32[] lengths = { _rows, _cols };
+                _input_array = (object[,])Array.CreateInstance(typeof(object), lengths, lowerBounds);
+            }
+            var pair = OneDToTwoD(_i);
+            var col_idx = pair.Item1;
+            var row_idx = pair.Item2;
+            _input_array[col_idx, row_idx] = datum;
             _i++;
+        }
+        public void AddArray(object[,] data)
+        {
+            if (_i != 0)
+            {
+                throw new Exception("You must use EITHER Add or AddArray, but not both.");
+            }
+            _input_array = data;
+        }
+        // this also adds a one to each index
+        // Excel is also row-major, just to be
+        // a complete pain in the ass
+        private Tuple<int,int> OneDToTwoD(int idx) {
+            var row_idx = (idx % _cols) + 1;
+            var col_idx = (idx / _cols) + 1;
+            return new Tuple<int,int>(col_idx, row_idx);
         }
         public string GetInput(int num)
         {
+            // we assign a numbering scheme from
+            // topleft to bottom right, starting at 0
             Debug.Assert(num < _input_array.Length);
-            return _input_array[num];
+            var pair = OneDToTwoD(num);
+            var col_idx = pair.Item1;
+            var row_idx = pair.Item2;
+            return System.Convert.ToString(_input_array[col_idx, row_idx]);
         }
         public int Length()
         {
             return _input_array.Length;
         }
+        public int Rows() { return _rows; }
+        public int Columns() { return _cols; }
         public HashSet<int> GetExcludes()
         {
             return _excludes;
@@ -71,9 +105,88 @@ namespace DataDebugMethods
         {
             return String.Join(",", _input_array);
         }
-        public string[] GetInputArray()
+        public object[,] GetInputArray()
         {
+            //// create one-based 2D multi-array
+            //var output = Array.CreateInstance(typeof(object), new int[2] { _input_array.GetLength(0), _input_array.GetLength(1) }, new int[2] { 1, 1});
+
             return _input_array;
         }
     }
+
+    //public class InputSample
+    //{
+    //    private int _i = 0;             // internal length counter for Add
+    //    private string[] _input_array;  // the actual values of this array
+    //    private HashSet<int> _excludes; // list of inputs excluded in this sample
+    //    private int[] _includes;        // a counter of values included by this sample
+
+    //    public InputSample(int size)
+    //    {
+    //        _input_array = new string[size];
+    //        _excludes = new HashSet<int>();
+    //    }
+    //    public void Add(string value)
+    //    {
+    //        Debug.Assert(_i < _input_array.Length);
+    //        _input_array[_i] = value;
+    //        _i++;
+    //    }
+    //    public string GetInput(int num)
+    //    {
+    //        Debug.Assert(num < _input_array.Length);
+    //        return _input_array[num];
+    //    }
+    //    public int Length()
+    //    {
+    //        return _input_array.Length;
+    //    }
+    //    public HashSet<int> GetExcludes()
+    //    {
+    //        return _excludes;
+    //    }
+    //    public int[] GetIncludes()
+    //    {
+    //        return _includes;
+    //    }
+    //    public void SetIncludes(int[] includes)
+    //    {
+    //        _includes = includes;
+    //        for (int i = 0; i < includes.Length; i++)
+    //        {
+    //            if (includes[i] == 0)
+    //            {
+    //                _excludes.Add(i);
+    //            }
+    //        }
+    //    }
+    //    public override int GetHashCode()
+    //    {
+    //        // note that in C#, shift never causes overflow
+    //        int sum = 0;
+    //        for (int i = 0; i < _includes.Length; i++)
+    //        {
+    //            sum += _includes[i] << i;
+    //        }
+    //        return sum;
+    //    }
+    //    public override bool Equals(object obj)
+    //    {
+    //        InputSample other = (InputSample)obj;
+    //        return _includes.SequenceEqual(other.GetIncludes());
+    //    }
+    //    public override string ToString()
+    //    {
+    //        return String.Join(",", _input_array);
+    //    }
+    //    public string[,] GetInputArray()
+    //    {
+    //        string[,] reformatted_input = new string[_input_array.Length, 1];
+    //        for (var i = 0; i < _input_array.Length; i++)
+    //        {
+    //            reformatted_input[i, 0] = _input_array[i];
+    //        }
+    //        return reformatted_input;
+    //    }
+    //}
 }

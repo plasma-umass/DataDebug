@@ -44,7 +44,7 @@ namespace DataDebug
                 foreach (Excel.Range cell in ws.UsedRange)
                 {
                     //Create a TreeNode for every cell with the name being the cell's address and set the node's worksheet appropriately
-                    TreeNode n = new TreeNode(cell.Address, cell.Worksheet, Globals.ThisAddIn.Application.ActiveWorkbook);
+                    TreeNode n = new TreeNode(cell, cell.Address, cell.Worksheet, Globals.ThisAddIn.Application.ActiveWorkbook);
                     n.setOriginalColor(System.Drawing.ColorTranslator.FromOle((int)cell.Interior.Color));
                     ts.Add(n);
                 }
