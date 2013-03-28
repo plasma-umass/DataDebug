@@ -331,7 +331,7 @@ namespace ErrorClassifier
                             errorCount++;
                             
                             //Create a new Excel file for this error
-                            string errorFileName = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_fuzz_" + errorCount + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
+                            string errorFileName = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorCount + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                             
                             errorAddresses.Add(errorCellAddress);
                             
@@ -490,8 +490,9 @@ namespace ErrorClassifier
                 return;
             }
 
-            // e * 1000
-            var NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+            // e * bootstrapMultiplier
+            int bootstrapMultiplier = (int)numericUpDown1.Value;
+            var NBOOTS = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
 
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
@@ -505,7 +506,7 @@ namespace ErrorClassifier
             textBox1.AppendText("Done." + Environment.NewLine);
 
             string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
-            errorTypesLines[0] += "\tDetected" + Environment.NewLine;
+            errorTypesLines[0] += "\tDetected\tTotal Flagged\tTotal Inputs" + Environment.NewLine;
 
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
@@ -514,7 +515,7 @@ namespace ErrorClassifier
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             //foreach (string file in xlsFilePaths)
             {
-                string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_fuzz_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
+                string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                 if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
                 {
                     continue;
@@ -561,11 +562,19 @@ namespace ErrorClassifier
                     return;
                 }
 
-                // e * 1000
-                var NBOOTS1 = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+                // e * bootstrapMultiplier
+                var NBOOTS1 = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
 
                 // Get bootstraps
                 var scores1 = Analysis.Bootstrap(NBOOTS1, data, app, true);
+                int countFlagged = 0;
+                foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores1)
+                {
+                    if (pair.Value != 0)
+                    {
+                        countFlagged++;
+                    }
+                }
 
                 // Color outputs
                 Analysis.ColorOutputs(scores1);
@@ -576,18 +585,19 @@ namespace ErrorClassifier
                 if (errorAddress.Interior.Color != 16711680)
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + Environment.NewLine);
-                    errorTypesLines[errorIndex] += "\t1" + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.)" + Environment.NewLine);
+                    errorTypesLines[errorIndex] += "\t1\t" + countFlagged + "\t" + scores1.Count + Environment.NewLine;
                 }
                 else
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + Environment.NewLine);
-                    errorTypesLines[errorIndex] += "\t0" + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + Environment.NewLine);
+                    errorTypesLines[errorIndex] += "\t0\t" + countFlagged + "\t" + scores1.Count + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
-                wb.Close(true);
+                wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_NBOOTS_" + NBOOTS1 + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
+                wb.Close(false);
             }
             originalWB.Close(false);
             string outText = "";
