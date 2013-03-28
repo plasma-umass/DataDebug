@@ -15,11 +15,9 @@ namespace DataDebug
 {
     public partial class Ribbon
     {
-        List<TreeNode> originalColorNodes = new List<TreeNode>(); //List for storing the original colors for all nodes
         Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
         Excel.Application app;
         Excel.Workbook current_workbook;
-        AnalysisData crap;
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -78,7 +76,10 @@ namespace DataDebug
             data.Reset();
 
             // reset colors
-            RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            if (current_workbook != null)
+            {
+                RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            }
             
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
@@ -152,13 +153,11 @@ namespace DataDebug
             // Disable screen updating during perturbation and analysis to speed things up
             app.ScreenUpdating = false;
 
-            // DEBUG: first thing, save all values
-            var w = (Excel.Worksheet)(current_workbook.ActiveSheet);
-            var saves = Utility.SaveAllInput(w.UsedRange);
-            var saves_f = Utility.SaveAllFormulas(w.UsedRange);
-
             // reset colors
-            RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            if (current_workbook != null)
+            {
+                RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            }
 
             // Make a new analysisData object
             AnalysisData data = new AnalysisData(app);
@@ -171,23 +170,12 @@ namespace DataDebug
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
-            if (crap == null)
-            {
-                crap = data;
-            }
-            else
-            {
-                if (!data.compare(crap))
-                {
-                    System.Windows.Forms.MessageBox.Show("Bah.");
-                }
-            }
 
             if (data.TerminalInputNodes().Length == 0)
             {
                 System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
                 data.pb.Close();
-                Globals.ThisAddIn.Application.ScreenUpdating = true;
+                app.ScreenUpdating = true;
                 return;
             }
 
@@ -195,28 +183,13 @@ namespace DataDebug
             var NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
 
             // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, this.weighted.Checked);
-
-            string s = "";
-            foreach (KeyValuePair<TreeNode, int> pair in scores)
-            {
-                s += pair.Key.getCOMObject().Address + " -> " + pair.Value + "\n";
-            }
-            s += "\n" + scores.Count + " outliers found.";
-            System.Windows.Forms.MessageBox.Show(s);
+            var scores = Analysis.Bootstrap(NBOOTS, data, app, this.weighted.Checked);
 
             // Color outputs
             Analysis.ColorOutputs(scores);
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
-
-            // check our values again
-            var saves2 = Utility.SaveAllInput(w.UsedRange);
-            var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
-
-            var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
-            System.Windows.Forms.MessageBox.Show(diff);
         }
     }
 }

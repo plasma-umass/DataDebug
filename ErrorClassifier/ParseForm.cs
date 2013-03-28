@@ -494,7 +494,7 @@ namespace ErrorClassifier
             var NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
 
             // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, true);
+            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
 
             // Color outputs
             Analysis.ColorOutputs(scores);
@@ -565,7 +565,7 @@ namespace ErrorClassifier
                 var NBOOTS1 = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
 
                 // Get bootstraps
-                var scores1 = Analysis.Bootstrap(NBOOTS1, data, true);
+                var scores1 = Analysis.Bootstrap(NBOOTS1, data, app, true);
 
                 // Color outputs
                 Analysis.ColorOutputs(scores1);

@@ -176,6 +176,10 @@ namespace DataDebugMethods
                 }
                 // add stored input to dict
                 d.Add(input_range, s);
+
+                // this is to force excel to recalculate its outputs
+                // exactly the same way that it will for our bootstraps
+                BootMemo.ReplaceExcelRange(com, s);
             }
             return d;
         }
@@ -274,7 +278,7 @@ namespace DataDebugMethods
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
         // All of this is pretty ugly.
-        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, bool weighted)
+        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted)
         {
             // this modifies the weights of each node
             PropagateWeights(data);
@@ -333,17 +337,14 @@ namespace DataDebugMethods
                     // this function's input range treenode
                     var t_rng = input_rngs[i];
 
-                    // this function's input cells
-                    var input_cells = t_rng.getParents().ToArray();
-
                     // do the hypothesis test and then merge
                     // the scores from previous tests
                     TreeScore s;
                     if (FunctionOutputsAreNumeric(boots[f][i]))
                     {
-                        s = NumericHypothesisTest(input_cells, boots[f][i], t_fn, initial_outputs[t_fn], weighted);
+                        s = NumericHypothesisTest(t_rng, t_fn, boots[f][i], initial_outputs[t_fn], weighted);
                     } else {
-                        s = StringHypothesisTest(input_cells, boots[f][i], t_fn, initial_outputs[t_fn], weighted);
+                        s = StringHypothesisTest(t_rng, t_fn, boots[f][i], initial_outputs[t_fn], weighted);
                     }
                     iexc_scores = DictAdd(iexc_scores, s);
                 }
@@ -380,8 +381,11 @@ namespace DataDebugMethods
             return d3;
         }
 
-        public static TreeScore StringHypothesisTest(TreeNode[] input_cells, FunctionOutput<string>[] boots, TreeNode t_fn, string initial_output, bool weighted)
+        public static TreeScore StringHypothesisTest(TreeNode t_rng, TreeNode t_fn, FunctionOutput<string>[] boots, string initial_output, bool weighted)
         {
+            // this function's input cells
+            var input_cells = t_rng.getParents().ToArray();
+
             // scores
             var iexc_scores = new TreeScore();
 
@@ -424,8 +428,11 @@ namespace DataDebugMethods
             return iexc_scores;
         }
 
-        public static TreeScore NumericHypothesisTest(TreeNode[] input_cells, FunctionOutput<string>[] boots, TreeNode t_fn, string initial_output, bool weighted)
+        public static TreeScore NumericHypothesisTest(TreeNode t_rng, TreeNode t_fn, FunctionOutput<string>[] boots, string initial_output, bool weighted)
         {
+            // this function's input cells
+            var input_cells = t_rng.getParents().ToArray();
+
             // scores
             var iexc_scores = new TreeScore();
 
@@ -444,6 +451,10 @@ namespace DataDebugMethods
 
                 // add weight to score if test fails
                 TreeNode xtree = input_cells[x];
+                if (xtree.getCOMObject().Address == "$C$13")
+                {
+                    var foo = "bar";
+                }
                 if (weighted)
                 {
                     // the weight of the function value of interest
@@ -684,8 +695,13 @@ namespace DataDebugMethods
 
             var original_output_d = System.Convert.ToDouble(original_output);
 
+            // truncate the values to deal with floating point imprecision
+            var low_value_tr = Math.Truncate(low_value * 10000) / 10000;
+            var high_value_tr = Math.Truncate(high_value * 10000) / 10000;
+            var original_tr = Math.Truncate(original_output_d * 10000) / 10000;
+
             // reject or fail to reject H_0
-            if (original_output_d < low_value || original_output_d > high_value)
+            if (original_tr < low_value_tr || original_tr > high_value_tr)
             {
                 return true;
             }
