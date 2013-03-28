@@ -85,5 +85,58 @@ namespace DataDebugMethods
             return (objBmpImage);
         }
 
+        public static Dictionary<string, string> SaveAllInput(Excel.Range r)
+        {
+            var save = new Dictionary<string, string>();
+            foreach (Excel.Range cell in r)
+            {
+                if (cell.Value2 != null && !cell.HasFormula)
+                {
+                    string address = cell.Address;
+                    string value = cell.Value2.ToString();
+
+                    save.Add(address, value);
+                }
+            }
+            return save;
+        }
+
+        public static Dictionary<string, string> SaveAllFormulas(Excel.Range r)
+        {
+            var save = new Dictionary<string, string>();
+            foreach (Excel.Range cell in r)
+            {
+                if (cell.HasFormula)
+                {
+                    save.Add(cell.Address, cell.Formula);
+                }
+            }
+            return save;
+        }
+
+        public static string DiffDicts(Dictionary<string, string> d1, Dictionary<string, string> d2)
+        {
+            var diffcount = 0;
+            string s = "";
+            foreach(KeyValuePair<string,string> pair in d1)
+            {
+                var addr = pair.Key;
+                if (d1[addr] != d2[addr])
+                {
+                    s += "Cell: " + addr + ", Original value: " + d1[addr] + ", Changed value: " + d2[addr] + "\n";
+                    diffcount++;
+                }
+            }
+            string s0 = diffcount + " of " + d1.Count() + " values changed:\n\n";
+            return s0 + s;
+        }
+
+        public static void PutValuesBack(Dictionary<string, string> d, Excel.Worksheet w)
+        {
+            foreach (KeyValuePair<string, string> pair in d)
+            {
+                w.get_Range(pair.Key).Value2 = pair.Value;
+            }
+        }
     }
 }

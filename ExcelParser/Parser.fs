@@ -144,6 +144,11 @@
             Some(formula)
         | Failure(errorMsg, _, _) -> None
 
+    let isNumeric(str): bool =
+        match run pfloat str with
+        | Success(number, _, _) -> true
+        | Failure(errorMsg, _, _) -> false
+
     // The parser REPL calls this; note that the
     // Formula parser looks for EOF
     let ConsoleTest(s: string) = test Formula s

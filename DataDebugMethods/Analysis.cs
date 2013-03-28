@@ -161,17 +161,18 @@ namespace DataDebugMethods
             var d = new Dictionary<TreeNode, InputSample>();
             foreach (TreeNode input_range in inputs)
             {
-                // the values are stored in this range's "parents"
-                // (i.e., the actual cells)
-                List<TreeNode> cells = input_range.getParents();
-                var s = new InputSample(cells.Count);
+                var com = input_range.getCOMObject();
+                var s = new InputSample(com.Count);
 
                 // store each input cell's contents
-                foreach (TreeNode c in cells)
+                foreach (Excel.Range cell in com)
                 {
-                    // if the cell contains nothing, replace the value
-                    // with an empty string
-                    s.Add(System.Convert.ToString(c.getCOMValueAsString()));
+                    if (cell.HasFormula)
+                    {
+                        throw new Exception("StoreInputs should never encounter a formula.");
+                    }
+                    // save as a string
+                    s.Add(cell.Value2.ToString());
                 }
                 // add stored input to dict
                 d.Add(input_range, s);
@@ -402,13 +403,6 @@ namespace DataDebugMethods
                                 weight = (int)t_fn.getWeight();
                             }
 
-                            
-
-                            if (xtree.getCOMObject().Address == "$B$4")
-                            {
-                                System.Windows.Forms.MessageBox.Show("Testing hypothesis for: " + xtree.getCOMObject().Address);
-                            }
-
                             if (RejectNullHypothesis(boots[f][i], initial_output, x))
                             {
 
@@ -546,6 +540,19 @@ namespace DataDebugMethods
             //System.Windows.Forms.MessageBox.Show("Time to perturb: " + sw.ElapsedMilliseconds.ToString() + " ms, hit rate: " + (System.Convert.ToDouble(hits) / System.Convert.ToDouble(maxcount) * 100).ToString() + "%");
 
             return bootstraps;
+        }
+
+        // are all of the values numeric?
+        public static bool FunctionOutputsAreNumeric(FunctionOutput<string>[] boots)
+        {
+            for (int b = 0; b < boots.Length; b++)
+            {
+                if (!ExcelParser.isNumeric(boots[b].GetValue()))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         // attempts to convert all of the bootstraps for FunctionOutput[function_idx, input_idx, _] to doubles

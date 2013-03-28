@@ -131,6 +131,17 @@ namespace DataDebug
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
 
+            // DEBUG: first thing, save all values
+            //var w = (Excel.Worksheet)(Globals.ThisAddIn.Application.ActiveWorkbook.ActiveSheet);
+            //var saves = Utility.SaveAllInput(w.UsedRange);
+            //var saves_f = Utility.SaveAllFormulas(w.UsedRange);
+
+            // reset colors
+            RibbonHelper.RestoreColorsForWorkbook(ref Colors, app.ActiveWorkbook);
+
+            // discard any old colors for this workbook
+            RibbonHelper.DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
+
             // Make a new analysisData object
             AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
             data.worksheets = app.Worksheets;
@@ -139,9 +150,6 @@ namespace DataDebug
 
             // Construct a new tree every time the tool is run
             data.Reset();
-
-            // discard any old colors for this workbook
-            RibbonHelper.DeleteColorsForWorkbook(ref Colors, app.ActiveWorkbook);
 
             // save colors
             RibbonHelper.SaveColors(ref Colors, app.ActiveWorkbook);
@@ -168,6 +176,34 @@ namespace DataDebug
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
+
+            // check our values again
+            //var saves2 = Utility.SaveAllInput(w.UsedRange);
+            //var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
+
+            //var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
+            //System.Windows.Forms.MessageBox.Show(diff);
+        }
+
+        private void WhatTheFuck_Click(object sender, RibbonControlEventArgs e)
+        {
+            // Get current app
+            Excel.Application app = Globals.ThisAddIn.Application;
+
+            // save all values
+            var w = (Excel.Worksheet)(Globals.ThisAddIn.Application.ActiveWorkbook.ActiveSheet);
+            var saves = Utility.SaveAllInput(w.UsedRange);
+            var saves_f = Utility.SaveAllFormulas(w.UsedRange);
+
+            // put them back
+            Utility.PutValuesBack(saves, w);
+
+            // check our values again
+            //var saves2 = Utility.SaveAllInput(w.UsedRange);
+            //var saves_f2 = Utility.SaveAllFormulas(w.UsedRange);
+
+            //var diff = "For values, " + Utility.DiffDicts(saves, saves2) + "\n\n" + "For formulas, " + Utility.DiffDicts(saves_f, saves_f2);
+            //System.Windows.Forms.MessageBox.Show(diff);
         }
     }
 }
