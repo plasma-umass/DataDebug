@@ -46,6 +46,7 @@
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            this.strawMan = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -199,9 +200,9 @@
             this.runTool.ForeColor = System.Drawing.Color.LightGray;
             this.runTool.Location = new System.Drawing.Point(616, 37);
             this.runTool.Name = "runTool";
-            this.runTool.Size = new System.Drawing.Size(175, 23);
+            this.runTool.Size = new System.Drawing.Size(141, 23);
             this.runTool.TabIndex = 11;
-            this.runTool.Text = "Run Tool";
+            this.runTool.Text = "Bootstrap";
             this.runTool.UseVisualStyleBackColor = true;
             this.runTool.Click += new System.EventHandler(this.runTool_Click);
             // 
@@ -250,8 +251,13 @@
             0,
             0,
             0});
+            this.numericUpDown1.Minimum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            0});
             this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(100, 20);
+            this.numericUpDown1.Size = new System.Drawing.Size(66, 20);
             this.numericUpDown1.TabIndex = 16;
             this.numericUpDown1.Value = new decimal(new int[] {
             1000,
@@ -259,12 +265,26 @@
             0,
             0});
             // 
+            // strawMan
+            // 
+            this.strawMan.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.strawMan.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.strawMan.ForeColor = System.Drawing.Color.LightGray;
+            this.strawMan.Location = new System.Drawing.Point(763, 37);
+            this.strawMan.Name = "strawMan";
+            this.strawMan.Size = new System.Drawing.Size(117, 23);
+            this.strawMan.TabIndex = 17;
+            this.strawMan.Text = "Straw Man";
+            this.strawMan.UseVisualStyleBackColor = true;
+            this.strawMan.Click += new System.EventHandler(this.strawMan_Click);
+            // 
             // ParseForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(1332, 530);
+            this.Controls.Add(this.strawMan);
             this.Controls.Add(this.numericUpDown1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.textBox3);
@@ -309,5 +329,6 @@
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.Button strawMan;
     }
 }
