@@ -190,6 +190,7 @@ namespace DataDebug
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
+
         }
     }
 }
