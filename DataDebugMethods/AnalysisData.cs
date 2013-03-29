@@ -28,9 +28,9 @@ namespace DataDebugMethods
         public ProgBar pb;
         public TreeDict formula_nodes;
         public TreeDict cell_nodes;
-        public TimeSpan tree_building_timespan;
-        public TimeSpan impact_scoring_timespan;
-        public TimeSpan swapping_timespan;
+        //public TimeSpan tree_building_timespan;
+        //public TimeSpan impact_scoring_timespan;
+        //public TimeSpan swapping_timespan;
         public int outliers_count; //This gets assigned and updated in the Analysis class
         public int[][][] times_perturbed;
         public Excel.Sheets worksheets;

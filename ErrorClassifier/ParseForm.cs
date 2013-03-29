@@ -29,6 +29,7 @@ namespace ErrorClassifier
         string csvFilePath = null;
         string xlsFilePath = null;
         string arrFilePath = null;
+        bool strawManDone = false;
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -438,7 +439,8 @@ namespace ErrorClassifier
             }
             //textBox2.Text += errorTypesTable + Environment.NewLine;
             textBox2.AppendText(errorTypesTable + Environment.NewLine);
-            errorTypesTable += Environment.NewLine + Environment.NewLine + "Bootstraps\tDetected\tTotal Flagged\tTotal Inputs" + Environment.NewLine;
+            errorTypesTable += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Bootstraps\tDetected\tTotal Flagged\tTotal Inputs" + Environment.NewLine;
+            errorTypesTable += "\t\t\t\t\tZ-Score results:" + Environment.NewLine + "\t\t\t\t\tDetected\tFlagged Outliers" + Environment.NewLine;
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", errorTypesTable);
             wb.Close(false);
             wbs.Close();
@@ -605,8 +607,14 @@ namespace ErrorClassifier
                 wb.Close(false);
             }
             originalWB.Close(false);
-            
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", outText);
+
+            if (strawManCheckBox.Checked == true)
+            {
+                doStrawManTest();
+                strawManCheckBox.Checked = false;
+            }
+            
             /*
             foreach (string file in xlsxFilePaths)
             {
@@ -665,13 +673,18 @@ namespace ErrorClassifier
 
         private void strawMan_Click(object sender, EventArgs e)
         {
+            doStrawManTest();
+        } //end strawMan
+
+        public void doStrawManTest()
+        {
             //textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
             //textBox1.Text += "Running analysis." + Environment.NewLine;
-            textBox1.AppendText("Running bootstrap analysis." + Environment.NewLine);
+            textBox1.AppendText("Running z-score analysis." + Environment.NewLine);
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -686,15 +699,7 @@ namespace ErrorClassifier
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
-            /*
-            // Perturb data (modifies data)
-            //Analysis.perturbationAnalysis(data);
-
-
-            // Find outliers (modifies data)
-            //Analysis.outlierAnalysis(data);
-            */
-
+            
             if (data.TerminalInputNodes().Length == 0)
             {
                 System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
@@ -702,20 +707,42 @@ namespace ErrorClassifier
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
                 return;
             }
+            int outliersCountOrig = 0;
+            double max_zscore_orig = -1;
+            Excel.Range max_zscore_cell_orig = null;
 
-            // e * bootstrapMultiplier
-            int bootstrapMultiplier = (int)numericUpDown1.Value;
-            var NBOOTS = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
+            foreach (DataDebugMethods.TreeNode treeNode in data.TerminalInputNodes())
+            {
+                Excel.Range r = treeNode.getCOMObject();
+                int size = r.Count;
+                double mean = __mean(r);
+                double variance = __variance(r);
+                double standard_deviation = __standard_deviation(variance);
 
-            // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
 
-            // Color outputs
-            Analysis.ColorOutputs(scores);
+                foreach (Excel.Range cell in r)
+                {
+                    double z_score = (cell.Value - mean) / standard_deviation;
+                    if (Math.Abs(z_score) > max_zscore_orig)
+                    {
+                        max_zscore_orig = Math.Abs(z_score);
+                        max_zscore_cell_orig = cell;
+                    }
+                    if (Math.Abs(z_score) > 3.0)
+                    {
+                        outliersCountOrig++;
+                        cell.Interior.Color = Color.Red;
+                    }
+                }
+            }
+            if (max_zscore_orig > 3.0)
+            {
+                max_zscore_cell_orig.Interior.Color = Color.MediumPurple;
+            }
+            data.pb.Close();
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
-            //textBox1.Text += "Done." + Environment.NewLine;
             textBox1.AppendText("Done." + Environment.NewLine);
 
             string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
@@ -747,7 +774,7 @@ namespace ErrorClassifier
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
-                textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
+                textBox1.AppendText("\tRunning z-score analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -762,14 +789,6 @@ namespace ErrorClassifier
 
                 // Build dependency graph (modifies data)
                 ConstructTree.constructTree(data, app);
-
-                /*
-                // Perturb data (modifies data)
-                Analysis.perturbationAnalysis(data);
-
-                // Find outliers (modifies data)
-                Analysis.outlierAnalysis(data);
-                */
 
                 if (data.TerminalInputNodes().Length == 0)
                 {
@@ -807,27 +826,27 @@ namespace ErrorClassifier
                         }
                     }
                 }
-                textBox3.Text += "Errors found: " + outliersCount + Environment.NewLine;
+                if (max_zscore > 3.0)
+                {
+                    max_zscore_cell.Interior.Color = Color.MediumPurple;
+                }
                 data.pb.Close();
 
                 // Enable screen updating when we're done
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
-                /*
+                
                 Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.)" + Environment.NewLine);
-                    outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    textBox3.Text += "Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + Environment.NewLine;
+                    outText += "\t\t\t\t\t1\t" + outliersCount + Environment.NewLine;
                 }
                 else
                 {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.)" + Environment.NewLine);
-                    outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    textBox3.Text += "Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + Environment.NewLine;
+                    outText += "\t\t\t\t\t0\t" + outliersCount + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
-                */
                 textBox1.AppendText("Done." + Environment.NewLine);
                 wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_ZSCORES_" + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
                 wb.Close(false);
@@ -835,7 +854,7 @@ namespace ErrorClassifier
             originalWB.Close(false);
 
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", outText);
-        } //end strawMan
+        } //end doStrawManTest
 
         private Double __mean(Excel.Range r)
         {

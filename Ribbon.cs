@@ -162,8 +162,8 @@ namespace DataDebug
             // Make a new analysisData object
             AnalysisData data = new AnalysisData(app);
             data.worksheets = app.Worksheets;
-            data.global_stopwatch.Reset();
-            data.global_stopwatch.Start();
+            //data.global_stopwatch.Reset();
+            //data.global_stopwatch.Start();
 
             // Construct a new tree every time the tool is run
             data.Reset();
@@ -184,13 +184,18 @@ namespace DataDebug
 
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, app, this.weighted.Checked);
-
+            
             // Color outputs
             Analysis.ColorOutputs(scores);
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
+        }
 
+        private void performanceExperiments_Click(object sender, RibbonControlEventArgs e)
+        {
+            PerformanceExperiments experimentsForm = new PerformanceExperiments();
+            experimentsForm.ShowDialog();
         }
     }
 }

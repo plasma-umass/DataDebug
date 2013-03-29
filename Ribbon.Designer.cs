@@ -44,19 +44,23 @@ namespace DataDebug
             this.button8 = this.Factory.CreateRibbonButton();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
+            this.performanceExperiments = this.Factory.CreateRibbonButton();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.button3 = this.Factory.CreateRibbonButton();
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
+            this.group3 = this.Factory.CreateRibbonGroup();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
+            this.group3.SuspendLayout();
             // 
             // tab1
             // 
             this.tab1.ControlId.ControlIdType = Microsoft.Office.Tools.Ribbon.RibbonControlIdType.Office;
             this.tab1.Groups.Add(this.group1);
+            this.tab1.Groups.Add(this.group3);
             this.tab1.Groups.Add(this.group2);
             this.tab1.Label = "TabAddIns";
             this.tab1.Name = "tab1";
@@ -123,6 +127,12 @@ namespace DataDebug
             this.toggle_weighted_average.Name = "toggle_weighted_average";
             this.toggle_weighted_average.Visible = false;
             // 
+            // performanceExperiments
+            // 
+            this.performanceExperiments.Label = "Performance Experiments";
+            this.performanceExperiments.Name = "performanceExperiments";
+            this.performanceExperiments.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.performanceExperiments_Click);
+            // 
             // group2
             // 
             this.group2.Items.Add(this.button3);
@@ -153,6 +163,12 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
+            // group3
+            // 
+            this.group3.Items.Add(this.performanceExperiments);
+            this.group3.Label = "Performance Experiments";
+            this.group3.Name = "group3";
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -165,6 +181,8 @@ namespace DataDebug
             this.group1.PerformLayout();
             this.group2.ResumeLayout(false);
             this.group2.PerformLayout();
+            this.group3.ResumeLayout(false);
+            this.group3.PerformLayout();
 
         }
 
@@ -185,6 +203,8 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton TestNewProcedure;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox weighted;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton performanceExperiments;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup group3;
     }
 
     partial class ThisRibbonCollection

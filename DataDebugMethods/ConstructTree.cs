@@ -27,8 +27,8 @@ namespace DataDebugMethods
             Excel.Sheets ws = app.Worksheets;
 
             analysisData.pb.SetProgress(0);
-            analysisData.impact_scoring_timespan = analysisData.global_stopwatch.Elapsed;
-            analysisData.swapping_timespan = analysisData.global_stopwatch.Elapsed;
+            //analysisData.impact_scoring_timespan = analysisData.global_stopwatch.Elapsed;
+            //analysisData.swapping_timespan = analysisData.global_stopwatch.Elapsed;
             analysisData.input_cells_in_computation_count = 0;
             analysisData.raw_input_cells_in_computation_count = 0;
 
@@ -82,7 +82,7 @@ namespace DataDebugMethods
             ConstructTree.StoreOutputs(analysisData);
 
             //Tree building stopwatch
-            analysisData.tree_building_timespan = analysisData.global_stopwatch.Elapsed;
+            //analysisData.tree_building_timespan = analysisData.global_stopwatch.Elapsed;
         }
 
         public static int CountFormulaCells(ArrayList rs)

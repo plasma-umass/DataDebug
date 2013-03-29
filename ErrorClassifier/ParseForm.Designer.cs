@@ -47,6 +47,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.strawMan = new System.Windows.Forms.Button();
+            this.strawManCheckBox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -100,7 +101,7 @@
             this.selectFolder.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.selectFolder.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.selectFolder.ForeColor = System.Drawing.Color.LightGray;
-            this.selectFolder.Location = new System.Drawing.Point(102, 37);
+            this.selectFolder.Location = new System.Drawing.Point(74, 37);
             this.selectFolder.Name = "selectFolder";
             this.selectFolder.Size = new System.Drawing.Size(175, 23);
             this.selectFolder.TabIndex = 3;
@@ -124,7 +125,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.LightGray;
-            this.label2.Location = new System.Drawing.Point(42, 41);
+            this.label2.Location = new System.Drawing.Point(14, 41);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(54, 11);
             this.label2.TabIndex = 5;
@@ -135,7 +136,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.LightGray;
-            this.label3.Location = new System.Drawing.Point(295, 41);
+            this.label3.Location = new System.Drawing.Point(267, 41);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(54, 11);
             this.label3.TabIndex = 6;
@@ -146,7 +147,7 @@
             this.generateFuzzed.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.generateFuzzed.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.generateFuzzed.ForeColor = System.Drawing.Color.LightGray;
-            this.generateFuzzed.Location = new System.Drawing.Point(355, 37);
+            this.generateFuzzed.Location = new System.Drawing.Point(327, 37);
             this.generateFuzzed.Name = "generateFuzzed";
             this.generateFuzzed.Size = new System.Drawing.Size(175, 23);
             this.generateFuzzed.TabIndex = 7;
@@ -187,7 +188,7 @@
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.LightGray;
-            this.label5.Location = new System.Drawing.Point(556, 41);
+            this.label5.Location = new System.Drawing.Point(528, 41);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(54, 11);
             this.label5.TabIndex = 10;
@@ -198,9 +199,9 @@
             this.runTool.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.runTool.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.runTool.ForeColor = System.Drawing.Color.LightGray;
-            this.runTool.Location = new System.Drawing.Point(616, 37);
+            this.runTool.Location = new System.Drawing.Point(588, 37);
             this.runTool.Name = "runTool";
-            this.runTool.Size = new System.Drawing.Size(141, 23);
+            this.runTool.Size = new System.Drawing.Size(157, 23);
             this.runTool.TabIndex = 11;
             this.runTool.Text = "Bootstrap";
             this.runTool.UseVisualStyleBackColor = true;
@@ -234,18 +235,18 @@
             // 
             this.label7.AutoSize = true;
             this.label7.ForeColor = System.Drawing.Color.LightGray;
-            this.label7.Location = new System.Drawing.Point(615, 15);
+            this.label7.Location = new System.Drawing.Point(585, 15);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(82, 13);
+            this.label7.Size = new System.Drawing.Size(79, 13);
             this.label7.TabIndex = 14;
-            this.label7.Text = "NBOOTS = E x ";
+            this.label7.Text = "NBOOTS = E x";
             // 
             // numericUpDown1
             // 
             this.numericUpDown1.BackColor = System.Drawing.Color.Black;
             this.numericUpDown1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.numericUpDown1.ForeColor = System.Drawing.Color.LightGray;
-            this.numericUpDown1.Location = new System.Drawing.Point(691, 12);
+            this.numericUpDown1.Location = new System.Drawing.Point(670, 12);
             this.numericUpDown1.Maximum = new decimal(new int[] {
             10000,
             0,
@@ -257,7 +258,7 @@
             0,
             0});
             this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(66, 20);
+            this.numericUpDown1.Size = new System.Drawing.Size(75, 20);
             this.numericUpDown1.TabIndex = 16;
             this.numericUpDown1.Value = new decimal(new int[] {
             1000,
@@ -270,13 +271,28 @@
             this.strawMan.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.strawMan.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.strawMan.ForeColor = System.Drawing.Color.LightGray;
-            this.strawMan.Location = new System.Drawing.Point(763, 37);
+            this.strawMan.Location = new System.Drawing.Point(889, 11);
             this.strawMan.Name = "strawMan";
             this.strawMan.Size = new System.Drawing.Size(117, 23);
             this.strawMan.TabIndex = 17;
             this.strawMan.Text = "Straw Man";
             this.strawMan.UseVisualStyleBackColor = true;
+            this.strawMan.Visible = false;
             this.strawMan.Click += new System.EventHandler(this.strawMan_Click);
+            // 
+            // strawManCheckBox
+            // 
+            this.strawManCheckBox.AutoSize = true;
+            this.strawManCheckBox.Checked = true;
+            this.strawManCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.strawManCheckBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.strawManCheckBox.ForeColor = System.Drawing.Color.LightGray;
+            this.strawManCheckBox.Location = new System.Drawing.Point(751, 40);
+            this.strawManCheckBox.Name = "strawManCheckBox";
+            this.strawManCheckBox.Size = new System.Drawing.Size(129, 15);
+            this.strawManCheckBox.TabIndex = 18;
+            this.strawManCheckBox.Text = "+Straw Man Test";
+            this.strawManCheckBox.UseVisualStyleBackColor = true;
             // 
             // ParseForm
             // 
@@ -284,6 +300,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(1332, 530);
+            this.Controls.Add(this.strawManCheckBox);
             this.Controls.Add(this.strawMan);
             this.Controls.Add(this.numericUpDown1);
             this.Controls.Add(this.label7);
@@ -330,5 +347,6 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.NumericUpDown numericUpDown1;
         private System.Windows.Forms.Button strawMan;
+        private System.Windows.Forms.CheckBox strawManCheckBox;
     }
 }
