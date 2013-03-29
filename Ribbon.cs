@@ -58,6 +58,10 @@ namespace DataDebug
         void app_WorkbookActivate(Excel.Workbook wb)
         {
             current_workbook = wb;
+            if (!color_dict.ContainsKey(current_workbook))
+            {
+                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+            }
         }
 
         // Action for "Analyze Worksheet" button
