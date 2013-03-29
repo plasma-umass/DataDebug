@@ -81,9 +81,14 @@
                     num + ccti(idx - 1)
             ccti(col.Length - 1)
         static member IntToColChars(dividend: int) : string =
-            let quot = dividend / 26
+            let mutable quot = dividend / 26
             let rem = dividend % 26
-            let ltr = char (64 + rem)
+            if rem = 0 then
+                quot <- quot - 1
+            let ltr = if rem = 0 then
+                        'Z'
+                      else
+                        char (64 + rem)
             if quot = 0 then
                 ltr.ToString()
             else
