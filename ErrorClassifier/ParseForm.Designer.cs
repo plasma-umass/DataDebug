@@ -277,7 +277,6 @@
             this.strawMan.TabIndex = 17;
             this.strawMan.Text = "Straw Man";
             this.strawMan.UseVisualStyleBackColor = true;
-            this.strawMan.Visible = false;
             this.strawMan.Click += new System.EventHandler(this.strawMan_Click);
             // 
             // strawManCheckBox

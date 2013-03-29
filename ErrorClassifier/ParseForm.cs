@@ -714,7 +714,26 @@ namespace ErrorClassifier
 
             foreach (DataDebugMethods.TreeNode treeNode in data.TerminalInputNodes())
             {
+                bool notNumeric = false;
                 Excel.Range r = treeNode.getCOMObject();
+                foreach (Excel.Range cell in r)
+                {
+                    if (cell.Value2 == null)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if (!ExcelParser.isNumeric(System.Convert.ToString(cell.Value2)))
+                        {
+                            notNumeric = true;
+                        }
+                    }
+                }
+                if (notNumeric)
+                {
+                    continue;
+                }
                 int size = r.Count;
                 double mean = __mean(r);
                 double variance = __variance(r);
@@ -815,7 +834,12 @@ namespace ErrorClassifier
                     
                     foreach (Excel.Range cell in r)
                     {
-                        double z_score = (cell.Value - mean) / standard_deviation;
+                        double z_score = 0;
+                        try
+                        {
+                            z_score = (cell.Value - mean) / standard_deviation;
+                        }
+                        catch { }
                         if (Math.Abs(z_score) > max_zscore)
                         {
                             max_zscore = Math.Abs(z_score);
@@ -864,7 +888,11 @@ namespace ErrorClassifier
             double sum = 0;
             foreach (Excel.Range cell in r)
             {
-                sum += cell.Value;
+                try
+                {
+                    sum += cell.Value;
+                }
+                catch { }
             }
             return sum / r.Count;
         }
@@ -882,7 +910,13 @@ namespace ErrorClassifier
             Double mymean = __mean(r);
             foreach (Excel.Range cell in r)
             {
-                distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                try
+                {
+                    distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                }
+                catch
+                {
+                }
             }
             return distance_sum_sq / (r.Count - 1);
         }
