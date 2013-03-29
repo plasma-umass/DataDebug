@@ -213,17 +213,19 @@ namespace DataDebug
                     "\t" + coloring_time + Environment.NewLine;
 
                 originalWB.Close(false);
-                string originalFileText = System.IO.File.ReadAllText(@folderPath + @"\ExperimentalResults.xls");
-                if (System.IO.File.ReadAllLines(@folderPath + @"\ExperimentalResults.xls").Length > 1)
+                try
                 {
+                    string originalFileText = System.IO.File.ReadAllText(openFileDialog.FileName.Substring(0,openFileDialog.FileName.LastIndexOf(@"\")+1) + @"\ExperimentalResults.xls");
                     results = originalFileText + results;
                 }
-                else
+                catch 
                 {
                     results = "Workbook name" + "\tBootstraps" + "\tTotal Time" + "\tTree Building Time" + "\tBootstrap Time" +
                     "\tColoring Time" + Environment.NewLine + results;
                 }
-                System.IO.File.WriteAllText(@folderPath + @"\ExperimentalResults.xls", results);
+
+                System.IO.File.WriteAllText(openFileDialog.FileName.Substring(0, openFileDialog.FileName.LastIndexOf(@"\")) + @"\ExperimentalResults.xls", results);
+                textBox1.AppendText("Wrote file: " + openFileDialog.FileName.Substring(0, openFileDialog.FileName.LastIndexOf(@"\")) + @"\ExperimentalResults.xls");
             }
         }
 
