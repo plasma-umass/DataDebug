@@ -508,12 +508,13 @@ namespace ErrorClassifier
             //textBox1.Text += "Done." + Environment.NewLine;
             textBox1.AppendText("Done." + Environment.NewLine);
 
-            string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
-            string outText = "";
-            foreach (string line in errorTypesLines)
-            {
-                outText += line + Environment.NewLine;
-            }
+            //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
+            //string outText = "";
+            //foreach (string line in errorTypesLines)
+            //{
+            //    outText += line + Environment.NewLine;
+            //}
+            string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
 
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
@@ -745,12 +746,13 @@ namespace ErrorClassifier
             Globals.ThisAddIn.Application.ScreenUpdating = true;
             textBox1.AppendText("Done." + Environment.NewLine);
 
-            string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
-            string outText = "";
-            foreach (string line in errorTypesLines)
-            {
-                outText += line + Environment.NewLine;
-            }
+            //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
+            //string outText = "";
+            //foreach (string line in errorTypesLines)
+            //{
+            //    outText += line + Environment.NewLine;
+            //}
+            string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
 
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");

@@ -110,7 +110,7 @@ namespace DataDebugMethods
             if (countDecimalPoints > 1 || countDecimalPointsEntered > 1)
             {
                 //MessageBox.Show("Decimal point omission: NO");
-                return false; ;
+                return false;
             }
             if (countDecimalPointsEntered < countDecimalPoints && originalText.Replace(".", "").Equals(enteredText.Replace(".", "")))
             {
