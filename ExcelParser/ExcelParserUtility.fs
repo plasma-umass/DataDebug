@@ -9,6 +9,7 @@
         | "HLOOKUP" -> true
         | "VLOOKUP" -> true
         | "LOOKUP" -> true
+        | "OFFSET" -> true
         | _ -> false
 
     let rec GetRangeReferenceRanges(ref: AST.ReferenceRange) : AST.Range list = [ref.Range]
