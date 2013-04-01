@@ -105,6 +105,8 @@ namespace DataDebugMethods
                 }
             }
 
+            System.Windows.Forms.MessageBox.Show("RAW input cells: " + analysisData.raw_input_cells_in_computation_count);
+
             //Convert reachable_impacts_grid to array form
             analysisData.reachable_impacts_grid_array = new double[analysisData.output_cells.Count][][];
             for (int i = 0; i < analysisData.output_cells.Count; i++)

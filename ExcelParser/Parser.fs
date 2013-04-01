@@ -145,7 +145,7 @@
         | Failure(errorMsg, _, _) -> None
 
     let isNumeric(str): bool =
-        match run pfloat str with
+        match run (pfloat .>> eof) str with
         | Success(number, _, _) -> true
         | Failure(errorMsg, _, _) -> false
 

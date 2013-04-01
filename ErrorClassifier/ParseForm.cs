@@ -439,8 +439,8 @@ namespace ErrorClassifier
             }
             //textBox2.Text += errorTypesTable + Environment.NewLine;
             textBox2.AppendText(errorTypesTable + Environment.NewLine);
-            errorTypesTable += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Bootstraps\tDetected\tTotal Flagged\tTotal Inputs" + Environment.NewLine;
-            errorTypesTable += "\t\t\t\t\tZ-Score results:" + Environment.NewLine + "\t\t\t\t\tDetected\tFlagged Outliers" + Environment.NewLine;
+            errorTypesTable += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Bootstraps\tDetected\tTotal Flagged\tTotal Newly Flagged\tTotal Inputs" + Environment.NewLine;
+            errorTypesTable += "\t\t\t\t\tZ-Score results:" + Environment.NewLine + "\t\t\t\t\tDetected\tTotal Flagged Outliers\tNew Flagged Outliers" + Environment.NewLine;
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", errorTypesTable);
             wb.Close(false);
             wbs.Close();
@@ -500,6 +500,15 @@ namespace ErrorClassifier
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
 
+            List<string> originalHighlightAddresses = new List<string>();
+            foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores)
+            {
+                if (pair.Value != 0)
+                {
+                    originalHighlightAddresses.Add(pair.Key.getCOMObject().Address);
+                }
+            }
+
             // Color outputs
             Analysis.ColorOutputs(scores);
 
@@ -526,6 +535,12 @@ namespace ErrorClassifier
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                 if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
                 {
+                    continue;
+                }
+                if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
+                {
+                    textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
+                    outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
                 //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
@@ -576,11 +591,22 @@ namespace ErrorClassifier
                 // Get bootstraps
                 var scores1 = Analysis.Bootstrap(NBOOTS1, data, app, true);
                 int countFlagged = 0;
+                int countNewFlagged = 0;
                 foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores1)
                 {
                     if (pair.Value != 0)
                     {
-                        countFlagged++;
+                        //See if it was flagged originally -- if yes, don't count it
+                        if (originalHighlightAddresses.Contains(pair.Key.getCOMObject().Address))
+                        {
+                            //This flagged cell doesn't count because it was flagged in the original
+                            countFlagged++;
+                        }
+                        else
+                        {
+                            countFlagged++;
+                            countNewFlagged++;
+                        }
                     }
                 }
 
@@ -593,14 +619,14 @@ namespace ErrorClassifier
                 if (errorAddress.Interior.Color != 16711680)
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.)" + Environment.NewLine);
-                    outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
+                    outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
                 }
                 else
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.)" + Environment.NewLine);
-                    outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
+                    outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
@@ -708,13 +734,35 @@ namespace ErrorClassifier
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
                 return;
             }
+
+            List<string> originalHighlightAddresses = new List<string>();
+
             int outliersCountOrig = 0;
             double max_zscore_orig = -1;
             Excel.Range max_zscore_cell_orig = null;
 
             foreach (DataDebugMethods.TreeNode treeNode in data.TerminalInputNodes())
             {
+                bool notNumeric = false;
                 Excel.Range r = treeNode.getCOMObject();
+                foreach (Excel.Range cell in r)
+                {
+                    if (cell.Value2 == null)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if (!ExcelParser.isNumeric(System.Convert.ToString(cell.Value2)))
+                        {
+                            notNumeric = true;
+                        }
+                    }
+                }
+                if (notNumeric)
+                {
+                    continue;
+                }
                 int size = r.Count;
                 double mean = __mean(r);
                 double variance = __variance(r);
@@ -723,7 +771,11 @@ namespace ErrorClassifier
 
                 foreach (Excel.Range cell in r)
                 {
-                    double z_score = (cell.Value - mean) / standard_deviation;
+                    double z_score = 0;
+                    if (cell.Value != null)
+                    {
+                        z_score = (cell.Value - mean) / standard_deviation;
+                    }
                     if (Math.Abs(z_score) > max_zscore_orig)
                     {
                         max_zscore_orig = Math.Abs(z_score);
@@ -732,6 +784,7 @@ namespace ErrorClassifier
                     if (Math.Abs(z_score) > 3.0)
                     {
                         outliersCountOrig++;
+                        originalHighlightAddresses.Add(cell.Address);
                         cell.Interior.Color = Color.Red;
                     }
                 }
@@ -766,6 +819,14 @@ namespace ErrorClassifier
                 {
                     continue;
                 }
+                if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
+                {
+                    textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
+                    textBox3.AppendText("Skipped." + Environment.NewLine);
+                    outText += "\t\t\t\t\t1\tSkipped." + Environment.NewLine;
+                    continue;
+                }
+
                 //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
@@ -801,6 +862,7 @@ namespace ErrorClassifier
                 }
 
                 int outliersCount = 0;
+                int outliersNewCount = 0; 
                 double max_zscore = -1;
                 Excel.Range max_zscore_cell = null;
 
@@ -815,7 +877,12 @@ namespace ErrorClassifier
                     
                     foreach (Excel.Range cell in r)
                     {
-                        double z_score = (cell.Value - mean) / standard_deviation;
+                        double z_score = 0;
+                        try
+                        {
+                            z_score = (cell.Value - mean) / standard_deviation;
+                        }
+                        catch { }
                         if (Math.Abs(z_score) > max_zscore)
                         {
                             max_zscore = Math.Abs(z_score);
@@ -823,7 +890,17 @@ namespace ErrorClassifier
                         }
                         if (Math.Abs(z_score) > 3.0)
                         {
-                            outliersCount++;
+                            //See if it was flagged originally -- if yes, don't count it
+                            if (originalHighlightAddresses.Contains(cell.Address))
+                            {
+                                //This flagged cell doesn't count because it was flagged in the original
+                                outliersCount++;
+                            }
+                            else
+                            {
+                                outliersCount++;
+                                outliersNewCount++;
+                            }
                             cell.Interior.Color = Color.Red;
                         }
                     }
@@ -840,13 +917,13 @@ namespace ErrorClassifier
                 Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
-                    textBox3.Text += "Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + Environment.NewLine;
-                    outText += "\t\t\t\t\t1\t" + outliersCount + Environment.NewLine;
+                    textBox3.Text += "Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine;
+                    outText += "\t\t\t\t\t1\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                 }
                 else
                 {
-                    textBox3.Text += "Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + Environment.NewLine;
-                    outText += "\t\t\t\t\t0\t" + outliersCount + Environment.NewLine;
+                    textBox3.Text += "Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine;
+                    outText += "\t\t\t\t\t0\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
@@ -864,7 +941,11 @@ namespace ErrorClassifier
             double sum = 0;
             foreach (Excel.Range cell in r)
             {
-                sum += cell.Value;
+                try
+                {
+                    sum += cell.Value;
+                }
+                catch { }
             }
             return sum / r.Count;
         }
@@ -882,7 +963,13 @@ namespace ErrorClassifier
             Double mymean = __mean(r);
             foreach (Excel.Range cell in r)
             {
-                distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                try
+                {
+                    distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                }
+                catch
+                {
+                }
             }
             return distance_sum_sq / (r.Count - 1);
         }

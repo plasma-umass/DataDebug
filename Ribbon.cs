@@ -201,5 +201,18 @@ namespace DataDebug
             PerformanceExperiments experimentsForm = new PerformanceExperiments();
             experimentsForm.ShowDialog();
         }
+
+        private void button2_Click(object sender, RibbonControlEventArgs e)
+        {
+            int countFormulas = 0;
+            foreach (Excel.Range cell in current_workbook.ActiveSheet.UsedRange)
+            {
+                if (cell.HasFormula)
+                {
+                    countFormulas++;
+                }
+            }
+            System.Windows.Forms.MessageBox.Show("Formulas " + countFormulas);
+        }
     }
 }
