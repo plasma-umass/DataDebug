@@ -54,8 +54,8 @@ namespace DataDebugMethods
             var str1 = String.Join(",", _cells.Take(half));
             var str2 = String.Join(",", _cells.Skip(half).Take(half));
             var output = new Bitmap[2];
-            output[0] = DataDebugMethods.Utility.CreateBitmapImage(str1, 12);
-            output[1] = DataDebugMethods.Utility.CreateBitmapImage(str2, 12);
+            output[0] = DataDebugMethods.Utility.CreateBitmapImage(str1, 11);
+            output[1] = DataDebugMethods.Utility.CreateBitmapImage(str2, 11);
             return output;
         }
         public void WriteAsImages(string path, string basename)
