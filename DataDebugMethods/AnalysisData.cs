@@ -35,6 +35,7 @@ namespace DataDebugMethods
         public int[][][] times_perturbed;
         public Excel.Sheets worksheets;
         public Excel.Sheets charts;
+        public List<string> oldToolOutlierAddresses;
 
         public const int PROGRESS_LOW = 0;
         public const int PROGRESS_HIGH = 100;
@@ -152,6 +153,7 @@ namespace DataDebugMethods
             starting_outputs = new List<StartValue>();
             output_cells = new List<TreeNode>();
             cell_nodes = new TreeDict();
+            oldToolOutlierAddresses = new List<string>();
 
             // Create a progress bar
             pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
