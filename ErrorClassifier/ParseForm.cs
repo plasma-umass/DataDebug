@@ -701,7 +701,7 @@ namespace ErrorClassifier
         private void strawMan_Click(object sender, EventArgs e)
         {
             doStrawManTest();
-        } //end strawMan
+        } //end strawMan_Click()
 
         public void doStrawManTest()
         {
@@ -972,6 +972,213 @@ namespace ErrorClassifier
                 }
             }
             return distance_sum_sq / (r.Count - 1);
+        }
+
+        private void oldAnalysis_Click(object sender, EventArgs e)
+        {
+            //textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
+            textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
+            // Get current app
+            Excel.Application app = Globals.ThisAddIn.Application;
+            Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+            //textBox1.Text += "Running analysis." + Environment.NewLine;
+            textBox1.AppendText("Running bootstrap analysis." + Environment.NewLine);
+            //Disable screen updating during perturbation and analysis to speed things up
+            Globals.ThisAddIn.Application.ScreenUpdating = false;
+
+            // Make a new analysisData object
+            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            data.worksheets = app.Worksheets;
+            data.global_stopwatch.Reset();
+            data.global_stopwatch.Start();
+
+            // Construct a new tree every time the tool is run
+            data.Reset();
+
+            // Build dependency graph (modifies data)
+            ConstructTree.constructTree(data, app);
+            /*
+            // Perturb data (modifies data)
+            //Analysis.perturbationAnalysis(data);
+
+
+            // Find outliers (modifies data)
+            //Analysis.outlierAnalysis(data);
+            */
+
+            if (data.TerminalInputNodes().Length == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
+                data.pb.Close();
+                Globals.ThisAddIn.Application.ScreenUpdating = true;
+                return;
+            }
+
+            // e * bootstrapMultiplier
+            int bootstrapMultiplier = (int)numericUpDown1.Value;
+            var NBOOTS = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
+
+            // Get bootstraps
+            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
+
+            List<string> originalHighlightAddresses = new List<string>();
+            foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores)
+            {
+                if (pair.Value != 0)
+                {
+                    originalHighlightAddresses.Add(pair.Key.getCOMObject().Address);
+                }
+            }
+
+            // Color outputs
+            Analysis.ColorOutputs(scores);
+
+            // Enable screen updating when we're done
+            Globals.ThisAddIn.Application.ScreenUpdating = true;
+            //textBox1.Text += "Done." + Environment.NewLine;
+            textBox1.AppendText("Done." + Environment.NewLine);
+
+            //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
+            //string outText = "";
+            //foreach (string line in errorTypesLines)
+            //{
+            //    outText += line + Environment.NewLine;
+            //}
+            string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
+
+            //int errorIndex = 0;
+            string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
+            string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
+
+            for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
+            //foreach (string file in xlsFilePaths)
+            {
+                string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
+                if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
+                {
+                    continue;
+                }
+                if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
+                {
+                    textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
+                    outText += "Skipped." + Environment.NewLine;
+                    continue;
+                }
+                //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
+                textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
+                //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
+                textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
+                Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+                //Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
+                //Excel.Workbook wb = wbs[1];
+                Excel.Worksheet ws = wb.Worksheets[1];
+
+                //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
+                textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
+                //Disable screen updating during perturbation and analysis to speed things up
+                Globals.ThisAddIn.Application.ScreenUpdating = false;
+
+                // Make a new analysisData object
+                data = new AnalysisData(Globals.ThisAddIn.Application);
+                data.worksheets = app.Worksheets;
+                data.global_stopwatch.Reset();
+                data.global_stopwatch.Start();
+
+                // Construct a new tree every time the tool is run
+                data.Reset();
+
+                // Build dependency graph (modifies data)
+                ConstructTree.constructTree(data, app);
+
+                
+                // Perturb data (modifies data)
+                Analysis.perturbationAnalysis(data);
+
+                // Find outliers (modifies data)
+                Analysis.outlierAnalysis(data);
+                
+                /*
+                if (data.TerminalInputNodes().Length == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
+                    data.pb.Close();
+                    Globals.ThisAddIn.Application.ScreenUpdating = true;
+                    return;
+                }
+
+                // e * bootstrapMultiplier
+                var NBOOTS1 = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
+
+                // Get bootstraps
+                var scores1 = Analysis.Bootstrap(NBOOTS1, data, app, true);
+                int countFlagged = 0;
+                int countNewFlagged = 0;
+                foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores1)
+                {
+                    if (pair.Value != 0)
+                    {
+                        //See if it was flagged originally -- if yes, don't count it
+                        if (originalHighlightAddresses.Contains(pair.Key.getCOMObject().Address))
+                        {
+                            //This flagged cell doesn't count because it was flagged in the original
+                            countFlagged++;
+                        }
+                        else
+                        {
+                            countFlagged++;
+                            countNewFlagged++;
+                        }
+                    }
+                }
+
+                // Color outputs
+                Analysis.ColorOutputs(scores1);
+                
+                // Enable screen updating when we're done
+                Globals.ThisAddIn.Application.ScreenUpdating = true;
+                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
+                if (errorAddress.Interior.Color != 16711680)
+                {
+                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
+                    outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                }
+                else
+                {
+                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
+                    outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                }
+                //textBox1.Text += "Done." + Environment.NewLine;
+                textBox1.AppendText("Done." + Environment.NewLine);
+                */
+                Globals.ThisAddIn.Application.ScreenUpdating = true;
+                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
+                if (errorAddress.Interior.Color != 16711680)
+                {
+                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED."  + Environment.NewLine);
+                    //outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                }
+                else
+                {
+                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + Environment.NewLine);
+                    //outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                }
+                //textBox1.Text += "Done." + Environment.NewLine;
+                textBox1.AppendText("Done." + Environment.NewLine);
+                wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_OldTool_" + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
+                wb.Close(false);
+            }
+            originalWB.Close(false);
+            System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", outText);
+
+            if (strawManCheckBox.Checked == true)
+            {
+                doStrawManTest();
+                strawManCheckBox.Checked = false;
+            }
         }
     }
 }

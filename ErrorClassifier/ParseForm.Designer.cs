@@ -48,6 +48,7 @@
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.strawMan = new System.Windows.Forms.Button();
             this.strawManCheckBox = new System.Windows.Forms.CheckBox();
+            this.oldAnalysis = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -58,7 +59,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(1107, 5);
+            this.button1.Location = new System.Drawing.Point(1202, 34);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(125, 23);
             this.button1.TabIndex = 0;
@@ -203,7 +204,7 @@
             this.runTool.Name = "runTool";
             this.runTool.Size = new System.Drawing.Size(157, 23);
             this.runTool.TabIndex = 11;
-            this.runTool.Text = "Bootstrap";
+            this.runTool.Text = "Run Bootstrap";
             this.runTool.UseVisualStyleBackColor = true;
             this.runTool.Click += new System.EventHandler(this.runTool_Click);
             // 
@@ -293,12 +294,26 @@
             this.strawManCheckBox.Text = "+Straw Man Test";
             this.strawManCheckBox.UseVisualStyleBackColor = true;
             // 
+            // oldAnalysis
+            // 
+            this.oldAnalysis.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.oldAnalysis.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.oldAnalysis.ForeColor = System.Drawing.Color.LightGray;
+            this.oldAnalysis.Location = new System.Drawing.Point(1012, 11);
+            this.oldAnalysis.Name = "oldAnalysis";
+            this.oldAnalysis.Size = new System.Drawing.Size(117, 23);
+            this.oldAnalysis.TabIndex = 19;
+            this.oldAnalysis.Text = "Run Old Tool";
+            this.oldAnalysis.UseVisualStyleBackColor = true;
+            this.oldAnalysis.Click += new System.EventHandler(this.oldAnalysis_Click);
+            // 
             // ParseForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(1332, 530);
+            this.Controls.Add(this.oldAnalysis);
             this.Controls.Add(this.strawManCheckBox);
             this.Controls.Add(this.strawMan);
             this.Controls.Add(this.numericUpDown1);
@@ -347,5 +362,6 @@
         private System.Windows.Forms.NumericUpDown numericUpDown1;
         private System.Windows.Forms.Button strawMan;
         private System.Windows.Forms.CheckBox strawManCheckBox;
+        private System.Windows.Forms.Button oldAnalysis;
     }
 }
