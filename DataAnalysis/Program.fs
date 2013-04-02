@@ -8,7 +8,7 @@ let csvfile = "C:\Users\Dan Barowy\Desktop\Batch_1082662_batch_results.csv"
 let csv = File.ReadAllText(csvfile)
 let rows = CSVParser.ParseCsv csv ","
 let mutable count = 0
-db.AddFile("workbook.xls", csvfile)
+let fileid = db.AddFile("workbook.xls", csvfile)
 for row in rows do
     if count <> 0 then
         let hitid = row.[0]
@@ -37,7 +37,8 @@ for row in rows do
         let worktimeinseconds = CSVParser.ZeroOrNum row.[23]
         let lifetimeapprovalrate = row.[24]
         let last30daysapprovalrate = row.[25]
-        let hitid = db.AddHIT(hitid,
+        let hitid = db.AddHIT(fileid,
+                              hitid,
                               hittypeid,
                               title,
                               description,
@@ -51,6 +52,8 @@ for row in rows do
                               expiration,
                               numberofsimilarhits,
                               lifetimeinseconds,
+                              assignmentid,
+                              workerid,
                               assignmentstatus,
                               accepttime,
                               submittime,

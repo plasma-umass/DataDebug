@@ -24,8 +24,11 @@ type MTurkData(filename: string) =
             TimeZoneInfo.ConvertTime(dt, pdt, utc)
         with
         | _ ->
-            let gmtformatstring = "ddd MMM dd HH:mm:ss 'GMT' yyyy"
-            DateTime.ParseExact(datestring, gmtformatstring, CultureInfo.InvariantCulture)
+            try
+                let gmtformatstring = "ddd MMM dd HH:mm:ss 'GMT' yyyy"
+                DateTime.ParseExact(datestring, gmtformatstring, CultureInfo.InvariantCulture)
+            with
+            | _ -> DateTime.Parse(datestring)
     let TurkTimeToTimestamp(datestring: string) =
         match datestring with
         | "" -> "null"
@@ -147,13 +150,16 @@ type MTurkData(filename: string) =
         match _conn with
         | Some(c) -> new SQLiteCommand(c)
         | None -> failwith "Unable to connect to database."
-    member self.AddFile(mturkfilename: string, benchmarkfilename: string) =
+    member self.AddFile(mturkfilename: string, benchmarkfilename: string) : int =
         let cmd = self.Command()
         let querytxt = "INSERT INTO files (mturkfilename, benchmarkfilename) VALUES (\"" + mturkfilename + "\", \"" + benchmarkfilename + "\")"
         cmd.CommandText <- querytxt
         if cmd.ExecuteNonQuery() <> 1 then
             failwith ("INSERT failed: " + querytxt)
-    member self.AddHIT(hitid: string,
+        cmd.CommandText <- "SELECT LAST_INSERT_ROWID();"
+        System.Convert.ToInt32(cmd.ExecuteScalar())
+    member self.AddHIT(fileid: int,
+                       hitid: string,
                        hittypeid: string,
                        title: string,
                        description: string,
@@ -167,6 +173,8 @@ type MTurkData(filename: string) =
                        expiration: string,
                        numberofsimilarhits: int,
                        lifetimeinseconds: int,
+                       assignmentid: string,
+                       workerid: string,
                        assignmentstatus: string,
                        accepttime: string,
                        submittime: string,
@@ -183,19 +191,24 @@ type MTurkData(filename: string) =
                                          " keywords, reward, creationtime, maxassignments," +
                                          " requesterannotation, assignmentdurationinseconds, " +
                                          " autoapprovaldelayinseconds, expiration, numberofsimilarhits," +
-                                         " lifetimeinseconds, assignmentstatus, accepttime, submittime," +
+                                         " lifetimeinseconds, assignmentid, workerid," +
+                                         " assignmentstatus, accepttime, submittime," +
                                          " autoapprovaltime, approvaltime, rejectiontime, requesterfeedback," +
-                                         " worktimeinseconds, lifetimeapprovalrate, last30daysapprovalrate )"
-        let queryval = " VALUES (\"" + hitid + "\",\"" + hittypeid + "\",\"" + title + "\",\"" + description + "\",\""
+                                         " worktimeinseconds, lifetimeapprovalrate, last30daysapprovalrate," +
+                                         " fileid )"
+        let queryval1 = " VALUES (\"" + hitid + "\",\"" + hittypeid + "\",\"" + title + "\",\"" + description + "\",\""
                                     + keywords + "\"," + reward.ToString() + "," + TurkTimeToTimestamp(creationtime) + "," + maxassignments.ToString() + ",\""
                                     + requesterannotation + "\"," + assignmentdurationinseconds.ToString() + ","
-                                    + autoapprovaldelayinseconds.ToString() + "," + TurkTimeToTimestamp(expiration) + "," + numberofsimilarhits.ToString() + ","
-                                    + lifetimeinseconds.ToString() + ",\"" + assignmentstatus + "\"," + TurkTimeToTimestamp(accepttime) + "," + TurkTimeToTimestamp(submittime) + ","
+        let queryval2 =               autoapprovaldelayinseconds.ToString() + "," + TurkTimeToTimestamp(expiration) + "," + numberofsimilarhits.ToString() + ","
+                                    + lifetimeinseconds.ToString() + ",\"" + assignmentid + "\",\"" + workerid + "\",\""
+                                    + assignmentstatus + "\"," + TurkTimeToTimestamp(accepttime) + "," + TurkTimeToTimestamp(submittime) + ","
                                     + TurkTimeToTimestamp(autoapprovaltime) + "," + TurkTimeToTimestamp(approvaltime) + "," + TurkTimeToTimestamp(rejectiontime) + ",\"" + requesterfeedback + "\","
-                                    + worktimeinseconds.ToString() + ",\"" + lifetimeapprovalrate + "\",\"" + last30daysapprovalrate + "\")"
-        cmd.CommandText <- querystr + queryval
+                                    + worktimeinseconds.ToString() + ",\"" + lifetimeapprovalrate + "\",\"" + last30daysapprovalrate + "\","
+                                    + fileid.ToString() + ")"
+        let querytxt = querystr + queryval1 + queryval2
+        cmd.CommandText <- querytxt
         if cmd.ExecuteNonQuery() <> 1 then
-            failwith ("INSERT failed: " + querystr + queryval)
+            failwith ("INSERT failed: " + querytxt)
 
         // return the id
         cmd.CommandText <- "SELECT LAST_INSERT_ROWID();"
