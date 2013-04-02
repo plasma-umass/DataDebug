@@ -27,7 +27,9 @@ type MTurkData(filename: string) =
             let gmtformatstring = "ddd MMM dd HH:mm:ss 'GMT' yyyy"
             DateTime.ParseExact(datestring, gmtformatstring, CultureInfo.InvariantCulture)
     let TurkTimeToTimestamp(datestring: string) =
-        ToTimestamp(FromMTurkTime(datestring))
+        match datestring with
+        | "" -> "null"
+        | _ -> ToTimestamp(FromMTurkTime(datestring))
     let Connected() =
         match _conn with
         | Some(c) -> true
@@ -131,6 +133,7 @@ type MTurkData(filename: string) =
         if (conn <> null) then
             printfn "Opening database."
             _conn <- Some(conn)
+            conn.Open()
         else
             failwith "Unable to connect to database."
     let OpenOrCreate() =
