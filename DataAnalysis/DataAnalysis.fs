@@ -1,6 +1,7 @@
 ﻿module DataAnalysis
 open System
 open System.Data.SQLite
+open System.Globalization
 
 type MTurkData(filename: string) =
     let mutable _conn: SQLiteConnection = null
@@ -90,7 +91,7 @@ type MTurkData(filename: string) =
                        description: string,
                        keywords: string,
                        reward: decimal,
-                       creationtime: DateTime,
+                       creationtime: string,
                        maxassignments: int,
                        requesterannotation: string,
                        assignmentdurationinseconds: int,
@@ -99,11 +100,11 @@ type MTurkData(filename: string) =
                        numberofsimilarhits: int,
                        lifetimeinseconds: int,
                        assignmentstatus: string,
-                       accepttime: DateTime,
-                       submittime: DateTime,
-                       autoapprovaltime: DateTime,
-                       approvaltime: DateTime,
-                       rejectiontime: DateTime,
+                       accepttime: string,
+                       submittime: string,
+                       autoapprovaltime: string,
+                       approvaltime: string,
+                       rejectiontime: string,
                        requesterfeedback: string,
                        worktimeinseconds: int,
                        lifetimeapprovalrate: string,
@@ -119,11 +120,11 @@ type MTurkData(filename: string) =
                                               " autoapprovaltime, approvaltime, rejectiontime, requesterfeedback," +
                                               " worktimeinseconds, lifetimeapprovalrate, last30daysapprovalrate )"
             let queryval = " VALUES (" + hitid + "," + hittypeid + "," + title + "," + description + ","
-                                       + keywords + "," + reward.ToString() + "," + MTurkData.ToTimestamp(creationtime) + "," + maxassignments.ToString() + ","
+                                       + keywords + "," + reward.ToString() + "," + MTurkData.TurkTimeToTimestamp(creationtime) + "," + maxassignments.ToString() + ","
                                        + requesterannotation + "," + assignmentdurationinseconds.ToString() + ","
                                        + autoapprovaldelayinseconds.ToString() + "," + expiration.ToString() + "," + numberofsimilarhits.ToString() + ","
-                                       + lifetimeinseconds.ToString() + "," + assignmentstatus + "," + MTurkData.ToTimestamp(accepttime) + "," + MTurkData.ToTimestamp(submittime) + ","
-                                       + MTurkData.ToTimestamp(autoapprovaltime) + "," + MTurkData.ToTimestamp(approvaltime) + "," + MTurkData.ToTimestamp(rejectiontime) + "," + requesterfeedback + ","
+                                       + lifetimeinseconds.ToString() + "," + assignmentstatus + "," + MTurkData.TurkTimeToTimestamp(accepttime) + "," + MTurkData.TurkTimeToTimestamp(submittime) + ","
+                                       + MTurkData.TurkTimeToTimestamp(autoapprovaltime) + "," + MTurkData.TurkTimeToTimestamp(approvaltime) + "," + MTurkData.TurkTimeToTimestamp(rejectiontime) + "," + requesterfeedback + ","
                                        + worktimeinseconds.ToString() + "," + lifetimeapprovalrate + "," + last30daysapprovalrate
                                        + ")"
             cmd.CommandText <- querystr + queryval
@@ -131,8 +132,16 @@ type MTurkData(filename: string) =
                 failwith ("INSERT failed: " + querystr + queryval)
         else
             failwith "Must be connected to a database."
-    static member ToTimestamp(dt: DateTime) : string =
-        (dt.Ticks / Convert.ToInt64("10000000") - Convert.ToInt64("62136892800")).ToString()
+    static member ToTimestamp(dt_utc: DateTime) : string =
+        (dt_utc - (new DateTime(1970, 1, 1))).TotalSeconds.ToString()
+    static member FromMTurkTime(datestring: string) : DateTime =
+        let formatstring = "ddd MMM dd HH:mm:ss 'PDT' yyyy"
+        let dt = DateTime.ParseExact(datestring, formatstring, CultureInfo.InvariantCulture)
+        let pdt = TimeZoneInfo.CreateCustomTimeZone("Pacific Daylight Time", new TimeSpan(-07, 00, 00), "(UTC-07:00) Pacific Daylight Time", "Pacific Daylight Time")
+        let utc = TimeZoneInfo.Utc
+        TimeZoneInfo.ConvertTime(dt, pdt, utc)
+    static member TurkTimeToTimestamp(datestring: string) =
+        MTurkData.ToTimestamp(MTurkData.FromMTurkTime(datestring))
 
 //        SQLiteCommand cmd = new SQLiteCommand(conn);
 //        cmd.CommandText = "select * from Customer";
