@@ -997,15 +997,17 @@ namespace ErrorClassifier
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
-            /*
+            
             // Perturb data (modifies data)
-            //Analysis.perturbationAnalysis(data);
+            Analysis.perturbationAnalysis(data);
 
 
-            // Find outliers (modifies data)
-            //Analysis.outlierAnalysis(data);
-            */
+            //Find outliers (modifies data)
+            Analysis.outlierAnalysis(data);
 
+            List<string> originalHighlightAddresses = data.oldToolOutlierAddresses;
+
+            /*
             if (data.TerminalInputNodes().Length == 0)
             {
                 System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
@@ -1020,23 +1022,15 @@ namespace ErrorClassifier
 
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
-
-            List<string> originalHighlightAddresses = new List<string>();
-            foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores)
-            {
-                if (pair.Value != 0)
-                {
-                    originalHighlightAddresses.Add(pair.Key.getCOMObject().Address);
-                }
-            }
-
+            */ 
+            
             // Color outputs
-            Analysis.ColorOutputs(scores);
+            //Analysis.ColorOutputs(scores);
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
             //textBox1.Text += "Done." + Environment.NewLine;
-            textBox1.AppendText("Done." + Environment.NewLine);
+            textBox1.AppendText("Done. Highlighted " + originalHighlightAddresses.Count + " cells in original." + Environment.NewLine);
 
             //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
             //string outText = "";
@@ -1060,20 +1054,17 @@ namespace ErrorClassifier
                 }
                 if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
                 {
-                    textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " was already highlighted in the original. Skipping." + Environment.NewLine);
                     outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
-                //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
-                //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
                 //Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
                 //Excel.Workbook wb = wbs[1];
                 Excel.Worksheet ws = wb.Worksheets[1];
 
-                //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
                 textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
@@ -1096,7 +1087,7 @@ namespace ErrorClassifier
 
                 // Find outliers (modifies data)
                 Analysis.outlierAnalysis(data);
-                
+                List<string> newOutlierAddresses = data.oldToolOutlierAddresses;
                 /*
                 if (data.TerminalInputNodes().Length == 0)
                 {
@@ -1111,26 +1102,24 @@ namespace ErrorClassifier
 
                 // Get bootstraps
                 var scores1 = Analysis.Bootstrap(NBOOTS1, data, app, true);
+                */
                 int countFlagged = 0;
                 int countNewFlagged = 0;
-                foreach (KeyValuePair<DataDebugMethods.TreeNode, int> pair in scores1)
+                foreach (string newAddress in newOutlierAddresses)
                 {
-                    if (pair.Value != 0)
+                    //See if it was flagged originally -- if yes, don't count it
+                    if (originalHighlightAddresses.Contains(newAddress))
                     {
-                        //See if it was flagged originally -- if yes, don't count it
-                        if (originalHighlightAddresses.Contains(pair.Key.getCOMObject().Address))
-                        {
-                            //This flagged cell doesn't count because it was flagged in the original
-                            countFlagged++;
-                        }
-                        else
-                        {
-                            countFlagged++;
-                            countNewFlagged++;
-                        }
+                        //This flagged cell doesn't count because it was flagged in the original
+                        countFlagged++;
+                    }
+                    else
+                    {
+                        countFlagged++;
+                        countNewFlagged++;
                     }
                 }
-
+                /*
                 // Color outputs
                 Analysis.ColorOutputs(scores1);
                 
@@ -1157,13 +1146,13 @@ namespace ErrorClassifier
                 if (errorAddress.Interior.Color != 16711680)
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " DETECTED."  + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED. (Newly flagged: " + countNewFlagged + ")"  + Environment.NewLine);
                     //outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
                 }
                 else
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected. (Newly flagged: " + countNewFlagged + ")" + Environment.NewLine);
                     //outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
