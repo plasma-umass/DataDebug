@@ -81,6 +81,7 @@ type MTurkData(filename: string) =
                                              " worktimeinseconds NUMERIC," +
                                              " lifetimeapprovalrate TEXT," +
                                              " last30daysapprovalrate TEXT," +
+                                             " last7daysapprovalrate TEXT," +
                                              " FOREIGN KEY(fileid) REFERENCES files(id)" +
                                              ")"
         cmd.ExecuteNonQuery() |> ignore
@@ -184,7 +185,8 @@ type MTurkData(filename: string) =
                        requesterfeedback: string,
                        worktimeinseconds: int,
                        lifetimeapprovalrate: string,
-                       last30daysapprovalrate: string
+                       last30daysapprovalrate: string,
+                       last7daysapprovalrate: string
                        ) : int =
         let cmd = self.Command()
         let querystr = "INSERT INTO hits ( hitid, hittypeid, title, description," +
@@ -195,7 +197,7 @@ type MTurkData(filename: string) =
                                          " assignmentstatus, accepttime, submittime," +
                                          " autoapprovaltime, approvaltime, rejectiontime, requesterfeedback," +
                                          " worktimeinseconds, lifetimeapprovalrate, last30daysapprovalrate," +
-                                         " fileid )"
+                                         " last7daysapprovalrate,fileid )"
         let queryval1 = " VALUES (\"" + hitid + "\",\"" + hittypeid + "\",\"" + title + "\",\"" + description + "\",\""
                                     + keywords + "\"," + reward.ToString() + "," + TurkTimeToTimestamp(creationtime) + "," + maxassignments.ToString() + ",\""
                                     + requesterannotation + "\"," + assignmentdurationinseconds.ToString() + ","
@@ -203,7 +205,7 @@ type MTurkData(filename: string) =
                                     + lifetimeinseconds.ToString() + ",\"" + assignmentid + "\",\"" + workerid + "\",\""
                                     + assignmentstatus + "\"," + TurkTimeToTimestamp(accepttime) + "," + TurkTimeToTimestamp(submittime) + ","
                                     + TurkTimeToTimestamp(autoapprovaltime) + "," + TurkTimeToTimestamp(approvaltime) + "," + TurkTimeToTimestamp(rejectiontime) + ",\"" + requesterfeedback + "\","
-                                    + worktimeinseconds.ToString() + ",\"" + lifetimeapprovalrate + "\",\"" + last30daysapprovalrate + "\","
+                                    + worktimeinseconds.ToString() + ",\"" + lifetimeapprovalrate + "\",\"" + last30daysapprovalrate + "\",\"" + last7daysapprovalrate + "\","
                                     + fileid.ToString() + ")"
         let querytxt = querystr + queryval1 + queryval2
         cmd.CommandText <- querytxt

@@ -37,6 +37,7 @@ for row in rows do
         let worktimeinseconds = CSVParser.ZeroOrNum row.[23]
         let lifetimeapprovalrate = row.[24]
         let last30daysapprovalrate = row.[25]
+        let last7daysapprovalrate = row.[26]
         let hitid = db.AddHIT(fileid,
                               hitid,
                               hittypeid,
@@ -63,9 +64,10 @@ for row in rows do
                               requesterfeedback,
                               worktimeinseconds,
                               lifetimeapprovalrate,
-                              last30daysapprovalrate)
-        db.AddAnswerWithErrors(hitid, "blahblahblah", hitid, [DataAnalysis.ErrorType.ExtraDigit]) |> ignore
-        db.AddAnswerWithErrors(hitid, "blahblahblah", hitid, [DataAnalysis.ErrorType.ExtraDigit]) |> ignore
+                              last30daysapprovalrate,
+                              last7daysapprovalrate)
+        for i in 0..9 do
+            db.AddAnswerWithErrors(hitid, row.[39 + i], hitid, [DataAnalysis.ErrorType.ExtraDigit]) |> ignore
     count <- count + 1
 
 printfn "done"
