@@ -451,7 +451,7 @@ namespace DataDebugMethods
                             analysisData.impacts_grid[(int)analysisData.reachable_impacts_grid_array[i][d][0]][(int)analysisData.reachable_impacts_grid_array[i][d][1]][(int)analysisData.reachable_impacts_grid_array[i][d][2]][i] };
                 }
             }
-            System.Windows.Forms.MessageBox.Show("Input cells in computation: " + analysisData.input_cells_in_computation_count);
+            //System.Windows.Forms.MessageBox.Show("Input cells in computation: " + analysisData.input_cells_in_computation_count);
         }
 
         public static void ComputeZScoresAndFindOutliers(AnalysisData analysisData)

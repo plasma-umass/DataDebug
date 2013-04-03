@@ -440,7 +440,6 @@ namespace ErrorClassifier
             //textBox2.Text += errorTypesTable + Environment.NewLine;
             textBox2.AppendText(errorTypesTable + Environment.NewLine);
             errorTypesTable += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Bootstraps\tDetected\tTotal Flagged\tTotal Newly Flagged\tTotal Inputs" + Environment.NewLine;
-            errorTypesTable += "\t\t\t\t\tZ-Score results:" + Environment.NewLine + "\t\t\t\t\tDetected\tTotal Flagged Outliers\tNew Flagged Outliers" + Environment.NewLine;
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", errorTypesTable);
             wb.Close(false);
             wbs.Close();
@@ -806,7 +805,7 @@ namespace ErrorClassifier
             //    outText += line + Environment.NewLine;
             //}
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
-
+            outText += "Z-Score results:" + Environment.NewLine + "Detected\tTotal Flagged Outliers\tNew Flagged Outliers" + Environment.NewLine;
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
@@ -823,7 +822,7 @@ namespace ErrorClassifier
                 {
                     textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
                     textBox3.AppendText("Skipped." + Environment.NewLine);
-                    outText += "\t\t\t\t\t1\tSkipped." + Environment.NewLine;
+                    outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
 
@@ -918,12 +917,12 @@ namespace ErrorClassifier
                 if (errorAddress.Interior.Color != 16711680)
                 {
                     textBox3.Text += "Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine;
-                    outText += "\t\t\t\t\t1\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
+                    outText += 1 + "\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                 }
                 else
                 {
                     textBox3.Text += "Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine;
-                    outText += "\t\t\t\t\t0\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
+                    outText += 0 + "\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
@@ -1007,38 +1006,13 @@ namespace ErrorClassifier
 
             List<string> originalHighlightAddresses = data.oldToolOutlierAddresses;
 
-            /*
-            if (data.TerminalInputNodes().Length == 0)
-            {
-                System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
-                data.pb.Close();
-                Globals.ThisAddIn.Application.ScreenUpdating = true;
-                return;
-            }
-
-            // e * bootstrapMultiplier
-            int bootstrapMultiplier = (int)numericUpDown1.Value;
-            var NBOOTS = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
-
-            // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
-            */ 
-            
-            // Color outputs
-            //Analysis.ColorOutputs(scores);
-
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
-            //textBox1.Text += "Done." + Environment.NewLine;
             textBox1.AppendText("Done. Highlighted " + originalHighlightAddresses.Count + " cells in original." + Environment.NewLine);
 
-            //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
-            //string outText = "";
-            //foreach (string line in errorTypesLines)
-            //{
-            //    outText += line + Environment.NewLine;
-            //}
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
+            outText += Environment.NewLine + "Old tool results:" + Environment.NewLine;
+            outText += "Detected\tTotal flagged\tNewly flagged" + Environment.NewLine;
 
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
@@ -1061,8 +1035,6 @@ namespace ErrorClassifier
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-                //Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
-                //Excel.Workbook wb = wbs[1];
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
@@ -1088,21 +1060,7 @@ namespace ErrorClassifier
                 // Find outliers (modifies data)
                 Analysis.outlierAnalysis(data);
                 List<string> newOutlierAddresses = data.oldToolOutlierAddresses;
-                /*
-                if (data.TerminalInputNodes().Length == 0)
-                {
-                    System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
-                    data.pb.Close();
-                    Globals.ThisAddIn.Application.ScreenUpdating = true;
-                    return;
-                }
-
-                // e * bootstrapMultiplier
-                var NBOOTS1 = (int)(Math.Ceiling(bootstrapMultiplier * Math.Exp(1.0)));
-
-                // Get bootstraps
-                var scores1 = Analysis.Bootstrap(NBOOTS1, data, app, true);
-                */
+                
                 int countFlagged = 0;
                 int countNewFlagged = 0;
                 foreach (string newAddress in newOutlierAddresses)
@@ -1119,41 +1077,18 @@ namespace ErrorClassifier
                         countNewFlagged++;
                     }
                 }
-                /*
-                // Color outputs
-                Analysis.ColorOutputs(scores1);
                 
-                // Enable screen updating when we're done
                 Globals.ThisAddIn.Application.ScreenUpdating = true;
                 Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
-                    outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
-                }
-                else
-                {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
-                    textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
-                    outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
-                }
-                //textBox1.Text += "Done." + Environment.NewLine;
-                textBox1.AppendText("Done." + Environment.NewLine);
-                */
-                Globals.ThisAddIn.Application.ScreenUpdating = true;
-                Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
-                if (errorAddress.Interior.Color != 16711680)
-                {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
                     textBox3.AppendText("Error " + errorIndex + " DETECTED. (Newly flagged: " + countNewFlagged + ")"  + Environment.NewLine);
-                    //outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    outText += 1 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + Environment.NewLine;
                 }
                 else
                 {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
                     textBox3.AppendText("Error " + errorIndex + " NOT detected. (Newly flagged: " + countNewFlagged + ")" + Environment.NewLine);
-                    //outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    outText += 0 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
