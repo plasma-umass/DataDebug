@@ -439,7 +439,6 @@ namespace ErrorClassifier
             }
             //textBox2.Text += errorTypesTable + Environment.NewLine;
             textBox2.AppendText(errorTypesTable + Environment.NewLine);
-            errorTypesTable += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Bootstraps\tDetected\tTotal Flagged\tTotal Newly Flagged\tTotal Inputs" + Environment.NewLine;
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", errorTypesTable);
             wb.Close(false);
             wbs.Close();
@@ -523,6 +522,7 @@ namespace ErrorClassifier
             //    outText += line + Environment.NewLine;
             //}
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
+            outText += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Detected\tTotal Flagged\tTotal Newly Flagged\tTotal Inputs\tBootstraps" + Environment.NewLine;
 
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
@@ -619,13 +619,13 @@ namespace ErrorClassifier
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
                     textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
-                    outText += NBOOTS1 + "\t1\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    outText += 1 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + "\t" + NBOOTS1 + Environment.NewLine;
                 }
                 else
                 {
                     //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
                     textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
-                    outText += NBOOTS1 + "\t0\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + Environment.NewLine;
+                    outText += 0 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + "\t" + NBOOTS1 + Environment.NewLine;
                 }
                 //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
@@ -805,7 +805,7 @@ namespace ErrorClassifier
             //    outText += line + Environment.NewLine;
             //}
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
-            outText += "Z-Score results:" + Environment.NewLine + "Detected\tTotal Flagged Outliers\tNew Flagged Outliers" + Environment.NewLine;
+            outText += Environment.NewLine + Environment.NewLine + "Z-Score results:" + Environment.NewLine + "Detected\tTotal Flagged Outliers\tNew Flagged Outliers" + Environment.NewLine;
             //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
@@ -1011,7 +1011,7 @@ namespace ErrorClassifier
             textBox1.AppendText("Done. Highlighted " + originalHighlightAddresses.Count + " cells in original." + Environment.NewLine);
 
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
-            outText += Environment.NewLine + "Old tool results:" + Environment.NewLine;
+            outText += Environment.NewLine + Environment.NewLine + "Old tool results:" + Environment.NewLine;
             outText += "Detected\tTotal flagged\tNewly flagged" + Environment.NewLine;
 
             //int errorIndex = 0;
