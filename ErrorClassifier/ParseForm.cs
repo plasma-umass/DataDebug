@@ -449,17 +449,17 @@ namespace ErrorClassifier
             // open Excel file
             app.Workbooks.Open(xlfilename); //, 2, true, Missing.Value, "a", Missing.Value, true, Missing.Value, Missing.Value, Missing.Value, false, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
             return app.Workbooks;
-        }//End OpenExcelFile
+        } //End OpenExcelFile
 
         private void runTool_Click(object sender, EventArgs e)
         {
-            //textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
+            
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-            //textBox1.Text += "Running analysis." + Environment.NewLine;
             textBox1.AppendText("Running bootstrap analysis." + Environment.NewLine);
+            
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -474,15 +474,7 @@ namespace ErrorClassifier
 
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
-            /*
-            // Perturb data (modifies data)
-            //Analysis.perturbationAnalysis(data);
-
-
-            // Find outliers (modifies data)
-            //Analysis.outlierAnalysis(data);
-            */
-
+            
             if (data.TerminalInputNodes().Length == 0)
             {
                 System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
@@ -512,15 +504,8 @@ namespace ErrorClassifier
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
-            //textBox1.Text += "Done." + Environment.NewLine;
             textBox1.AppendText("Done." + Environment.NewLine);
 
-            //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
-            //string outText = "";
-            //foreach (string line in errorTypesLines)
-            //{
-            //    outText += line + Environment.NewLine;
-            //}
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
             outText += Environment.NewLine + Environment.NewLine + "Bootstrap Results:" + Environment.NewLine + "Detected\tTotal Flagged\tTotal Newly Flagged\tTotal Inputs\tBootstraps" + Environment.NewLine;
 
@@ -529,7 +514,6 @@ namespace ErrorClassifier
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
             
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
-            //foreach (string file in xlsFilePaths)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                 if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
@@ -542,17 +526,13 @@ namespace ErrorClassifier
                     outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
-                //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
-                //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-                //Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
-                //Excel.Workbook wb = wbs[1];
                 Excel.Worksheet ws = wb.Worksheets[1];
 
-                //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
                 textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
+                
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -567,14 +547,6 @@ namespace ErrorClassifier
 
                 // Build dependency graph (modifies data)
                 ConstructTree.constructTree(data, app);
-
-                /*
-                // Perturb data (modifies data)
-                Analysis.perturbationAnalysis(data);
-
-                // Find outliers (modifies data)
-                Analysis.outlierAnalysis(data);
-                */
 
                 if (data.TerminalInputNodes().Length == 0)
                 {
@@ -617,17 +589,14 @@ namespace ErrorClassifier
                 Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " DETECTED." + Environment.NewLine;
                     textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
                     outText += 1 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + "\t" + NBOOTS1 + Environment.NewLine;
                 }
                 else
                 {
-                    //textBox3.Text += "Error " + (errorIndex + 1) + " NOT detected." + Environment.NewLine;
                     textBox3.AppendText("Error " + errorIndex + " NOT detected." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
                     outText += 0 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + "\t" + NBOOTS1 + Environment.NewLine;
                 }
-                //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
                 wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_NBOOTS_" + NBOOTS1 + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
                 wb.Close(false);
@@ -640,43 +609,6 @@ namespace ErrorClassifier
                 doStrawManTest();
                 strawManCheckBox.Checked = false;
             }
-            
-            /*
-            foreach (string file in xlsxFilePaths)
-            {
-                if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
-                {
-                    continue;
-                }
-                textBox1.Text += "Opening Excel file: " + file + Environment.NewLine;
-                Excel.Workbook wb = app.Workbooks.Open(file, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-                textBox1.Text += "Running analysis." + Environment.NewLine;
-                //Disable screen updating during perturbation and analysis to speed things up
-                Globals.ThisAddIn.Application.ScreenUpdating = false;
-
-                // Make a new analysisData object
-                data = new AnalysisData(Globals.ThisAddIn.Application);
-                data.worksheets = app.Worksheets;
-                data.global_stopwatch.Reset();
-                data.global_stopwatch.Start();
-
-                // Construct a new tree every time the tool is run
-                data.Reset();
-
-                // Build dependency graph (modifies data)
-                ConstructTree.constructTree(data, app);
-
-                // Perturb data (modifies data)
-                Analysis.perturbationAnalysis(data);
-
-                // Find outliers (modifies data)
-                Analysis.outlierAnalysis(data);
-
-                // Enable screen updating when we're done
-                Globals.ThisAddIn.Application.ScreenUpdating = true;
-                textBox1.Text += "Done." + Environment.NewLine;
-            } 
-            */
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -704,13 +636,14 @@ namespace ErrorClassifier
 
         public void doStrawManTest()
         {
-            //textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
+            
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-            //textBox1.Text += "Running analysis." + Environment.NewLine;
+            
             textBox1.AppendText("Running z-score analysis." + Environment.NewLine);
+            
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -798,20 +731,13 @@ namespace ErrorClassifier
             Globals.ThisAddIn.Application.ScreenUpdating = true;
             textBox1.AppendText("Done." + Environment.NewLine);
 
-            //string[] errorTypesLines = System.IO.File.ReadAllLines(@folderPath + @"\ErrorTypesTable.xls");
-            //string outText = "";
-            //foreach (string line in errorTypesLines)
-            //{
-            //    outText += line + Environment.NewLine;
-            //}
             string outText = System.IO.File.ReadAllText(@folderPath + @"\ErrorTypesTable.xls");
             outText += Environment.NewLine + Environment.NewLine + "Z-Score results:" + Environment.NewLine + "Detected\tTotal Flagged Outliers\tNew Flagged Outliers" + Environment.NewLine;
-            //int errorIndex = 0;
+            
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
 
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
-            //foreach (string file in xlsFilePaths)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                 if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
@@ -826,17 +752,13 @@ namespace ErrorClassifier
                     continue;
                 }
 
-                //textBox1.Text += "Error " + (errorIndex + 1) + " out of " + errorAddresses.Count + "." + Environment.NewLine;
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
-                //textBox1.Text += "\tOpening fuzzed Excel file: " + file + Environment.NewLine;
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-                //Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
-                //Excel.Workbook wb = wbs[1];
                 Excel.Worksheet ws = wb.Worksheets[1];
 
-                //textBox1.Text += "\tRunning analysis. Error was in cell " + errorAddresses[errorIndex] + "." + Environment.NewLine;
                 textBox1.AppendText("\tRunning z-score analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
+                
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -872,7 +794,6 @@ namespace ErrorClassifier
                     double mean = __mean(r);
                     double variance = __variance(r);
                     double standard_deviation = __standard_deviation(variance);
-                    
                     
                     foreach (Excel.Range cell in r)
                     {
@@ -924,7 +845,6 @@ namespace ErrorClassifier
                     textBox3.Text += "Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine;
                     outText += 0 + "\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                 }
-                //textBox1.Text += "Done." + Environment.NewLine;
                 textBox1.AppendText("Done." + Environment.NewLine);
                 wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_ZSCORES_" + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
                 wb.Close(false);
@@ -966,22 +886,21 @@ namespace ErrorClassifier
                 {
                     distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
                 }
-                catch
-                {
-                }
+                catch {}
             }
             return distance_sum_sq / (r.Count - 1);
         }
 
         private void oldAnalysis_Click(object sender, EventArgs e)
         {
-            //textBox1.Text += "Opening original Excel file: " + xlsFilePath + Environment.NewLine;
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
+            
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
-            //textBox1.Text += "Running analysis." + Environment.NewLine;
+            
             textBox1.AppendText("Running bootstrap analysis." + Environment.NewLine);
+            
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -1014,12 +933,10 @@ namespace ErrorClassifier
             outText += Environment.NewLine + Environment.NewLine + "Old tool results:" + Environment.NewLine;
             outText += "Detected\tTotal flagged\tNewly flagged" + Environment.NewLine;
 
-            //int errorIndex = 0;
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
 
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
-            //foreach (string file in xlsFilePaths)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
                 if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
@@ -1038,6 +955,7 @@ namespace ErrorClassifier
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
+                
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
@@ -1053,7 +971,6 @@ namespace ErrorClassifier
                 // Build dependency graph (modifies data)
                 ConstructTree.constructTree(data, app);
 
-                
                 // Perturb data (modifies data)
                 Analysis.perturbationAnalysis(data);
 
@@ -1103,6 +1020,6 @@ namespace ErrorClassifier
                 doStrawManTest();
                 strawManCheckBox.Checked = false;
             }
-        }
+        } //End oldAnalysis_Click
     }
 }
