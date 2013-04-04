@@ -212,7 +212,7 @@ namespace DataDebug
                     countFormulas++;
                 }
             }
-            System.Windows.Forms.MessageBox.Show("Formulas " + countFormulas);
+            System.Windows.Forms.MessageBox.Show(countFormulas + " formulas in thiw workbook.");
         }
     }
 }

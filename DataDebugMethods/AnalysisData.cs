@@ -35,7 +35,7 @@ namespace DataDebugMethods
         public int[][][] times_perturbed;
         public Excel.Sheets worksheets;
         public Excel.Sheets charts;
-        public List<string> oldToolOutlierAddresses;
+        public List<string> oldToolOutlierAddresses; //This keeps track of which entries have been flaged as outliers by the old tool
 
         public const int PROGRESS_LOW = 0;
         public const int PROGRESS_HIGH = 100;

@@ -27,8 +27,6 @@ namespace DataDebugMethods
             Excel.Sheets ws = app.Worksheets;
 
             analysisData.pb.SetProgress(0);
-            //analysisData.impact_scoring_timespan = analysisData.global_stopwatch.Elapsed;
-            //analysisData.swapping_timespan = analysisData.global_stopwatch.Elapsed;
             analysisData.input_cells_in_computation_count = 0;
             analysisData.raw_input_cells_in_computation_count = 0;
 
@@ -80,9 +78,6 @@ namespace DataDebugMethods
             //TODO -- we are not able to capture ranges that are identified in stored procedures or macros, just ones referenced in formulas
             //TODO -- Dealing with fuzzing of charts -- idea: any cell that feeds into a chart is essentially an output; the chart is just a visual representation (can charts operate on values before they are displayed? don't think so...)
             ConstructTree.StoreOutputs(analysisData);
-
-            //Tree building stopwatch
-            //analysisData.tree_building_timespan = analysisData.global_stopwatch.Elapsed;
         }
 
         public static int CountFormulaCells(ArrayList rs)
@@ -125,13 +120,7 @@ namespace DataDebugMethods
                         // the previously found formula cell
                         else
                         {
-                            formula_cells = app.Union(
-                                            cell,
-                                            formula_cells,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                                            Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                            formula_cells = app.Union(cell, formula_cells);
                         }
                     }
                 }
@@ -266,16 +255,10 @@ namespace DataDebugMethods
         {
             foreach (TreeNode range_node in analysisData.input_ranges)
             {
-                //If this node is not a range, continue to the next node because no perturbations can be done on this node.
-                //if (!range_node.isRange())
-                //{
-                //    continue;
-                //}
                 //For every range node
                 double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
-                //double max_total_delta = 0;     //The maximum influence found (for normalizing)
-                //double min_total_delta = -1;     //The minimum influence found (for normalizing)
-                int swaps_per_range = 30; // 30;
+                
+                int swaps_per_range = 30;
                 if (range_node.getParents().Count <= swaps_per_range)
                 {
                     swaps_per_range = range_node.getParents().Count - 1;
@@ -416,7 +399,6 @@ namespace DataDebugMethods
                             {
                                 analysisData.min_max_delta_outputs[i][1] = delta;
                             }
-                            //index++;
                             total_delta = total_delta + delta;
                         }
                     }
@@ -508,7 +490,7 @@ namespace DataDebugMethods
                         {
                             analysisData.reachable_impacts_grid_array[i][d][3] = Math.Abs((analysisData.impacts_grid[worksheet_ind][row][col][i] - output_average) / std_dev);
                         }
-                        else  //std_dev == 0.0
+                        else  //if std_dev == 0.0
                         {
                             //If the standard deviation is zero, then all the impacts were the same and we shouldn't flag any entries, so set their z-scores to 0.0
                             analysisData.reachable_impacts_grid_array[i][d][3] = 0.0;
@@ -750,14 +732,10 @@ namespace DataDebugMethods
             }
             var output = new string[rows, WIDTH];
             var addrs = new string[rows, WIDTH];
-            //var output = new string[rows][];
-            //var addrs = new string[rows][];
 
             // split data
             var j = 0;
             var i = 0;
-            //addrs[i] = new string[WIDTH];
-            //output[i] = new string[WIDTH];
             foreach (KeyValuePair<AST.Address,TreeNode> pair in data.cell_nodes)
             {
                 var t = pair.Value;
@@ -774,8 +752,6 @@ namespace DataDebugMethods
                 if (j == 0)
                 {
                     i++;
-                    //output[i] = new string[WIDTH];
-                    //addrs[i] = new string[WIDTH];
                 }
             }
 
