@@ -94,7 +94,6 @@
             this.textBox1.Size = new System.Drawing.Size(871, 452);
             this.textBox1.TabIndex = 2;
             this.textBox1.WordWrap = false;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // selectFolder
             // 
@@ -171,7 +170,6 @@
             this.textBox2.Size = new System.Drawing.Size(438, 192);
             this.textBox2.TabIndex = 8;
             this.textBox2.WordWrap = false;
-            this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             // 
             // label4
             // 
@@ -230,7 +228,6 @@
             this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBox3.Size = new System.Drawing.Size(438, 229);
             this.textBox3.TabIndex = 13;
-            this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
             // 
             // label7
             // 

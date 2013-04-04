@@ -202,7 +202,7 @@ namespace DataDebug
             experimentsForm.ShowDialog();
         }
 
-        private void button2_Click(object sender, RibbonControlEventArgs e)
+        private void countFormulas_Click(object sender, RibbonControlEventArgs e)
         {
             int countFormulas = 0;
             foreach (Excel.Range cell in current_workbook.ActiveSheet.UsedRange)
