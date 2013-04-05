@@ -166,8 +166,6 @@ namespace DataDebug
             // Make a new analysisData object
             AnalysisData data = new AnalysisData(app);
             data.worksheets = app.Worksheets;
-            //data.global_stopwatch.Reset();
-            //data.global_stopwatch.Start();
 
             // Construct a new tree every time the tool is run
             data.Reset();
@@ -212,7 +210,7 @@ namespace DataDebug
                     countFormulas++;
                 }
             }
-            System.Windows.Forms.MessageBox.Show(countFormulas + " formulas in thiw workbook.");
+            System.Windows.Forms.MessageBox.Show(countFormulas + " formulas in this workbook.");
         }
     }
 }
