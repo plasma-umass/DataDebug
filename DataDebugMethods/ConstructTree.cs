@@ -169,6 +169,7 @@ namespace DataDebugMethods
             return nodes;
         }
 
+        //This method stores the values of all the identified outputs before the swapping procedure (perturbation analysis) begins
         public static void StoreOutputs(AnalysisData analysisData)
         {
             // Collect output values
@@ -220,6 +221,7 @@ namespace DataDebugMethods
             }
         }
 
+        //This method is for printing out a graph viz representation of the dependence graph built up by our dependence analysis
         public static string GenerateGraphVizTree(TreeDict nodes)
         {
             string tree = "";
@@ -230,6 +232,7 @@ namespace DataDebugMethods
             return "digraph g{" + tree + "}"; 
         }
 
+        //This method initializes the arrays neccessary for storing impact values (and others) during the swapping procedure
         public static void setUpGrids(AnalysisData analysisData)
         {
             analysisData.influences_grid = new double[analysisData.worksheets.Count + analysisData.charts.Count][][];
@@ -251,6 +254,11 @@ namespace DataDebugMethods
             }
         }
 
+        //This method executes the swapping procedure. For each cell in the input ranges, it calculates its impact by substituting the values of its neighbors (other cells in 
+        //the range) in its place. This is as if this cell was removed from the range and another was substituted in its place, but rather than substituting a single cell
+        //in its place, all of its neighbors are substituted. We measure the effect of each substitution by calculating the change in the outputs. The change is totalled
+        //and averaged over the number of substitutions that were performed. This gives an "impact score" for each cell. We then look for outliers based on the impact scores
+        //of the cells -- we assume they follow a normal distribution and see which ones fall outside of two standard deviations from the mean.
         public static void SwappingProcedure(AnalysisData analysisData)
         {
             foreach (TreeNode range_node in analysisData.input_ranges)
