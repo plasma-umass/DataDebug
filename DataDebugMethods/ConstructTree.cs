@@ -276,7 +276,7 @@ namespace DataDebugMethods
                     analysisData.input_cells_in_computation_count++;
 
                     //Generate 30 random indices for swapping with siblings
-                    int[] indices = new int[swaps_per_range];
+                    int[] indices = new int[swaps_per_range];  //This holds the indices which will be used for swapping -- values from these indices will be substituted for the current one
                     if (swaps_per_range == 30)
                     {
                         int indices_pointer = 0;
@@ -291,7 +291,7 @@ namespace DataDebugMethods
                             indices_pointer++;
                         }
                     }
-                    //Generate indices for swapping with siblings -- include all indices but the one for the current node (so as to not swap with itself)
+                    //Generate indices for swapping with siblings -- include all indices except the one for the current node (so as to not swap with itself)
                     else
                     {
                         int sibling_ind = 0; //sibling_ind is a counter that goes through all indices
@@ -316,7 +316,6 @@ namespace DataDebugMethods
                     double total_delta = 0.0; // Stores the total change in outputs caused by this cell after swapping with every other value in the range
                     double delta = 0.0;   // Stores the change in outputs caused by a single swap
                     //Swapping loop - swap every sibling or a reduced number of siblings (approximately equal to swaps_per_range), for reduced complexity and runtime
-                    //foreach (TreeNode sibling in node.getParents())
                     foreach (int sibling_index in indices)
                     {
                         TreeNode sibling = range_node.getParents()[sibling_index];
@@ -629,7 +628,6 @@ namespace DataDebugMethods
                 worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
                 analysisData.oldToolOutlierAddresses.Add(worksheet.Cells[row + 1, col + 1].Address);
             }
-
         }
 
         public static void CreateCellNodesFromRange(TreeNode rangeNode, TreeNode formulaNode, TreeDict formula_nodes, TreeDict cell_nodes)
