@@ -482,6 +482,10 @@ namespace ErrorClassifier
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
             
+            int errorsNotSkippedCount = 0; //This is the number of errors that we are trying to detect. (Number of errors that were not being highlighted by the initial run.)
+            int errorsDetectedCount = 0; //This is the number of errors we are able to detect.
+            int totalNewlyFlagged = 0; //This is the total number of newly flagged cells (ones that were not flagged on the original run, but were flagged on the fuzzed run.)
+
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
@@ -491,10 +495,12 @@ namespace ErrorClassifier
                 }
                 if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
                 {
-                    textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " was already highlighted in the original. Skipping." + Environment.NewLine);
                     outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
+                errorsNotSkippedCount++;
+
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
@@ -546,6 +552,7 @@ namespace ErrorClassifier
                         {
                             countFlagged++;
                             countNewFlagged++;
+                            totalNewlyFlagged++;
                         }
                     }
                 }
@@ -560,6 +567,7 @@ namespace ErrorClassifier
                 {
                     textBox3.AppendText("Error " + errorIndex + " DETECTED." + " Flagged " + countFlagged + " out of " + scores1.Count + " inputs." + "(" + NBOOTS1 + " bootstraps.) Newly flagged: " + countNewFlagged + Environment.NewLine);
                     outText += 1 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + scores1.Count + "\t" + NBOOTS1 + Environment.NewLine;
+                    errorsDetectedCount++;
                 }
                 else
                 {
@@ -570,6 +578,8 @@ namespace ErrorClassifier
                 wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_NBOOTS_" + NBOOTS1 + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
                 wb.Close(false);
             }
+            outText += "Recall = " + ((double)errorsDetectedCount / errorsNotSkippedCount * 100.0) + "% (" + errorsDetectedCount + " out of " + errorsNotSkippedCount + " errors were detected.)" + Environment.NewLine + "Precision = " + ((double)errorsDetectedCount / totalNewlyFlagged * 100.0) + "% (" + errorsDetectedCount + " out of " + totalNewlyFlagged + " newly flagged cells were errors.)" + Environment.NewLine;
+            textBox3.AppendText("Recall = " + ((double)errorsDetectedCount / errorsNotSkippedCount * 100.0) + "% (" + errorsDetectedCount + " out of " + errorsNotSkippedCount + " errors were detected.)" + Environment.NewLine + "Precision = " + ((double)errorsDetectedCount / totalNewlyFlagged * 100.0) + "% (" + errorsDetectedCount + " out of " + totalNewlyFlagged + " newly flagged cells were errors.)" + Environment.NewLine);
             originalWB.Close(false);
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", outText);
 
@@ -688,6 +698,10 @@ namespace ErrorClassifier
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
 
+            int errorsNotSkippedCount = 0; //This is the number of errors that we are trying to detect. (Number of errors that were not being highlighted by the initial run.)
+            int errorsDetectedCount = 0; //This is the number of errors we are able to detect.
+            int totalNewlyFlagged = 0; //This is the total number of newly flagged cells (ones that were not flagged on the original run, but were flagged on the fuzzed run.)
+
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
@@ -697,11 +711,11 @@ namespace ErrorClassifier
                 }
                 if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
                 {
-                    textBox1.AppendText("Error was already highlighted in the original. Skipping." + Environment.NewLine);
-                    textBox3.AppendText("Skipped." + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " was already highlighted in the original. Skipping." + Environment.NewLine);
                     outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
+                errorsNotSkippedCount++;
 
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
@@ -771,6 +785,7 @@ namespace ErrorClassifier
                             {
                                 outliersCount++;
                                 outliersNewCount++;
+                                totalNewlyFlagged++;
                             }
                             cell.Interior.Color = Color.Red;
                         }
@@ -790,6 +805,7 @@ namespace ErrorClassifier
                 {
                     textBox3.AppendText("Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine);
                     outText += 1 + "\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
+                    errorsDetectedCount++;
                 }
                 else
                 {
@@ -800,6 +816,8 @@ namespace ErrorClassifier
                 wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_ZSCORES_" + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
                 wb.Close(false);
             }
+            outText += "Recall = " + ((double)errorsDetectedCount / errorsNotSkippedCount * 100.0) + "% (" + errorsDetectedCount + " out of " + errorsNotSkippedCount + " errors were detected.)" + Environment.NewLine + "Precision = " + ((double)errorsDetectedCount / totalNewlyFlagged * 100.0) + "% (" + errorsDetectedCount + " out of " + totalNewlyFlagged + " newly flagged cells were errors.)" + Environment.NewLine;
+            textBox3.AppendText("Recall = " + ((double)errorsDetectedCount / errorsNotSkippedCount * 100.0) + "% (" + errorsDetectedCount + " out of " + errorsNotSkippedCount + " errors were detected.)" + Environment.NewLine + "Precision = " + ((double)errorsDetectedCount / totalNewlyFlagged * 100.0) + "% (" + errorsDetectedCount + " out of " + totalNewlyFlagged + " newly flagged cells were errors.)" + Environment.NewLine);
             originalWB.Close(false);
 
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", outText);
@@ -850,7 +868,7 @@ namespace ErrorClassifier
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
             
-            textBox1.AppendText("Running bootstrap analysis." + Environment.NewLine);
+            textBox1.AppendText("Running old tool analysis." + Environment.NewLine);
             
             //Disable screen updating during perturbation and analysis to speed things up
             Globals.ThisAddIn.Application.ScreenUpdating = false;
@@ -887,6 +905,10 @@ namespace ErrorClassifier
             string[] xlsFilePaths = Directory.GetFiles(folderPath, "*.xls");
             string[] xlsxFilePaths = Directory.GetFiles(folderPath, "*.xlsx");
 
+            int errorsNotSkippedCount = 0; //This is the number of errors that we are trying to detect. (Number of errors that were not being highlighted by the initial run.)
+            int errorsDetectedCount = 0; //This is the number of errors we are able to detect.
+            int totalNewlyFlagged = 0; //This is the total number of newly flagged cells (ones that were not flagged on the original run, but were flagged on the fuzzed run.)
+            
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
@@ -900,12 +922,14 @@ namespace ErrorClassifier
                     outText += "Skipped." + Environment.NewLine;
                     continue;
                 }
+                errorsNotSkippedCount++;
+
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
                 Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
                 Excel.Worksheet ws = wb.Worksheets[1];
 
-                textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
+                textBox1.AppendText("\tRunning old tool analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
                 
                 //Disable screen updating during perturbation and analysis to speed things up
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
@@ -943,6 +967,7 @@ namespace ErrorClassifier
                     {
                         countFlagged++;
                         countNewFlagged++;
+                        totalNewlyFlagged++;
                     }
                 }
                 
@@ -952,6 +977,7 @@ namespace ErrorClassifier
                 {
                     textBox3.AppendText("Error " + errorIndex + " DETECTED. (Newly flagged: " + countNewFlagged + ")"  + Environment.NewLine);
                     outText += 1 + "\t" + countFlagged + "\t" + countNewFlagged + "\t" + Environment.NewLine;
+                    errorsDetectedCount++;
                 }
                 else
                 {
@@ -962,6 +988,8 @@ namespace ErrorClassifier
                 wb.SaveAs(xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + "_OldTool_" + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls")));
                 wb.Close(false);
             }
+            outText += "Recall = " + ((double)errorsDetectedCount/errorsNotSkippedCount*100.0) + "% (" + errorsDetectedCount + " out of " + errorsNotSkippedCount + " errors were detected.)" + Environment.NewLine + "Precision = " + ((double)errorsDetectedCount/totalNewlyFlagged*100.0) + "% (" + errorsDetectedCount + " out of " + totalNewlyFlagged + " newly flagged cells were errors.)" + Environment.NewLine;
+            textBox3.AppendText("Recall = " + ((double)errorsDetectedCount/errorsNotSkippedCount*100.0) + "% (" + errorsDetectedCount + " out of " + errorsNotSkippedCount + " errors were detected.)" + Environment.NewLine + "Precision = " + ((double)errorsDetectedCount/totalNewlyFlagged*100.0) + "% (" + errorsDetectedCount + " out of " + totalNewlyFlagged + " newly flagged cells were errors.)" + Environment.NewLine);
             originalWB.Close(false);
             System.IO.File.WriteAllText(@folderPath + @"\ErrorTypesTable.xls", outText);
 
