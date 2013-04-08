@@ -424,6 +424,8 @@ namespace ErrorClassifier
         {
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
             
+            //Run the bootstrapping tool on original file (before any errors are introduced) and store the initial highlighting. 
+
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
@@ -486,6 +488,7 @@ namespace ErrorClassifier
             int errorsDetectedCount = 0; //This is the number of errors we are able to detect.
             int totalNewlyFlagged = 0; //This is the total number of newly flagged cells (ones that were not flagged on the original run, but were flagged on the fuzzed run.)
 
+            //Run the bootstrapping tool on each fuzzed file (there is one for each error)
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
@@ -493,6 +496,7 @@ namespace ErrorClassifier
                 {
                     continue;
                 }
+                //Any cells flagged during the original run will be assumed to be correct. If an error happens to be in one of those cells, it will be skipped. 
                 if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
                 {
                     textBox3.AppendText("Error " + errorIndex + " was already highlighted in the original. Skipping." + Environment.NewLine);
@@ -599,6 +603,8 @@ namespace ErrorClassifier
         {
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
             
+            //Run the z-score tool on original file (before any errors are introduced) and store the initial highlighting. 
+            
             // Get current app
             Excel.Application app = Globals.ThisAddIn.Application;
             Excel.Workbook originalWB = app.Workbooks.Open(xlsFilePath, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
@@ -702,6 +708,7 @@ namespace ErrorClassifier
             int errorsDetectedCount = 0; //This is the number of errors we are able to detect.
             int totalNewlyFlagged = 0; //This is the total number of newly flagged cells (ones that were not flagged on the original run, but were flagged on the fuzzed run.)
 
+            //Run the z-score tool on each fuzzed file (there is one for each error)
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
@@ -709,6 +716,7 @@ namespace ErrorClassifier
                 {
                     continue;
                 }
+                //Any cells flagged during the original run will be assumed to be correct. If an error happens to be in one of those cells, it will be skipped. 
                 if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
                 {
                     textBox3.AppendText("Error " + errorIndex + " was already highlighted in the original. Skipping." + Environment.NewLine);
@@ -862,6 +870,7 @@ namespace ErrorClassifier
 
         private void oldAnalysis_Click(object sender, EventArgs e)
         {
+            //Run the old tool on original file (before any errors are introduced) and store the initial highlighting. 
             textBox1.AppendText("Opening original Excel file: " + xlsFilePath + Environment.NewLine);
             
             // Get current app
@@ -909,13 +918,15 @@ namespace ErrorClassifier
             int errorsDetectedCount = 0; //This is the number of errors we are able to detect.
             int totalNewlyFlagged = 0; //This is the total number of newly flagged cells (ones that were not flagged on the original run, but were flagged on the fuzzed run.)
             
+            //Run the tool on each fuzzed file (there is one for each error)
             for (int errorIndex = 1; errorIndex <= errorCount; errorIndex++)
             {
                 string file = xlsFilePath.Substring(0, xlsFilePath.IndexOf(".xls")) + "_error_" + errorIndex + xlsFilePath.Substring(xlsFilePath.IndexOf(".xls"));
-                if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls"))
+                if (file.Equals(xlsFilePath) || file.Contains("~$") || file.Contains("ErrorTypesTable.xls")) //ignore the original file, the temp .xls file created by Excel (it contains an $ in the name), and the ErrorTypesTable file
                 {
                     continue;
                 }
+                //Any cells flagged during the original run will be assumed to be correct. If an error happens to be in one of those cells, it will be skipped. 
                 if (originalHighlightAddresses.Contains(errorAddresses[errorIndex - 1]))
                 {
                     textBox3.AppendText("Error " + errorIndex + " was already highlighted in the original. Skipping." + Environment.NewLine);
