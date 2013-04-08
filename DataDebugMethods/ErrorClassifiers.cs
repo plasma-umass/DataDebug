@@ -362,5 +362,48 @@ namespace DataDebugMethods
                 return false;
             }
         } //End TestBlank
+
+        public static bool TestDigitTransposition(string enteredText, string originalText)
+        {
+            //For a transposition to occur, the original text has to have at least two characters. Also, the original text and entered text must differ, but have the same length.
+            //We assume there is only one transposition in the number -- that is, there must be one transposition, and all other characters must be correct; otherwise this will count as a general typo. 
+            if (originalText.Length >= 2 && !enteredText.Equals(originalText) && enteredText.Length == originalText.Length)
+            {
+                //Look for transpositions at each index in the string
+                for (int i = 0; i < originalText.Length - 1; i++)
+                {
+                    //For a transposition to exist, two consecutive characters in the original string (which are different) must be transposed (typed in the reverse order) in the entered string. 
+                    if (!originalText[i].Equals(originalText[i + 1]) && originalText[i].Equals(enteredText[i + 1]) && originalText[i + 1].Equals(enteredText[i]))
+                    {
+                        //Once we have identified a transposition, we have to check if all other characters besides the ones at index i and i+1 are correct
+                        bool othersMatch = true;
+                        for (int j = 0; j < originalText.Length; j++)
+                        {
+                            if (j == i || j == i + 1)
+                            {
+                                continue;
+                            }
+                            if (originalText[j].Equals(enteredText[j]) == false)
+                            {
+                                othersMatch = false;
+                            }
+                        }
+                        if (othersMatch == true)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return false;
+            }
+            else
+            {
+                return false;
+            }
+        } //End TestDigitTransposition
     }
 }

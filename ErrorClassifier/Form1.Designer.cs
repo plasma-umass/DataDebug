@@ -39,6 +39,7 @@
             this.originalText = new System.Windows.Forms.TextBox();
             this.wrongDigit = new System.Windows.Forms.Button();
             this.extraDigit = new System.Windows.Forms.Button();
+            this.digitTransposition = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // decimalOmission
@@ -143,11 +144,22 @@
             this.extraDigit.UseVisualStyleBackColor = true;
             this.extraDigit.Click += new System.EventHandler(this.extraDigit_Click);
             // 
+            // digitTransposition
+            // 
+            this.digitTransposition.Location = new System.Drawing.Point(153, 145);
+            this.digitTransposition.Name = "digitTransposition";
+            this.digitTransposition.Size = new System.Drawing.Size(130, 23);
+            this.digitTransposition.TabIndex = 20;
+            this.digitTransposition.Text = "Test digit transposition";
+            this.digitTransposition.UseVisualStyleBackColor = true;
+            this.digitTransposition.Click += new System.EventHandler(this.digitTransposition_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(293, 176);
+            this.Controls.Add(this.digitTransposition);
             this.Controls.Add(this.extraDigit);
             this.Controls.Add(this.wrongDigit);
             this.Controls.Add(this.decimalOmission);
@@ -179,5 +191,6 @@
         private System.Windows.Forms.TextBox originalText;
         private System.Windows.Forms.Button wrongDigit;
         private System.Windows.Forms.Button extraDigit;
+        private System.Windows.Forms.Button digitTransposition;
     }
 }

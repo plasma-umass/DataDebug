@@ -214,7 +214,7 @@ namespace ErrorClassifier
             TurkJob[] turkJobs = TurkJob.DeserializeArray(arrFilePath); //Indexed by jobID, this holds the addresses of all the cells
             errorCount = 0;
             errorTypesTable = "Error Number\tJobID\tResponder\tCell Index\tMisplaced Decimal\tSign Omission\tDecimal Point Omission\t" +
-            "Digit Repeat\tExtra Digit\tWrong Digit\tDigit Omission\tBlank Input\tOther" + Environment.NewLine;
+            "Digit Repeat\tExtra Digit\tWrong Digit\tDigit Omission\tBlank Input\tDigit Transposition\tOther" + Environment.NewLine;
             
             // create new file
             Excel.Workbooks wbs = OpenExcelFile(xlsFilePath, new Excel.Application());
@@ -326,7 +326,7 @@ namespace ErrorClassifier
                             errorCell.Interior.ColorIndex = errorCellOrigColor;
 
                             //Classify error:
-                            bool[] errorTypes = new bool[9];
+                            bool[] errorTypes = new bool[10];
                             bool errorIdentified = false;
                             if (DataDebugMethods.ErrorClassifiers.TestMisplacedDecimal(tokensArray[answerIndices[index]], tokensArray[inputIndices[index]]))
                             {
@@ -368,9 +368,14 @@ namespace ErrorClassifier
                                 errorIdentified = true;
                                 errorTypes[7] = true;
                             }
+                            if (DataDebugMethods.ErrorClassifiers.TestDigitTransposition(tokensArray[answerIndices[index]], tokensArray[inputIndices[index]]))
+                            {
+                                errorIdentified = true;
+                                errorTypes[8] = true;
+                            }
                             if (errorIdentified == false)
                             {
-                                errorTypes[8] = true;
+                                errorTypes[9] = true;
                             }
                             string errorTypesString = "";
                             foreach (bool b in errorTypes)
@@ -384,7 +389,7 @@ namespace ErrorClassifier
                                     errorTypesString += "0\t";
                                 }
                             }
-                            errorTypesString = errorTypesString.Remove(errorTypesString.Length - 1);
+                            errorTypesString = errorTypesString.Remove(errorTypesString.Length - 1); //Remove the last tab character from the string
                             errorTypesTable += errorCount + "\t"+ jobID + "\t" + i + "\t" + index + "\t" + errorTypesString + Environment.NewLine;
                             tokensArray[answerIndices[index]] = "<" + tokensArray[answerIndices[index]] + ">";
                         }

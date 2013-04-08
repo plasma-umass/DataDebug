@@ -101,5 +101,17 @@ namespace ErrorClassifier
                 MessageBox.Show("Wrong digit: NO");
             }
         }
+
+        private void digitTransposition_Click(object sender, EventArgs e)
+        {
+            if (ErrorClassifiers.TestDigitTransposition(enteredText.Text, originalText.Text))
+            {
+                MessageBox.Show("Digit transposition: YES");
+            }
+            else
+            {
+                MessageBox.Show("Digit transposition: NO");
+            }
+        }
     }
 }
