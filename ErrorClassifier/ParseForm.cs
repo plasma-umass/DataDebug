@@ -811,13 +811,13 @@ namespace ErrorClassifier
                 Excel.Range errorAddress = ws.get_Range(errorAddresses[errorIndex - 1]);
                 if (errorAddress.Interior.Color != 16711680)
                 {
-                    textBox3.AppendText("Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " DETECTED. Outliers flagged: " + outliersCount + " (" + outliersNewCount + " new.)" + Environment.NewLine);
                     outText += 1 + "\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                     errorsDetectedCount++;
                 }
                 else
                 {
-                    textBox3.AppendText("Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + "(" + outliersNewCount + " new.)" + Environment.NewLine);
+                    textBox3.AppendText("Error " + errorIndex + " NOT detected. Outliers flagged: " + outliersCount + " (" + outliersNewCount + " new.)" + Environment.NewLine);
                     outText += 0 + "\t" + outliersCount + "\t" + outliersNewCount + Environment.NewLine;
                 }
                 textBox1.AppendText("Done." + Environment.NewLine);
