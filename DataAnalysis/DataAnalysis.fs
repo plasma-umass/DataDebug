@@ -1,7 +1,9 @@
 ﻿module DataAnalysis
 open System
+open System.IO
 open System.Data.SQLite
 open System.Globalization
+open DataDebugMethods
 
 type ErrorType =
     | DigitTransposition = 0
@@ -88,7 +90,9 @@ type MTurkData(filename: string) =
 
         cmd.CommandText <- "CREATE TABLE answers ( id INTEGER PRIMARY KEY AUTOINCREMENT," +
                                                  " cell NUMERIC," +
-                                                 " data TEXT," +
+                                                 " origdata TEXT," +
+                                                 " userdata TEXT," +
+                                                 " is_different BOOLEAN," +
                                                  " hitid INTEGER," +
                                                  " FOREIGN KEY(hitid) REFERENCES hits(id)" +
                                                  ")"
@@ -158,6 +162,8 @@ type MTurkData(filename: string) =
         if cmd.ExecuteNonQuery() <> 1 then
             failwith ("INSERT failed: " + querytxt)
         cmd.CommandText <- "SELECT LAST_INSERT_ROWID();"
+        let row_id = System.Convert.ToInt32(cmd.ExecuteScalar())
+        cmd.CommandText <- "SELECT id FROM files WHERE ROWID = " + row_id.ToString() + ";"
         System.Convert.ToInt32(cmd.ExecuteScalar())
     member self.AddHIT(fileid: int,
                        hitid: string,
@@ -214,17 +220,22 @@ type MTurkData(filename: string) =
 
         // return the id
         cmd.CommandText <- "SELECT LAST_INSERT_ROWID();"
+        let row_id = System.Convert.ToInt32(cmd.ExecuteScalar())
+        cmd.CommandText <- "SELECT id FROM hits WHERE ROWID = " + row_id.ToString() + ";"
         System.Convert.ToInt32(cmd.ExecuteScalar())
-    member self.AddAnswerWithErrors(cell: int, data: string, hitid: int, errors: ErrorType list) : int =
+    member self.AddAnswerWithErrors(cell: int, origdata: string, userdata: string, is_different: bool, hitid: int, errors: ErrorType list) : int =
         if Connected() then
             let cmd = self.Command()
-            let querystr = "INSERT INTO answers (cell, data, hitid) VALUES (" + cell.ToString() + ",\"" + data + "\"," + hitid.ToString() + ")"
+            let is_diff = if is_different then 1 else 0
+            let querystr = "INSERT INTO answers (cell, origdata, userdata, is_different, hitid) VALUES (" + cell.ToString() + ",\"" + origdata + "\",\"" + userdata + "\"," + is_diff.ToString() + "," + hitid.ToString() + ")"
             cmd.CommandText <- querystr
             if cmd.ExecuteNonQuery() <> 1 then
                 failwith ("INSERT failed: " + querystr)
 
             // return the id
             cmd.CommandText <- "SELECT LAST_INSERT_ROWID();"
+            let row_id = System.Convert.ToInt32(cmd.ExecuteScalar())
+            cmd.CommandText <- "SELECT id FROM answers WHERE ROWID = " + row_id.ToString() + ";"
             let answer_id = System.Convert.ToInt32(cmd.ExecuteScalar())
 
             // add all of the error classifications
@@ -238,3 +249,78 @@ type MTurkData(filename: string) =
             answer_id
         else
             failwith "Must be connected to a database."
+    member self.ImportCSV(csvfile: string) =
+        let csv = File.ReadAllText(csvfile)
+        let rows = CSVParser.ParseCsv csv ","
+        let wbname = rows.[1].[27]  // wbname is always here for DD experiments
+        let mutable count = 0
+        let fileid = self.AddFile(wbname, csvfile)
+        for row in rows do
+            if count <> 0 then
+                let hitid = row.[0]
+                let hittypeid = row.[1]
+                let title = row.[2]
+                let description = row.[3]
+                let keywords = row.[4]
+                let reward = Decimal.Parse(row.[5].Substring(1))    // drop leading '$'
+                let creationtime = row.[6]
+                let maxassignments = CSVParser.ZeroOrNum row.[7]
+                let requesterannotation = row.[8]
+                let assignmentdurationinseconds = CSVParser.ZeroOrNum row.[9]
+                let autoapprovaldelayinseconds = CSVParser.ZeroOrNum row.[10]
+                let expiration = row.[11]
+                let numberofsimilarhits = CSVParser.ZeroOrNum row.[12]
+                let lifetimeinseconds = CSVParser.ZeroOrNum row.[13]
+                let assignmentid = row.[14]
+                let workerid = row.[15]
+                let assignmentstatus = row.[16]
+                let accepttime = row.[17]
+                let submittime = row.[18]
+                let autoapprovaltime = row.[19]
+                let approvaltime = row.[20]
+                let rejectiontime = row.[21]
+                let requesterfeedback = row.[22]
+                let worktimeinseconds = CSVParser.ZeroOrNum row.[23]
+                let lifetimeapprovalrate = row.[24]
+                let last30daysapprovalrate = row.[25]
+                let last7daysapprovalrate = row.[26]
+                let hitid = self.AddHIT(fileid,
+                                      hitid,
+                                      hittypeid,
+                                      title,
+                                      description,
+                                      keywords,
+                                      reward,
+                                      creationtime,
+                                      maxassignments,
+                                      requesterannotation,
+                                      assignmentdurationinseconds,
+                                      autoapprovaldelayinseconds,
+                                      expiration,
+                                      numberofsimilarhits,
+                                      lifetimeinseconds,
+                                      assignmentid,
+                                      workerid,
+                                      assignmentstatus,
+                                      accepttime,
+                                      submittime,
+                                      autoapprovaltime,
+                                      approvaltime,
+                                      rejectiontime,
+                                      requesterfeedback,
+                                      worktimeinseconds,
+                                      lifetimeapprovalrate,
+                                      last30daysapprovalrate,
+                                      last7daysapprovalrate)
+                for i in 0..9 do
+                    let usertxt = row.[39 + i]
+                    let origtxt = row.[29 + i]
+
+                    // classify errors
+                    let mutable errors = []
+                    if ErrorClassifiers.SignError(usertxt, origtxt) then
+                        errors <- ErrorType.SignError :: errors
+
+                    // insert answer with errors into DB
+                    self.AddAnswerWithErrors(hitid, origtxt, usertxt, ErrorClassifiers.Differs(usertxt, origtxt), hitid, errors) |> ignore
+            count <- count + 1
