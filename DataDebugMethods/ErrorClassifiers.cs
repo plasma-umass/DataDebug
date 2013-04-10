@@ -7,11 +7,6 @@ namespace DataDebugMethods
 {
     public static class ErrorClassifiers
     {
-        public static bool Differ(string enteredText, string originalText)
-        {
-            return !enteredText.Equals(originalText);
-        }
-
         public static bool TestMisplacedDecimal(string enteredText, string originalText)
         {
             //Strings must contain at most one decimal point

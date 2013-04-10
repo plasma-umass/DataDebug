@@ -322,5 +322,5 @@ type MTurkData(filename: string) =
                         errors <- ErrorType.SignError :: errors
 
                     // insert answer with errors into DB
-                    self.AddAnswerWithErrors(hitid, origtxt, usertxt, ErrorClassifiers.Differ(usertxt, origtxt), hitid, errors) |> ignore
+                    self.AddAnswerWithErrors(hitid, origtxt, usertxt, not(usertxt.Equals(origtxt)), hitid, errors) |> ignore
             count <- count + 1
