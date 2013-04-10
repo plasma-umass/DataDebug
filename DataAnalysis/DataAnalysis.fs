@@ -318,9 +318,9 @@ type MTurkData(filename: string) =
 
                     // classify errors
                     let mutable errors = []
-                    if ErrorClassifiers.SignError(usertxt, origtxt) then
+                    if ErrorClassifiers.TestSignError(usertxt, origtxt) then
                         errors <- ErrorType.SignError :: errors
 
                     // insert answer with errors into DB
-                    self.AddAnswerWithErrors(hitid, origtxt, usertxt, ErrorClassifiers.Differs(usertxt, origtxt), hitid, errors) |> ignore
+                    self.AddAnswerWithErrors(hitid, origtxt, usertxt, ErrorClassifiers.Differ(usertxt, origtxt), hitid, errors) |> ignore
             count <- count + 1

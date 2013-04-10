@@ -7,6 +7,11 @@ namespace DataDebugMethods
 {
     public static class ErrorClassifiers
     {
+        public static bool Differ(string enteredText, string originalText)
+        {
+            return !enteredText.Equals(originalText);
+        }
+
         public static bool TestMisplacedDecimal(string enteredText, string originalText)
         {
             //Strings must contain at most one decimal point
@@ -47,31 +52,6 @@ namespace DataDebugMethods
                 return false;
             }
         } //End TestMisplacedDecimal
-
-        public static bool Differs(string usertxt, string origtxt)
-        {
-            return !usertxt.Equals(origtxt);
-        }
-
-        public static bool SignError(string usertxt, string origtxt)
-        {
-            // check for zero-length strings
-            if (origtxt.Length == 0)
-            {
-                // no way that is can have a sign
-                return false;
-            }
-            if (usertxt.Length == 0)
-            {
-                // no way that it can have a sign error
-                return false;
-            }
-            // checks for:
-            // 1. omitted '-'
-            // 2. introduced '-'
-            // we don't care about omitted or introduced '+'; it has no effect.
-            return (origtxt[0] == '-' && usertxt[0] != '-') || (origtxt[0] != '-' && usertxt[0] == '-');
-        }
 
         public static bool TestSignOmission(string enteredText, string originalText)
         {
