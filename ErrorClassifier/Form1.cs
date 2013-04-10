@@ -26,7 +26,7 @@ namespace ErrorClassifier
             else
             {
                 MessageBox.Show("Sign omission: NO");
-            }   
+            }
         }
 
         private void decimalPoint_Click(object sender, EventArgs e)
@@ -111,6 +111,18 @@ namespace ErrorClassifier
             else
             {
                 MessageBox.Show("Digit transposition: NO");
+            }
+        }
+
+        private void signError_Click(object sender, EventArgs e)
+        {
+            if (ErrorClassifiers.TestSignError(enteredText.Text, originalText.Text))
+            {
+                MessageBox.Show("Sign error: YES");
+            }
+            else
+            {
+                MessageBox.Show("Sign error: NO");
             }
         }
     }

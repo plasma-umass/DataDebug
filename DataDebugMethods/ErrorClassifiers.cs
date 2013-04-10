@@ -405,5 +405,33 @@ namespace DataDebugMethods
                 return false;
             }
         } //End TestDigitTransposition
+
+        public static bool TestSignError(string enteredText, string originalText)
+        {
+            //Both strings have to have at least one character besides a - sign
+            if (enteredText.Replace("-", "").Length >= 1 && originalText.Replace("-", "").Length >= 1)
+            {
+                //If the first character in the original string is a '-', but it is not in the entered string, this is a sign error
+                if (originalText[0].Equals('-') && !enteredText[0].Equals('-'))
+                {
+                    return true;
+                }
+                //If the first character in the entered string is a '-', but it is not in the original string, this is a sign error
+                else if (!originalText[0].Equals('-') && enteredText[0].Equals('-'))
+                {
+                    return true;
+                }
+                //If there is no difference in the signs, this is not a sign error
+                else
+                {
+                    return false;
+                }
+            }
+            //If the strings are shorter than one character (ignoring - signs), there is no sign error
+            else
+            {
+                return false;
+            }
+        }  //End TestSignError
     }
 }

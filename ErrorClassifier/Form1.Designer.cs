@@ -40,6 +40,7 @@
             this.wrongDigit = new System.Windows.Forms.Button();
             this.extraDigit = new System.Windows.Forms.Button();
             this.digitTransposition = new System.Windows.Forms.Button();
+            this.signError = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // decimalOmission
@@ -154,11 +155,22 @@
             this.digitTransposition.UseVisualStyleBackColor = true;
             this.digitTransposition.Click += new System.EventHandler(this.digitTransposition_Click);
             // 
+            // signError
+            // 
+            this.signError.Location = new System.Drawing.Point(6, 174);
+            this.signError.Name = "signError";
+            this.signError.Size = new System.Drawing.Size(130, 23);
+            this.signError.TabIndex = 21;
+            this.signError.Text = "Test sign error";
+            this.signError.UseVisualStyleBackColor = true;
+            this.signError.Click += new System.EventHandler(this.signError_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(293, 176);
+            this.ClientSize = new System.Drawing.Size(293, 204);
+            this.Controls.Add(this.signError);
             this.Controls.Add(this.digitTransposition);
             this.Controls.Add(this.extraDigit);
             this.Controls.Add(this.wrongDigit);
@@ -192,5 +204,6 @@
         private System.Windows.Forms.Button wrongDigit;
         private System.Windows.Forms.Button extraDigit;
         private System.Windows.Forms.Button digitTransposition;
+        private System.Windows.Forms.Button signError;
     }
 }
