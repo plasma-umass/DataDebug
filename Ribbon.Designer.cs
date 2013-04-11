@@ -103,6 +103,7 @@ namespace DataDebug
             this.weighted.Checked = true;
             this.weighted.Label = "Use Weights";
             this.weighted.Name = "weighted";
+            this.weighted.Visible = false;
             // 
             // TestNewProcedure
             // 
