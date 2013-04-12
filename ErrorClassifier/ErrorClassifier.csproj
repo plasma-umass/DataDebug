@@ -182,11 +182,11 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="ParseForm.cs">
+    <Compile Include="ExperimentTool.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ParseForm.Designer.cs">
-      <DependentUpon>ParseForm.cs</DependentUpon>
+    <Compile Include="ExperimentTool.Designer.cs">
+      <DependentUpon>ExperimentTool.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -194,8 +194,8 @@
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ParseForm.resx">
-      <DependentUpon>ParseForm.cs</DependentUpon>
+    <EmbeddedResource Include="ExperimentTool.resx">
+      <DependentUpon>ExperimentTool.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

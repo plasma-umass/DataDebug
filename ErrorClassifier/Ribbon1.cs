@@ -21,7 +21,7 @@ namespace ErrorClassifier
 
         private void buttonOpenTool_Click(object sender, RibbonControlEventArgs e)
         {
-            ParseForm parseForm = new ParseForm();
+            ExperimentTool parseForm = new ExperimentTool();
             parseForm.ShowDialog();
         }
     }
