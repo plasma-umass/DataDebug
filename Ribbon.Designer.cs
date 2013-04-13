@@ -96,6 +96,7 @@ namespace DataDebug
             // 
             this.button7.Label = "Output MTurk Data";
             this.button7.Name = "button7";
+            this.button7.Visible = false;
             this.button7.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button7_Click);
             // 
             // weighted
@@ -134,6 +135,7 @@ namespace DataDebug
             // 
             this.countFormulas.Label = "Count Formulas";
             this.countFormulas.Name = "countFormulas";
+            this.countFormulas.Visible = false;
             this.countFormulas.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.countFormulas_Click);
             // 
             // group3
@@ -141,6 +143,7 @@ namespace DataDebug
             this.group3.Items.Add(this.performanceExperiments);
             this.group3.Label = "Performance Experiments";
             this.group3.Name = "group3";
+            this.group3.Visible = false;
             // 
             // performanceExperiments
             // 
