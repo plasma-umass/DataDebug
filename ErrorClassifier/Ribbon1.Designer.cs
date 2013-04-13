@@ -54,7 +54,6 @@
             this.group1.Items.Add(this.buttonOpenTool);
             this.group1.Label = "Error Classifier";
             this.group1.Name = "group1";
-            this.group1.Visible = false;
             // 
             // buttonOpenDialog
             // 
