@@ -41,15 +41,6 @@
             this.extraDigit = new System.Windows.Forms.Button();
             this.digitTransposition = new System.Windows.Forms.Button();
             this.signError = new System.Windows.Forms.Button();
-            this.signOmissionTextBox = new System.Windows.Forms.TextBox();
-            this.digitRepeatTextBox = new System.Windows.Forms.TextBox();
-            this.decimalOmissionTextBox = new System.Windows.Forms.TextBox();
-            this.extraDigitTextBox = new System.Windows.Forms.TextBox();
-            this.signErrorTextBox = new System.Windows.Forms.TextBox();
-            this.misplacedDecimalTextBox = new System.Windows.Forms.TextBox();
-            this.digitOmissionTextBox = new System.Windows.Forms.TextBox();
-            this.wrongDigitTextBox = new System.Windows.Forms.TextBox();
-            this.digitTranspositionTextBox = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
@@ -59,6 +50,15 @@
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
+            this.signOmissionLabel = new System.Windows.Forms.Label();
+            this.digitRepeatLabel = new System.Windows.Forms.Label();
+            this.decimalOmissionLabel = new System.Windows.Forms.Label();
+            this.extraDigitLabel = new System.Windows.Forms.Label();
+            this.signErrorLabel = new System.Windows.Forms.Label();
+            this.misplacedDecimalLabel = new System.Windows.Forms.Label();
+            this.digitOmissionLabel = new System.Windows.Forms.Label();
+            this.wrongDigitLabel = new System.Windows.Forms.Label();
+            this.digitTranspositionLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // decimalOmission
@@ -224,105 +224,6 @@
             this.signError.Visible = false;
             this.signError.Click += new System.EventHandler(this.signError_Click);
             // 
-            // signOmissionTextBox
-            // 
-            this.signOmissionTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.signOmissionTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.signOmissionTextBox.ForeColor = System.Drawing.Color.Black;
-            this.signOmissionTextBox.Location = new System.Drawing.Point(131, 60);
-            this.signOmissionTextBox.Name = "signOmissionTextBox";
-            this.signOmissionTextBox.Size = new System.Drawing.Size(23, 18);
-            this.signOmissionTextBox.TabIndex = 22;
-            this.signOmissionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // digitRepeatTextBox
-            // 
-            this.digitRepeatTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.digitRepeatTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.digitRepeatTextBox.ForeColor = System.Drawing.Color.Black;
-            this.digitRepeatTextBox.Location = new System.Drawing.Point(131, 89);
-            this.digitRepeatTextBox.Name = "digitRepeatTextBox";
-            this.digitRepeatTextBox.Size = new System.Drawing.Size(23, 18);
-            this.digitRepeatTextBox.TabIndex = 23;
-            this.digitRepeatTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // decimalOmissionTextBox
-            // 
-            this.decimalOmissionTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.decimalOmissionTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.decimalOmissionTextBox.ForeColor = System.Drawing.Color.Black;
-            this.decimalOmissionTextBox.Location = new System.Drawing.Point(131, 118);
-            this.decimalOmissionTextBox.Name = "decimalOmissionTextBox";
-            this.decimalOmissionTextBox.Size = new System.Drawing.Size(23, 18);
-            this.decimalOmissionTextBox.TabIndex = 24;
-            this.decimalOmissionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // extraDigitTextBox
-            // 
-            this.extraDigitTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.extraDigitTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.extraDigitTextBox.ForeColor = System.Drawing.Color.Black;
-            this.extraDigitTextBox.Location = new System.Drawing.Point(131, 147);
-            this.extraDigitTextBox.Name = "extraDigitTextBox";
-            this.extraDigitTextBox.Size = new System.Drawing.Size(23, 18);
-            this.extraDigitTextBox.TabIndex = 25;
-            this.extraDigitTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // signErrorTextBox
-            // 
-            this.signErrorTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.signErrorTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.signErrorTextBox.ForeColor = System.Drawing.Color.Black;
-            this.signErrorTextBox.Location = new System.Drawing.Point(131, 176);
-            this.signErrorTextBox.Name = "signErrorTextBox";
-            this.signErrorTextBox.Size = new System.Drawing.Size(23, 18);
-            this.signErrorTextBox.TabIndex = 26;
-            this.signErrorTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // misplacedDecimalTextBox
-            // 
-            this.misplacedDecimalTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.misplacedDecimalTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.misplacedDecimalTextBox.ForeColor = System.Drawing.Color.Black;
-            this.misplacedDecimalTextBox.Location = new System.Drawing.Point(322, 60);
-            this.misplacedDecimalTextBox.Name = "misplacedDecimalTextBox";
-            this.misplacedDecimalTextBox.Size = new System.Drawing.Size(23, 18);
-            this.misplacedDecimalTextBox.TabIndex = 27;
-            this.misplacedDecimalTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // digitOmissionTextBox
-            // 
-            this.digitOmissionTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.digitOmissionTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.digitOmissionTextBox.ForeColor = System.Drawing.Color.Black;
-            this.digitOmissionTextBox.Location = new System.Drawing.Point(322, 89);
-            this.digitOmissionTextBox.Name = "digitOmissionTextBox";
-            this.digitOmissionTextBox.Size = new System.Drawing.Size(23, 18);
-            this.digitOmissionTextBox.TabIndex = 28;
-            this.digitOmissionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // wrongDigitTextBox
-            // 
-            this.wrongDigitTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.wrongDigitTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.wrongDigitTextBox.ForeColor = System.Drawing.Color.Black;
-            this.wrongDigitTextBox.Location = new System.Drawing.Point(322, 118);
-            this.wrongDigitTextBox.Name = "wrongDigitTextBox";
-            this.wrongDigitTextBox.Size = new System.Drawing.Size(23, 18);
-            this.wrongDigitTextBox.TabIndex = 29;
-            this.wrongDigitTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // digitTranspositionTextBox
-            // 
-            this.digitTranspositionTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.digitTranspositionTextBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.digitTranspositionTextBox.ForeColor = System.Drawing.Color.Black;
-            this.digitTranspositionTextBox.Location = new System.Drawing.Point(322, 147);
-            this.digitTranspositionTextBox.Name = "digitTranspositionTextBox";
-            this.digitTranspositionTextBox.Size = new System.Drawing.Size(23, 18);
-            this.digitTranspositionTextBox.TabIndex = 30;
-            this.digitTranspositionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -422,12 +323,129 @@
             this.label11.TabIndex = 39;
             this.label11.Text = "Digit Transposition:";
             // 
+            // signOmissionLabel
+            // 
+            this.signOmissionLabel.AutoSize = true;
+            this.signOmissionLabel.BackColor = System.Drawing.Color.Black;
+            this.signOmissionLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.signOmissionLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.signOmissionLabel.Location = new System.Drawing.Point(125, 63);
+            this.signOmissionLabel.Name = "signOmissionLabel";
+            this.signOmissionLabel.Size = new System.Drawing.Size(29, 11);
+            this.signOmissionLabel.TabIndex = 40;
+            this.signOmissionLabel.Text = " - ";
+            // 
+            // digitRepeatLabel
+            // 
+            this.digitRepeatLabel.AutoSize = true;
+            this.digitRepeatLabel.BackColor = System.Drawing.Color.Black;
+            this.digitRepeatLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.digitRepeatLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.digitRepeatLabel.Location = new System.Drawing.Point(125, 92);
+            this.digitRepeatLabel.Name = "digitRepeatLabel";
+            this.digitRepeatLabel.Size = new System.Drawing.Size(29, 11);
+            this.digitRepeatLabel.TabIndex = 41;
+            this.digitRepeatLabel.Text = " - ";
+            // 
+            // decimalOmissionLabel
+            // 
+            this.decimalOmissionLabel.AutoSize = true;
+            this.decimalOmissionLabel.BackColor = System.Drawing.Color.Black;
+            this.decimalOmissionLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.decimalOmissionLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.decimalOmissionLabel.Location = new System.Drawing.Point(125, 121);
+            this.decimalOmissionLabel.Name = "decimalOmissionLabel";
+            this.decimalOmissionLabel.Size = new System.Drawing.Size(29, 11);
+            this.decimalOmissionLabel.TabIndex = 42;
+            this.decimalOmissionLabel.Text = " - ";
+            // 
+            // extraDigitLabel
+            // 
+            this.extraDigitLabel.AutoSize = true;
+            this.extraDigitLabel.BackColor = System.Drawing.Color.Black;
+            this.extraDigitLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.extraDigitLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.extraDigitLabel.Location = new System.Drawing.Point(125, 151);
+            this.extraDigitLabel.Name = "extraDigitLabel";
+            this.extraDigitLabel.Size = new System.Drawing.Size(29, 11);
+            this.extraDigitLabel.TabIndex = 43;
+            this.extraDigitLabel.Text = " - ";
+            // 
+            // signErrorLabel
+            // 
+            this.signErrorLabel.AutoSize = true;
+            this.signErrorLabel.BackColor = System.Drawing.Color.Black;
+            this.signErrorLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.signErrorLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.signErrorLabel.Location = new System.Drawing.Point(125, 180);
+            this.signErrorLabel.Name = "signErrorLabel";
+            this.signErrorLabel.Size = new System.Drawing.Size(29, 11);
+            this.signErrorLabel.TabIndex = 44;
+            this.signErrorLabel.Text = " - ";
+            // 
+            // misplacedDecimalLabel
+            // 
+            this.misplacedDecimalLabel.AutoSize = true;
+            this.misplacedDecimalLabel.BackColor = System.Drawing.Color.Black;
+            this.misplacedDecimalLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.misplacedDecimalLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.misplacedDecimalLabel.Location = new System.Drawing.Point(316, 63);
+            this.misplacedDecimalLabel.Name = "misplacedDecimalLabel";
+            this.misplacedDecimalLabel.Size = new System.Drawing.Size(29, 11);
+            this.misplacedDecimalLabel.TabIndex = 45;
+            this.misplacedDecimalLabel.Text = " - ";
+            // 
+            // digitOmissionLabel
+            // 
+            this.digitOmissionLabel.AutoSize = true;
+            this.digitOmissionLabel.BackColor = System.Drawing.Color.Black;
+            this.digitOmissionLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.digitOmissionLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.digitOmissionLabel.Location = new System.Drawing.Point(316, 93);
+            this.digitOmissionLabel.Name = "digitOmissionLabel";
+            this.digitOmissionLabel.Size = new System.Drawing.Size(29, 11);
+            this.digitOmissionLabel.TabIndex = 46;
+            this.digitOmissionLabel.Text = " - ";
+            // 
+            // wrongDigitLabel
+            // 
+            this.wrongDigitLabel.AutoSize = true;
+            this.wrongDigitLabel.BackColor = System.Drawing.Color.Black;
+            this.wrongDigitLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.wrongDigitLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.wrongDigitLabel.Location = new System.Drawing.Point(316, 122);
+            this.wrongDigitLabel.Name = "wrongDigitLabel";
+            this.wrongDigitLabel.Size = new System.Drawing.Size(29, 11);
+            this.wrongDigitLabel.TabIndex = 47;
+            this.wrongDigitLabel.Text = " - ";
+            // 
+            // digitTranspositionLabel
+            // 
+            this.digitTranspositionLabel.AutoSize = true;
+            this.digitTranspositionLabel.BackColor = System.Drawing.Color.Black;
+            this.digitTranspositionLabel.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.digitTranspositionLabel.ForeColor = System.Drawing.Color.LightGray;
+            this.digitTranspositionLabel.Location = new System.Drawing.Point(316, 150);
+            this.digitTranspositionLabel.Name = "digitTranspositionLabel";
+            this.digitTranspositionLabel.Size = new System.Drawing.Size(29, 11);
+            this.digitTranspositionLabel.TabIndex = 48;
+            this.digitTranspositionLabel.Text = " - ";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(359, 211);
+            this.Controls.Add(this.digitTranspositionLabel);
+            this.Controls.Add(this.wrongDigitLabel);
+            this.Controls.Add(this.digitOmissionLabel);
+            this.Controls.Add(this.misplacedDecimalLabel);
+            this.Controls.Add(this.signErrorLabel);
+            this.Controls.Add(this.extraDigitLabel);
+            this.Controls.Add(this.decimalOmissionLabel);
+            this.Controls.Add(this.digitRepeatLabel);
+            this.Controls.Add(this.signOmissionLabel);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.label9);
@@ -437,15 +455,6 @@
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.digitTranspositionTextBox);
-            this.Controls.Add(this.wrongDigitTextBox);
-            this.Controls.Add(this.digitOmissionTextBox);
-            this.Controls.Add(this.misplacedDecimalTextBox);
-            this.Controls.Add(this.signErrorTextBox);
-            this.Controls.Add(this.extraDigitTextBox);
-            this.Controls.Add(this.decimalOmissionTextBox);
-            this.Controls.Add(this.digitRepeatTextBox);
-            this.Controls.Add(this.signOmissionTextBox);
             this.Controls.Add(this.signError);
             this.Controls.Add(this.digitTransposition);
             this.Controls.Add(this.extraDigit);
@@ -482,15 +491,6 @@
         private System.Windows.Forms.Button extraDigit;
         private System.Windows.Forms.Button digitTransposition;
         private System.Windows.Forms.Button signError;
-        private System.Windows.Forms.TextBox signOmissionTextBox;
-        private System.Windows.Forms.TextBox digitRepeatTextBox;
-        private System.Windows.Forms.TextBox decimalOmissionTextBox;
-        private System.Windows.Forms.TextBox extraDigitTextBox;
-        private System.Windows.Forms.TextBox signErrorTextBox;
-        private System.Windows.Forms.TextBox misplacedDecimalTextBox;
-        private System.Windows.Forms.TextBox digitOmissionTextBox;
-        private System.Windows.Forms.TextBox wrongDigitTextBox;
-        private System.Windows.Forms.TextBox digitTranspositionTextBox;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
@@ -500,5 +500,14 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label signOmissionLabel;
+        private System.Windows.Forms.Label digitRepeatLabel;
+        private System.Windows.Forms.Label decimalOmissionLabel;
+        private System.Windows.Forms.Label extraDigitLabel;
+        private System.Windows.Forms.Label signErrorLabel;
+        private System.Windows.Forms.Label misplacedDecimalLabel;
+        private System.Windows.Forms.Label digitOmissionLabel;
+        private System.Windows.Forms.Label wrongDigitLabel;
+        private System.Windows.Forms.Label digitTranspositionLabel;
     }
 }

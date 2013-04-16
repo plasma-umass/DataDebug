@@ -21,13 +21,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestSignOmission(enteredText.Text, originalText.Text))
             {
-                signOmissionTextBox.BackColor = System.Drawing.Color.LightGreen;
-                signOmissionTextBox.Text = "Y";
+                signOmissionLabel.ForeColor = System.Drawing.Color.Green;
+                signOmissionLabel.Text = " Y ";
             }
             else
             {
-                signOmissionTextBox.BackColor = System.Drawing.Color.Red;
-                signOmissionTextBox.Text = "N";
+                signOmissionLabel.ForeColor = System.Drawing.Color.Red;
+                signOmissionLabel.Text = " N ";
             }
         }
 
@@ -35,13 +35,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestMisplacedDecimal(enteredText.Text, originalText.Text))
             {
-                misplacedDecimalTextBox.BackColor = System.Drawing.Color.LightGreen;
-                misplacedDecimalTextBox.Text = "Y";
+                misplacedDecimalLabel.ForeColor = System.Drawing.Color.Green;
+                misplacedDecimalLabel.Text = " Y ";
             }
             else
             {
-                misplacedDecimalTextBox.BackColor = System.Drawing.Color.Red;
-                misplacedDecimalTextBox.Text = "N";
+                misplacedDecimalLabel.ForeColor = System.Drawing.Color.Red;
+                misplacedDecimalLabel.Text = " N ";
             }   
         }
 
@@ -49,13 +49,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitRepeat(enteredText.Text, originalText.Text))
             {
-                digitRepeatTextBox.BackColor = System.Drawing.Color.LightGreen;
-                digitRepeatTextBox.Text = "Y";
+                digitRepeatLabel.ForeColor = System.Drawing.Color.Green;
+                digitRepeatLabel.Text = " Y ";
             }
             else
             {
-                digitRepeatTextBox.BackColor = System.Drawing.Color.Red;
-                digitRepeatTextBox.Text = "N";
+                digitRepeatLabel.ForeColor = System.Drawing.Color.Red;
+                digitRepeatLabel.Text = " N ";
             }
         }
 
@@ -63,13 +63,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitOmission(enteredText.Text, originalText.Text))
             {
-                digitOmissionTextBox.BackColor = System.Drawing.Color.LightGreen;
-                digitOmissionTextBox.Text = "Y";
+                digitOmissionLabel.ForeColor = System.Drawing.Color.Green;
+                digitOmissionLabel.Text = " Y ";
             }
             else
             {
-                digitOmissionTextBox.BackColor = System.Drawing.Color.Red;
-                digitOmissionTextBox.Text = "N";
+                digitOmissionLabel.ForeColor = System.Drawing.Color.Red;
+                digitOmissionLabel.Text = " N ";
             }
         }
 
@@ -77,13 +77,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDecimalOmission(enteredText.Text, originalText.Text))
             {
-                decimalOmissionTextBox.BackColor = System.Drawing.Color.LightGreen;
-                decimalOmissionTextBox.Text = "Y";
+                decimalOmissionLabel.ForeColor = System.Drawing.Color.Green;
+                decimalOmissionLabel.Text = " Y ";
             }
             else
             {
-                decimalOmissionTextBox.BackColor = System.Drawing.Color.Red;
-                decimalOmissionTextBox.Text = "N";
+                decimalOmissionLabel.ForeColor = System.Drawing.Color.Red;
+                decimalOmissionLabel.Text = " N ";
             }
         }
 
@@ -91,13 +91,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestExtraDigit(enteredText.Text, originalText.Text))
             {
-                extraDigitTextBox.BackColor = System.Drawing.Color.LightGreen;
-                extraDigitTextBox.Text = "Y";
+                extraDigitLabel.ForeColor = System.Drawing.Color.Green;
+                extraDigitLabel.Text = " Y ";
             }
             else
             {
-                extraDigitTextBox.BackColor = System.Drawing.Color.Red;
-                extraDigitTextBox.Text = "N";
+                extraDigitLabel.ForeColor = System.Drawing.Color.Red;
+                extraDigitLabel.Text = " N ";
             }
         }
 
@@ -106,13 +106,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestWrongDigit(enteredText.Text, originalText.Text))
             {
-                wrongDigitTextBox.BackColor = System.Drawing.Color.LightGreen;
-                wrongDigitTextBox.Text = "Y";
+                wrongDigitLabel.ForeColor = System.Drawing.Color.Green;
+                wrongDigitLabel.Text = " Y ";
             }
             else
             {
-                wrongDigitTextBox.BackColor = System.Drawing.Color.Red;
-                wrongDigitTextBox.Text = "N";
+                wrongDigitLabel.ForeColor = System.Drawing.Color.Red;
+                wrongDigitLabel.Text = " N ";
             }
         }
 
@@ -120,13 +120,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitTransposition(enteredText.Text, originalText.Text))
             {
-                digitTranspositionTextBox.BackColor = System.Drawing.Color.LightGreen;
-                digitTranspositionTextBox.Text = "Y";
+                digitTranspositionLabel.ForeColor = System.Drawing.Color.Green;
+                digitTranspositionLabel.Text = " Y ";
             }
             else
             {
-                digitTranspositionTextBox.BackColor = System.Drawing.Color.Red;
-                digitTranspositionTextBox.Text = "N";
+                digitTranspositionLabel.ForeColor = System.Drawing.Color.Red;
+                digitTranspositionLabel.Text = " N ";
             }
         }
 
@@ -134,13 +134,13 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestSignError(enteredText.Text, originalText.Text))
             {
-                signErrorTextBox.BackColor = System.Drawing.Color.LightGreen;
-                signErrorTextBox.Text = "Y";
+                signErrorLabel.ForeColor = System.Drawing.Color.Green;
+                signErrorLabel.Text = " Y ";
             }
             else
             {
-                signErrorTextBox.BackColor = System.Drawing.Color.Red;
-                signErrorTextBox.Text = "N";
+                signErrorLabel.ForeColor = System.Drawing.Color.Red;
+                signErrorLabel.Text = " N ";
             }
         }
 
