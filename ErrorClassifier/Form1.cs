@@ -21,11 +21,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestSignOmission(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Sign omission: YES");
+                signOmissionTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Sign omission: NO");
+                signOmissionTextBox.Text = "N";
             }
         }
 
@@ -33,11 +33,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestMisplacedDecimal(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Misplaced decimal point: YES");
+                misplacedDecimalTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Misplaced decimal point: NO");
+                misplacedDecimalTextBox.Text = "N";
             }   
         }
 
@@ -45,11 +45,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitRepeat(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Repeated digit: YES");
+                digitRepeatTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Repeated digit: NO");
+                digitRepeatTextBox.Text = "N";
             }
         }
 
@@ -57,11 +57,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitOmission(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Digit omission: YES");
+                digitOmissionTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Digit omission: NO");
+                digitOmissionTextBox.Text = "N";
             }
         }
 
@@ -69,11 +69,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDecimalOmission(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Decimal omission: YES");
+                decimalOmissionTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Decimal omission: NO");
+                decimalOmissionTextBox.Text = "N";
             }
         }
 
@@ -81,11 +81,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestExtraDigit(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Extra digit: YES");
+                extraDigitTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Extra digit: NO");
+                extraDigitTextBox.Text = "N";
             }
         }
 
@@ -94,11 +94,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestWrongDigit(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Wrong digit: YES");
+                wrongDigitTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Wrong digit: NO");
+                wrongDigitTextBox.Text = "N";
             }
         }
 
@@ -106,11 +106,11 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitTransposition(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Digit transposition: YES");
+                digitTranspositionTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Digit transposition: NO");
+                digitTranspositionTextBox.Text = "N";
             }
         }
 
@@ -118,12 +118,38 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestSignError(enteredText.Text, originalText.Text))
             {
-                MessageBox.Show("Sign error: YES");
+                signErrorTextBox.Text = "Y";
             }
             else
             {
-                MessageBox.Show("Sign error: NO");
+                signErrorTextBox.Text = "N";
             }
         }
+
+        private void originalText_TextChanged(object sender, EventArgs e)
+        {
+            signError_Click(sender, e);
+            digitTransposition_Click(sender, e);
+            wrongDigit_Click(sender, e);
+            extraDigit_Click(sender, e);
+            digitOmission_Click(sender, e);
+            decimalOmission_Click(sender, e);
+            digitRepeat_Click(sender, e);
+            decimalPoint_Click(sender, e);
+            signOmission_Click(sender, e);
+        } //End originalText_TextChanged
+
+        private void enteredText_TextChanged(object sender, EventArgs e)
+        {
+            signError_Click(sender, e);
+            digitTransposition_Click(sender, e);
+            wrongDigit_Click(sender, e);
+            extraDigit_Click(sender, e);
+            digitOmission_Click(sender, e);
+            decimalOmission_Click(sender, e);
+            digitRepeat_Click(sender, e);
+            decimalPoint_Click(sender, e);
+            signOmission_Click(sender, e);
+        } //End enteredText_TextChanged
     }
 }
