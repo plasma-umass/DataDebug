@@ -21,10 +21,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestSignOmission(enteredText.Text, originalText.Text))
             {
+                signOmissionTextBox.BackColor = System.Drawing.Color.LightGreen;
                 signOmissionTextBox.Text = "Y";
             }
             else
             {
+                signOmissionTextBox.BackColor = System.Drawing.Color.Red;
                 signOmissionTextBox.Text = "N";
             }
         }
@@ -33,10 +35,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestMisplacedDecimal(enteredText.Text, originalText.Text))
             {
+                misplacedDecimalTextBox.BackColor = System.Drawing.Color.LightGreen;
                 misplacedDecimalTextBox.Text = "Y";
             }
             else
             {
+                misplacedDecimalTextBox.BackColor = System.Drawing.Color.Red;
                 misplacedDecimalTextBox.Text = "N";
             }   
         }
@@ -45,10 +49,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitRepeat(enteredText.Text, originalText.Text))
             {
+                digitRepeatTextBox.BackColor = System.Drawing.Color.LightGreen;
                 digitRepeatTextBox.Text = "Y";
             }
             else
             {
+                digitRepeatTextBox.BackColor = System.Drawing.Color.Red;
                 digitRepeatTextBox.Text = "N";
             }
         }
@@ -57,10 +63,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitOmission(enteredText.Text, originalText.Text))
             {
+                digitOmissionTextBox.BackColor = System.Drawing.Color.LightGreen;
                 digitOmissionTextBox.Text = "Y";
             }
             else
             {
+                digitOmissionTextBox.BackColor = System.Drawing.Color.Red;
                 digitOmissionTextBox.Text = "N";
             }
         }
@@ -69,10 +77,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDecimalOmission(enteredText.Text, originalText.Text))
             {
+                decimalOmissionTextBox.BackColor = System.Drawing.Color.LightGreen;
                 decimalOmissionTextBox.Text = "Y";
             }
             else
             {
+                decimalOmissionTextBox.BackColor = System.Drawing.Color.Red;
                 decimalOmissionTextBox.Text = "N";
             }
         }
@@ -81,10 +91,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestExtraDigit(enteredText.Text, originalText.Text))
             {
+                extraDigitTextBox.BackColor = System.Drawing.Color.LightGreen;
                 extraDigitTextBox.Text = "Y";
             }
             else
             {
+                extraDigitTextBox.BackColor = System.Drawing.Color.Red;
                 extraDigitTextBox.Text = "N";
             }
         }
@@ -94,10 +106,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestWrongDigit(enteredText.Text, originalText.Text))
             {
+                wrongDigitTextBox.BackColor = System.Drawing.Color.LightGreen;
                 wrongDigitTextBox.Text = "Y";
             }
             else
             {
+                wrongDigitTextBox.BackColor = System.Drawing.Color.Red;
                 wrongDigitTextBox.Text = "N";
             }
         }
@@ -106,10 +120,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestDigitTransposition(enteredText.Text, originalText.Text))
             {
+                digitTranspositionTextBox.BackColor = System.Drawing.Color.LightGreen;
                 digitTranspositionTextBox.Text = "Y";
             }
             else
             {
+                digitTranspositionTextBox.BackColor = System.Drawing.Color.Red;
                 digitTranspositionTextBox.Text = "N";
             }
         }
@@ -118,10 +134,12 @@ namespace ErrorClassifier
         {
             if (ErrorClassifiers.TestSignError(enteredText.Text, originalText.Text))
             {
+                signErrorTextBox.BackColor = System.Drawing.Color.LightGreen;
                 signErrorTextBox.Text = "Y";
             }
             else
             {
+                signErrorTextBox.BackColor = System.Drawing.Color.Red;
                 signErrorTextBox.Text = "N";
             }
         }
