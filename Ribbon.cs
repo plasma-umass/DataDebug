@@ -94,6 +94,19 @@ namespace DataDebug
             // Find outliers (modifies data)
             Analysis.outlierAnalysis(data);
 
+            string fileName = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
+            string folderPath = Globals.ThisAddIn.Application.ActiveWorkbook.Path;
+            string outText = "Worksheet\tAddress\tOriginal Color" + Environment.NewLine;
+            foreach (string[] dataEntry in data.reportData)
+            {
+                foreach (string dataItem in dataEntry)
+                {
+                    outText += dataItem + "\t";
+                }
+                outText += Environment.NewLine;
+            }
+            System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", outText);
+
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
         }

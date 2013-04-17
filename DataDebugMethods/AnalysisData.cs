@@ -36,6 +36,7 @@ namespace DataDebugMethods
         public Excel.Sheets worksheets;
         public Excel.Sheets charts;
         public List<string> oldToolOutlierAddresses; //This keeps track of which entries have been flaged as outliers by the old tool
+        public List<string[]> reportData; //This keeps information for the persistent state after the tool is run. (Addresses of flagged cells and their initial colors.)
 
         public const int PROGRESS_LOW = 0;
         public const int PROGRESS_HIGH = 100;
@@ -154,6 +155,7 @@ namespace DataDebugMethods
             output_cells = new List<TreeNode>();
             cell_nodes = new TreeDict();
             oldToolOutlierAddresses = new List<string>();
+            reportData = new List<string[]>();
 
             // Create a progress bar
             pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
