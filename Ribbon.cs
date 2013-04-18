@@ -96,16 +96,24 @@ namespace DataDebug
 
             string fileName = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
             string folderPath = Globals.ThisAddIn.Application.ActiveWorkbook.Path;
-            string outText = "Worksheet\tAddress\tOriginal Color" + Environment.NewLine;
+            string reportsText = "";
+            //If there is an existing report file, get its text, otherwise a new report file will be created.
+            try
+            {
+                reportsText = System.IO.File.ReadAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt");
+            }
+            catch { }
+
+            reportsText += "Worksheet Index\tAddress\tOriginal Color" + Environment.NewLine;
             foreach (string[] dataEntry in data.reportData)
             {
                 foreach (string dataItem in dataEntry)
                 {
-                    outText += dataItem + "\t";
+                    reportsText += dataItem + "\t";
                 }
-                outText += Environment.NewLine;
+                reportsText += Environment.NewLine;
             }
-            System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", outText);
+            System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", reportsText);
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
@@ -224,6 +232,33 @@ namespace DataDebug
                 }
             }
             System.Windows.Forms.MessageBox.Show(countFormulas + " formulas in this workbook.");
+        }
+
+        private void undoButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            string fileName = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
+            string folderPath = Globals.ThisAddIn.Application.ActiveWorkbook.Path;
+            string reportsText = "";
+            try
+            {
+                reportsText = System.IO.File.ReadAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt");
+            }
+            catch { return; }
+
+            int startIndex = reportsText.LastIndexOf("Worksheet Index\tAddress\tOriginal Color" + Environment.NewLine);
+            
+            //If the reports file is empty, there is nothing more to undo
+            if (startIndex == -1)
+            {
+                return;
+            }
+            //Restore colors will go here
+
+            string lastReport = reportsText.Substring(startIndex);
+            System.Windows.Forms.MessageBox.Show("Last report: " + Environment.NewLine + lastReport);
+            reportsText = reportsText.Remove(startIndex);
+            System.Windows.Forms.MessageBox.Show("Remaining report: "  + reportsText);
+            System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", reportsText);
         }
     }
 }

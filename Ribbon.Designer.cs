@@ -52,6 +52,7 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
+            this.undoButton = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group3.SuspendLayout();
@@ -77,6 +78,7 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_compile_regex);
             this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Items.Add(this.countFormulas);
+            this.group1.Items.Add(this.undoButton);
             this.group1.Label = "DataDebug";
             this.group1.Name = "group1";
             // 
@@ -179,6 +181,12 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
+            // undoButton
+            // 
+            this.undoButton.Label = "Undo";
+            this.undoButton.Name = "undoButton";
+            this.undoButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.undoButton_Click);
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -216,6 +224,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton performanceExperiments;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group3;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton countFormulas;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton undoButton;
     }
 
     partial class ThisRibbonCollection
