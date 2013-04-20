@@ -63,11 +63,15 @@ namespace DataDebug
                 _addr = address;
                 _colorindex = colorindex;
             }
-            public void Restore() { _ws.get_Range(_addr).Interior.ColorIndex = _colorindex; }
+            public void Restore()
+            {
+                _ws.get_Range(_addr).Interior.ColorIndex = _colorindex;
+            }
         }
 
         public static List<CellColor> SaveColors2(Excel.Workbook wb)
         {
+            System.Windows.Forms.MessageBox.Show("Saving colors.");
             var _l = new List<CellColor>();
             foreach (Excel.Worksheet ws in wb.Worksheets)
             {

@@ -255,6 +255,7 @@ namespace DataDebug
             //Restore colors will go here
 
             string lastReport = reportsText.Substring(startIndex);
+            //string[] lastReportLines = lastReport.lin
             System.Windows.Forms.MessageBox.Show("Last report: " + Environment.NewLine + lastReport);
             reportsText = reportsText.Remove(startIndex);
             System.Windows.Forms.MessageBox.Show("Remaining report: "  + reportsText);
