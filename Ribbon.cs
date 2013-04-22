@@ -79,11 +79,12 @@ namespace DataDebug
             // Construct a new tree every time the tool is run
             data.Reset();
 
+            //TODO This needs to be improved -- it doesn't make sense that it restores the colors to whatever they were when the workbook was opened. It removes any coloring changes the user has made since opening the file, which is not good.
             // reset colors
-            if (current_workbook != null)
-            {
-                RibbonHelper.RestoreColors2(color_dict[current_workbook]);
-            }
+            //if (current_workbook != null)
+            //{
+            //    RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            //}
             
             // Build dependency graph (modifies data)
             ConstructTree.constructTree(data, app);
@@ -178,11 +179,12 @@ namespace DataDebug
             // Disable screen updating during perturbation and analysis to speed things up
             app.ScreenUpdating = false;
 
+            //TODO This needs to be improved -- it doesn't make sense that it restores the colors to whatever they were when the workbook was opened. It removes any coloring changes the user has made since opening the file, which is not good.
             // reset colors
-            if (current_workbook != null)
-            {
-                RibbonHelper.RestoreColors2(color_dict[current_workbook]);
-            }
+            //if (current_workbook != null)
+            //{
+            //    RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            //}
 
             // Make a new analysisData object
             AnalysisData data = new AnalysisData(app);
@@ -232,34 +234,6 @@ namespace DataDebug
                 }
             }
             System.Windows.Forms.MessageBox.Show(countFormulas + " formulas in this workbook.");
-        }
-
-        private void undoButton_Click(object sender, RibbonControlEventArgs e)
-        {
-            string fileName = Globals.ThisAddIn.Application.ActiveWorkbook.Name;
-            string folderPath = Globals.ThisAddIn.Application.ActiveWorkbook.Path;
-            string reportsText = "";
-            try
-            {
-                reportsText = System.IO.File.ReadAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt");
-            }
-            catch { return; }
-
-            int startIndex = reportsText.LastIndexOf("Worksheet Index\tAddress\tOriginal Color" + Environment.NewLine);
-            
-            //If the reports file is empty, there is nothing more to undo
-            if (startIndex == -1)
-            {
-                return;
-            }
-            //Restore colors will go here
-
-            string lastReport = reportsText.Substring(startIndex);
-            //string[] lastReportLines = lastReport.lin
-            System.Windows.Forms.MessageBox.Show("Last report: " + Environment.NewLine + lastReport);
-            reportsText = reportsText.Remove(startIndex);
-            System.Windows.Forms.MessageBox.Show("Remaining report: "  + reportsText);
-            System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", reportsText);
         }
     }
 }
