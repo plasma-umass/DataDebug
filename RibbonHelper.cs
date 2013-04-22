@@ -56,16 +56,25 @@ namespace DataDebug
             private Excel.Worksheet _ws;
             private string _addr;
             private int _colorindex;
+            private double _color;
 
-            public CellColor(Excel.Worksheet ws, string address, int colorindex)
+            public CellColor(Excel.Worksheet ws, string address, int colorindex, double color)
             {
                 _ws = ws;
                 _addr = address;
                 _colorindex = colorindex;
+                _color = color;
             }
             public void Restore()
             {
-                _ws.get_Range(_addr).Interior.ColorIndex = _colorindex;
+                if (_colorindex == TRANSPARENT_COLOR_INDEX)
+                {
+                    _ws.get_Range(_addr).Interior.ColorIndex = _colorindex;
+                }
+                else
+                {
+                    _ws.get_Range(_addr).Interior.Color = _color;
+                }
             }
         }
 
@@ -77,7 +86,7 @@ namespace DataDebug
             {
                 foreach (Excel.Range cell in ws.UsedRange)
                 {
-                    _l.Add(new CellColor(ws, cell.Address, cell.Interior.ColorIndex));
+                    _l.Add(new CellColor(ws, cell.Address, cell.Interior.ColorIndex, cell.Interior.Color));
                 }
             }
             return _l;
