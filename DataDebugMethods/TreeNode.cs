@@ -55,12 +55,18 @@ namespace DataDebugMethods
             _COM = com;
             _height = com.Rows.Count;
             _width = com.Columns.Count;
+            _dont_perturb = true;
         }
         public int Columns() { return _width; }
         public int Rows() { return _height; }
         public void DontPerturb()
         {
             _dont_perturb = true;
+        }
+
+        public void Perturb()
+        {
+            _dont_perturb = false;
         }
 
         public bool GetDontPerturb()

@@ -663,12 +663,17 @@ namespace DataDebugMethods
                     }
                 }
 
-                // check whether this cell is a formula; if it is, set the "don't perturb" bit on the range
-                if (cell.HasFormula)
+                //Perturb every range which contains at least one concrete value (not a formula)
+                if (!cell.HasFormula && cell.Value2 != null)
                 {
-                    // TODO: check for constant formulas... if that's the case, then we again consider the input to be a formula
-                    rangeNode.DontPerturb();
+                    rangeNode.Perturb();
                 }
+                // check whether this cell is a formula; if it is, set the "don't perturb" bit on the range
+                //if (cell.HasFormula)
+                //{
+                    // TODO: check for constant formulas... if that's the case, then we again consider the input to be a formula
+                //    rangeNode.DontPerturb();
+                //}
                 // register this cell as an input to the rangeNode
                 rangeNode.addParent(cellNode);
                 // register the range as an output of this input cell
