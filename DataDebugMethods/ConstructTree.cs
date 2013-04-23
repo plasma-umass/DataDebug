@@ -263,6 +263,10 @@ namespace DataDebugMethods
         {
             foreach (TreeNode range_node in analysisData.input_ranges)
             {
+                if (range_node.GetDontPerturb())
+                {
+                    continue;
+                }
                 //For every range node
                 double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
                 
@@ -277,10 +281,10 @@ namespace DataDebugMethods
                 foreach (TreeNode parent in range_node.getParents())
                 {
                     //Do not perturb nodes which are intermediate computations
-                    if (parent.hasParents())
-                    {
-                        continue;
-                    }
+                    //if (parent.hasParents())
+                    //{
+                    //    continue;
+                    //}
                     analysisData.input_cells_in_computation_count++;
 
                     //Generate 30 random indices for swapping with siblings
