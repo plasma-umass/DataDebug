@@ -34,11 +34,11 @@ namespace DataDebugMethods
         //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
         private int _height = 1;
         private int _width = 1;
-        public TreeNode(Excel.Range com, string n, Excel.Worksheet ws, Excel.Workbook wb)
+        public TreeNode(Excel.Range com, string name, Excel.Worksheet ws, Excel.Workbook wb)
         {
             _parents = new List<TreeNode>();
             _children = new List<TreeNode>();
-            _name = n;
+            _name = name;
             _worksheet = ws;
             if (_worksheet == null)
             {
@@ -51,14 +51,38 @@ namespace DataDebugMethods
             _workbook = wb;
             _weight = 0.0;
             _chart = false;
-            _is_formula = false;
             _COM = com;
             _height = com.Rows.Count;
             _width = com.Columns.Count;
+            if (_height == 1 && _width == 1)
+            {
+                if (com.HasFormula == true)
+                {
+                    _is_formula = true;
+                    _formula = com.Formula;
+                }
+                else
+                {
+                    _is_formula = false;
+                }
+            }
+            else
+            {
+                _is_formula = false;
+            }
             _dont_perturb = true;
         }
-        public int Columns() { return _width; }
-        public int Rows() { return _height; }
+        
+        public int Columns() 
+        { 
+            return _width; 
+        }
+        
+        public int Rows() 
+        { 
+            return _height; 
+        }
+
         public void DontPerturb()
         {
             _dont_perturb = true;

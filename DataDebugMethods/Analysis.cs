@@ -167,7 +167,7 @@ namespace DataDebugMethods
                 var s = new InputSample(input_range.Rows(), input_range.Columns());
 
                 // store the entire COM array as a multiarray
-                // in one swell foop.
+                // in one fell swoop.
                 s.AddArray(com.Value2);
 
                 //// store each input cell's contents
@@ -189,6 +189,36 @@ namespace DataDebugMethods
             }
             return d;
         }
+
+        /**
+        private static Dictionary<TreeNode, InputSample> StoreFormulas(TreeNode[] inputs)
+        {
+            var dictionary = new Dictionary<TreeNode, InputSample>();
+            foreach (TreeNode input_range in inputs)
+            {
+                Excel.Range range = input_range.getCOMObject();
+                var inputSample = new InputSample(input_range.Rows(), input_range.Columns());
+
+                //Store all formulas in this range
+                foreach (Excel.Range cell in range)
+                {
+                    if (cell.HasFormula)
+                    {
+                        throw new Exception("StoreInputs should never encounter a formula.");
+                    }
+                    //save as a string
+                    inputSample.Add(cell.Value2.ToString());
+                }
+                // add stored input to dict
+                dictionary.Add(input_range, inputSample);
+
+                // this is to force excel to recalculate its outputs
+                // exactly the same way that it will for our bootstraps
+                BootMemo.ReplaceExcelRange(range, inputSample);
+            }
+            return dictionary;
+        }
+        */
 
         private static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
         {
@@ -319,6 +349,16 @@ namespace DataDebugMethods
             // second idx: the ith input
             // third idx: the bth bootstrap
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
+
+            // restore formulas
+            foreach (TreeDictPair pair in data.formula_nodes)
+            {
+                TreeNode node = pair.Value;
+                if (node.isFormula())
+                {
+                    node.getCOMObject().Formula = node.getFormula();
+                }
+            }
 
             // do appropriate hypothesis test, and add weighted test scores, and return result dict
             return ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted);
