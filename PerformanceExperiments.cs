@@ -103,7 +103,7 @@ namespace DataDebug
                 string bootstrap_time = (bootstrap_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + ""; 
 
                 // Color outputs
-                Analysis.ColorOutputs(scores);
+                Analysis.ColorOutliers(scores);
                 
                 stopwatch.Stop();
                 total_timespan = stopwatch.Elapsed;
@@ -192,7 +192,7 @@ namespace DataDebug
                 string bootstrap_time = (bootstrap_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + "";
 
                 // Color outputs
-                Analysis.ColorOutputs(scores);
+                Analysis.ColorOutliers(scores);
 
                 stopwatch.Stop();
                 total_timespan = stopwatch.Elapsed;

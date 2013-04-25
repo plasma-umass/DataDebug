@@ -211,7 +211,7 @@ namespace DataDebug
             var scores = Analysis.Bootstrap(NBOOTS, data, app, this.weighted.Checked);
             
             // Color outputs
-            Analysis.ColorOutputs(scores);
+            Analysis.ColorOutliers(scores);
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;

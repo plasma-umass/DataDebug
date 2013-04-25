@@ -471,7 +471,7 @@ namespace ErrorClassifier
             }
 
             // Color outputs
-            Analysis.ColorOutputs(scores);
+            Analysis.ColorOutliers(scores);
 
             // Enable screen updating when we're done
             Globals.ThisAddIn.Application.ScreenUpdating = true;
@@ -562,7 +562,7 @@ namespace ErrorClassifier
                 }
 
                 // Color outputs
-                Analysis.ColorOutputs(scores1);
+                Analysis.ColorOutliers(scores1);
 
                 // Enable screen updating when we're done
                 Globals.ThisAddIn.Application.ScreenUpdating = true;

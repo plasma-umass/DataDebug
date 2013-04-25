@@ -378,19 +378,21 @@ namespace DataDebugMethods
                 for (int f = 0; f < output_fns.Length; f++)
                 {
                     // this function output treenode
-                    var t_fn = output_fns[f];
+                    TreeNode functionNode = output_fns[f];
 
                     // this function's input range treenode
-                    var t_rng = input_rngs[i];
+                    TreeNode rangeNode = input_rngs[i];
 
                     // do the hypothesis test and then merge
                     // the scores from previous tests
                     TreeScore s;
                     if (FunctionOutputsAreNumeric(boots[f][i]))
                     {
-                        s = NumericHypothesisTest(t_rng, t_fn, boots[f][i], initial_outputs[t_fn], weighted);
-                    } else {
-                        s = StringHypothesisTest(t_rng, t_fn, boots[f][i], initial_outputs[t_fn], weighted);
+                        s = NumericHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
+                    }
+                    else
+                    {
+                        s = StringHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
                     }
                     iexc_scores = DictAdd(iexc_scores, s);
                 }
@@ -427,29 +429,29 @@ namespace DataDebugMethods
             return d3;
         }
 
-        public static TreeScore StringHypothesisTest(TreeNode t_rng, TreeNode t_fn, FunctionOutput<string>[] boots, string initial_output, bool weighted)
+        public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted)
         {
             // this function's input cells
-            var input_cells = t_rng.getParents().ToArray();
+            var input_cells = rangeNode.getParents().ToArray();
 
             // scores
             var iexc_scores = new TreeScore();
 
             // exclude each index, in turn
-            for (int x = 0; x < input_cells.Length; x++)
+            for (int i = 0; i < input_cells.Length; i++)
             {
                 // default weight
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells[x];
+                TreeNode xtree = input_cells[i];
                 if (weighted)
                 {
                     // the weight of the function value of interest
-                    weight = (int)t_fn.getWeight();
+                    weight = (int)functionNode.getWeight();
                 }
 
-                if (RejectNullHypothesis(boots, initial_output, x))
+                if (RejectNullHypothesis(boots, initial_output, i))
                 {
 
                     if (iexc_scores.ContainsKey(xtree))
@@ -474,13 +476,13 @@ namespace DataDebugMethods
             return iexc_scores;
         }
 
-        public static TreeScore NumericHypothesisTest(TreeNode t_rng, TreeNode t_fn, FunctionOutput<string>[] boots, string initial_output, bool weighted)
+        public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted)
         {
             // this function's input cells
-            var input_cells = t_rng.getParents().ToArray();
+            var input_cells = rangeNode.getParents().ToArray();
 
             // scores
-            var iexc_scores = new TreeScore();
+            var input_exclusion_scores = new TreeScore();
 
             // convert to numeric
             var numeric_boots = ConvertToNumericOutput(boots);
@@ -490,41 +492,41 @@ namespace DataDebugMethods
 
             // for each excluded index, test whether the original input
             // falls outside our bootstrap confidence bounds
-            for (int x = 0; x < input_cells.Length; x++)
+            for (int i = 0; i < input_cells.Length; i++)
             {
                 // default weight
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells[x];
+                TreeNode xtree = input_cells[i];
                 if (weighted)
                 {
                     // the weight of the function value of interest
-                    weight = (int)t_fn.getWeight();
+                    weight = (int)functionNode.getWeight();
                 }
 
-                if (RejectNullHypothesis(sorted_num_boots, initial_output, x))
+                if (RejectNullHypothesis(sorted_num_boots, initial_output, i))
                 {
                     // get the xth indexed input in input_rng i
-                    if (iexc_scores.ContainsKey(xtree))
+                    if (input_exclusion_scores.ContainsKey(xtree))
                     {
-                        iexc_scores[xtree] += weight;
+                        input_exclusion_scores[xtree] += weight;
                     }
                     else
                     {
-                        iexc_scores.Add(xtree, weight);
+                        input_exclusion_scores.Add(xtree, weight);
                     }
                 }
                 else
                 {
                     // we need to at least add the value to the tree
-                    if (!iexc_scores.ContainsKey(xtree))
+                    if (!input_exclusion_scores.ContainsKey(xtree))
                     {
-                        iexc_scores.Add(xtree, 0);
+                        input_exclusion_scores.Add(xtree, 0);
                     }
                 }
             }
-            return iexc_scores;
+            return input_exclusion_scores;
         }
 
         public static string TreeWeightsAsString(TreeNode root)
@@ -538,32 +540,50 @@ namespace DataDebugMethods
             return treeweights;
         }
 
-        public static void ColorOutputs(TreeScore input_exclusion_scores)
+        public static void ColorOutliers(TreeScore input_exclusion_scores)
         {
             // find value of the max element; we use this to calibrate our scale
-            double low_score = input_exclusion_scores.Select(pair => pair.Value).Min();  // low value is always zero
+            //double min_score = input_exclusion_scores.Select(pair => pair.Value).Min();  // min value is always zero
             double max_score = input_exclusion_scores.Select(pair => pair.Value).Max();  // largest value we've seen
+            double min_score = max_score;
+            foreach (KeyValuePair<TreeNode, int> pair in input_exclusion_scores)
+            {
+                if (pair.Value < min_score && pair.Value != 0)
+                {
+                    min_score = pair.Value;
+                }
+            }
+            if (min_score == max_score)
+            {
+                min_score = 0;
+            }
+
+            min_score = 0.95 * min_score; //this is so that the smallest outlier also gets colored, rather than being white
 
             // calculate the color of each cell
             foreach(KeyValuePair<TreeNode,int> pair in input_exclusion_scores)
             {
                 var cell = pair.Key;
 
-                int cval;
+                int cval = 0;
                 // this happens when there are no suspect inputs.
-                if (max_score - low_score == 0)
+                if (max_score - min_score == 0)
                 {
                     cval = 0;
                 }
                 else
                 {
-                    cval = (int)(255 * (pair.Value - low_score) / (max_score - low_score));
+                    if (pair.Value != 0)
+                    {
+                        cval = (int)(255 * (pair.Value - min_score) / (max_score - min_score));
+                    }
                 }
                 // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
                 // if cval == 0, skip, because otherwise we end up coloring it white
                 if (cval != 0)
                 {
                     var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
+                    //System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
