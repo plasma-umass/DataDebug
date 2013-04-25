@@ -558,9 +558,10 @@ namespace DataDebugMethods
                 min_score = 0;
             }
 
-            min_score = 0.95 * min_score; //this is so that the smallest outlier also gets colored, rather than being white
-
+            min_score = 0.90 * min_score; //this is so that the smallest outlier also gets colored, rather than being white
+            
             // calculate the color of each cell
+            string outlierValues = "";
             foreach(KeyValuePair<TreeNode,int> pair in input_exclusion_scores)
             {
                 var cell = pair.Key;
@@ -575,6 +576,8 @@ namespace DataDebugMethods
                 {
                     if (pair.Value != 0)
                     {
+                        outlierValues += cell.getCOMObject().Address + " : " + pair.Value + Environment.NewLine;
+                        //cval = (int)(255 * (Math.Pow(1.01, pair.Value) - Math.Pow(1.01, min_score)) / (Math.Pow(1.01, max_score) - Math.Pow(1.01, min_score)));
                         cval = (int)(255 * (pair.Value - min_score) / (max_score - min_score));
                     }
                 }
@@ -587,6 +590,7 @@ namespace DataDebugMethods
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
+            System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
         }
 
         // initializes the first and second dimensions
