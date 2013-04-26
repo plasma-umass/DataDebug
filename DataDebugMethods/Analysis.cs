@@ -505,16 +505,18 @@ namespace DataDebugMethods
                     weight = (int)functionNode.getWeight();
                 }
 
-                if (RejectNullHypothesis(sorted_num_boots, initial_output, i))
+                double outlieriness = RejectNullHypothesis(sorted_num_boots, initial_output, i);
+
+                if (outlieriness != 0.0)
                 {
                     // get the xth indexed input in input_rng i
                     if (input_exclusion_scores.ContainsKey(xtree))
                     {
-                        input_exclusion_scores[xtree] += weight;
+                        input_exclusion_scores[xtree] += (int)(weight * outlieriness);
                     }
                     else
                     {
-                        input_exclusion_scores.Add(xtree, weight);
+                        input_exclusion_scores.Add(xtree, (int)(weight * outlieriness));
                     }
                 }
                 else
@@ -558,7 +560,7 @@ namespace DataDebugMethods
                 min_score = 0;
             }
 
-            min_score = 0.90 * min_score; //this is so that the smallest outlier also gets colored, rather than being white
+            min_score = 0.50 * min_score; //this is so that the smallest outlier also gets colored, rather than being white
             
             // calculate the color of each cell
             string outlierValues = "";
@@ -576,9 +578,9 @@ namespace DataDebugMethods
                 {
                     if (pair.Value != 0)
                     {
-                        outlierValues += cell.getCOMObject().Address + " : " + pair.Value + Environment.NewLine;
                         //cval = (int)(255 * (Math.Pow(1.01, pair.Value) - Math.Pow(1.01, min_score)) / (Math.Pow(1.01, max_score) - Math.Pow(1.01, min_score)));
                         cval = (int)(255 * (pair.Value - min_score) / (max_score - min_score));
+                        outlierValues += cell.getCOMObject().Address + " : " + pair.Value + ";\t" + cval + Environment.NewLine;
                     }
                 }
                 // to make something a shade of red, we set the "red" value to 255, and adjust the OTHER values.
@@ -590,7 +592,7 @@ namespace DataDebugMethods
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
-            System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
+            //System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
         }
 
         // initializes the first and second dimensions
@@ -750,7 +752,7 @@ namespace DataDebugMethods
         }
 
         // Exclude a specified input index, compute quantiles, and check position of original input
-        public static bool RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index)
+        public static double RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index)
         {
             // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
@@ -771,11 +773,18 @@ namespace DataDebugMethods
             var original_tr = Math.Truncate(original_output_d * 10000) / 10000;
 
             // reject or fail to reject H_0
-            if (original_tr < low_value_tr || original_tr > high_value_tr)
+            if (high_value_tr != low_value_tr)
             {
-                return true;
+                if (original_tr < low_value_tr)
+                {
+                    return Math.Abs((original_tr - low_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
+                }
+                else if (original_tr > high_value_tr)
+                {
+                    return Math.Abs((original_tr - high_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
+                }
             }
-            return false;
+            return 0.0;
         }
 
         // Propagate weights
