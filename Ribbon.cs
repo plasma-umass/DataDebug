@@ -114,7 +114,14 @@ namespace DataDebug
                 }
                 reportsText += Environment.NewLine;
             }
-            System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", reportsText);
+            if (folderPath == "")
+            {
+                System.Windows.Forms.MessageBox.Show("A report will not be created because you have not saved this file yet.");
+            }
+            else
+            {
+                System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", reportsText);
+            }
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
