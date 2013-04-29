@@ -592,7 +592,7 @@ namespace DataDebugMethods
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
-            //System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
+            System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
         }
 
         // initializes the first and second dimensions
