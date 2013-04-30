@@ -45,6 +45,7 @@ namespace DataDebug
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.countFormulas = this.Factory.CreateRibbonButton();
+            this.undoButton = this.Factory.CreateRibbonButton();
             this.group3 = this.Factory.CreateRibbonGroup();
             this.performanceExperiments = this.Factory.CreateRibbonButton();
             this.group2 = this.Factory.CreateRibbonGroup();
@@ -52,7 +53,7 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.undoButton = this.Factory.CreateRibbonButton();
+            this.showGVTree = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group3.SuspendLayout();
@@ -79,6 +80,7 @@ namespace DataDebug
             this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Items.Add(this.countFormulas);
             this.group1.Items.Add(this.undoButton);
+            this.group1.Items.Add(this.showGVTree);
             this.group1.Label = "DataDebug";
             this.group1.Name = "group1";
             // 
@@ -139,6 +141,12 @@ namespace DataDebug
             this.countFormulas.Visible = false;
             this.countFormulas.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.countFormulas_Click);
             // 
+            // undoButton
+            // 
+            this.undoButton.Label = "Undo";
+            this.undoButton.Name = "undoButton";
+            this.undoButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.undoButton_Click);
+            // 
             // group3
             // 
             this.group3.Items.Add(this.performanceExperiments);
@@ -181,11 +189,10 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
-            // undoButton
+            // showGVTree
             // 
-            this.undoButton.Label = "Undo";
-            this.undoButton.Name = "undoButton";
-            this.undoButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.undoButton_Click);
+            this.showGVTree.Label = "Show GV Tree";
+            this.showGVTree.Name = "showGVTree";
             // 
             // Ribbon
             // 
@@ -225,6 +232,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group3;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton countFormulas;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton undoButton;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox showGVTree;
     }
 
     partial class ThisRibbonCollection

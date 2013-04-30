@@ -125,6 +125,12 @@ namespace DataDebug
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
+            if (showGVTree.Checked)
+            {
+                Display d = new Display();
+                d.textBox1.Text = ConstructTree.GenerateGraphVizTree(data.formula_nodes);
+                d.ShowDialog();
+            }
         }
 
         // Button for outputting MTurk HIT CSVs
