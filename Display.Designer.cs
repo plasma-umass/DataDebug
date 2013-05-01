@@ -47,7 +47,7 @@
             this.ClientSize = new System.Drawing.Size(537, 326);
             this.Controls.Add(this.textBox1);
             this.Name = "Display";
-            this.Text = "Display";
+            this.Text = "GraphViz Tree";
             this.ResumeLayout(false);
             this.PerformLayout();
 
