@@ -126,36 +126,6 @@ namespace DataDebugMethods
             //Stop timing the zscore computation and outlier finding
             analysisData.SetProgress(analysisData.pb.maxProgress());
             analysisData.KillPB();
-            
-            // Format and display the TimeSpan value. 
-            //string tree_building_time = tree_building_timespan.TotalSeconds + ""; //String.Format("{0:00}:{1:00}.{2:00}", tree_building_timespan.Minutes, tree_building_timespan.Seconds, tree_building_timespan.Milliseconds / 10);
-            //string swapping_time = (swapping_timespan.TotalSeconds - tree_building_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", swapping_timespan.Minutes, swapping_timespan.Seconds, swapping_timespan.Milliseconds / 10);
-            //string impact_scoring_time = (impact_scoring_timespan.TotalSeconds - swapping_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}", z_score_timespan.Minutes, z_score_timespan.Seconds, z_score_timespan.Milliseconds / 10);
-            //global_stopwatch.Stop();
-            // Get the elapsed time as a TimeSpan value.
-            //TimeSpan global_timespan = global_stopwatch.Elapsed;
-            //string global_time = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", global_timespan.Hours, global_timespan.Minutes, global_timespan.Seconds, global_timespan.Milliseconds / 10);
-            //string global_time = global_timespan.TotalSeconds + ""; //(tree_building_timespan.TotalSeconds + swapping_timespan.TotalSeconds + z_score_timespan.TotalSeconds + average_z_score_timespan.TotalSeconds + outlier_detection_timespan.TotalSeconds + outlier_coloring_timespan.TotalSeconds) + ""; //String.Format("{0:00}:{1:00}.{2:00}",
-
-            //Display timeDisplay = new Display();
-            //stats_text += "" //+ "Benchmark:\tNumber of formulas:\tRaw input count:\tInputs to computations:\tTotal (s):\tTree Construction (s):\tSwapping (s):\tZ-Score Calculation (s):\t"
-                //  + "Outlier Detection (s):\tOutlier Coloring (s):\t"
-                //+ "Outliers found:\n"
-                //"Formula cells:\t" + formula_cells_count + "\n"
-                //+ "Number of input cells involved in computations:\t" + input_cells_in_computation_count
-                //+ "\nExecution times (seconds): "
-                //+ Globals.ThisAddIn.Application.ActiveWorkbook.Name + "\t"
-                //+ formula_cells_count + "\t"
-                //+ raw_input_cells_in_computation_count + "\t"
-                //+ input_cells_in_computation_count + "\t"
-                //+ global_time + "\t"
-                //+ tree_building_time + "\t"
-                //+ swapping_time + "\t"
-                //+ impact_scoring_time + "\t"
-                //+ outliers_count;
-            //timeDisplay.textBox1.Text = stats_text;
-            //timeDisplay.ShowDialog();
-
         } //outlierAnalysis ends here
 
         private static Dictionary<TreeNode, InputSample> StoreInputs(TreeNode[] inputs)
