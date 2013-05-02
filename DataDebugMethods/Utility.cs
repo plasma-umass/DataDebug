@@ -123,11 +123,11 @@ namespace DataDebugMethods
                 var addr = pair.Key;
                 if (d1[addr] != d2[addr])
                 {
-                    s += "Cell: " + addr + ", Original value: " + d1[addr] + ", Changed value: " + d2[addr] + "\n";
+                    s += "Cell: " + addr + ", Original value: " + d1[addr] + ", Changed value: " + d2[addr] + Environment.NewLine;
                     diffcount++;
                 }
             }
-            string s0 = diffcount + " of " + d1.Count() + " values changed:\n\n";
+            string s0 = diffcount + " of " + d1.Count() + " values changed:" + Environment.NewLine + Environment.NewLine;
             return s0 + s;
         }
 

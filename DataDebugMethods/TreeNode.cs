@@ -110,7 +110,7 @@ namespace DataDebugMethods
             {
                 children_string += node.getName() + ", ";
             }
-            return _name + "\nParents: " + parents_string + "\nChildren: " + children_string;
+            return _name + Environment.NewLine + "Parents: " + parents_string + Environment.NewLine + "Children: " + children_string;
         }
 
         //Method for displaying a string representation of the node in GraphViz format
@@ -120,7 +120,7 @@ namespace DataDebugMethods
             foreach (TreeNode parent in _parents)
             {
                 //parents_string += "\n" + parent.getWorksheet().Replace(" ", "") + "_" + parent.getName().Replace(" ", "") + "_weight_" + parent.getWeight() + "->" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight;
-                parents_string += "\n" + parent.getWorksheet().Replace(" ", "") + "_" + parent.getName().Replace(" ", "") + "->" + _worksheet_name.Replace(" ", "") + "_" + _name.Replace(" ", "");
+                parents_string += Environment.NewLine + parent.getWorksheet().Replace(" ", "") + "_" + parent.getName().Replace(" ", "") + "->" + _worksheet_name.Replace(" ", "") + "_" + _name.Replace(" ", "");
             }
             //string children_string = "";
             //foreach (TreeNode child in children)
@@ -132,7 +132,7 @@ namespace DataDebugMethods
             //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]"
             //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight + "[shape = ellipse]"
             //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[label=\"\", shape = ellipse]"
-            return ("\n" + _worksheet_name.Replace(" ", "") + "_" + _name.Replace(" ", "") + "[shape = ellipse]"
+            return (Environment.NewLine + _worksheet_name.Replace(" ", "") + "_" + _name.Replace(" ", "") + "[shape = ellipse]"
                 //+ weight_string 
                 + parents_string).Replace("$", "");
             //fillcolor = \"green\"   \"0.000 " + weight + " 0.878\"

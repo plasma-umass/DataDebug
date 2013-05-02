@@ -227,7 +227,7 @@ namespace DataDebugMethods
             string tree = "";
             foreach (TreeDictPair nodePair in nodes)
             {
-                tree += nodePair.Value.toGVString(0.0) + "\n";
+                tree += nodePair.Value.toGVString(0.0) + Environment.NewLine;
             }
             return "digraph g{" + tree + "}"; 
         }

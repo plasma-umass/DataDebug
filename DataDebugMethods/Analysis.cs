@@ -538,7 +538,7 @@ namespace DataDebugMethods
             {
                 treeweights += TreeWeightsAsString(input);
             }
-            treeweights += root.getCOMObject().Address + " -> " + root.getWeight() + "\n";
+            treeweights += root.getCOMObject().Address + " -> " + root.getWeight() + Environment.NewLine;
             return treeweights;
         }
 
