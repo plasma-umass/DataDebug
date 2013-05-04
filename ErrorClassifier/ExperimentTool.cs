@@ -35,17 +35,7 @@ namespace ErrorClassifier
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.ShowDialog();
-            //if (openFileDialog.FileName == "")
-            //{
-            //    MessageBox.Show("No file selected");
-            //}
-            //else
-            //{
-            //    MessageBox.Show("File selected: " + openFileDialog.FileName);
-            //    string fileExtension = openFileDialog.FileName.Substring(openFileDialog.FileName.LastIndexOf("."));
-            //    MessageBox.Show("File extension: " + fileExtension);
-            //}
-
+            
             //After the file is selected, and it's a .csv, start parsing it.
             if (openFileDialog.FileName != "" && openFileDialog.FileName.Substring(openFileDialog.FileName.LastIndexOf(".")) == ".csv")
             {
