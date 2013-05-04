@@ -470,7 +470,7 @@
             this.Controls.Add(this.originalText);
             this.ForeColor = System.Drawing.Color.Black;
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Error Classifier";
             this.ResumeLayout(false);
             this.PerformLayout();
 
