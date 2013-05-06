@@ -116,7 +116,7 @@ namespace DataDebug
             }
             if (folderPath == "")
             {
-                System.Windows.Forms.MessageBox.Show("A report cannot be created because you have not saved this file yet.");
+                System.Windows.Forms.MessageBox.Show("A report cannot be created because this file has not been saved yet.");
             }
             else
             {
