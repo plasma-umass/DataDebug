@@ -55,11 +55,11 @@ namespace ErrorClassifier
                         while (line.Length > 0)
                         {
                             string token = chomp(ref line);
-                            if (token.Length >= "Input".Length && token.Contains("Input")) //.Substring(0, "Input".Length).Equals("Input"))
+                            if (token.Length >= "Input".Length && token.Contains("Input"))
                             {
                                 inputIndices.Add(tokenIndex);
                             }
-                            if (token.Length >= "Answer".Length && token.Contains("Answer")) //.Substring(0, "Output".Length).Equals("Output"))
+                            if (token.Length >= "Answer".Length && token.Contains("Answer"))
                             {
                                 outputIndices.Add(tokenIndex);
                             }
@@ -235,11 +235,11 @@ namespace ErrorClassifier
                         {
                             jobIdIndex = tokenIndex;
                         }
-                        if (token.Length >= "Input.cell".Length && token.Contains("Input.cell")) //.Substring(0, "Input".Length).Equals("Input"))
+                        if (token.Length >= "Input.cell".Length && token.Contains("Input.cell"))
                         {
                             inputIndices.Add(tokenIndex);
                         }
-                        if (token.Length >= "Answer.cell".Length && token.Contains("Answer.cell")) //.Substring(0, "Output".Length).Equals("Output"))
+                        if (token.Length >= "Answer.cell".Length && token.Contains("Answer.cell"))
                         {
                             answerIndices.Add(tokenIndex);
                         }
@@ -296,7 +296,7 @@ namespace ErrorClassifier
                             
                             errorAddresses.Add(errorCellAddress);
                             
-                            Excel.Range errorCell = ws.get_Range(errorCellAddress); //errorCellAddress);
+                            Excel.Range errorCell = ws.get_Range(errorCellAddress);
                             
                             //Store original value
                             var oldValue = errorCell.Value;
@@ -406,7 +406,7 @@ namespace ErrorClassifier
         static Excel.Workbooks OpenExcelFile(String xlfilename, Excel.Application app)
         {
             // open Excel file
-            app.Workbooks.Open(xlfilename); //, 2, true, Missing.Value, "a", Missing.Value, true, Missing.Value, Missing.Value, Missing.Value, false, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+            app.Workbooks.Open(xlfilename);
             return app.Workbooks;
         } //End OpenExcelFile
 
@@ -497,7 +497,7 @@ namespace ErrorClassifier
 
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
-                Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+                Excel.Workbook wb = app.Workbooks.Open(file);
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 textBox1.AppendText("\tRunning analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
@@ -717,7 +717,7 @@ namespace ErrorClassifier
 
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
-                Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+                Excel.Workbook wb = app.Workbooks.Open(file);
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 textBox1.AppendText("\tRunning z-score analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
@@ -927,7 +927,7 @@ namespace ErrorClassifier
 
                 textBox1.AppendText("Error " + errorIndex + " out of " + errorAddresses.Count + "." + Environment.NewLine);
                 textBox1.AppendText("\tOpening fuzzed Excel file: " + file + Environment.NewLine);
-                Excel.Workbook wb = app.Workbooks.Open(file); //, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+                Excel.Workbook wb = app.Workbooks.Open(file);
                 Excel.Worksheet ws = wb.Worksheets[1];
 
                 textBox1.AppendText("\tRunning old tool analysis. Error was in cell " + errorAddresses[errorIndex - 1] + "." + Environment.NewLine);
