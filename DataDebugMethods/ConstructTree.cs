@@ -267,6 +267,113 @@ namespace DataDebugMethods
                 {
                     continue;
                 }
+
+                //Test order invariance with Fisher-Yates shuffle
+                
+                //Store original before shuffling
+                Excel.Range originalRange = range_node.getCOMObject();
+                
+                //To shuffle an array a of n elements (indices 0..n-1):
+                //for i from n − 1 downto 1 do
+                    //j ← random integer with 0 ≤ j ≤ i
+                    //exchange a[j] and a[i]
+                
+                /*
+                int size = originalRange.Cells.Count;
+                //System.Windows.Forms.MessageBox.Show("Size : " + size);
+                for (int i = size - 1; i >= 1; i--)
+                {
+                    Random random = new Random();
+                    int j = random.Next() % (i + 1);
+                    //System.Windows.Forms.MessageBox.Show("Swapping cells " + (i + 1) + " (value = " + originalRange.Cells[i + 1].Value + ") and " + (j + 1) + " (value = " + originalRange.Cells[j + 1].Value + ")");
+                    //var iContents = originalRange.Cells[i + 1].Value;
+                    //var jContents = originalRange.Cells[j + 1].Value;
+                    //originalRange.Cells[i + 1].Value = jContents;
+                    //originalRange.Cells[j + 1].Value = iContents;
+
+                    double delta = 0.0;
+                    double total_delta = 0.0;
+                    foreach (TreeNode parent in range_node.getParents())
+                    {
+                        Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
+                        for (int o = 0; o < analysisData.output_cells.Count; o++)
+                        {
+                            try
+                            {
+                                //If this output is not reachable from this cell, continue
+                                if (analysisData.reachable_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][o] == false)
+                                {
+                                    continue;
+                                }
+                            }
+                            catch
+                            {
+                                continue;
+                            }
+                            TreeNode n = analysisData.output_cells[o];
+                            if (analysisData.starting_outputs[o].get_string() == null) // If the output is not a string
+                            {
+                                if (!n.isChart())   //If the output is not a chart, it must be a number
+                                {
+                                    delta = Math.Abs(analysisData.starting_outputs[o].get_double() - (double)n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
+                                }
+                                else  // The node is a chart
+                                {
+                                    double sum = 0.0;
+                                    TreeNode parent_range = n.getParents()[0];
+                                    foreach (TreeNode par in parent_range.getParents())
+                                    {
+                                        sum = sum + (double)par.getWorksheetObject().get_Range(par.getName()).Value;
+                                    }
+                                    double average = sum / parent_range.getParents().Count;
+                                    delta = Math.Abs(analysisData.starting_outputs[o].get_double() - average);
+                                }
+                            }
+                            else  // If the output is a string
+                            {
+                                if (String.Equals(analysisData.starting_outputs[o].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
+                                {
+                                    delta = 0.0;
+                                }
+                                else
+                                {
+                                    delta = 1.0;
+                                }
+                            }
+                            //Add to the impact of the cell for this output
+                            analysisData.impacts_grid[cell.Worksheet.Index - 1][cell.Row - 1][cell.Column - 1][o] += delta;
+                            //Compare the min/max values for this output to this delta
+                            if (analysisData.min_max_delta_outputs[o][0] == -1.0)
+                            {
+                                analysisData.min_max_delta_outputs[o][0] = delta;
+                            }
+                            else
+                            {
+                                if (analysisData.min_max_delta_outputs[o][0] > delta)
+                                {
+                                    analysisData.min_max_delta_outputs[o][0] = delta;
+                                }
+                            }
+                            if (analysisData.min_max_delta_outputs[o][1] < delta)
+                            {
+                                analysisData.min_max_delta_outputs[o][1] = delta;
+                            }
+                            total_delta = total_delta + delta;
+                        }
+                    }
+                    if (total_delta != 0.0)
+                    {
+                        //System.Windows.Forms.MessageBox.Show("NOT order-invariant.");
+                    }
+                    else
+                    {
+                        //System.Windows.Forms.MessageBox.Show("Order-invariant.");
+                    }
+                }
+                */
+
+                //TODO Need to restore the original order of the range here
+
                 //For every range node
                 double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
                 
