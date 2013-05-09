@@ -81,7 +81,7 @@ namespace DataDebug
             this.group1.Items.Add(this.countFormulas);
             this.group1.Items.Add(this.undoButton);
             this.group1.Items.Add(this.showGVTree);
-            this.group1.Label = "DataDebug";
+            this.group1.Label = "CheckCell";
             this.group1.Name = "group1";
             // 
             // button1
@@ -111,13 +111,13 @@ namespace DataDebug
             // 
             // TestNewProcedure
             // 
-            this.TestNewProcedure.Label = "Bootstrap";
+            this.TestNewProcedure.Label = "Analyze Workbook";
             this.TestNewProcedure.Name = "TestNewProcedure";
             this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
             // 
             // clearColoringButton
             // 
-            this.clearColoringButton.Label = "Clear Coloring";
+            this.clearColoringButton.Label = "Reset";
             this.clearColoringButton.Name = "clearColoringButton";
             this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 

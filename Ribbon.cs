@@ -68,6 +68,16 @@ namespace DataDebug
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
             current_workbook = app.ActiveWorkbook;
+            try
+            {
+                if (current_workbook != null)
+                {
+                    RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+                    color_dict.Remove(current_workbook);
+                }
+            }
+            catch { }
+
             if (!color_dict.ContainsKey(current_workbook))
             {
                 color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
@@ -190,6 +200,16 @@ namespace DataDebug
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
             current_workbook = app.ActiveWorkbook;
+            try
+            {
+                if (current_workbook != null)
+                {
+                    RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+                    color_dict.Remove(current_workbook);
+                }
+            }
+            catch { }
+
             if (!color_dict.ContainsKey(current_workbook))
             {
                 color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
