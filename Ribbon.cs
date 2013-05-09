@@ -28,23 +28,23 @@ namespace DataDebug
             app = Globals.ThisAddIn.Application;
 
             // Get current workbook
-            current_workbook = app.ActiveWorkbook;
-            if (current_workbook != null)
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
+            //current_workbook = app.ActiveWorkbook;
+            //if (current_workbook != null)
+            //{
+            //    color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+            //}
 
             // register event handlers
-            app.WorkbookOpen += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookOpenEventHandler(app_WorkbookOpen);
+            //app.WorkbookOpen += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookOpenEventHandler(app_WorkbookOpen);
             app.WorkbookBeforeClose += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookBeforeCloseEventHandler(app_WorkbookBeforeClose);
-            app.WorkbookActivate += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookActivateEventHandler(app_WorkbookActivate);
+            //app.WorkbookActivate += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookActivateEventHandler(app_WorkbookActivate);
         }
 
-        void app_WorkbookOpen(Excel.Workbook wb)
-        {
-            current_workbook = wb;
-            color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-        }
+        //void app_WorkbookOpen(Excel.Workbook wb)
+        //{
+        //    current_workbook = wb;
+        //    color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+        //}
 
         void app_WorkbookBeforeClose(Excel.Workbook wb, ref bool cancel)
         {
@@ -55,18 +55,24 @@ namespace DataDebug
             }
         }
 
-        void app_WorkbookActivate(Excel.Workbook wb)
-        {
-            current_workbook = wb;
-            if (!color_dict.ContainsKey(current_workbook))
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
-        }
+        //void app_WorkbookActivate(Excel.Workbook wb)
+        //{
+        //    current_workbook = wb;
+        //    if (!color_dict.ContainsKey(current_workbook))
+        //    {
+        //        color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+        //    }
+        //}
 
         // Action for "Analyze Worksheet" button
         private void button1_Click(object sender, RibbonControlEventArgs e)
         {
+            current_workbook = app.ActiveWorkbook;
+            if (!color_dict.ContainsKey(current_workbook))
+            {
+                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+            }
+
             //Disable screen updating during perturbation and analysis to speed things up
             app.ScreenUpdating = false;
 
@@ -181,14 +187,14 @@ namespace DataDebug
             }
         }
 
-        // Action for "Clear coloring" button
-        private void button8_Click(object sender, RibbonControlEventArgs e)
-        {
-            RibbonHelper.RestoreColors2(color_dict[current_workbook]);
-        }
-
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
+            current_workbook = app.ActiveWorkbook;
+            if (!color_dict.ContainsKey(current_workbook))
+            {
+                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+            }
+            
             // Disable screen updating during perturbation and analysis to speed things up
             app.ScreenUpdating = false;
 
@@ -277,6 +283,15 @@ namespace DataDebug
             reportsText = reportsText.Remove(startIndex);
             System.Windows.Forms.MessageBox.Show("Remaining report: "  + reportsText);
             System.IO.File.WriteAllText(@folderPath + @"\" + @fileName.Remove(fileName.LastIndexOf(".")) + " - Report.txt", reportsText);
+        }
+
+        // Action for "Clear coloring" button
+        private void clearColoringButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            if (current_workbook != null)
+            {
+                RibbonHelper.RestoreColors2(color_dict[current_workbook]);
+            }
         }
     }
 }

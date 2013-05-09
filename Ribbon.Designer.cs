@@ -41,11 +41,12 @@ namespace DataDebug
             this.button7 = this.Factory.CreateRibbonButton();
             this.weighted = this.Factory.CreateRibbonCheckBox();
             this.TestNewProcedure = this.Factory.CreateRibbonButton();
-            this.button8 = this.Factory.CreateRibbonButton();
+            this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.countFormulas = this.Factory.CreateRibbonButton();
             this.undoButton = this.Factory.CreateRibbonButton();
+            this.showGVTree = this.Factory.CreateRibbonCheckBox();
             this.group3 = this.Factory.CreateRibbonGroup();
             this.performanceExperiments = this.Factory.CreateRibbonButton();
             this.group2 = this.Factory.CreateRibbonGroup();
@@ -53,7 +54,6 @@ namespace DataDebug
             this.button4 = this.Factory.CreateRibbonButton();
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
-            this.showGVTree = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group3.SuspendLayout();
@@ -75,7 +75,7 @@ namespace DataDebug
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.weighted);
             this.group1.Items.Add(this.TestNewProcedure);
-            this.group1.Items.Add(this.button8);
+            this.group1.Items.Add(this.clearColoringButton);
             this.group1.Items.Add(this.toggle_compile_regex);
             this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Items.Add(this.countFormulas);
@@ -115,11 +115,11 @@ namespace DataDebug
             this.TestNewProcedure.Name = "TestNewProcedure";
             this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
             // 
-            // button8
+            // clearColoringButton
             // 
-            this.button8.Label = "Clear Coloring";
-            this.button8.Name = "button8";
-            this.button8.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.button8_Click);
+            this.clearColoringButton.Label = "Clear Coloring";
+            this.clearColoringButton.Name = "clearColoringButton";
+            this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
             // toggle_compile_regex
             // 
@@ -146,6 +146,11 @@ namespace DataDebug
             this.undoButton.Label = "Undo";
             this.undoButton.Name = "undoButton";
             this.undoButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.undoButton_Click);
+            // 
+            // showGVTree
+            // 
+            this.showGVTree.Label = "Show GV Tree";
+            this.showGVTree.Name = "showGVTree";
             // 
             // group3
             // 
@@ -189,11 +194,6 @@ namespace DataDebug
             this.button6.Label = "Normal KS Test";
             this.button6.Name = "button6";
             // 
-            // showGVTree
-            // 
-            this.showGVTree.Label = "Show GV Tree";
-            this.showGVTree.Name = "showGVTree";
-            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -223,7 +223,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button6;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox checkBox2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton button7;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton button8;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton clearColoringButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_compile_regex;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox toggle_weighted_average;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton TestNewProcedure;

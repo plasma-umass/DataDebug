@@ -53,6 +53,10 @@ namespace DataDebug
 
         public class CellColor
         {
+            public string getAddress()
+            {
+                return _addr;
+            }
             private Excel.Worksheet _ws;
             private string _addr;
             private int _colorindex;
@@ -96,6 +100,7 @@ namespace DataDebug
         {
             foreach (CellColor c in colors)
             {
+                //System.Windows.Forms.MessageBox.Show("Restoring color in cell " + c.getAddress());
                 c.Restore();
             }
         }
