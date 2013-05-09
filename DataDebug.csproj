@@ -34,7 +34,7 @@
     <PublishUrl>C:\Users\Dimitar Gochev\Documents\Visual Studio 2010\Projects\datadebug\DataDebug\Release 05-09-2013\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.14</ApplicationVersion>
+    <ApplicationVersion>1.0.0.15</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
