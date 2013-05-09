@@ -4,3 +4,8 @@ To install CheckCell:
 3. Follow the instructions in the installer
 
 Note that you must have Excel 2010 or newer. 
+
+To remove CheckCell:
+1. Go to 'Add or Remove Programs' in Windows
+2. Find 'DataDebug' in the list 
+3. Press Uninstall.

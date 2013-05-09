@@ -111,13 +111,13 @@ namespace DataDebug
             // 
             // TestNewProcedure
             // 
-            this.TestNewProcedure.Label = "Analyze Workbook";
+            this.TestNewProcedure.Label = "Bootstrap";
             this.TestNewProcedure.Name = "TestNewProcedure";
             this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
             // 
             // clearColoringButton
             // 
-            this.clearColoringButton.Label = "Reset";
+            this.clearColoringButton.Label = "Clear Coloring";
             this.clearColoringButton.Name = "clearColoringButton";
             this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
