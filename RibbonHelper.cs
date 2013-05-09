@@ -74,7 +74,7 @@ namespace DataDebug
             public void Restore()
             {
                 System.Drawing.Color color = System.Drawing.ColorTranslator.FromOle((int)_cellCOM.Interior.Color);
-                if (color.R == 255 && color.G < 255 && color.B < 255) //TODO This is a bit of a hack -- we should know exactly what color this cell should be if we highlighted it
+                if (color.R == 255 && color.G < 255 && color.B == color.G) //TODO This is a bit of a hack -- we should know exactly what color this cell should be if we highlighted it
                 {//we set this color -- reset it
                     if (_colorindex == TRANSPARENT_COLOR_INDEX)
                     {
