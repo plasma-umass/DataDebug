@@ -67,7 +67,7 @@
     let Reference = pipe2 Workbook ReferenceKinds (fun wbname ref -> ref.WorkbookName <- wbname; ref)
 
     // Functions
-    let FunctionName = many1Satisfy (fun c -> isLetter(c))
+    let FunctionName = many1Satisfy (fun c -> isLetter(c) || c = '.')
     let Function = pipe2 (FunctionName .>> pstring "(") (ArgumentList .>> pstring ")") (fun fname arglist -> ReferenceFunction(None, fname, arglist) :> Reference)
 //    do ArgumentListImpl := sepBy Reference (pstring ",")
     do ArgumentListImpl := sepBy ExpressionDecl (pstring ",")
