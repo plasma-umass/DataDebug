@@ -237,7 +237,7 @@ namespace DataDebug
 
             if (data.TerminalInputNodes().Length == 0)
             {
-                System.Windows.Forms.MessageBox.Show("This spreadsheet has no input ranges.  Sorry, dude.");
+                System.Windows.Forms.MessageBox.Show("There are no ranges that can be analyzed in this spreadsheet.");
                 data.pb.Close();
                 app.ScreenUpdating = true;
                 return;
