@@ -746,7 +746,9 @@ namespace DataDebugMethods
                 }
                 string[] reportEntry = new string[3] { "" + worksheet.Index, worksheet.Cells[row + 1, col + 1].Address, "" + worksheet.Cells[row + 1, col + 1].Interior.Color };
                 analysisData.reportData.Add(reportEntry);
-                worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
+                //worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
+                worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(255, Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255));
+                //System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
                 analysisData.oldToolOutlierAddresses.Add(worksheet.Cells[row + 1, col + 1].Address);
             }
         }
