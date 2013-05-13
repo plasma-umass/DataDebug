@@ -11,10 +11,12 @@ namespace DataDebugMethods
     public class BootMemo
     {
         private Dictionary<InputSample, FunctionOutput<string>[]> _d;
+        
         public BootMemo()
         {
             _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
         }
+        
         public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits, bool replace_original)
         {
             FunctionOutput<string>[] fo_arr;
