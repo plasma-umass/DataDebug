@@ -517,7 +517,7 @@ namespace DataDebugMethods
             // find value of the max element; we use this to calibrate our scale
             //double min_score = input_exclusion_scores.Select(pair => pair.Value).Min();  // min value is always zero
             double max_score = input_exclusion_scores.Select(pair => pair.Value).Max();  // largest value we've seen
-            double min_score = max_score;
+            double min_score = max_score;   //smallest value we've seen
             foreach (KeyValuePair<TreeNode, int> pair in input_exclusion_scores)
             {
                 if (pair.Value < min_score && pair.Value != 0)
@@ -558,7 +558,6 @@ namespace DataDebugMethods
                 if (cval != 0)
                 {
                     var color = System.Drawing.Color.FromArgb(255, 255, 255 - cval, 255 - cval);
-                    //System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
