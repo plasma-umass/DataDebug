@@ -230,7 +230,7 @@ namespace DataDebugMethods
         {
             // the resampled values go here
             var ss = new InputSample[num_bootstraps];
-
+            
             // sample with replacement to get i
             // bootstrapped samples
             for (var i = 0; i < num_bootstraps; i++)
@@ -255,6 +255,19 @@ namespace DataDebugMethods
 
                 // indicate which indices are excluded
                 s.SetIncludes(inc_count);
+                string included = "";
+                string excluded = "";
+                for (int incl_index = 0; incl_index < s.GetIncludes().Length; incl_index++)
+                {
+                    if (s.GetIncludes()[incl_index] != 0)
+                    {
+                        included += incl_index + " ";
+                    }
+                }
+                foreach (int excl_index in s.GetExcludes())
+                {
+                    excluded += excl_index + " ";
+                }
 
                 // add the new InputSample to the output array
                 ss[i] = s;
@@ -561,7 +574,7 @@ namespace DataDebugMethods
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
-            System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
+            //System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
         }
 
         // initializes the first and second dimensions
@@ -579,12 +592,8 @@ namespace DataDebugMethods
             return bs;
         }
 
-        private static FunctionOutput<string>[][][] ComputeBootstraps(int num_bootstraps,
-                                                                      Dictionary<TreeNode, InputSample> initial_inputs,
-                                                                      InputSample[][] resamples,
-                                                                      TreeNode[] input_arr,
-                                                                      TreeNode[] output_arr,
-                                                                      AnalysisData data)
+        private static FunctionOutput<string>[][][] ComputeBootstraps(int num_bootstraps, Dictionary<TreeNode, InputSample> initial_inputs, InputSample[][] resamples,
+                                                                      TreeNode[] input_arr, TreeNode[] output_arr, AnalysisData data)
         {
             // first idx: the fth function output
             // second idx: the ith input
@@ -725,7 +734,7 @@ namespace DataDebugMethods
         {
             // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
-
+            
             // index for value greater than 2.5% of the lowest values; we want to round down here
             var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * .025));
             // index for value greater than 97.5% of the lowest values; we want to round up here
@@ -740,7 +749,7 @@ namespace DataDebugMethods
             var low_value_tr = Math.Truncate(low_value * 10000) / 10000;
             var high_value_tr = Math.Truncate(high_value * 10000) / 10000;
             var original_tr = Math.Truncate(original_output_d * 10000) / 10000;
-
+            
             // reject or fail to reject H_0
             if (high_value_tr != low_value_tr)
             {
@@ -751,6 +760,17 @@ namespace DataDebugMethods
                 else if (original_tr > high_value_tr)
                 {
                     return Math.Abs((original_tr - high_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
+                }
+            }
+            else if (high_value_tr != original_tr || low_value_tr != original_tr)
+            {
+                if (original_tr < low_value_tr)
+                {
+                    return Math.Abs(original_tr - low_value_tr) * 100.0;
+                }
+                else if (original_tr > high_value_tr)
+                {
+                    return Math.Abs(original_tr - high_value_tr) * 100.0;
                 }
             }
             return 0.0;
