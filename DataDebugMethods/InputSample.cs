@@ -21,6 +21,7 @@ namespace DataDebugMethods
             _cols = cols;
             _excludes = new HashSet<int>();
         }
+
         public void Add(string datum) {
             if (_i == 0)
             {
@@ -35,6 +36,7 @@ namespace DataDebugMethods
             _input_array[col_idx, row_idx] = datum;
             _i++;
         }
+
         public void AddArray(object[,] data)
         {
             if (_i != 0)
@@ -43,6 +45,7 @@ namespace DataDebugMethods
             }
             _input_array = data;
         }
+
         // this also adds a one to each index
         // Excel is also row-major, just to be
         // a complete pain in the ass
@@ -51,6 +54,7 @@ namespace DataDebugMethods
             var col_idx = (idx / _cols) + 1;
             return new Tuple<int,int>(col_idx, row_idx);
         }
+
         public string GetInput(int num)
         {
             // we assign a numbering scheme from
@@ -61,20 +65,32 @@ namespace DataDebugMethods
             var row_idx = pair.Item2;
             return System.Convert.ToString(_input_array[col_idx, row_idx]);
         }
+
         public int Length()
         {
             return _input_array.Length;
         }
-        public int Rows() { return _rows; }
-        public int Columns() { return _cols; }
+        
+        public int Rows() 
+        { 
+            return _rows; 
+        }
+        
+        public int Columns() 
+        { 
+            return _cols; 
+        }
+        
         public HashSet<int> GetExcludes()
         {
             return _excludes;
         }
+
         public int[] GetIncludes()
         {
             return _includes;
         }
+
         public void SetIncludes(int[] includes)
         {
             _includes = includes;
@@ -86,6 +102,7 @@ namespace DataDebugMethods
                 }
             }
         }
+
         public override int GetHashCode()
         {
             // note that in C#, shift never causes overflow
@@ -96,21 +113,35 @@ namespace DataDebugMethods
             }
             return sum;
         }
+
         public override bool Equals(object obj)
         {
             InputSample other = (InputSample)obj;
             return _includes.SequenceEqual(other.GetIncludes());
         }
+
         public override string ToString()
         {
             return String.Join(",", _input_array);
         }
+
         public object[,] GetInputArray()
         {
             //// create one-based 2D multi-array
             //var output = Array.CreateInstance(typeof(object), new int[2] { _input_array.GetLength(0), _input_array.GetLength(1) }, new int[2] { 1, 1});
 
             return _input_array;
+        }
+
+        public string Text()
+        {
+            string text = "";
+            foreach (object obj in _input_array)
+            {
+                text += obj + ",";
+            }
+            text.Remove(text.LastIndexOf(',') - 1);
+            return text;
         }
     }
 
