@@ -269,27 +269,33 @@ namespace DataDebugMethods
                 }
 
                 //Test order invariance with Fisher-Yates shuffle
-                
+
                 //Store original before shuffling
                 Excel.Range originalRange = range_node.getCOMObject();
+                int size = originalRange.Cells.Count;
+
+                //Store all the cells
+                Object[] originalCellValues = new Object[range_node.getCOMObject().Cells.Count];
+                for (int cell_ind = 1; cell_ind <= size; cell_ind++)
+                {
+                    originalCellValues[cell_ind - 1] = originalRange[cell_ind].Value;
+                }
                 
                 //To shuffle an array a of n elements (indices 0..n-1):
                 //for i from n − 1 downto 1 do
                     //j ← random integer with 0 ≤ j ≤ i
                     //exchange a[j] and a[i]
                 
-                /*
-                int size = originalRange.Cells.Count;
                 //System.Windows.Forms.MessageBox.Show("Size : " + size);
                 for (int i = size - 1; i >= 1; i--)
                 {
                     Random random = new Random();
                     int j = random.Next() % (i + 1);
                     //System.Windows.Forms.MessageBox.Show("Swapping cells " + (i + 1) + " (value = " + originalRange.Cells[i + 1].Value + ") and " + (j + 1) + " (value = " + originalRange.Cells[j + 1].Value + ")");
-                    //var iContents = originalRange.Cells[i + 1].Value;
-                    //var jContents = originalRange.Cells[j + 1].Value;
-                    //originalRange.Cells[i + 1].Value = jContents;
-                    //originalRange.Cells[j + 1].Value = iContents;
+                    var iContents = originalRange.Cells[i + 1].Value;
+                    var jContents = originalRange.Cells[j + 1].Value;
+                    originalRange.Cells[i + 1].Value = jContents;
+                    originalRange.Cells[j + 1].Value = iContents;
 
                     double delta = 0.0;
                     double total_delta = 0.0;
@@ -370,9 +376,12 @@ namespace DataDebugMethods
                         //System.Windows.Forms.MessageBox.Show("Order-invariant.");
                     }
                 }
-                */
 
-                //TODO Need to restore the original order of the range here
+                //Restore the original order of the range here
+                for (int cell_ind = 1; cell_ind <= range_node.getCOMObject().Cells.Count; cell_ind++)
+                {
+                    originalRange.Cells[cell_ind].Value = originalCellValues[cell_ind - 1]; //range_node.getCOMObject().Cells[cell_ind]; // = originalRange.Cells[cell_ind];
+                }
 
                 //For every range node
                 double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
