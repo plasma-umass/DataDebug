@@ -285,8 +285,9 @@ namespace DataDebugMethods
                 //for i from n − 1 downto 1 do
                     //j ← random integer with 0 ≤ j ≤ i
                     //exchange a[j] and a[i]
+
+                double total_d = 0.0;
                 
-                //System.Windows.Forms.MessageBox.Show("Size : " + size);
                 for (int i = size - 1; i >= 1; i--)
                 {
                     Random random = new Random();
@@ -298,7 +299,6 @@ namespace DataDebugMethods
                     originalRange.Cells[j + 1].Value = iContents;
 
                     double delta = 0.0;
-                    double total_delta = 0.0;
                     foreach (TreeNode parent in range_node.getParents())
                     {
                         Excel.Range cell = parent.getWorksheetObject().get_Range(parent.getName());
@@ -364,23 +364,24 @@ namespace DataDebugMethods
                             {
                                 analysisData.min_max_delta_outputs[o][1] = delta;
                             }
-                            total_delta = total_delta + delta;
+                            total_d = total_d + delta;
                         }
                     }
-                    if (total_delta != 0.0)
-                    {
-                        //System.Windows.Forms.MessageBox.Show("NOT order-invariant.");
-                    }
-                    else
-                    {
-                        //System.Windows.Forms.MessageBox.Show("Order-invariant.");
-                    }
+                }
+
+                if (total_d != 0.0)
+                {
+                    System.Windows.Forms.MessageBox.Show("NOT order-invariant.");
+                }
+                else
+                {
+                    System.Windows.Forms.MessageBox.Show("Order-invariant.");
                 }
 
                 //Restore the original order of the range here
                 for (int cell_ind = 1; cell_ind <= range_node.getCOMObject().Cells.Count; cell_ind++)
                 {
-                    originalRange.Cells[cell_ind].Value = originalCellValues[cell_ind - 1]; //range_node.getCOMObject().Cells[cell_ind]; // = originalRange.Cells[cell_ind];
+                    originalRange.Cells[cell_ind].Value = originalCellValues[cell_ind - 1];
                 }
 
                 //For every range node
