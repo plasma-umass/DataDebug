@@ -371,11 +371,14 @@ namespace DataDebugMethods
 
                 if (total_d != 0.0)
                 {
-                    System.Windows.Forms.MessageBox.Show("NOT order-invariant.");
+                    //System.Windows.Forms.MessageBox.Show("NOT order-invariant.");
+                    //TODO Rather than continuing, maybe we should see which formula was order invariant, and just exclude that one.
+                    range_node.DontPerturb();
+                    continue;
                 }
                 else
                 {
-                    System.Windows.Forms.MessageBox.Show("Order-invariant.");
+                    //System.Windows.Forms.MessageBox.Show("Order-invariant.");
                 }
 
                 //Restore the original order of the range here
