@@ -322,6 +322,16 @@ namespace DataDebugMethods
                                 if (!n.isChart())   //If the output is not a chart, it must be a number
                                 {
                                     delta = Math.Abs(analysisData.starting_outputs[o].get_double() - (double)n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
+                                    if (delta != 0.0)
+                                    {
+                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
+                                        analysisData.output_cells.RemoveAt(o);
+                                        o--;
+                                    }
+                                    else
+                                    {
+                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " order-invariant.");
+                                    }
                                 }
                                 else  // The node is a chart
                                 {
@@ -333,6 +343,16 @@ namespace DataDebugMethods
                                     }
                                     double average = sum / parent_range.getParents().Count;
                                     delta = Math.Abs(analysisData.starting_outputs[o].get_double() - average);
+                                    if (delta != 0.0)
+                                    {
+                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
+                                        analysisData.output_cells.RemoveAt(o);
+                                        o--;
+                                    }
+                                    else
+                                    {
+                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " order-invariant.");
+                                    }
                                 }
                             }
                             else  // If the output is a string
@@ -340,10 +360,14 @@ namespace DataDebugMethods
                                 if (String.Equals(analysisData.starting_outputs[o].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
                                 {
                                     delta = 0.0;
+                                    System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " order-invariant.");
                                 }
                                 else
                                 {
                                     delta = 1.0;
+                                    System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
+                                    analysisData.output_cells.RemoveAt(o);
+                                    o--;
                                 }
                             }
                             //Add to the impact of the cell for this output
@@ -373,8 +397,8 @@ namespace DataDebugMethods
                 {
                     //System.Windows.Forms.MessageBox.Show("NOT order-invariant.");
                     //TODO Rather than continuing, maybe we should see which formula was order invariant, and just exclude that one.
-                    range_node.DontPerturb();
-                    continue;
+                    //range_node.DontPerturb();
+                    //continue;
                 }
                 else
                 {
