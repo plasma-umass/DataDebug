@@ -324,13 +324,9 @@ namespace DataDebugMethods
                                     delta = Math.Abs(analysisData.starting_outputs[o].get_double() - (double)n.getWorksheetObject().get_Range(n.getName()).Value);  //Compute the absolute change caused by the swap
                                     if (delta != 0.0)
                                     {
-                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
+                                        //System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
                                         analysisData.output_cells.RemoveAt(o);
                                         o--;
-                                    }
-                                    else
-                                    {
-                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " order-invariant.");
                                     }
                                 }
                                 else  // The node is a chart
@@ -345,13 +341,9 @@ namespace DataDebugMethods
                                     delta = Math.Abs(analysisData.starting_outputs[o].get_double() - average);
                                     if (delta != 0.0)
                                     {
-                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
+                                        //System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
                                         analysisData.output_cells.RemoveAt(o);
                                         o--;
-                                    }
-                                    else
-                                    {
-                                        System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " order-invariant.");
                                     }
                                 }
                             }
@@ -360,12 +352,11 @@ namespace DataDebugMethods
                                 if (String.Equals(analysisData.starting_outputs[o].get_string(), n.getWorksheetObject().get_Range(n.getName()).Value, StringComparison.Ordinal))
                                 {
                                     delta = 0.0;
-                                    System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " order-invariant.");
                                 }
                                 else
                                 {
                                     delta = 1.0;
-                                    System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
+                                    //System.Windows.Forms.MessageBox.Show("Output " + analysisData.output_cells[o].getName() + " NOT order-invariant.");
                                     analysisData.output_cells.RemoveAt(o);
                                     o--;
                                 }
