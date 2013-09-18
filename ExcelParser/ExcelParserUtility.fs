@@ -38,11 +38,20 @@
         | _ -> failwith "Unknown reference type."
 
     let GetReferencesFromFormula(formula: string, wb: Workbook, ws: Worksheet) : seq<XLRange> =
+        let wbpath = wb.FullName
         let app = wb.Application
-        match ExcelParser.ParseFormula(formula, wb, ws) with
+        match ExcelParser.ParseFormula(formula, wbpath, wb, ws) with
         | Some(tree) ->
             let refs = GetExprRanges(tree)
-            List.map (fun (r: AST.Range) -> r.GetCOMObject(wb.Application)) refs |> Seq.ofList
+            List.map (fun (r: AST.Range) ->
+                        // temporarily bail if r refers to object in a different workbook
+                        // TODO: we should open the other workbook and continue the analysis
+                        let paths = Seq.filter (fun pth -> pth = wbpath) (r.GetPathNames())
+                        if Seq.length(paths) = 0 then
+                            None
+                        else
+                            Some(r.GetCOMObject(wb.Application))
+                     ) refs |> List.choose id |> Seq.ofList
         | None -> [] |> Seq.ofList
 
     // single-cell variants:
@@ -72,8 +81,27 @@
         else
             List.map (fun arg -> GetSCExprRanges(arg)) ref.ArgumentList |> List.concat
 
+    let rec GetFormulaNamesFromExpr(ast: AST.Expression): string list =
+        match ast with
+        | AST.ReferenceExpr(r) -> GetFormulaNamesFromReference(r)
+        | AST.BinOpExpr(op, e1, e2) -> GetFormulaNamesFromExpr(e1) @ GetFormulaNamesFromExpr(e2)
+        | AST.UnaryOpExpr(op, e) -> GetFormulaNamesFromExpr(e)
+        | AST.ParensExpr(e) -> GetFormulaNamesFromExpr(e)
+
+    and GetFormulaNamesFromReference(ref: AST.Reference): string list =
+        match ref with
+        | :? AST.ReferenceFunction as r -> [r.FunctionName]
+        | _ -> []
+
+    let GetSCFormulaNames(formula: string, path: string, ws: Worksheet, wb: Workbook) =
+        let app = wb.Application
+        match ExcelParser.ParseFormula(formula, path, wb, ws) with
+        | Some(ast) -> GetFormulaNamesFromExpr(ast) |> Seq.ofList
+        | None -> [] |> Seq.ofList
+
     let GetSingleCellReferencesFromFormula(formula: string, wb: Workbook, ws: Worksheet) : seq<AST.Address> =
         let app = wb.Application
-        match ExcelParser.ParseFormula(formula, wb, ws) with
+        let path = wb.FullName
+        match ExcelParser.ParseFormula(formula, path, wb, ws) with
         | Some(tree) -> GetSCExprRanges(tree) |> Seq.ofList
         | None -> [] |> Seq.ofList

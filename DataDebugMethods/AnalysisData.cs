@@ -25,6 +25,7 @@ namespace DataDebugMethods
         public int raw_input_cells_in_computation_count = 0;
         public int formula_cells_count;
         public System.Diagnostics.Stopwatch global_stopwatch = new System.Diagnostics.Stopwatch();
+        public bool no_progress;
         public ProgBar pb;
         public TreeDict formula_nodes;
         public TreeDict cell_nodes;
@@ -36,7 +37,7 @@ namespace DataDebugMethods
         public Excel.Sheets worksheets;
         public Excel.Sheets charts;
         public List<string> oldToolOutlierAddresses; //This keeps track of which entries have been flaged as outliers by the old tool
-        public List<string[]> reportData; //This keeps information for the persistent state after the tool is run. (Addresses of flagged cells and their initial colors.)
+		public List<string[]> reportData; //This keeps information for the persistent state after the tool is run. (Addresses of flagged cells and their initial colors.)
 
         public const int PROGRESS_LOW = 0;
         public const int PROGRESS_HIGH = 100;
@@ -135,10 +136,11 @@ namespace DataDebugMethods
             return true;
         }
 
-        public AnalysisData(Excel.Application application)
+        public AnalysisData(Excel.Application application, Excel.Workbook wb, bool dont_show_progbar)
         {
-            worksheets = application.Worksheets;
-            charts = application.Charts;
+            no_progress = dont_show_progbar;
+            worksheets = wb.Worksheets;
+            charts = wb.Charts;
             nodelist = new List<TreeNode>();            // holds all the TreeNodes in the Excel file
             input_ranges = new List<TreeNode>();              // holds all the input ranges of TreeNodes in the Excel file
             starting_outputs = new List<StartValue>();  // holds the values of all the output nodes at the start of the procedure for swapping values (fuzzing)
@@ -155,16 +157,17 @@ namespace DataDebugMethods
             output_cells = new List<TreeNode>();
             cell_nodes = new TreeDict();
             oldToolOutlierAddresses = new List<string>();
-            reportData = new List<string[]>();
+			reportData = new List<string[]>();
 
             // Create a progress bar
-            pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
+            if (!no_progress)
+                pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
         }
 
         public void SetProgress(int i)
         {
             Debug.Assert(i >= PROGRESS_LOW && i <= PROGRESS_HIGH);
-            pb.SetProgress(i);
+            if (!no_progress) pb.SetProgress(i);
         }
 
         public void SetPBMax(int max)
@@ -181,7 +184,7 @@ namespace DataDebugMethods
         public void KillPB()
         {
             // Kill progress bar
-            pb.Close();
+            if (!no_progress) pb.Close();
         }
 
         public TreeNode[] TerminalFormulaNodes()

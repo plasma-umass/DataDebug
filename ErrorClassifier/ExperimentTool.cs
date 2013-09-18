@@ -425,7 +425,7 @@ namespace ErrorClassifier
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
             data.worksheets = app.Worksheets;
             data.global_stopwatch.Reset();
             data.global_stopwatch.Start();
@@ -434,7 +434,7 @@ namespace ErrorClassifier
             data.Reset();
 
             // Build dependency graph (modifies data)
-            ConstructTree.constructTree(data, app);
+            ConstructTree.constructTree(data, app.ActiveWorkbook, app);
             
             if (data.TerminalInputNodes().Length == 0)
             {
@@ -506,7 +506,7 @@ namespace ErrorClassifier
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
                 // Make a new analysisData object
-                data = new AnalysisData(Globals.ThisAddIn.Application);
+                data = new AnalysisData(Globals.ThisAddIn.Application, app.ActiveWorkbook, false);
                 data.worksheets = app.Worksheets;
                 data.global_stopwatch.Reset();
                 data.global_stopwatch.Start();
@@ -515,7 +515,7 @@ namespace ErrorClassifier
                 data.Reset();
 
                 // Build dependency graph (modifies data)
-                ConstructTree.constructTree(data, app);
+                ConstructTree.constructTree(data, app.ActiveWorkbook, app);
 
                 if (data.TerminalInputNodes().Length == 0)
                 {
@@ -605,7 +605,7 @@ namespace ErrorClassifier
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
             data.worksheets = app.Worksheets;
             data.global_stopwatch.Reset();
             data.global_stopwatch.Start();
@@ -614,7 +614,7 @@ namespace ErrorClassifier
             data.Reset();
 
             // Build dependency graph (modifies data)
-            ConstructTree.constructTree(data, app);
+            ConstructTree.constructTree(data, app.ActiveWorkbook, app);
             
             if (data.TerminalInputNodes().Length == 0)
             {
@@ -726,7 +726,7 @@ namespace ErrorClassifier
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
                 // Make a new analysisData object
-                data = new AnalysisData(Globals.ThisAddIn.Application);
+                data = new AnalysisData(app, app.ActiveWorkbook, false);
                 data.worksheets = app.Worksheets;
                 data.global_stopwatch.Reset();
                 data.global_stopwatch.Start();
@@ -735,7 +735,7 @@ namespace ErrorClassifier
                 data.Reset();
 
                 // Build dependency graph (modifies data)
-                ConstructTree.constructTree(data, app);
+                ConstructTree.constructTree(data, app.ActiveWorkbook, app);
 
                 if (data.TerminalInputNodes().Length == 0)
                 {
@@ -873,7 +873,7 @@ namespace ErrorClassifier
             Globals.ThisAddIn.Application.ScreenUpdating = false;
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
             data.worksheets = app.Worksheets;
             data.global_stopwatch.Reset();
             data.global_stopwatch.Start();
@@ -882,7 +882,7 @@ namespace ErrorClassifier
             data.Reset();
 
             // Build dependency graph (modifies data)
-            ConstructTree.constructTree(data, app);
+            ConstructTree.constructTree(data, app.ActiveWorkbook, app);
             
             // Perturb data (modifies data)
             Analysis.perturbationAnalysis(data);
@@ -936,7 +936,7 @@ namespace ErrorClassifier
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
                 // Make a new analysisData object
-                data = new AnalysisData(Globals.ThisAddIn.Application);
+                data = new AnalysisData(app, app.ActiveWorkbook, false);
                 data.worksheets = app.Worksheets;
                 data.global_stopwatch.Reset();
                 data.global_stopwatch.Start();
@@ -945,7 +945,7 @@ namespace ErrorClassifier
                 data.Reset();
 
                 // Build dependency graph (modifies data)
-                ConstructTree.constructTree(data, app);
+                ConstructTree.constructTree(data, app.ActiveWorkbook, app);
 
                 // Perturb data (modifies data)
                 Analysis.perturbationAnalysis(data);

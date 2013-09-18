@@ -71,7 +71,7 @@ namespace DataDebug
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
                 // Make a new analysisData object
-                AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+                AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
                 data.worksheets = app.Worksheets;
                 
                 // Construct a new tree every time the tool is run
@@ -79,7 +79,7 @@ namespace DataDebug
                 stopwatch.Start();
                 
                 // Build dependency graph (modifies data)
-                ConstructTree.constructTree(data, app);
+                ConstructTree.constructTree(data, app.ActiveWorkbook, app);
                 
                 tree_building_timespan = stopwatch.Elapsed;
                 string tree_building_time = tree_building_timespan.TotalSeconds + "";
@@ -160,7 +160,7 @@ namespace DataDebug
                 Globals.ThisAddIn.Application.ScreenUpdating = false;
 
                 // Make a new analysisData object
-                AnalysisData data = new AnalysisData(Globals.ThisAddIn.Application);
+                AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
                 data.worksheets = app.Worksheets;
 
                 // Construct a new tree every time the tool is run
@@ -168,7 +168,7 @@ namespace DataDebug
                 stopwatch.Start();
 
                 // Build dependency graph (modifies data)
-                ConstructTree.constructTree(data, app);
+                ConstructTree.constructTree(data, app.ActiveWorkbook, app);
 
                 tree_building_timespan = stopwatch.Elapsed;
                 string tree_building_time = tree_building_timespan.TotalSeconds + "";

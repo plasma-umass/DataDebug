@@ -22,11 +22,11 @@ namespace DataDebugMethods
          * This method also contains the perturbation procedure and outlier analysis logic.
          * In the end, a text representation of the dependency graph is given in GraphViz format. It includes the entire graph and the weights of the nodes.
          */
-        public static void constructTree(AnalysisData analysisData, Excel.Application app)
+        public static void constructTree(AnalysisData analysisData, Excel.Workbook wb, Excel.Application app)
         {
-            Excel.Sheets ws = app.Worksheets;
+            Excel.Sheets ws = wb.Worksheets;
 
-            analysisData.pb.SetProgress(0);
+            if (!analysisData.no_progress) analysisData.pb.SetProgress(0);
             analysisData.input_cells_in_computation_count = 0;
             analysisData.raw_input_cells_in_computation_count = 0;
 
@@ -35,7 +35,7 @@ namespace DataDebugMethods
             analysisData.formula_cells_count = ConstructTree.CountFormulaCells(formulaRanges);
 
             // Create nodes for every cell containing a formula
-            analysisData.formula_nodes = ConstructTree.CreateFormulaNodes(formulaRanges, app);
+            analysisData.formula_nodes = ConstructTree.CreateFormulaNodes(formulaRanges, wb, app);
 
             //Now we parse the formulas in nodes to extract any range and cell references
             foreach(TreeDictPair pair in analysisData.formula_nodes)
@@ -136,10 +136,8 @@ namespace DataDebugMethods
         //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
         //This includes cells that contain constants and formulas
         //Go through every worksheet
-        public static TreeDict CreateFormulaNodes(ArrayList rs, Excel.Application app)
+        public static TreeDict CreateFormulaNodes(ArrayList rs, Excel.Workbook wb, Excel.Application app)
         {
-            Excel.Workbook wb = app.ActiveWorkbook;
-
             // init nodes
             var nodes = new TreeDict();
 
@@ -263,7 +261,7 @@ namespace DataDebugMethods
         {
             foreach (TreeNode range_node in analysisData.input_ranges)
             {
-                if (range_node.GetDontPerturb())
+if (range_node.GetDontPerturb())
                 {
                     continue;
                 }
@@ -401,7 +399,6 @@ namespace DataDebugMethods
                 {
                     originalRange.Cells[cell_ind].Value = originalCellValues[cell_ind - 1];
                 }
-
                 //For every range node
                 double[] influences = new double[range_node.getParents().Count]; //Array to keep track of the influence values for every cell in the range
                 
@@ -416,10 +413,10 @@ namespace DataDebugMethods
                 foreach (TreeNode parent in range_node.getParents())
                 {
                     //Do not perturb nodes which are intermediate computations
-                    //if (parent.hasParents())
-                    //{
-                    //    continue;
-                    //}
+                    // if (parent.hasParents())
+                    // {
+                        // continue;
+                    // }
                     analysisData.input_cells_in_computation_count++;
 
                     //Generate 30 random indices for swapping with siblings
@@ -772,7 +769,7 @@ namespace DataDebugMethods
                         break;
                     }
                 }
-                string[] reportEntry = new string[3] { "" + worksheet.Index, worksheet.Cells[row + 1, col + 1].Address, "" + worksheet.Cells[row + 1, col + 1].Interior.Color };
+				string[] reportEntry = new string[3] { "" + worksheet.Index, worksheet.Cells[row + 1, col + 1].Address, "" + worksheet.Cells[row + 1, col + 1].Interior.Color };
                 analysisData.reportData.Add(reportEntry);
                 //worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), 255, 255);
                 worksheet.Cells[row + 1, col + 1].Interior.Color = System.Drawing.Color.FromArgb(255, Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255), Convert.ToInt32(255 - (average_z_scores[worksheet.Index - 1][row][col] / max_weighted_z_score) * 255));
@@ -812,6 +809,7 @@ namespace DataDebugMethods
                 // check whether this cell is a formula; if it is, set the "don't perturb" bit on the range
                 //if (cell.HasFormula)
                 //{
+
                     // TODO: check for constant formulas... if that's the case, then we again consider the input to be a formula
                 //    rangeNode.DontPerturb();
                 //}
@@ -858,14 +856,14 @@ namespace DataDebugMethods
             return true;
         }
 
-        public static FSharpOption<TurkJob[]> DataForMTurk(Excel.Application app, int maxlen)
+        public static FSharpOption<TurkJob[]> DataForMTurk(Excel.Workbook wb, Excel.Application app, int maxlen)
         {
             const int WIDTH = 10;
 
-            AnalysisData data = new AnalysisData(app);
+            AnalysisData data = new AnalysisData(app, wb, true);
             data.Reset();
-            ConstructTree.constructTree(data, app);
-            data.pb.Close();
+            ConstructTree.constructTree(data, wb, app);
+            //if (!data.no_progress) data.pb.Close();
 
             // sanity check
             if (!AllValuesBelowLength(maxlen, data.cell_nodes))

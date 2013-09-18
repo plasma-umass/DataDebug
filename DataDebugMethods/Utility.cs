@@ -19,7 +19,7 @@ namespace DataDebugMethods
         public static AST.Reference ParseReferenceOfXLRange(Excel.Range rng, Workbook wb)
         {
             string rng_r1c1 = rng.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false];
-            FSharpOption<AST.Reference> r = ExcelParser.GetReference(rng_r1c1, wb, rng.Worksheet);
+            FSharpOption<AST.Reference> r = ExcelParser.GetReference(rng_r1c1, wb.FullName, wb, rng.Worksheet);
 
             if (FSharpOption<AST.Reference>.get_IsNone(r))
             {

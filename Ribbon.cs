@@ -87,7 +87,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(app);
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
             data.worksheets = app.Worksheets;
             data.global_stopwatch.Reset();
             data.global_stopwatch.Start();
@@ -103,7 +103,7 @@ namespace DataDebug
             //}
             
             // Build dependency graph (modifies data)
-            ConstructTree.constructTree(data, app);
+            ConstructTree.constructTree(data, app.ActiveWorkbook, app);
 
             // Perturb data (modifies data)
             Analysis.perturbationAnalysis(data);
@@ -157,7 +157,7 @@ namespace DataDebug
 
             // get MTurk jobs or fail is spreadsheet data cells are too long
             TurkJob[] turkjobs;
-            var turkjobs_opt = ConstructTree.DataForMTurk(Globals.ThisAddIn.Application, MAXLEN);
+            var turkjobs_opt = ConstructTree.DataForMTurk(current_workbook, Globals.ThisAddIn.Application, MAXLEN);
             if (FSharpOption<TurkJob[]>.get_IsSome(turkjobs_opt))
             {
                 turkjobs = turkjobs_opt.Value;
@@ -226,14 +226,14 @@ namespace DataDebug
             //}
 
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(app);
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
             data.worksheets = app.Worksheets;
 
             // Construct a new tree every time the tool is run
             data.Reset();
 
             // Build dependency graph (modifies data)
-            ConstructTree.constructTree(data, app);
+            ConstructTree.constructTree(data, app.ActiveWorkbook, app);
 
             if (data.TerminalInputNodes().Length == 0)
             {
