@@ -29,7 +29,6 @@ namespace ErrorClassifier
         string csvFilePath = null;
         string xlsFilePath = null;
         string arrFilePath = null;
-        bool strawManDone = false;
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -829,7 +828,7 @@ namespace ErrorClassifier
             {
                 try
                 {
-                    sum += cell.Value;
+                    sum += (double)cell.Value;
                 }
                 catch { }
             }
