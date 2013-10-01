@@ -179,8 +179,6 @@ namespace DataDebugMethods
             }
         }
 
-
-
         // this function makes a TreeNode for a range
         public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
         {
@@ -202,7 +200,6 @@ namespace DataDebugMethods
             }
             return rangeNode;
         }
-
 
     } // ConstructTree class ends here
 } // namespace ends here

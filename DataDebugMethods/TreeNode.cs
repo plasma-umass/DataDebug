@@ -17,24 +17,24 @@ namespace DataDebugMethods
     public class TreeNode
     {
         Excel.Workbook _workbook;
-        private List<TreeNode> _parents;  //these are the TreeNodes that feed into the current cell
-        private List<TreeNode> _children;    //these are the TreeNodes that the current cell feeds into
+        private HashSet<TreeNode> _inputs; // these are the TreeNodes that feed into the current cell
+        private HashSet<TreeNode> _outputs;    //these are the TreeNodes that the current cell feeds into
         private string _name;    //The name of each node: for cells, it is its address as a string; for ranges, it is of the form <EndCell>:<EndCell>; for charts it is "Chart<Name of chart>"
         private string _worksheet_name;  //This keeps track of the worksheet where this cell/range/chart is located
         private Excel.Worksheet _worksheet; // A reference to the actual worksheet where this TreeNode is located
         private double _weight = 0.0;  //The weight of the node as computed by propagating values down the tree
         private bool _chart;
         private bool _is_formula; //this indicates whether this node is a formula
-        private System.Drawing.Color originalColor;
         private string _formula;
         private Excel.Range _COM;
         private bool _dont_perturb = false; // this flag indicates that this is an input range which contains non-perturbable elements, like function outputs.  We assume, by default, that all treenodes are perturbable.
         private int _height = 1;
         private int _width = 1;
+        private AST.Address _addr;
         public TreeNode(Excel.Range com, Excel.Worksheet ws, Excel.Workbook wb)
         {
-            _parents = new List<TreeNode>();
-            _children = new List<TreeNode>();
+            _inputs = new HashSet<TreeNode>();
+            _outputs = new HashSet<TreeNode>();
             _name = com.Address;
             _worksheet = ws;
             if (_worksheet == null)
@@ -51,6 +51,15 @@ namespace DataDebugMethods
             _COM = com;
             _height = com.Rows.Count;
             _width = com.Columns.Count;
+            
+            // save parsed address of THIS cell;
+            // used frequently in equality comparisons
+            _addr = AST.Address.AddressFromCOMObject(_COM,
+                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_worksheet_name),
+                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.Name),
+                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.FullName));
+
+            // might be a single cell or formula
             if (_height == 1 && _width == 1)
             {
                 if (com.HasFormula == true)
@@ -70,12 +79,19 @@ namespace DataDebugMethods
             _dont_perturb = true;
         }
 
+        public override bool Equals(object obj)
+        {
+            return _addr == ((TreeNode)obj).GetAddress();
+        }
+
+        public override int GetHashCode()
+        {
+            return _addr.AddressAsInt32();
+        }
+
         public AST.Address GetAddress()
         {
-            return AST.Address.AddressFromCOMObject(_COM,
-                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_worksheet_name),
-                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.Name),
-                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.FullName));
+            return _addr;
         }
 
         public int Columns() 
@@ -106,12 +122,12 @@ namespace DataDebugMethods
         public string toString()
         {
             string parents_string = "";
-            foreach (TreeNode node in _parents)
+            foreach (TreeNode node in _inputs)
             {
                 parents_string += node.getWorksheet() + " " + node.getName() + ", ";
             }
             string children_string = "";
-            foreach (TreeNode node in _children)
+            foreach (TreeNode node in _outputs)
             {
                 children_string += node.getName() + ", ";
             }
@@ -146,14 +162,14 @@ namespace DataDebugMethods
         {
             //Make sure we are not adding a parent more than once
             bool parent_already_added = false;
-            foreach (TreeNode n in _parents)
+            foreach (TreeNode n in _inputs)
             {
                 if (node.getName() == n.getName())
                     parent_already_added = true;
             }
             //If the parent is not on the list, add it
             if (!parent_already_added)
-                _parents.Add(node);
+                _inputs.Add(node);
         }
 
         //Adds a child to the list of child nodes; checks for duplicates before adding it
@@ -161,20 +177,20 @@ namespace DataDebugMethods
         {
             //Make sure we are not adding a child more than once
             bool child_already_added = false;
-            foreach (TreeNode n in _children)
+            foreach (TreeNode n in _outputs)
             {
                 if (node.getName() == n.getName())
                     child_already_added = true;
             }
             //If the child is not on the list, add it
             if (!child_already_added)
-                _children.Add(node);
+                _outputs.Add(node);
         }
 
         //Checks if this node has any children
         public bool hasChildren()
         {
-            if (_children.Count == 0)
+            if (_outputs.Count == 0)
                 return false;
             else
                 return true;
@@ -183,7 +199,7 @@ namespace DataDebugMethods
         //Checks if this node has any parents
         public bool hasParents()
         {
-            if (_parents.Count == 0)
+            if (_inputs.Count == 0)
                 return false;
             else
                 return true;
@@ -210,15 +226,15 @@ namespace DataDebugMethods
         }
 
         //Retuns the List<TreeNode> of children of this node
-        public List<TreeNode> getChildren()
+        public HashSet<TreeNode> getChildren()
         {
-            return _children;
+            return _outputs;
         }
 
         //Retuns the List<TreeNode> of parents of this node
-        public List<TreeNode> getParents()
+        public HashSet<TreeNode> getParents()
         {
-            return _parents;
+            return _inputs;
         }
 
         //Returns the name of the worksheet that holds this cell/range/chart

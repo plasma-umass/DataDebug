@@ -22,7 +22,6 @@ namespace DataDebug
         Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
         Excel.Application app;
         Excel.Workbook current_workbook;
-        bool tool_active = false;
         HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
         HashSet<AST.Address> known_good = new HashSet<AST.Address>();
         TreeScore analysis_results = null;
@@ -35,7 +34,6 @@ namespace DataDebug
             this.FixError.Enabled = true;
             this.clearColoringButton.Enabled = true;
             this.TestNewProcedure.Enabled = false;
-            tool_active = true;
         }
 
         private void DeactivateTool()
@@ -44,7 +42,6 @@ namespace DataDebug
             this.MarkAsOK.Enabled = false;
             this.FixError.Enabled = false;
             this.clearColoringButton.Enabled = false;
-            tool_active = false;
         }
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
