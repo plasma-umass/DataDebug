@@ -71,11 +71,17 @@ namespace DataDebug
                 _color = color;
                 _cellCOM = cellCOM;
             }
-            public void Restore()
+            public AST.Address GetASTAddr()
             {
-                System.Drawing.Color color = System.Drawing.ColorTranslator.FromOle((int)_cellCOM.Interior.Color);
-                if (color.R == 255 && color.G < 255 && color.B == color.G) //TODO This is a bit of a hack -- we should know exactly what color this cell should be if we highlighted it
-                {//this color was set by us, so we reset it
+                return AST.Address.AddressFromCOMObject(_cellCOM,
+                                                        new Microsoft.FSharp.Core.FSharpOption<string>(_ws.Name),
+                                                        new Microsoft.FSharp.Core.FSharpOption<string>(_cellCOM.Application.ActiveWorkbook.Name),
+                                                        new Microsoft.FSharp.Core.FSharpOption<string>(_cellCOM.Application.ActiveWorkbook.FullName));
+            }
+            public void Restore(HashSet<AST.Address> tool_highlights)
+            {
+                if (tool_highlights.Contains(this.GetASTAddr()))
+                { //this color was set by us, so reset it
                     if (_colorindex == TRANSPARENT_COLOR_INDEX)
                     {
                         _ws.get_Range(_addr).Interior.ColorIndex = _colorindex;
@@ -85,7 +91,7 @@ namespace DataDebug
                         _ws.get_Range(_addr).Interior.Color = _color;
                     }
                 }
-                else { } //the user set this color after the tool was run, so we do not reset it
+                else { } //the user set this color after the tool was run, so do not reset it
             }
         }
 
@@ -103,12 +109,11 @@ namespace DataDebug
             return _l;
         }
 
-        public static void RestoreColors2(List<CellColor> colors)
+        public static void RestoreColors2(List<CellColor> colors, HashSet<AST.Address> tool_highlights)
         {
             foreach (CellColor c in colors)
             {
-                //System.Windows.Forms.MessageBox.Show("Restoring color in cell " + c.getAddress());
-                c.Restore();
+                c.Restore(tool_highlights);
             }
         }
 

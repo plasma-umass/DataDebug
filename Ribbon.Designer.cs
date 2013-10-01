@@ -35,13 +35,16 @@ namespace DataDebug
         private void InitializeComponent()
         {
             this.tab1 = this.Factory.CreateRibbonTab();
+            this.ccgroup = this.Factory.CreateRibbonGroup();
+            this.TestNewProcedure = this.Factory.CreateRibbonButton();
+            this.MarkAsOK = this.Factory.CreateRibbonButton();
+            this.FixError = this.Factory.CreateRibbonButton();
+            this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.group1 = this.Factory.CreateRibbonGroup();
             this.button1 = this.Factory.CreateRibbonButton();
             this.checkBox2 = this.Factory.CreateRibbonCheckBox();
             this.button7 = this.Factory.CreateRibbonButton();
             this.weighted = this.Factory.CreateRibbonCheckBox();
-            this.TestNewProcedure = this.Factory.CreateRibbonButton();
-            this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.toggle_compile_regex = this.Factory.CreateRibbonCheckBox();
             this.toggle_weighted_average = this.Factory.CreateRibbonCheckBox();
             this.countFormulas = this.Factory.CreateRibbonButton();
@@ -55,6 +58,7 @@ namespace DataDebug
             this.button5 = this.Factory.CreateRibbonButton();
             this.button6 = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
+            this.ccgroup.SuspendLayout();
             this.group1.SuspendLayout();
             this.group3.SuspendLayout();
             this.group2.SuspendLayout();
@@ -62,11 +66,57 @@ namespace DataDebug
             // tab1
             // 
             this.tab1.ControlId.ControlIdType = Microsoft.Office.Tools.Ribbon.RibbonControlIdType.Office;
+            this.tab1.Groups.Add(this.ccgroup);
             this.tab1.Groups.Add(this.group1);
             this.tab1.Groups.Add(this.group3);
             this.tab1.Groups.Add(this.group2);
             this.tab1.Label = "TabAddIns";
             this.tab1.Name = "tab1";
+            // 
+            // ccgroup
+            // 
+            this.ccgroup.Items.Add(this.TestNewProcedure);
+            this.ccgroup.Items.Add(this.MarkAsOK);
+            this.ccgroup.Items.Add(this.FixError);
+            this.ccgroup.Items.Add(this.clearColoringButton);
+            this.ccgroup.Label = "CheckCell";
+            this.ccgroup.Name = "ccgroup";
+            // 
+            // TestNewProcedure
+            // 
+            this.TestNewProcedure.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.TestNewProcedure.Image = global::DataDebug.Properties.Resources.analyze_small;
+            this.TestNewProcedure.Label = "Analyze";
+            this.TestNewProcedure.Name = "TestNewProcedure";
+            this.TestNewProcedure.ShowImage = true;
+            this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
+            // 
+            // MarkAsOK
+            // 
+            this.MarkAsOK.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.MarkAsOK.Image = global::DataDebug.Properties.Resources.mark_as_ok_small;
+            this.MarkAsOK.Label = "Mark As OK";
+            this.MarkAsOK.Name = "MarkAsOK";
+            this.MarkAsOK.ShowImage = true;
+            this.MarkAsOK.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.MarkAsOK_Click);
+            // 
+            // FixError
+            // 
+            this.FixError.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.FixError.Image = global::DataDebug.Properties.Resources.correct_small;
+            this.FixError.Label = "Fix Error";
+            this.FixError.Name = "FixError";
+            this.FixError.ShowImage = true;
+            this.FixError.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.FixError_Click);
+            // 
+            // clearColoringButton
+            // 
+            this.clearColoringButton.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.clearColoringButton.Image = global::DataDebug.Properties.Resources.clear_small;
+            this.clearColoringButton.Label = "Start Over";
+            this.clearColoringButton.Name = "clearColoringButton";
+            this.clearColoringButton.ShowImage = true;
+            this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
             // group1
             // 
@@ -74,8 +124,6 @@ namespace DataDebug
             this.group1.Items.Add(this.checkBox2);
             this.group1.Items.Add(this.button7);
             this.group1.Items.Add(this.weighted);
-            this.group1.Items.Add(this.TestNewProcedure);
-            this.group1.Items.Add(this.clearColoringButton);
             this.group1.Items.Add(this.toggle_compile_regex);
             this.group1.Items.Add(this.toggle_weighted_average);
             this.group1.Items.Add(this.countFormulas);
@@ -83,6 +131,7 @@ namespace DataDebug
             this.group1.Items.Add(this.showGVTree);
             this.group1.Label = "CheckCell";
             this.group1.Name = "group1";
+            this.group1.Visible = false;
             // 
             // button1
             // 
@@ -108,18 +157,6 @@ namespace DataDebug
             this.weighted.Label = "Use Weights";
             this.weighted.Name = "weighted";
             this.weighted.Visible = false;
-            // 
-            // TestNewProcedure
-            // 
-            this.TestNewProcedure.Label = "Bootstrap";
-            this.TestNewProcedure.Name = "TestNewProcedure";
-            this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
-            // 
-            // clearColoringButton
-            // 
-            this.clearColoringButton.Label = "Clear Coloring";
-            this.clearColoringButton.Name = "clearColoringButton";
-            this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
             // toggle_compile_regex
             // 
@@ -157,6 +194,7 @@ namespace DataDebug
             this.group3.Items.Add(this.performanceExperiments);
             this.group3.Label = "Performance Experiments";
             this.group3.Name = "group3";
+            this.group3.Visible = false;
             // 
             // performanceExperiments
             // 
@@ -202,6 +240,8 @@ namespace DataDebug
             this.Load += new Microsoft.Office.Tools.Ribbon.RibbonUIEventHandler(this.Ribbon1_Load);
             this.tab1.ResumeLayout(false);
             this.tab1.PerformLayout();
+            this.ccgroup.ResumeLayout(false);
+            this.ccgroup.PerformLayout();
             this.group1.ResumeLayout(false);
             this.group1.PerformLayout();
             this.group3.ResumeLayout(false);
@@ -233,6 +273,9 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton countFormulas;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton undoButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox showGVTree;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup ccgroup;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton MarkAsOK;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton FixError;
     }
 
     partial class ThisRibbonCollection

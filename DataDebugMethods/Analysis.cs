@@ -324,6 +324,7 @@ namespace DataDebugMethods
             {
                 // this TreeNode
                 var t = input_rngs[i];
+
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             }
@@ -525,11 +526,44 @@ namespace DataDebugMethods
             return treeweights;
         }
 
+        public static AST.Address FlagTopOutlier(TreeScore scores, HashSet<AST.Address> known_good)
+        {
+            // filter out cells marked as OK
+            var filtered_scores = scores.Where(kvp => !known_good.Contains(kvp.Key.GetSingleCellAddress()));
+
+            if (filtered_scores.Count() != 0)
+            {
+
+                // get max score
+                double max_score = filtered_scores.Select(pair => pair.Value).Max();
+
+                // get node corresponding to max score
+                var flagged_cell = filtered_scores.Where(pair => pair.Value == max_score).First().Key;
+
+                // color cell
+                flagged_cell.getCOMObject().Interior.Color = System.Drawing.Color.Red;
+
+                // return cell address
+                return flagged_cell.GetSingleCellAddress();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public static void ColorOutliers(TreeScore input_exclusion_scores)
         {
+            var f_input_scores = input_exclusion_scores;
+
             // find value of the max element; we use this to calibrate our scale
             //double min_score = input_exclusion_scores.Select(pair => pair.Value).Min();  // min value is always zero
-            double max_score = input_exclusion_scores.Select(pair => pair.Value).Max();  // largest value we've seen
+            double max_score = f_input_scores.Select(pair => pair.Value).Max();  // largest value we've seen
+
+            // if the user is using the tool in iterative mode, only highlight the
+            // highest-ranked cell that is not in the known_good cells
+
+            // highlight all of them
             double min_score = max_score;   //smallest value we've seen
             foreach (KeyValuePair<TreeNode, int> pair in input_exclusion_scores)
             {
@@ -544,10 +578,10 @@ namespace DataDebugMethods
             }
 
             min_score = 0.50 * min_score; //this is so that the smallest outlier also gets colored, rather than being white
-            
+
             // calculate the color of each cell
             string outlierValues = "";
-            foreach(KeyValuePair<TreeNode,int> pair in input_exclusion_scores)
+            foreach (KeyValuePair<TreeNode, int> pair in f_input_scores)
             {
                 var cell = pair.Key;
 

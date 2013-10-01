@@ -72,7 +72,15 @@ namespace DataDebugMethods
             }
             _dont_perturb = true;
         }
-        
+
+        public AST.Address GetSingleCellAddress()
+        {
+            return AST.Address.AddressFromCOMObject(_COM,
+                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_worksheet_name),
+                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.Name),
+                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.FullName));
+        }
+
         public int Columns() 
         { 
             return _width; 

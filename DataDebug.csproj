@@ -212,6 +212,12 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="CellFixForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CellFixForm.Designer.cs">
+      <DependentUpon>CellFixForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Display.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -238,6 +244,9 @@
     <Compile Include="Stats\NormalDistribution.cs" />
     <Compile Include="Stats\NormalKS.cs" />
     <Compile Include="Stats\Utilities.cs" />
+    <EmbeddedResource Include="CellFixForm.resx">
+      <DependentUpon>CellFixForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Display.resx">
       <DependentUpon>Display.cs</DependentUpon>
     </EmbeddedResource>
@@ -287,6 +296,30 @@
       <Project>{6DE2A2B9-C029-4BDB-8992-D16276471D9F}</Project>
       <Name>ExcelParser</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analyze.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\clear.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\correct.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\mark_as_ok.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analyze_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\clear_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\correct_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\mark_as_ok_small.png" />
   </ItemGroup>
   <!-- Include the build rules for a C# project. -->
   <PropertyGroup>

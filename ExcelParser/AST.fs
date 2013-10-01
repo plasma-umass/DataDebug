@@ -89,6 +89,17 @@
                 else
                     num + ccti(idx - 1)
             ccti(col.Length - 1)
+        static member AddressFromCOMObject(com: Microsoft.Office.Interop.Excel.Range, wsname: string option, wbname: string option, path: string option) : Address =
+            if com.Columns.Count > 1 || com.Rows.Count > 1 then
+                failwith "Cannot call TreeNode.GetSingleCellAddress() on a TreeNode that represents more than one cell."
+            let addr = com.get_Address(true, true, Microsoft.Office.Interop.Excel.XlReferenceStyle.xlR1C1, Type.Missing, Type.Missing)
+            Address.FromString(addr, wsname, wbname, path)
+        static member FromString(addr: string, wsname: string option, wbname: string option, path: string option) : Address =
+            let reg = System.Text.RegularExpressions.Regex("R(?<row>[0-9]+)C(?<column>[0-9]+)")
+            let m = reg.Match(addr)
+            let r = System.Convert.ToInt32(m.Groups.["row"].Value)
+            let c = System.Convert.ToInt32(m.Groups.["column"].Value)
+            Address(r, c, wsname, wbname, path)
         static member IntToColChars(dividend: int) : string =
             let mutable quot = dividend / 26
             let rem = dividend % 26
