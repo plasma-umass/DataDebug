@@ -218,18 +218,6 @@
     <Compile Include="CellFixForm.Designer.cs">
       <DependentUpon>CellFixForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Display.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Display.Designer.cs">
-      <DependentUpon>Display.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PerformanceExperiments.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PerformanceExperiments.Designer.cs">
-      <DependentUpon>PerformanceExperiments.cs</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -240,18 +228,8 @@
       <DependentUpon>Ribbon.cs</DependentUpon>
     </Compile>
     <Compile Include="RibbonHelper.cs" />
-    <Compile Include="Stats\NormalAD.cs" />
-    <Compile Include="Stats\NormalDistribution.cs" />
-    <Compile Include="Stats\NormalKS.cs" />
-    <Compile Include="Stats\Utilities.cs" />
     <EmbeddedResource Include="CellFixForm.resx">
       <DependentUpon>CellFixForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Display.resx">
-      <DependentUpon>Display.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PerformanceExperiments.resx">
-      <DependentUpon>PerformanceExperiments.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -266,8 +244,6 @@
     <EmbeddedResource Include="Ribbon.resx">
       <DependentUpon>Ribbon.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="DataDebug_1_TemporaryKey.pfx" />
-    <None Include="DataDebug_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

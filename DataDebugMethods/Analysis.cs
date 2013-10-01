@@ -17,117 +17,6 @@ namespace DataDebugMethods
 {
     public class Analysis
     {
-        public static TreeDict DictMerge(TreeDict d1, TreeDict d2)
-        {
-            var d3 = new TreeDict();
-            foreach(TreeDictPair pair in d1) {
-                var a = pair.Key;
-                var tn = pair.Value;
-                d3.Add(a, tn);
-            }
-            foreach (TreeDictPair pair in d2)
-            {
-                var a = pair.Key;
-                var tn = pair.Value;
-                if (!d3.ContainsKey(a))
-                {
-                    d3.Add(a, tn);
-                }
-            }
-            return d3;
-        }
-
-        public static void perturbationAnalysis(AnalysisData analysisData)
-        {
-            var single_nodes = DictMerge(analysisData.formula_nodes, analysisData.cell_nodes);
-            analysisData.SetProgress(25);
-
-            //Grids for storing influences
-            analysisData.influences_grid = null;
-            analysisData.times_perturbed = null;
-            //influences_grid and times_perturbed are passed by reference so that they can be modified in the setUpGrids method
-            ConstructTree.setUpGrids(analysisData);
-
-            analysisData.outliers_count = 0;
-            //Procedure for swapping values within ranges, one cell at a time
-
-            //Initialize min_max_delta_outputs
-            analysisData.min_max_delta_outputs = new double[analysisData.output_cells.Count][];
-            for (int i = 0; i < analysisData.output_cells.Count; i++)
-            {
-                analysisData.min_max_delta_outputs[i] = new double[2];
-                analysisData.min_max_delta_outputs[i][0] = -1.0;
-                analysisData.min_max_delta_outputs[i][1] = 0.0;
-            }
-
-            //Initialize impacts_grid 
-            //Initialize reachable_grid
-            analysisData.impacts_grid = new double[analysisData.worksheets.Count][][][];
-            analysisData.reachable_grid = new bool[analysisData.worksheets.Count][][][];
-            foreach (Excel.Worksheet worksheet in analysisData.worksheets)
-            {
-                analysisData.impacts_grid[worksheet.Index - 1] = new double[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
-                analysisData.reachable_grid[worksheet.Index - 1] = new bool[worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row][][];
-                for (int row = 0; row < (worksheet.UsedRange.Rows.Count + worksheet.UsedRange.Row); row++)
-                {
-                    analysisData.impacts_grid[worksheet.Index - 1][row] = new double[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
-                    analysisData.reachable_grid[worksheet.Index - 1][row] = new bool[worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column][];
-                    for (int col = 0; col < (worksheet.UsedRange.Columns.Count + worksheet.UsedRange.Column); col++)
-                    {
-                        analysisData.impacts_grid[worksheet.Index - 1][row][col] = new double[analysisData.output_cells.Count];
-                        analysisData.reachable_grid[worksheet.Index - 1][row][col] = new bool[analysisData.output_cells.Count];
-                        for (int i = 0; i < analysisData.output_cells.Count; i++)
-                        {
-                            analysisData.impacts_grid[worksheet.Index - 1][row][col][i] = 0.0;
-                            analysisData.reachable_grid[worksheet.Index - 1][row][col][i] = false;
-                        }
-                    }
-                }
-            }
-
-            //Initialize reachable_impacts_grid
-            analysisData.reachable_impacts_grid = new List<double[]>[analysisData.output_cells.Count];
-            for (int i = 0; i < analysisData.output_cells.Count; i++)
-            {
-                analysisData.reachable_impacts_grid[i] = new List<double[]>();
-            }
-
-            //Propagate weights  -- find the weights of all outputs and set up the reachable_grid entries
-            foreach (TreeDictPair tdp in single_nodes)
-            {
-                var node = tdp.Value;
-                if (!node.hasParents())
-                {
-                    node.setWeight(1.0);  //Set the weight of all input nodes to 1.0 to start
-                    //Now we propagate it's weight to all of it's children
-                    TreeNode.propagateWeightUp(node, 1.0, node, analysisData.output_cells, analysisData.reachable_grid, analysisData.reachable_impacts_grid);
-                    analysisData.raw_input_cells_in_computation_count++;
-                }
-            }
-
-            //System.Windows.Forms.MessageBox.Show("RAW input cells: " + analysisData.raw_input_cells_in_computation_count);
-
-            //Convert reachable_impacts_grid to array form
-            analysisData.reachable_impacts_grid_array = new double[analysisData.output_cells.Count][][];
-            for (int i = 0; i < analysisData.output_cells.Count; i++)
-            {
-                analysisData.reachable_impacts_grid_array[i] = analysisData.reachable_impacts_grid[i].ToArray();
-            }
-            analysisData.SetProgress(40);
-            ConstructTree.SwappingProcedure(analysisData);
-           
-            //Stop timing swapping procedure:
-            analysisData.SetProgress(80);
-        } //perturbationAnalysis ends here
-
-        public static void outlierAnalysis(AnalysisData analysisData)
-        {
-            ConstructTree.ComputeZScoresAndFindOutliers(analysisData);
-            //Stop timing the zscore computation and outlier finding
-            analysisData.SetProgress(analysisData.pb.maxProgress());
-            analysisData.KillPB();
-        } //outlierAnalysis ends here
-
         private static Dictionary<TreeNode, InputSample> StoreInputs(TreeNode[] inputs)
         {
             var d = new Dictionary<TreeNode, InputSample>();
@@ -140,16 +29,6 @@ namespace DataDebugMethods
                 // in one fell swoop.
                 s.AddArray(com.Value2);
 
-                //// store each input cell's contents
-                //foreach (Excel.Range cell in com)
-                //{
-                //    if (cell.HasFormula)
-                //    {
-                //        throw new Exception("StoreInputs should never encounter a formula.");
-                //    }
-                //    // save as a string
-                //    s.Add(cell.Value2.ToString());
-                //}
                 // add stored input to dict
                 d.Add(input_range, s);
 
@@ -159,36 +38,6 @@ namespace DataDebugMethods
             }
             return d;
         }
-
-        /**
-        private static Dictionary<TreeNode, InputSample> StoreFormulas(TreeNode[] inputs)
-        {
-            var dictionary = new Dictionary<TreeNode, InputSample>();
-            foreach (TreeNode input_range in inputs)
-            {
-                Excel.Range range = input_range.getCOMObject();
-                var inputSample = new InputSample(input_range.Rows(), input_range.Columns());
-
-                //Store all formulas in this range
-                foreach (Excel.Range cell in range)
-                {
-                    if (cell.HasFormula)
-                    {
-                        throw new Exception("StoreInputs should never encounter a formula.");
-                    }
-                    //save as a string
-                    inputSample.Add(cell.Value2.ToString());
-                }
-                // add stored input to dict
-                dictionary.Add(input_range, inputSample);
-
-                // this is to force excel to recalculate its outputs
-                // exactly the same way that it will for our bootstraps
-                BootMemo.ReplaceExcelRange(range, inputSample);
-            }
-            return dictionary;
-        }
-        */
 
         private static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
         {
@@ -201,29 +50,6 @@ namespace DataDebugMethods
                 d.Add(output_fn, output_fn.getCOMValueAsString());
             }
             return d;
-        }
-
-        public static bool OnlyInputsInResample(InputSample orig_vals, InputSample resample)
-        {
-
-            for (var i = 0; i < resample.Length(); i++)
-            {
-                var o = 0;
-                var found = false;
-                while (!found && o < orig_vals.Length())
-                {
-                    if (resample.GetInput(i) == orig_vals.GetInput(o))
-                    {
-                        found = true;
-                    }
-                    o++;
-                }
-                if (!found)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
@@ -251,8 +77,6 @@ namespace DataDebugMethods
                     s.Add(value);
                 }
 
-                Debug.Assert(OnlyInputsInResample(orig_vals, s));
-
                 // indicate which indices are excluded
                 s.SetIncludes(inc_count);
                 string included = "";
@@ -274,23 +98,6 @@ namespace DataDebugMethods
             }
 
             return ss;
-        }
-
-        private static bool InputSanityCheck(TreeNode[] input_ranges)
-        {
-            // these input ranges should be terminal, i.e.,
-            // none of their cells contain formulae
-            foreach (TreeNode input_range in input_ranges)
-            {
-                foreach (TreeNode input_cell in input_range.getParents())
-                {
-                    if (input_cell.isFormula())
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
 
         // num_bootstraps: the number of bootstrap samples to get
@@ -515,21 +322,10 @@ namespace DataDebugMethods
             return input_exclusion_scores;
         }
 
-        public static string TreeWeightsAsString(TreeNode root)
-        {
-            string treeweights = "";
-            foreach (TreeNode input in root.getParents())
-            {
-                treeweights += TreeWeightsAsString(input);
-            }
-            treeweights += root.getCOMObject().Address + " -> " + root.getWeight() + Environment.NewLine;
-            return treeweights;
-        }
-
         public static AST.Address FlagTopOutlier(TreeScore scores, HashSet<AST.Address> known_good)
         {
             // filter out cells marked as OK
-            var filtered_scores = scores.Where(kvp => !known_good.Contains(kvp.Key.GetSingleCellAddress()));
+            var filtered_scores = scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress()));
 
             if (filtered_scores.Count() != 0)
             {
@@ -544,7 +340,7 @@ namespace DataDebugMethods
                 flagged_cell.getCOMObject().Interior.Color = System.Drawing.Color.Red;
 
                 // return cell address
-                return flagged_cell.GetSingleCellAddress();
+                return flagged_cell.GetAddress();
             }
             else
             {
@@ -608,7 +404,6 @@ namespace DataDebugMethods
                     cell.getCOMObject().Interior.Color = color;
                 }
             }
-            //System.IO.File.WriteAllText(@"C:\Users\Dimitar Gochev\Desktop\outlier values.txt", outlierValues);
         }
 
         // initializes the first and second dimensions
@@ -676,7 +471,6 @@ namespace DataDebugMethods
             data.KillPB();
 
             sw.Stop();
-            //System.Windows.Forms.MessageBox.Show("Time to perturb: " + sw.ElapsedMilliseconds.ToString() + " ms, hit rate: " + (System.Convert.ToDouble(hits) / System.Convert.ToDouble(maxcount) * 100).ToString() + "%");
 
             return bootstraps;
         }
@@ -714,7 +508,7 @@ namespace DataDebugMethods
             return boots.OrderBy(b => b.GetValue()).ToArray();
         }
 
-        // Count instances of unique string output values and return bar chart
+        // Count instances of unique string output values and return multinomial probability vector
         public static Dictionary<string, double> BootstrapFrequency(FunctionOutput<string>[] boots)
         {
             var counts = new Dictionary<string, int>();

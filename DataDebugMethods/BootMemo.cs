@@ -51,33 +51,9 @@ namespace DataDebugMethods
             return fo_arr;
         }
 
-        //public static void ReplaceExcelRange(Range com, InputSample input)
-        //{
-        //    var i = 0;
-        //    foreach (Range cell in com)
-        //    {
-        //        cell.Value2 = input.GetInput(i);
-        //        i++;
-        //    }
-        //}
-
         public static void ReplaceExcelRange(Range com, InputSample input)
         {
             com.Value2 = input.GetInputArray();
-
-            // if all of the values happen to be numeric, write them as
-            // doubles to avoid Excel errors
-            //var strarr = input.GetInputArray();
-            //var numarr = new double[strarr.GetLength(0),strarr.GetLength(1)];
-            //try {
-            //    for(var i = 0; i < numarr.GetLength(0); i++)
-            //    {
-            //        numarr[i,0] = System.Convert.ToDouble(strarr[i,0]);
-            //    }
-            //    com.Value2 = numarr;
-            //} catch {
-            //    com.Value2 = strarr;
-            //}
         }
     }
 }

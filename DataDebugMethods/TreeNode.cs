@@ -26,19 +26,16 @@ namespace DataDebugMethods
         private bool _chart;
         private bool _is_formula; //this indicates whether this node is a formula
         private System.Drawing.Color originalColor;
-        //private int originalColor;  //For using ColorIndex property instead of Color property
-        private int colorBit = 0;
         private string _formula;
         private Excel.Range _COM;
         private bool _dont_perturb = false; // this flag indicates that this is an input range which contains non-perturbable elements, like function outputs.  We assume, by default, that all treenodes are perturbable.
-        //Constructor method -- the string argument n is used as the name of the node; the string argument ws is used as the worksheet of the node
         private int _height = 1;
         private int _width = 1;
-        public TreeNode(Excel.Range com, string name, Excel.Worksheet ws, Excel.Workbook wb)
+        public TreeNode(Excel.Range com, Excel.Worksheet ws, Excel.Workbook wb)
         {
             _parents = new List<TreeNode>();
             _children = new List<TreeNode>();
-            _name = name;
+            _name = com.Address;
             _worksheet = ws;
             if (_worksheet == null)
             {
@@ -73,7 +70,7 @@ namespace DataDebugMethods
             _dont_perturb = true;
         }
 
-        public AST.Address GetSingleCellAddress()
+        public AST.Address GetAddress()
         {
             return AST.Address.AddressFromCOMObject(_COM,
                                                     new Microsoft.FSharp.Core.FSharpOption<string>(_worksheet_name),
@@ -121,31 +118,6 @@ namespace DataDebugMethods
             return _name + Environment.NewLine + "Parents: " + parents_string + Environment.NewLine + "Children: " + children_string;
         }
 
-        //Method for displaying a string representation of the node in GraphViz format
-        public string toGVString(double max_weight)
-        {
-            string parents_string = "";
-            foreach (TreeNode parent in _parents)
-            {
-                //parents_string += "\n" + parent.getWorksheet().Replace(" ", "") + "_" + parent.getName().Replace(" ", "") + "_weight_" + parent.getWeight() + "->" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight;
-                parents_string += Environment.NewLine + parent.getWorksheet().Replace(" ", "") + "_" + parent.getName().Replace(" ", "") + "->" + _worksheet_name.Replace(" ", "") + "_" + _name.Replace(" ", "");
-            }
-            //string children_string = "";
-            //foreach (TreeNode child in children)
-            //{
-            //    children_string += "\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight:" + weight + "->" + child.getWorksheet().Replace(" ", "") + "_" + child.getName().Replace(" ", "") + "_weight:" + weight;
-            //}
-            //string weight_string = "\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "->iuc" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + " [style=dotted, arrowhead=odot, arrowsize=1] ; \niuc" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + " [shape=plaintext,label=\"Weight=" + weight + "\"]; \n{rank=same; " + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + ";iuc" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "}";
-
-            //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[shape = ellipse, fillcolor = \"0.000 " + (weight / max_weight) + " 0.878\", style = \"filled\"]"
-            //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "_weight_" + weight + "[shape = ellipse]"
-            //return ("\n" + worksheet.Replace(" ", "") + "_" + name.Replace(" ", "") + "[label=\"\", shape = ellipse]"
-            return (Environment.NewLine + _worksheet_name.Replace(" ", "") + "_" + _name.Replace(" ", "") + "[shape = ellipse]"
-                //+ weight_string 
-                + parents_string).Replace("$", "");
-            //fillcolor = \"green\"   \"0.000 " + weight + " 0.878\"
-        }
-
         //Returns the name of the node
         public string getName()
         {
@@ -170,7 +142,7 @@ namespace DataDebugMethods
         }
 
         //Adds a parent to the list of parent nodes; checks for duplicates before adding it
-        public void addParent(TreeNode node)
+        public void addInput(TreeNode node)
         {
             //Make sure we are not adding a parent more than once
             bool parent_already_added = false;
@@ -185,7 +157,7 @@ namespace DataDebugMethods
         }
 
         //Adds a child to the list of child nodes; checks for duplicates before adding it
-        public void addChild(TreeNode node)
+        public void addOutput(TreeNode node)
         {
             //Make sure we are not adding a child more than once
             bool child_already_added = false;
@@ -221,21 +193,15 @@ namespace DataDebugMethods
         //If the name contains an underscore, and it is not a Chart node, then it is a Range node
         public bool isRange()
         {
-            //if (_name.Contains("_") && !isChart())
             if (_name.Contains(":") && !isChart())
                 return true;
             else
                 return false;
         }
 
-        //By convention, we add the string "Chart" to the beginning of the name of every Chart node
         public bool isChart()
         {
             return _chart;
-            //if (name.Contains("Chart"))
-            //    return true;
-            //else
-            //    return false;
         }
 
         public void setChart(bool value)
@@ -270,25 +236,6 @@ namespace DataDebugMethods
         public void setWorksheet(string s)
         {
             _worksheet_name = s;
-        }
-
-        //Returns the original color of the cell as a System.Drawing.Color
-        public System.Drawing.Color getOriginalColor()
-        //public int getOriginalColor() //For using ColorIndex property instead of Color property
-        {
-            return originalColor;
-        }
-
-        //Sets the value of the original color of the cell as a System.Drawing.Color
-        public void setOriginalColor(System.Drawing.Color color)
-        //public void setOriginalColor(int color)   //For using ColorIndex property instead of Color property
-        {
-            //We only want to set the original color once
-            if (colorBit == 0)
-            {
-                colorBit = 1; 
-                originalColor = color;
-            }
         }
 
         public void setIsFormula()
@@ -346,43 +293,6 @@ namespace DataDebugMethods
             }
         }
 
-        /**
-         * This is a recursive method for propagating the weights up the nodes in the tree.
-         * It is used for weighting the outputs in the computation tree -- outputs with a lot of 
-         * inputs have higher weight than ones that have fewer inputs. 
-         * All inputs have weight 1 and their weights get passed up in the tree and accumulated at the outputs.
-         * Modifies output_cells, reachable_grid, and reachable_impacts_grid
-         */
-        public static void propagateWeightUp(TreeNode node, double weight_passed_up, TreeNode originalNode, List<TreeNode> output_cells, bool[][][][] reachable_grid, List<double[]>[] reachable_impacts_grid)
-        {
-            if (!node.hasChildren())
-            {
-                int originalNode_row = originalNode.getWorksheetObject().Cells.get_Range(originalNode.getName()).Row - 1;
-                int originalNode_col = originalNode.getWorksheetObject().Cells.get_Range(originalNode.getName()).Column - 1;
-                //Mark that this output (node) is reachable from originalNode
-                //Find node in output_cells
-                for (int i = 0; i < output_cells.Count; i++)
-                {
-                    if (output_cells[i].getName().Equals(node.getName()) && output_cells[i].getWorksheet().Equals(node.getWorksheet()))
-                    {
-                        reachable_grid[originalNode.getWorksheetObject().Index - 1][originalNode_row][originalNode_col][i] = true;
-                        reachable_impacts_grid[i].Add(new double[4] { (double)originalNode.getWorksheetObject().Index - 1, (double)originalNode_row, (double)originalNode_col, 0.0 });
-                        //MessageBox.Show("Output " + i + " is reachable from " + originalNode.getWorksheetObject().Name + " " + originalNode.getWorksheetObject().Cells.get_Range(originalNode.getName()).get_Address().Replace("$",""));
-                        break;
-                    }
-                }
-                return;
-            }
-            else
-            {
-                foreach (TreeNode child in node.getChildren())
-                {
-                    child.setWeight(child.getWeight() + weight_passed_up);
-                    propagateWeightUp(child, 1.0, originalNode, output_cells, reachable_grid, reachable_impacts_grid);
-                }
-            }
-        }
-
         internal void setFormula(string formula)
         {
             _formula = formula;
@@ -392,11 +302,6 @@ namespace DataDebugMethods
         {
             return _formula;
         }
-
-        //public void addCOM(Excel.Range range)
-        //{
-        //    _COM = range;
-        //}
 
         public Excel.Range getCOMObject()
         {
