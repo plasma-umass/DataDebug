@@ -145,10 +145,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ErrorClassifier_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>ErrorClassifier_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>B34A8C24173C7A3B6CD3EF470304EAD4F785F33B</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>933333BDD92ADC35EAA9C1B08E61C55069971AEC</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!--
     This section specifies references for the project.
@@ -235,6 +235,7 @@
     <EmbeddedResource Include="Ribbon1.resx">
       <DependentUpon>Ribbon1.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="ErrorClassifier_1_TemporaryKey.pfx" />
     <None Include="ErrorClassifier_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
