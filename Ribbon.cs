@@ -22,9 +22,10 @@ namespace DataDebug
         Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
         Excel.Application app;
         Excel.Workbook current_workbook;
+        double tool_significance = 0.95;
         HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
         HashSet<AST.Address> known_good = new HashSet<AST.Address>();
-        TreeScore analysis_results = null;
+        IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
         AST.Address flagged_cell = null;
         System.Drawing.Color GREEN = System.Drawing.Color.Green;
 
@@ -97,9 +98,31 @@ namespace DataDebug
             }
         }
 
-        private TreeScore Analyze()
+        private FSharpOption<double> GetSignificance(string input, string label)
         {
-            current_workbook = app.ActiveWorkbook;
+            var errormsg = label + " must be a value between 0 and 100";
+            var significance = 0.95;
+
+            try
+            {
+                significance = (100.0 - Double.Parse(input)) / 100.0;
+            }
+            catch
+            {
+                System.Windows.Forms.MessageBox.Show(errormsg);
+            }
+
+            if (significance < 0 || significance > 100)
+            {
+                System.Windows.Forms.MessageBox.Show(errormsg);
+            }
+
+            return FSharpOption<double>.Some(significance);
+        }
+
+        private IEnumerable<Tuple<double,TreeNode>> Analyze()
+        {
+             current_workbook = app.ActiveWorkbook;
 
             // Disable screen updating during analysis to speed things up
             app.ScreenUpdating = false;
@@ -115,14 +138,19 @@ namespace DataDebug
                 System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                 data.KillPB();
                 app.ScreenUpdating = true;
-                return new TreeScore();
+                return (IEnumerable<Tuple<double,TreeNode>>)new List<Tuple<int, TreeNode>>();
             }
 
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
 
+            // Compute quantiles based on user-supplied sensitivity
+            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+            );
+
             // Color top outlier and save in ribbon state
-            flagged_cell = Analysis.FlagTopOutlier(scores, known_good);
+            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance);
             if (flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
@@ -139,12 +167,21 @@ namespace DataDebug
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
 
-            return scores;
+            return quantiles;
         }
 
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
-            analysis_results = Analyze();
+            var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
+            if (sig == FSharpOption<double>.None)
+            {
+                return;
+            }
+            else
+            {
+                tool_significance = sig.Value;
+                analysis_results = Analyze();
+            }
         }
 
         private void ResetTool()
@@ -170,7 +207,7 @@ namespace DataDebug
             known_good.Add(flagged_cell);
             var cell = flagged_cell.GetCOMObject(app);
             cell.Interior.Color = GREEN;
-            flagged_cell = Analysis.FlagTopOutlier(analysis_results, known_good);
+            flagged_cell = Analysis.FlagTopOutlier(analysis_results, known_good, tool_significance);
             if (flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
@@ -192,7 +229,8 @@ namespace DataDebug
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
             double[] a = { 1, 2, 2, 2, 3, 1, 5, 6, 6, 6, 0 };
-            var result = DataDebugMethods.Analysis.ComputeQuantile(a);
+            var b = a.Select( v => new Tuple<int,double>((int)v, v));
+            var result = DataDebugMethods.Analysis.ComputeQuantile(b);
             System.Windows.Forms.MessageBox.Show(String.Join(",", result));
         }
     }

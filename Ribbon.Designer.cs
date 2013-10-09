@@ -36,13 +36,16 @@ namespace DataDebug
         {
             this.tab1 = this.Factory.CreateRibbonTab();
             this.ccgroup = this.Factory.CreateRibbonGroup();
+            this.buttonGroup1 = this.Factory.CreateRibbonButtonGroup();
             this.TestNewProcedure = this.Factory.CreateRibbonButton();
             this.MarkAsOK = this.Factory.CreateRibbonButton();
             this.FixError = this.Factory.CreateRibbonButton();
             this.clearColoringButton = this.Factory.CreateRibbonButton();
+            this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
             this.TestStuff = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
+            this.buttonGroup1.SuspendLayout();
             // 
             // tab1
             // 
@@ -53,17 +56,22 @@ namespace DataDebug
             // 
             // ccgroup
             // 
-            this.ccgroup.Items.Add(this.TestNewProcedure);
-            this.ccgroup.Items.Add(this.MarkAsOK);
-            this.ccgroup.Items.Add(this.FixError);
-            this.ccgroup.Items.Add(this.clearColoringButton);
+            this.ccgroup.Items.Add(this.buttonGroup1);
+            this.ccgroup.Items.Add(this.SensitivityTextBox);
             this.ccgroup.Items.Add(this.TestStuff);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
             // 
+            // buttonGroup1
+            // 
+            this.buttonGroup1.Items.Add(this.TestNewProcedure);
+            this.buttonGroup1.Items.Add(this.MarkAsOK);
+            this.buttonGroup1.Items.Add(this.FixError);
+            this.buttonGroup1.Items.Add(this.clearColoringButton);
+            this.buttonGroup1.Name = "buttonGroup1";
+            // 
             // TestNewProcedure
             // 
-            this.TestNewProcedure.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.TestNewProcedure.Image = global::DataDebug.Properties.Resources.analyze_small;
             this.TestNewProcedure.Label = "Analyze";
             this.TestNewProcedure.Name = "TestNewProcedure";
@@ -72,7 +80,6 @@ namespace DataDebug
             // 
             // MarkAsOK
             // 
-            this.MarkAsOK.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.MarkAsOK.Image = global::DataDebug.Properties.Resources.mark_as_ok_small;
             this.MarkAsOK.Label = "Mark As OK";
             this.MarkAsOK.Name = "MarkAsOK";
@@ -81,7 +88,6 @@ namespace DataDebug
             // 
             // FixError
             // 
-            this.FixError.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.FixError.Image = global::DataDebug.Properties.Resources.correct_small;
             this.FixError.Label = "Fix Error";
             this.FixError.Name = "FixError";
@@ -90,18 +96,22 @@ namespace DataDebug
             // 
             // clearColoringButton
             // 
-            this.clearColoringButton.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.clearColoringButton.Image = global::DataDebug.Properties.Resources.clear_small;
             this.clearColoringButton.Label = "Start Over";
             this.clearColoringButton.Name = "clearColoringButton";
             this.clearColoringButton.ShowImage = true;
             this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
+            // SensitivityTextBox
+            // 
+            this.SensitivityTextBox.Label = "% Most Unusual to Show";
+            this.SensitivityTextBox.Name = "SensitivityTextBox";
+            this.SensitivityTextBox.Text = "5.0";
+            // 
             // TestStuff
             // 
             this.TestStuff.Label = "Test";
             this.TestStuff.Name = "TestStuff";
-            this.TestStuff.Visible = false;
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
             // Ribbon
@@ -114,6 +124,8 @@ namespace DataDebug
             this.tab1.PerformLayout();
             this.ccgroup.ResumeLayout(false);
             this.ccgroup.PerformLayout();
+            this.buttonGroup1.ResumeLayout(false);
+            this.buttonGroup1.PerformLayout();
 
         }
 
@@ -126,6 +138,8 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton MarkAsOK;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton FixError;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton TestStuff;
+        internal Microsoft.Office.Tools.Ribbon.RibbonEditBox SensitivityTextBox;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
     }
 
     partial class ThisRibbonCollection

@@ -322,21 +322,25 @@ namespace DataDebugMethods
             return input_exclusion_scores;
         }
 
-        public static AST.Address FlagTopOutlier(TreeScore scores, HashSet<AST.Address> known_good)
+        public static AST.Address FlagTopOutlier(IEnumerable<Tuple<double,TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance)
         {
+            if (quantiles.Count() == 0)
+            {
+                return null;
+            }
+
+            // filter out cells below our significance level
+            var significant_scores = quantiles.Where(tup => tup.Item1 >= significance);
+
             // filter out cells marked as OK
-            var filtered_scores = scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress()));
+            var filtered_scores = significant_scores.Where(tup => !known_good.Contains(tup.Item2.GetAddress()));
 
             if (filtered_scores.Count() != 0)
             {
+                // get TreeNode corresponding to most unusual score
+                var flagged_cell = filtered_scores.Last().Item2;
 
-                // get max score
-                double max_score = filtered_scores.Select(pair => pair.Value).Max();
-
-                // get node corresponding to max score
-                var flagged_cell = filtered_scores.Where(pair => pair.Value == max_score).First().Key;
-
-                // color cell
+                // highlight cell
                 flagged_cell.getCOMObject().Interior.Color = System.Drawing.Color.Red;
 
                 // return cell address
@@ -604,13 +608,15 @@ namespace DataDebugMethods
             return 0.0;
         }
 
-        public static List<Tuple<double, double>> ComputeQuantile(double[] values)
+        // Computes quantile array.  Accepts key,value pairs so that arbitrary data can be kept and passed along.
+        // Note that the Tuple's key type (K) is the basis for the quantile computation.
+        public static IEnumerable<Tuple<double,V>> ComputeQuantile<K,V>(IEnumerable<Tuple<K,V>> inputs)
         {
             // sort values
-            var sorted_values = values.OrderBy(v => v).ToArray();
+            var sorted_values = inputs.OrderBy(tup => tup.Item1).ToArray();
 
             // init output list
-            var output = new List<Tuple<double, double>>();
+            var outputs = new List<Tuple<double, V>>();
 
             // in loop, choose the next value, look for repeats of that value,
             // increment your pointer to the last instance of the value,
@@ -619,9 +625,9 @@ namespace DataDebugMethods
             while (ptr < sorted_values.Length)
             {
                 // get current value
-                var current_value = sorted_values[ptr];
+                var current_value = sorted_values[ptr].Item1;
 
-                while (ptr + 1 < sorted_values.Length && current_value == sorted_values[ptr + 1])
+                while (ptr + 1 < sorted_values.Length && current_value.Equals(sorted_values[ptr + 1].Item1))
                 {
                     ptr += 1;
                 }
@@ -629,14 +635,13 @@ namespace DataDebugMethods
                 // calculate proportion of values to the left of the ptr
                 var quantile = (double)(ptr + 1) / (double)sorted_values.Length;
 
-                // update output with tuple
-                output.Add(new Tuple<double,double>(quantile, sorted_values[ptr]));
+                // update output with value
+                outputs.Add(new Tuple<double,V>(quantile, sorted_values[ptr].Item2));
 
                 ptr += 1;
             }
 
-
-            return output;
+            return outputs;
         }
 
         // Propagate weights
