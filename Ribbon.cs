@@ -188,5 +188,12 @@ namespace DataDebug
             var fixform = new CellFixForm(comcell, GREEN, callback);
             fixform.Show();
         }
+
+        private void TestStuff_Click(object sender, RibbonControlEventArgs e)
+        {
+            double[] a = { 1, 2, 2, 2, 3, 1, 5, 6, 6, 6, 0 };
+            var result = DataDebugMethods.Analysis.ComputeQuantile(a);
+            System.Windows.Forms.MessageBox.Show(String.Join(",", result));
+        }
     }
 }

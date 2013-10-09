@@ -604,6 +604,41 @@ namespace DataDebugMethods
             return 0.0;
         }
 
+        public static List<Tuple<double, double>> ComputeQuantile(double[] values)
+        {
+            // sort values
+            var sorted_values = values.OrderBy(v => v).ToArray();
+
+            // init output list
+            var output = new List<Tuple<double, double>>();
+
+            // in loop, choose the next value, look for repeats of that value,
+            // increment your pointer to the last instance of the value,
+            // and then calculate the proportion of values to the left of the pointer (inclusive)
+            int ptr = 0;
+            while (ptr < sorted_values.Length)
+            {
+                // get current value
+                var current_value = sorted_values[ptr];
+
+                while (ptr + 1 < sorted_values.Length && current_value == sorted_values[ptr + 1])
+                {
+                    ptr += 1;
+                }
+
+                // calculate proportion of values to the left of the ptr
+                var quantile = (double)(ptr + 1) / (double)sorted_values.Length;
+
+                // update output with tuple
+                output.Add(new Tuple<double,double>(quantile, sorted_values[ptr]));
+
+                ptr += 1;
+            }
+
+
+            return output;
+        }
+
         // Propagate weights
         private static void PropagateWeights(AnalysisData data)
         {

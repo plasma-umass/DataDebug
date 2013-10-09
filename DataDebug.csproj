@@ -155,10 +155,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>DataDebug_1_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>DataDebug_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>FEE0FFFD34C7EC4C17997C93C3AE50710265385D</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>C2745F7ACBC46218AE48CBE6E1F7C1014E908FB4</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!--
     This section specifies references for the project.
@@ -244,6 +244,7 @@
     <EmbeddedResource Include="Ribbon.resx">
       <DependentUpon>Ribbon.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="DataDebug_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

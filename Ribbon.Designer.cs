@@ -40,6 +40,7 @@ namespace DataDebug
             this.MarkAsOK = this.Factory.CreateRibbonButton();
             this.FixError = this.Factory.CreateRibbonButton();
             this.clearColoringButton = this.Factory.CreateRibbonButton();
+            this.TestStuff = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             // 
@@ -56,6 +57,7 @@ namespace DataDebug
             this.ccgroup.Items.Add(this.MarkAsOK);
             this.ccgroup.Items.Add(this.FixError);
             this.ccgroup.Items.Add(this.clearColoringButton);
+            this.ccgroup.Items.Add(this.TestStuff);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
             // 
@@ -95,6 +97,13 @@ namespace DataDebug
             this.clearColoringButton.ShowImage = true;
             this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
+            // TestStuff
+            // 
+            this.TestStuff.Label = "Test";
+            this.TestStuff.Name = "TestStuff";
+            this.TestStuff.Visible = false;
+            this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -116,6 +125,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup ccgroup;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton MarkAsOK;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton FixError;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton TestStuff;
     }
 
     partial class ThisRibbonCollection
