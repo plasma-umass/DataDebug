@@ -149,7 +149,7 @@ namespace DataDebug
                 pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
             );
 
-            // Color top outlier and save in ribbon state
+            // Color top outlier, zoom to worksheet, and save in ribbon state
             flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance);
             if (flagged_cell == null)
             {
@@ -160,6 +160,9 @@ namespace DataDebug
             {
                 tool_highlights.Add(flagged_cell);
 
+                // go to highlighted cell
+                ActivateAndCenterOn(flagged_cell, app);
+
                 // enable auditing buttons
                 ActivateTool();
             }
@@ -168,6 +171,26 @@ namespace DataDebug
             app.ScreenUpdating = true;
 
             return quantiles;
+        }
+
+        private void ActivateAndCenterOn(AST.Address cell, Excel.Application app)
+        {
+            // go to worksheet
+            RibbonHelper.GetWorksheetByName(flagged_cell.A1Worksheet(), current_workbook.Worksheets).Activate();
+
+            // COM object
+            var comobj = flagged_cell.GetCOMObject(app);
+
+            // center screen on cell
+            var visible_columns = app.ActiveWindow.VisibleRange.Columns.Count;
+            var visible_rows = app.ActiveWindow.VisibleRange.Rows.Count;
+            app.Goto(comobj, true);
+            app.ActiveWindow.SmallScroll(Type.Missing, visible_rows / 2, Type.Missing, visible_columns / 2);
+
+            // select highlighted cell
+            // center on highlighted cell
+            comobj.Select();
+
         }
 
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
@@ -212,6 +235,11 @@ namespace DataDebug
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
                 ResetTool();
+            }
+            else
+            {
+                // go to highlighted cell
+                ActivateAndCenterOn(flagged_cell, app);
             }
         }
 
