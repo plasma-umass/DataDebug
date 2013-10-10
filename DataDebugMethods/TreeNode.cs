@@ -54,10 +54,7 @@ namespace DataDebugMethods
             
             // save parsed address of THIS cell;
             // used frequently in equality comparisons
-            _addr = AST.Address.AddressFromCOMObject(_COM,
-                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_worksheet_name),
-                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.Name),
-                                                    new Microsoft.FSharp.Core.FSharpOption<string>(_workbook.FullName));
+            _addr = AST.Address.AddressFromCOMObject(_COM, _worksheet_name, _workbook.Name, _workbook.FullName);
 
             // might be a single cell or formula
             if (_height == 1 && _width == 1)

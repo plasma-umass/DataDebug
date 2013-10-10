@@ -123,7 +123,7 @@ namespace DataDebugMethods
                 {
                     if (cell.Value2 != null)
                     {
-                        var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], wb, cell.Worksheet);
+                        var addr = AST.Address.AddressFromCOMObject(cell, cell.Worksheet.Name, wb.Name, wb.FullName);
                         var n = new TreeNode(cell, cell.Worksheet, wb);
                         
                         if (cell.HasFormula)
@@ -152,7 +152,7 @@ namespace DataDebugMethods
                 if (!formula_nodes.TryGetValue(ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet), out cellNode))
                 {
                     //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
-                    var addr = ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet);
+                    var addr = AST.Address.AddressFromCOMObject(cell, cell.Worksheet.Name, formulaNode.getWorkbookObject().Name, formulaNode.getWorkbookObject().FullName);
                     cellNode = new TreeNode(cell, cell.Worksheet, formulaNode.getWorkbookObject());
 
                     // Add to cell_nodes, not formula_nodes
@@ -179,26 +179,22 @@ namespace DataDebugMethods
             }
         }
 
-        // this function makes a TreeNode for a range
-        public static TreeNode MakeRangeTreeNode(TreeList ranges, Excel.Range range, TreeNode node)
+        public static TreeNode MakeRangeTreeNode(TreeDict input_ranges, Excel.Range input_range, TreeNode parent)
         {
-            TreeNode rangeNode = null;
-            // See if there is an existing node for this range already in "ranges";
-            // if there is, do not add it again - just grab the existing one
-            foreach (TreeNode existingNode in ranges)
+            // parse the address
+            var addr = AST.Address.AddressFromCOMObject(input_range,
+                                                        input_range.Worksheet.Name,
+                                                        parent.getWorkbookObject().Name,
+                                                        parent.getWorkbookObject().FullName);
+
+            // get it from dictionary, or, if it does not exist, create it, add to dict, and return new ref
+            TreeNode tn;
+            if (!input_ranges.TryGetValue(addr, out tn))
             {
-                if (existingNode.getName().Equals(range.Address))
-                {
-                    rangeNode = existingNode;
-                    break;
-                }
+                tn = new TreeNode(input_range, input_range.Worksheet, parent.getWorkbookObject());
+                input_ranges.Add(addr, tn);
             }
-            if (rangeNode == null)
-            {
-                rangeNode = new TreeNode(range, range.Worksheet, node.getWorkbookObject());
-                ranges.Add(rangeNode);
-            }
-            return rangeNode;
+            return tn;
         }
 
     } // ConstructTree class ends here

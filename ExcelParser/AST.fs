@@ -89,9 +89,9 @@
                 else
                     num + ccti(idx - 1)
             ccti(col.Length - 1)
-        static member AddressFromCOMObject(com: Microsoft.Office.Interop.Excel.Range, wsname: string option, wbname: string option, path: string option) : Address =
+        static member AddressFromCOMObject(com: Microsoft.Office.Interop.Excel.Range, wsname: string, wbname: string, path: string) : Address =
             let addr = com.get_Address(true, true, Microsoft.Office.Interop.Excel.XlReferenceStyle.xlR1C1, Type.Missing, Type.Missing)
-            Address.FromString(addr, wsname, wbname, path)
+            Address.FromString(addr, Some(wsname), Some(wbname), Some(path))
         static member FromString(addr: string, wsname: string option, wbname: string option, path: string option) : Address =
             let reg = System.Text.RegularExpressions.Regex("R(?<row>[0-9]+)C(?<column>[0-9]+)")
             let m = reg.Match(addr)

@@ -35,9 +35,9 @@ namespace DataDebug
             public AST.Address GetASTAddr()
             {
                 return AST.Address.AddressFromCOMObject(_cellCOM,
-                                                        new Microsoft.FSharp.Core.FSharpOption<string>(_ws.Name),
-                                                        new Microsoft.FSharp.Core.FSharpOption<string>(_cellCOM.Application.ActiveWorkbook.Name),
-                                                        new Microsoft.FSharp.Core.FSharpOption<string>(_cellCOM.Application.ActiveWorkbook.FullName));
+                                                        _ws.Name,
+                                                        _cellCOM.Application.ActiveWorkbook.Name,
+                                                        _cellCOM.Application.ActiveWorkbook.FullName);
             }
             public void Restore(HashSet<AST.Address> tool_highlights)
             {
