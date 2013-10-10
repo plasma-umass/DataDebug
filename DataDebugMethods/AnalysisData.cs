@@ -12,7 +12,6 @@ namespace DataDebugMethods
     {
         public List<TreeNode> nodelist;     // holds all the TreeNodes in the Excel fileTreeNode
         public TreeDict input_ranges;
-        public List<TreeNode> output_cells; // holds all the output nodes at the start of the fuzzing procedure
         private bool no_progress;
         private ProgBar pb;
         public TreeDict formula_nodes;
@@ -31,7 +30,6 @@ namespace DataDebugMethods
             charts = wb.Charts;
             nodelist = new List<TreeNode>();
             input_ranges = new TreeDict();
-            output_cells = new List<TreeNode>();
             cell_nodes = new TreeDict();
 
             // Create a progress bar
@@ -84,7 +82,8 @@ namespace DataDebugMethods
             //    and also contains a formula which consumes input from
             //    another range).
             // 2. the range is actually a formula cell
-            return input_ranges.Where(pair => !pair.Value.GetDontPerturb()).Select(pair => pair.Value).ToArray();
+            return input_ranges.Where(pair => !pair.Value.GetDontPerturb())
+                               .Select(pair => pair.Value).ToArray();
         }
     }
 }

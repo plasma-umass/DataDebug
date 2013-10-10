@@ -89,7 +89,10 @@
                 else
                     num + ccti(idx - 1)
             ccti(col.Length - 1)
-        static member AddressFromCOMObject(com: Microsoft.Office.Interop.Excel.Range, wsname: string, wbname: string, path: string) : Address =
+        static member AddressFromCOMObject(com: Microsoft.Office.Interop.Excel.Range, wb: Microsoft.Office.Interop.Excel.Workbook) : Address =
+            let wsname = com.Worksheet.Name
+            let wbname = wb.Name
+            let path = wb.FullName
             let addr = com.get_Address(true, true, Microsoft.Office.Interop.Excel.XlReferenceStyle.xlR1C1, Type.Missing, Type.Missing)
             Address.FromString(addr, Some(wsname), Some(wbname), Some(path))
         static member FromString(addr: string, wsname: string option, wbname: string option, path: string option) : Address =

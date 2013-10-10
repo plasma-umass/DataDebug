@@ -138,7 +138,7 @@ namespace DataDebug
                 System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                 data.KillPB();
                 app.ScreenUpdating = true;
-                return (IEnumerable<Tuple<double,TreeNode>>)new List<Tuple<int, TreeNode>>();
+                return new List<Tuple<double, TreeNode>>();
             }
 
             // Get bootstraps

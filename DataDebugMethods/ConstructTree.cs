@@ -123,7 +123,7 @@ namespace DataDebugMethods
                 {
                     if (cell.Value2 != null)
                     {
-                        var addr = AST.Address.AddressFromCOMObject(cell, cell.Worksheet.Name, wb.Name, wb.FullName);
+                        var addr = AST.Address.AddressFromCOMObject(cell, wb);
                         var n = new TreeNode(cell, cell.Worksheet, wb);
                         
                         if (cell.HasFormula)
@@ -143,49 +143,40 @@ namespace DataDebugMethods
             return nodes;
         }
 
-        public static void CreateCellNodesFromRange(TreeNode rangeNode, TreeNode formulaNode, TreeDict formula_nodes, TreeDict cell_nodes)
+        public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes)
         {
-            foreach (Excel.Range cell in rangeNode.getCOMObject())
+            foreach (Excel.Range cell in input_range.getCOMObject())
             {
-                TreeNode cellNode = null;
-                //See if there is an existing node for this cell already in nodes; if there is, do not add it again - just grab the existing one
-                if (!formula_nodes.TryGetValue(ExcelParser.GetAddress(cell.Address[true, true, Excel.XlReferenceStyle.xlR1C1, false], formulaNode.getWorkbookObject(), cell.Worksheet), out cellNode))
-                {
-                    //TODO CORRECT THE WORKBOOK PARAMETER IN THIS LINE: (IT SHOULD BE THE WORKBOOK OF cell, WHICH SHOULD COME FROM GetReferencesFromFormula
-                    var addr = AST.Address.AddressFromCOMObject(cell, cell.Worksheet.Name, formulaNode.getWorkbookObject().Name, formulaNode.getWorkbookObject().FullName);
-                    cellNode = new TreeNode(cell, cell.Worksheet, formulaNode.getWorkbookObject());
+                var addr = AST.Address.AddressFromCOMObject(cell, formula.getWorkbookObject());
 
-                    // Add to cell_nodes, not formula_nodes
-                    if (!cell_nodes.ContainsKey(addr))
-                    {
-                        cell_nodes.Add(addr, cellNode);
-                    }
-                    else
-                    {
-                        cellNode = cell_nodes[addr];
-                    }
+                // cell might either be another formula or just a simple data cell;
+                var d = cell.HasFormula ? formula_nodes : cell_nodes;
+
+                // add to appropriate dictionary
+                TreeNode cell_node;
+                if (!d.TryGetValue(addr, out cell_node))
+                {
+                    cell_node = new TreeNode(cell, cell.Worksheet, formula.getWorkbookObject());
+                    d.Add(addr, cell_node);
                 }
 
-                // Allow perturbation for every range which contains at least one concrete value (not a formula)
+                // Allow perturbation of every input_range that contains at least one value
                 if (!cell.HasFormula && cell.Value2 != null)
                 {
-                    rangeNode.Perturb();
+                    input_range.Perturb();
                 }
 
                 // link cell, range, and formula inputs and outputs together
-                rangeNode.addInput(cellNode);
-                cellNode.addOutput(formulaNode);
-                formulaNode.addInput(cellNode);
+                input_range.addInput(cell_node);
+                cell_node.addOutput(formula);
+                formula.addInput(cell_node);
             }
         }
 
         public static TreeNode MakeRangeTreeNode(TreeDict input_ranges, Excel.Range input_range, TreeNode parent)
         {
             // parse the address
-            var addr = AST.Address.AddressFromCOMObject(input_range,
-                                                        input_range.Worksheet.Name,
-                                                        parent.getWorkbookObject().Name,
-                                                        parent.getWorkbookObject().FullName);
+            var addr = AST.Address.AddressFromCOMObject(input_range, parent.getWorkbookObject());
 
             // get it from dictionary, or, if it does not exist, create it, add to dict, and return new ref
             TreeNode tn;

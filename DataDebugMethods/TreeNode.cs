@@ -54,7 +54,7 @@ namespace DataDebugMethods
             
             // save parsed address of THIS cell;
             // used frequently in equality comparisons
-            _addr = AST.Address.AddressFromCOMObject(_COM, _worksheet_name, _workbook.Name, _workbook.FullName);
+            _addr = AST.Address.AddressFromCOMObject(_COM, _workbook);
 
             // might be a single cell or formula
             if (_height == 1 && _width == 1)

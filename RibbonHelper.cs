@@ -34,10 +34,7 @@ namespace DataDebug
             }
             public AST.Address GetASTAddr()
             {
-                return AST.Address.AddressFromCOMObject(_cellCOM,
-                                                        _ws.Name,
-                                                        _cellCOM.Application.ActiveWorkbook.Name,
-                                                        _cellCOM.Application.ActiveWorkbook.FullName);
+                return AST.Address.AddressFromCOMObject(_cellCOM, _cellCOM.Application.ActiveWorkbook);
             }
             public void Restore(HashSet<AST.Address> tool_highlights)
             {
