@@ -91,6 +91,7 @@ namespace DataDebugMethods
             return _includes;
         }
 
+        // indicate which values are included in a resample
         public void SetIncludes(int[] includes)
         {
             _includes = includes;

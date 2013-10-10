@@ -79,19 +79,6 @@ namespace DataDebugMethods
 
                 // indicate which indices are excluded
                 s.SetIncludes(inc_count);
-                string included = "";
-                string excluded = "";
-                for (int incl_index = 0; incl_index < s.GetIncludes().Length; incl_index++)
-                {
-                    if (s.GetIncludes()[incl_index] != 0)
-                    {
-                        included += incl_index + " ";
-                    }
-                }
-                foreach (int excl_index in s.GetExcludes())
-                {
-                    excluded += excl_index + " ";
-                }
 
                 // add the new InputSample to the output array
                 ss[i] = s;
@@ -127,14 +114,14 @@ namespace DataDebugMethods
 
             // populate bootstrap array
             // for each input range (a TreeNode)
-            for (var i = 0; i < input_rngs.Length; i++)
+            System.Threading.Tasks.Parallel.For(0, input_rngs.Length, i =>
             {
                 // this TreeNode
                 var t = input_rngs[i];
 
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
-            }
+            });
 
             // first idx: the fth function output
             // second idx: the ith input

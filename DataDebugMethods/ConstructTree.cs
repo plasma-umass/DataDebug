@@ -14,14 +14,7 @@ namespace DataDebugMethods
 {
     public static class ConstructTree
     {
-        /*
-         * This method constructs the dependency graph from the worksheet.
-         * It analyzes formulas and looks for references to cells or ranges of cells.
-         * It also looks for any charts, and adds those to the dependency graph as well. 
-         * After the dependency graph is constructed, we use it to determine and propagate weights to all nodes in the graph. 
-         * This method also contains the perturbation procedure and outlier analysis logic.
-         * In the end, a text representation of the dependency graph is given in GraphViz format. It includes the entire graph and the weights of the nodes.
-         */
+        // This method constructs the dependency graph from the workbook.
         public static void constructTree(AnalysisData analysisData, Excel.Workbook wb, Excel.Application app)
         {
             // Get a range representing the formula cells for each worksheet in each workbook
