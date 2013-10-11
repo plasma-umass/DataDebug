@@ -309,7 +309,7 @@ namespace DataDebugMethods
             return input_exclusion_scores;
         }
 
-        public static AST.Address FlagTopOutlier(IEnumerable<Tuple<double,TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance)
+        public static AST.Address GetTopOutlier(IEnumerable<Tuple<double, TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance)
         {
             if (quantiles.Count() == 0)
             {
@@ -327,9 +327,6 @@ namespace DataDebugMethods
                 // get TreeNode corresponding to most unusual score
                 var flagged_cell = filtered_scores.Last().Item2;
 
-                // highlight cell
-                flagged_cell.getCOMObject().Interior.Color = System.Drawing.Color.Red;
-
                 // return cell address
                 return flagged_cell.GetAddress();
             }
@@ -337,6 +334,23 @@ namespace DataDebugMethods
             {
                 return null;
             }
+        }
+
+        public static AST.Address FlagTopOutlier(IEnumerable<Tuple<double,TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance, Excel.Application app)
+        {
+            var flagged_cell = GetTopOutlier(quantiles, known_good, significance);
+
+            if (flagged_cell != null)
+            {
+                // get COM object for cell
+                var comcell = flagged_cell.GetCOMObject(app);
+
+                // highlight cell
+                comcell.Interior.Color = System.Drawing.Color.Red;
+            }
+
+            // return cell address
+            return flagged_cell;
         }
 
         public static void ColorOutliers(TreeScore input_exclusion_scores)

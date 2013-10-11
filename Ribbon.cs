@@ -147,7 +147,7 @@ namespace DataDebug
             );
 
             // Color top outlier, zoom to worksheet, and save in ribbon state
-            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance);
+            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
             if (flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
@@ -227,7 +227,7 @@ namespace DataDebug
             known_good.Add(flagged_cell);
             var cell = flagged_cell.GetCOMObject(app);
             cell.Interior.Color = GREEN;
-            flagged_cell = Analysis.FlagTopOutlier(analysis_results, known_good, tool_significance);
+            flagged_cell = Analysis.FlagTopOutlier(analysis_results, known_good, tool_significance, app);
             if (flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
