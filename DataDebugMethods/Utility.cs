@@ -7,9 +7,9 @@ using System.Reflection;
 
 namespace DataDebugMethods
 {
-    class Utility
+    public class Utility
     {
-        static Excel.Workbook OpenWorkbook(string filename, Excel.Application app)
+        public static Excel.Workbook OpenWorkbook(string filename, Excel.Application app)
         {
             // we need to disable all alerts, e.g., password prompts, etc.
             app.DisplayAlerts = false;

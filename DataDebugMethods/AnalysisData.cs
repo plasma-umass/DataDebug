@@ -36,9 +36,6 @@ namespace DataDebugMethods
             if (!no_progress)
             {
                 pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
-            }
-            else
-            {
                 pb.SetProgress(0);
             }
         }

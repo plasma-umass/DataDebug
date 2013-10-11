@@ -122,16 +122,13 @@ namespace DataDebug
 
         private IEnumerable<Tuple<double,TreeNode>> Analyze()
         {
-             current_workbook = app.ActiveWorkbook;
+            current_workbook = app.ActiveWorkbook;
 
             // Disable screen updating during analysis to speed things up
             app.ScreenUpdating = false;
 
-            // Make a new analysisData object
-            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, false);
-
             // Build dependency graph (modifies data)
-            ConstructTree.constructTree(data, app.ActiveWorkbook, app);
+            var data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
 
             if (data.TerminalInputNodes().Length == 0)
             {

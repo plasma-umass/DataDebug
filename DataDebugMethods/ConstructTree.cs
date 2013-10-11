@@ -15,16 +15,19 @@ namespace DataDebugMethods
     public static class ConstructTree
     {
         // This method constructs the dependency graph from the workbook.
-        public static void constructTree(AnalysisData analysisData, Excel.Workbook wb, Excel.Application app)
+        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, bool show_progbar)
         {
+            // Make a new analysisData object
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, !show_progbar);
+
             // Get a range representing the formula cells for each worksheet in each workbook
             ArrayList formulaRanges = ConstructTree.GetFormulaRanges(wb.Worksheets, app);
 
             // Create nodes for every cell containing a formula
-            analysisData.formula_nodes = ConstructTree.CreateFormulaNodes(formulaRanges, wb, app);
+            data.formula_nodes = ConstructTree.CreateFormulaNodes(formulaRanges, wb, app);
 
             //Now we parse the formulas in nodes to extract any range and cell references
-            foreach(TreeDictPair pair in analysisData.formula_nodes)
+            foreach(TreeDictPair pair in data.formula_nodes)
             {
                 // This is a formula:
                 TreeNode formula_node = pair.Value;
@@ -35,9 +38,9 @@ namespace DataDebugMethods
                 foreach (Excel.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
                 {
                     // this function both creates a TreeNode and adds it to AnalysisData.input_ranges
-                    TreeNode range_node = ConstructTree.MakeRangeTreeNode(analysisData.input_ranges, input_range, formula_node);
+                    TreeNode range_node = ConstructTree.MakeRangeTreeNode(data.input_ranges, input_range, formula_node);
                     // this function both creates cell TreeNodes for a range and adds it to AnalysisData.cell_nodes
-                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, analysisData.formula_nodes, analysisData.cell_nodes);
+                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, data.formula_nodes, data.cell_nodes);
                 }
 
                 // For each single-cell input found in the formula by the parser,
@@ -48,7 +51,7 @@ namespace DataDebugMethods
                     // Find the input cell's TreeNode; if there isn't one, move on.
                     // We don't care about scalar inputs that are not functions
                     TreeNode tn;
-                    if (analysisData.formula_nodes.TryGetValue(input_addr, out tn))
+                    if (data.formula_nodes.TryGetValue(input_addr, out tn))
                     {
                         // sanity check-- should be a formula
                         if (tn.isFormula())
@@ -60,6 +63,7 @@ namespace DataDebugMethods
                     }
                 }
             }
+            return data;
         }
 
         public static ArrayList GetFormulaRanges(Excel.Sheets ws, Excel.Application app)
