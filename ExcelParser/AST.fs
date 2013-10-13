@@ -11,14 +11,11 @@
 
     [<Serializable>]
     type Address() =
-//    type Address(R: int, C: int, wsname: string option, wbname: string option, path: string option) =
         let mutable R: int = 0
         let mutable C: int = 0
         let mutable _wsn = None
         let mutable _wbn = None
         let mutable _path = None
-//        new(row: int, col: string, wsname: string option, wbname: string option, path: string option) =
-//            Address(row, Address.CharColToInt(col), wsname, wbname, path)
         static member FromR1C1(R: int, C: int, wsname: string, wbname: string, path: string) : Address =
             let addr = Address()
             addr.Row <- R

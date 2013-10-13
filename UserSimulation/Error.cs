@@ -60,5 +60,9 @@ namespace UserSimulation
         public string workbook;
         public string worksheet;
         public string value;
+        public AST.Address GetAddress()
+        {
+            return AST.Address.FromR1C1(row, col, worksheet, workbook, path);
+        }
     }
 }

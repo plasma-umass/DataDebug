@@ -262,8 +262,8 @@ namespace DataDebug
             sfd.ShowDialog();
             var filename = sfd.FileName;
             var errors = new UserSimulation.ErrorDB();
-            errors.AddError(1, 1, "badcell");
-            errors.AddError(2, 3, "LINCOLN");
+            errors.AddError(1, 1, "worksheet", "workbook", "path", "badcell");
+            errors.AddError(2, 3, "worksheet", "workbook", "path", "anotherbadcell");
             errors.Serialize(filename);
             var errors2 = UserSimulation.ErrorDB.Deserialize(filename);
             System.Windows.Forms.MessageBox.Show("Everything works.");

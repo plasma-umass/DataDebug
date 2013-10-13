@@ -81,6 +81,8 @@ namespace UserSimulation
         // create and run a CheckCell simulation
         public void Run(int nboots, string filename, double significance, ErrorDB errors, Excel.Application app)
         {
+            var errord = ErrorDBToCellDict(errors);
+
             try
             {
                 // open workbook
@@ -106,13 +108,13 @@ namespace UserSimulation
                 CellDict correct_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
 
                 // inject errors
-                InjectValues(app, wb, errors);
+                InjectValues(app, wb, errord);
 
                 // save function outputs
                 CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, errors, app);
+                _user = SimulateUser(nboots, significance, data, original_inputs, errord, app);
 
                 // error
                 _error = CalculateError(app, correct_outputs, incorrect_outputs);
@@ -198,7 +200,7 @@ namespace UserSimulation
                                                double significance,
                                                AnalysisData data,
                                                CellDict original_inputs,
-                                               ErrorDB errors,
+                                               CellDict errord,
                                                Excel.Application app)
         {
             var o = new UserResults();
@@ -224,7 +226,7 @@ namespace UserSimulation
                 else
                 {
                     // check to see if the flagged value is actually an error
-                    if (errors.ContainsKey(flagged_cell))
+                    if (errord.ContainsKey(flagged_cell))
                     {
                         o.true_positives.Add(flagged_cell);
                     }
@@ -242,21 +244,31 @@ namespace UserSimulation
             }
 
             // find all of the false negatives
-            o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errors);
+            o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errord);
 
             return o;
         }
 
+        private static CellDict ErrorDBToCellDict(ErrorDB errors)
+        {
+            var d = new CellDict();
+            foreach (Error e in errors.Errors)
+            {
+                d.Add(e.GetAddress(), e.value);
+            }
+            return d;
+        }
+
         // return the set of false negatives
-        private static HashSet<AST.Address> GetFalseNegatives(List<AST.Address> true_positives, List<AST.Address> false_positives, ErrorDB errors)
+        private static HashSet<AST.Address> GetFalseNegatives(List<AST.Address> true_positives, List<AST.Address> false_positives, CellDict errors)
         {
             var fnset = new HashSet<AST.Address>();
             var tpset = new HashSet<AST.Address>(true_positives);
             var fpset = new HashSet<AST.Address>(false_positives);
 
-            foreach(Error e in errors.Errors)
+            foreach(KeyValuePair<AST.Address, string> pair in errors)
             {
-                var addr = AST.Address.FromR1C1(e.row, e.col, e.worksheet, e.workbook, e.path);
+                var addr = pair.Key;
                 if (!tpset.Contains(addr) && !fpset.Contains(addr))
                 {
                     fnset.Add(addr);
@@ -297,24 +309,6 @@ namespace UserSimulation
                 cd.Add(formula_cell.GetAddress(), formula_cell.getCOMValueAsString());
             }
             return cd;
-        }
-
-        // inject errors into a workbook
-        private static void InjectValues(Excel.Application app, Excel.Workbook wb, ErrorDB errors)
-        {
-            foreach (Error e in errors.Errors)
-            {
-                var addr = AST.Address.FromR1C1(e.row, e.col, e.worksheet, e.workbook, e.path);
-                var errorstr = e.value;
-                var comcell = addr.GetCOMObject(app);
-
-                // never perturb formulae
-                if (!comcell.HasFormula)
-                {
-                    // inject error
-                    addr.GetCOMObject(app).Value2 = errorstr;
-                }
-            }
         }
 
         // inject errors into a workbook
