@@ -19,6 +19,14 @@
         let mutable _path = None
 //        new(row: int, col: string, wsname: string option, wbname: string option, path: string option) =
 //            Address(row, Address.CharColToInt(col), wsname, wbname, path)
+        static member FromR1C1(R: int, C: int, wsname: string, wbname: string, path: string) : Address =
+            let addr = Address()
+            addr.Row <- R
+            addr.Col <- C
+            addr.WorksheetName <- Some(wsname)
+            addr.WorkbookName <- Some(wbname)
+            addr.Path <- Some(path)
+            addr
         static member NewFromR1C1(R: int, C: int, wsname: string option, wbname: string option, path: string option) : Address =
             let addr = Address()
             addr.Row <- R

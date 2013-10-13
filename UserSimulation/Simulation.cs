@@ -79,7 +79,7 @@ namespace UserSimulation
         }
 
         // create and run a CheckCell simulation
-        public void Run(int nboots, string filename, double significance, CellDict errors, Excel.Application app)
+        public void Run(int nboots, string filename, double significance, ErrorDB errors, Excel.Application app)
         {
             try
             {
@@ -198,7 +198,7 @@ namespace UserSimulation
                                                double significance,
                                                AnalysisData data,
                                                CellDict original_inputs,
-                                               CellDict errors,
+                                               ErrorDB errors,
                                                Excel.Application app)
         {
             var o = new UserResults();
@@ -248,15 +248,15 @@ namespace UserSimulation
         }
 
         // return the set of false negatives
-        private static HashSet<AST.Address> GetFalseNegatives(List<AST.Address> true_positives, List<AST.Address> false_positives, CellDict errors)
+        private static HashSet<AST.Address> GetFalseNegatives(List<AST.Address> true_positives, List<AST.Address> false_positives, ErrorDB errors)
         {
             var fnset = new HashSet<AST.Address>();
             var tpset = new HashSet<AST.Address>(true_positives);
             var fpset = new HashSet<AST.Address>(false_positives);
 
-            foreach(KeyValuePair<AST.Address, string> error in errors)
+            foreach(Error e in errors.Errors)
             {
-                var addr = error.Key;
+                var addr = AST.Address.FromR1C1(e.row, e.col, e.worksheet, e.workbook, e.path);
                 if (!tpset.Contains(addr) && !fpset.Contains(addr))
                 {
                     fnset.Add(addr);
@@ -300,9 +300,27 @@ namespace UserSimulation
         }
 
         // inject errors into a workbook
-        private static void InjectValues(Excel.Application app, Excel.Workbook wb, CellDict errors)
+        private static void InjectValues(Excel.Application app, Excel.Workbook wb, ErrorDB errors)
         {
-            foreach (KeyValuePair<AST.Address, string> pair in errors)
+            foreach (Error e in errors.Errors)
+            {
+                var addr = AST.Address.FromR1C1(e.row, e.col, e.worksheet, e.workbook, e.path);
+                var errorstr = e.value;
+                var comcell = addr.GetCOMObject(app);
+
+                // never perturb formulae
+                if (!comcell.HasFormula)
+                {
+                    // inject error
+                    addr.GetCOMObject(app).Value2 = errorstr;
+                }
+            }
+        }
+
+        // inject errors into a workbook
+        private static void InjectValues(Excel.Application app, Excel.Workbook wb, CellDict values)
+        {
+            foreach (KeyValuePair<AST.Address,string> pair in values)
             {
                 var addr = pair.Key;
                 var errorstr = pair.Value;

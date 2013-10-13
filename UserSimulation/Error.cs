@@ -11,20 +11,23 @@ namespace UserSimulation
     [Serializable]
     public class ErrorDB
     {
-        public List<Error> _errors { get; set; }
+        public List<Error> Errors { get; set; }
 
         public ErrorDB()
         {
-            _errors = new List<Error>();
+            Errors = new List<Error>();
         }
 
-        public void AddError(int r, int c, string value)
+        public void AddError(int r, int c, string worksheet, string workbook, string path, string value)
         {
             var e = new Error();
             e.row = r;
             e.col = c;
+            e.worksheet = worksheet;
+            e.workbook = workbook;
+            e.path = path;
             e.value = value;
-            _errors.Add(e);
+            Errors.Add(e);
         }
 
         public void Serialize(string filename)
@@ -46,13 +49,16 @@ namespace UserSimulation
             }
             return obj;
         }
+    }
 
-        [Serializable]
-        public struct Error
-        {
-            public int row;
-            public int col;
-            public string value;
-        }
+    [Serializable]
+    public struct Error
+    {
+        public int row;
+        public int col;
+        public string path;
+        public string workbook;
+        public string worksheet;
+        public string value;
     }
 }
