@@ -274,6 +274,10 @@
       <Project>{6DE2A2B9-C029-4BDB-8992-D16276471D9F}</Project>
       <Name>ExcelParser</Name>
     </ProjectReference>
+    <ProjectReference Include="UserSimulation\UserSimulation.csproj">
+      <Project>{cb1aade6-ad72-4ae5-aaa8-351cebc61236}</Project>
+      <Name>UserSimulation</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\analyze.png" />

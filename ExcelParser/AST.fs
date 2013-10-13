@@ -9,12 +9,32 @@
     type XLRange = Microsoft.Office.Interop.Excel.Range
     type XLRefStyle = Microsoft.Office.Interop.Excel.XlReferenceStyle
 
-    type Address(R: int, C: int, wsname: string option, wbname: string option, path: string option) =
-        let mutable _wsn = wsname
-        let mutable _wbn = wbname
-        let mutable _path = path
-        new(row: int, col: string, wsname: string option, wbname: string option, path: string option) =
-            Address(row, Address.CharColToInt(col), wsname, wbname, path)
+    [<Serializable>]
+    type Address() =
+//    type Address(R: int, C: int, wsname: string option, wbname: string option, path: string option) =
+        let mutable R: int = 0
+        let mutable C: int = 0
+        let mutable _wsn = None
+        let mutable _wbn = None
+        let mutable _path = None
+//        new(row: int, col: string, wsname: string option, wbname: string option, path: string option) =
+//            Address(row, Address.CharColToInt(col), wsname, wbname, path)
+        static member NewFromR1C1(R: int, C: int, wsname: string option, wbname: string option, path: string option) : Address =
+            let addr = Address()
+            addr.Row <- R
+            addr.Col <- C
+            addr.WorksheetName <- wsname
+            addr.WorkbookName <- wbname
+            addr.Path <- path
+            addr
+        static member NewFromA1(row: int, col: string, wsname: string option, wbname: string option, path: string option) : Address =
+            let addr = Address()
+            addr.Row <- row
+            addr.Col <- Address.CharColToInt(col)
+            addr.WorksheetName <- wsname
+            addr.WorkbookName <- wbname
+            addr.Path <- path
+            addr
         member self.A1Local() : string = Address.IntToColChars(self.X) + self.Y.ToString()
         member self.A1Path() : string =
             match _path with
@@ -37,6 +57,12 @@
             pstr + wbstr + wsstr + "R" + R.ToString() + "C" + C.ToString()
         member self.X: int = C
         member self.Y: int = R
+        member self.Row
+            with get() = R
+            and set(value) = R <- value
+        member self.Col
+            with get() = C
+            and set(value) = C <- value
         member self.Path
             with get() = _path
             and set(value) = _path <- value
@@ -100,7 +126,7 @@
             let m = reg.Match(addr)
             let r = System.Convert.ToInt32(m.Groups.["row"].Value)
             let c = System.Convert.ToInt32(m.Groups.["column"].Value)
-            Address(r, c, wsname, wbname, path)
+            Address.NewFromR1C1(r, c, wsname, wbname, path)
         static member IntToColChars(dividend: int) : string =
             let mutable quot = dividend / 26
             let rem = dividend % 26

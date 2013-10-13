@@ -34,12 +34,12 @@
     // exactly the same way unless you copy and paste them.
     let AddrR = pstring "R" >>. pint32
     let AddrC = pstring "C" >>. pint32
-    let AddrR1C1 = pipe2 AddrR AddrC (fun r c -> Address(r,c,None,None,None))
+    let AddrR1C1 = pipe2 AddrR AddrC (fun r c -> Address.NewFromR1C1(r,c,None,None,None))
     let AddrA = many1Satisfy isAsciiUpper
     let AddrAAbs = (pstring "$" <|> pstring "") >>. AddrA
     let Addr1 = pint32
     let Addr1Abs = (pstring "$" <|> pstring "") >>. Addr1
-    let AddrA1 = (pipe2 AddrAAbs Addr1Abs (fun col row -> Address(row,col,None,None,None))) <!> "AddrA1"
+    let AddrA1 = (pipe2 AddrAAbs Addr1Abs (fun col row -> Address.NewFromA1(row,col,None,None,None))) <!> "AddrA1"
     let AnyAddr = ((attempt AddrR1C1) <|> AddrA1) <!> "AnyAddr"
 
     // Ranges

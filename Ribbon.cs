@@ -253,10 +253,11 @@ namespace DataDebug
 
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            double[] a = { 1, 2, 2, 2, 3, 1, 5, 6, 6, 6, 0 };
-            var b = a.Select( v => new Tuple<int,double>((int)v, v));
-            var result = DataDebugMethods.Analysis.ComputeQuantile(b);
-            System.Windows.Forms.MessageBox.Show(String.Join(",", result));
+            var ofd = new System.Windows.Forms.OpenFileDialog();
+            ofd.ShowDialog();
+            var filename = ofd.SafeFileName;
+            var sim = new UserSimulation.Simulation();
+            //sim.Run(5000, filename, 0.95, errors, app);
         }
     }
 }
