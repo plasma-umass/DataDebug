@@ -7,7 +7,6 @@ using Excel = Microsoft.Office.Interop.Excel;
 using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 using System.Diagnostics;
 using DataDebugMethods;
@@ -15,6 +14,7 @@ using Serialization = System.Runtime.Serialization;
 
 namespace UserSimulation
 {
+    [Serializable]
     public enum ErrorCondition
     {
         OK,

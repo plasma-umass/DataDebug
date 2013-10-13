@@ -253,11 +253,20 @@ namespace DataDebug
 
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            var ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.ShowDialog();
-            var filename = ofd.SafeFileName;
-            var sim = new UserSimulation.Simulation();
+            //var ofd = new System.Windows.Forms.OpenFileDialog();
+            //ofd.ShowDialog();
+            //var filename = ofd.SafeFileName;
+            //var sim = new UserSimulation.Simulation();
             //sim.Run(5000, filename, 0.95, errors, app);
+            var sfd = new System.Windows.Forms.SaveFileDialog();
+            sfd.ShowDialog();
+            var filename = sfd.FileName;
+            var errors = new UserSimulation.ErrorDB();
+            errors.AddError(1, 1, "badcell");
+            errors.AddError(2, 3, "LINCOLN");
+            errors.Serialize(filename);
+            var errors2 = UserSimulation.ErrorDB.Deserialize(filename);
+            System.Windows.Forms.MessageBox.Show("Everything works.");
         }
     }
 }
