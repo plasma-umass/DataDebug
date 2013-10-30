@@ -88,42 +88,6 @@ namespace DataDebugMethods
             }
         } //End TestSignOmission
 
-        public static bool TestDecimalOmission(string enteredText, string originalText)
-        {
-            //Original string must contain at most one decimal point
-            int countDecimalPoints = 0;
-            for (int i = 0; i < originalText.Length; i++)
-            {
-                if (originalText[i].Equals('.'))
-                {
-                    countDecimalPoints++;
-                }
-            }
-            int countDecimalPointsEntered = 0;
-            for (int i = 0; i < enteredText.Length; i++)
-            {
-                if (enteredText[i].Equals('.'))
-                {
-                    countDecimalPointsEntered++;
-                }
-            }
-            if (countDecimalPoints > 1 || countDecimalPointsEntered > 1)
-            {
-                //MessageBox.Show("Decimal point omission: NO");
-                return false;
-            }
-            if (countDecimalPointsEntered < countDecimalPoints && originalText.Replace(".", "").Equals(enteredText.Replace(".", "")))
-            {
-                //MessageBox.Show("Decimal point omission: YES");
-                return true;
-            }
-            else
-            {
-                //MessageBox.Show("Decimal point omission: NO");
-                return false;
-            }
-        } //End TestDecimalOmission
-
         public static bool TestDigitRepeat(string enteredText, string originalText)
         {
             string originalString = originalText;
