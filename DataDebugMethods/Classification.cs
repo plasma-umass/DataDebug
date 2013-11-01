@@ -223,15 +223,18 @@ namespace DataDebugMethods
                     decimal_index = i;
                 }
             }
-            // if there's more than one decimal, this is not a number
+            // if there's more than one decimal in the entered string, it is not a number
+            // or if the entered string contains decimals, this isn't a decimal omission
+            // or if the entered string is shorter than the location of the decimal in the original string (we can't add the decimal in that case)
             // so we don't care
-            if (countDecimalPoints != 1 || entered.LastIndexOf('.') != -1)
+            if (countDecimalPoints != 1 || entered.LastIndexOf('.') != -1 || entered.Length <= decimal_index)
             {
                 AddDecimalOmission(false);
                 return OptString.None;
             }
 
             AddDecimalOmission(true);
+            
             return OptString.Some(entered.Insert(decimal_index, "."));
         } //End TestDecimalOmission
 
