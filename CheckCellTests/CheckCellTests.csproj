@@ -54,6 +54,7 @@
     <Compile Include="CheckCellTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ErrorClassifierTests.cs" />
+    <Compile Include="LCSTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DataDebugMethods\DataDebugMethods.csproj">
@@ -63,6 +64,10 @@
     <ProjectReference Include="..\ExcelParser\ExcelParser.fsproj">
       <Project>{6DE2A2B9-C029-4BDB-8992-D16276471D9F}</Project>
       <Name>ExcelParser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LongestCommonSubsequence\LongestCommonSubsequence.fsproj">
+      <Project>{e3b87cad-521f-41ea-b3e8-ecd0d7d5074b}</Project>
+      <Name>LongestCommonSubsequence</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
