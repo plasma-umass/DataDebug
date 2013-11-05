@@ -10,17 +10,10 @@ using System.Text.RegularExpressions;
 using Microsoft.FSharp.Core;
 using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
 using OptInt = Microsoft.FSharp.Core.FSharpOption<int>;
+using Sign = LongestCommonSubsequence.Sign;
 
 namespace DataDebugMethods
 {
-    public enum Sign
-    {
-        Plus,
-        Minus,
-        Empty
-    }
-
-
     public class Classification
     {
         //Error types:

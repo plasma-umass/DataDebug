@@ -72,6 +72,10 @@
       <Project>{6DE2A2B9-C029-4BDB-8992-D16276471D9F}</Project>
       <Name>ExcelParser</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LongestCommonSubsequence\LongestCommonSubsequence.fsproj">
+      <Project>{e3b87cad-521f-41ea-b3e8-ecd0d7d5074b}</Project>
+      <Name>LongestCommonSubsequence</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ProgBar.resx">
