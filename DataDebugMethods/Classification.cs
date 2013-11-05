@@ -92,8 +92,21 @@ namespace DataDebugMethods
         public OptString HasSignError(string original, string entered)
         {
             // sign for orig
-            Sign orig_sign = original[0] == '+' ? Sign.Plus : original[0] == '-' ? Sign.Minus : Sign.Empty;
+            Sign orig_sign;
+            if (original[0] == '+') 
+            {
+                orig_sign = Sign.Plus; 
+            }
+            else if (original[0] == '-')
+            {
+                orig_sign = Sign.Minus;
+            }
+            else
+            {
+                orig_sign = Sign.Empty;
+            }
 
+            //If the entered string is blank, return empty optstring
             if (entered.Length < 1)
             {
                 AddSignError(orig_sign, Sign.Empty);
@@ -101,7 +114,19 @@ namespace DataDebugMethods
             }
 
             // sign for entered
-            Sign ent_sign = entered[0] == '+' ? Sign.Plus : entered[0] == '-' ? Sign.Minus : Sign.Empty;
+            Sign ent_sign;
+            if (entered[0] == '+')
+            {
+                ent_sign = Sign.Plus;
+            }
+            else if (entered[0] == '-')
+            {
+                ent_sign = Sign.Minus;
+            }
+            else
+            {
+                ent_sign = Sign.Empty;
+            }
 
             // update probabilities
             AddSignError(orig_sign, ent_sign);
@@ -111,29 +136,37 @@ namespace DataDebugMethods
             var fc_ent = entered[0];
 
             // does the original string have a sign?
-            var orig_has_sign = fc_orig == '-' || fc_orig == '+';
+            var orig_has_sign = false;
+            if (fc_orig == '-' || fc_orig == '+')
+            {
+                orig_has_sign = true;
+            }
 
             // does the entered string have a sign?
-            var ent_has_sign = fc_ent == '-' || fc_ent == '+';
+            var ent_has_sign = false;
+            if (fc_ent == '-' || fc_ent == '+')
+            {
+                ent_has_sign = true;
+            }
 
             // if the original string had no sign but the entered one did
             // erase the sign in the entered string
+            if (ent_has_sign && !orig_has_sign)
+            {
+                return new OptString(entered.Remove(0, 1));
+            }
+
+            // if the original string had a sign but the entered string
+            // did not, remove the sign in the entered string
             if (!ent_has_sign && orig_has_sign)
             {
                 return new OptString(fc_orig + entered);
             }
 
-            // if the original string had a sign but the entered string
-            // did not, remove the sign in the entered string
-            if (ent_has_sign && !orig_has_sign)
-            {
-                return new OptString(entered.Remove(1));
-            }
-
             // both have signs but are not the same
-            if (ent_has_sign && orig_has_sign)
+            if (ent_has_sign && orig_has_sign && (orig_sign != ent_sign))
             {
-                return new OptString(fc_orig + entered.Remove(1));
+                return new OptString(fc_orig + entered.Remove(0,1));
             }
 
             // no sign errors
