@@ -100,6 +100,10 @@
         // return realigned char list
         newseq
 
+    // this is for C# use
+    let LeftAlignedLCSList(orig: string, entered: string) : System.Collections.Generic.IEnumerable<(int*int)> =
+        LeftAlignedLCS(orig, entered) |> List.toSeq
+
     let LCS_Hash(X: string, Y: string) : System.Collections.Generic.HashSet<string> =
         let hs = new System.Collections.Generic.HashSet<string>()
         for s in LCS(X,Y) do hs.Add(s) |> ignore

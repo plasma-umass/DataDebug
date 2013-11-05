@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using DataDebugMethods;
 using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
+using Classification = UserSimulation.Classification;
 
 namespace CheckCellTests
 {

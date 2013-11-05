@@ -52,7 +52,6 @@
     <Compile Include="Analysis.cs" />
     <Compile Include="AnalysisData.cs" />
     <Compile Include="BootMemo.cs" />
-    <Compile Include="Classification.cs" />
     <Compile Include="ConstructTree.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FunctionOutput.cs" />

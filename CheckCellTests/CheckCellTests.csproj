@@ -69,6 +69,10 @@
       <Project>{e3b87cad-521f-41ea-b3e8-ecd0d7d5074b}</Project>
       <Name>LongestCommonSubsequence</Name>
     </ProjectReference>
+    <ProjectReference Include="..\UserSimulation\UserSimulation.csproj">
+      <Project>{cb1aade6-ad72-4ae5-aaa8-351cebc61236}</Project>
+      <Name>UserSimulation</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

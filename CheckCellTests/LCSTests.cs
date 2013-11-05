@@ -53,9 +53,15 @@ namespace CheckCellTests
         [TestMethod]
         public void TestLeftAlignedLCS()
         {
-            var s1 = "Hello";
-            var s2 = "Heellloo";
+            var s1 = "abc";
+            var s2 = "abcc";
+            // this returns exactly one left-aligned common subsequence, chosen randomly
+            var ss = LongestCommonSubsequence.LeftAlignedLCSList(s1, s2);
 
+            // but in this case, both left-aligned subsequences will be the same
+            Tuple<int, int>[] shouldbe = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
+
+            Assert.AreEqual(true, ss.SequenceEqual<Tuple<int, int>>(shouldbe));
         }
     }
 }

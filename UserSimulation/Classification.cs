@@ -12,7 +12,7 @@ using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
 using OptInt = Microsoft.FSharp.Core.FSharpOption<int>;
 using Sign = LongestCommonSubsequence.Sign;
 
-namespace DataDebugMethods
+namespace UserSimulation
 {
     public class Classification
     {
