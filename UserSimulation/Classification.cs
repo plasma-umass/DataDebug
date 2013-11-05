@@ -88,23 +88,34 @@ namespace UserSimulation
             }
         }
 
-        public OptString HasSignError(string original, string entered)
+        public Sign getSign(string input)
         {
-            // sign for orig
-            Sign orig_sign;
-            if (original[0] == '+') 
+            Sign s;
+            if (input.Length < 1)
             {
-                orig_sign = Sign.Plus; 
+                s = Sign.Empty;
+                return s;
             }
-            else if (original[0] == '-')
+            if (input[0] == '+')
             {
-                orig_sign = Sign.Minus;
+                s = Sign.Plus;
+            }
+            else if (input[0] == '-')
+            {
+                s = Sign.Minus;
             }
             else
             {
-                orig_sign = Sign.Empty;
+                s = Sign.Empty;
             }
+            return s;
+        }
 
+        public OptString HasSignError(string original, string entered)
+        {
+            // sign for orig
+            Sign orig_sign = getSign(original);
+          
             //If the entered string is blank, return empty optstring
             if (entered.Length < 1)
             {
@@ -113,20 +124,8 @@ namespace UserSimulation
             }
 
             // sign for entered
-            Sign ent_sign;
-            if (entered[0] == '+')
-            {
-                ent_sign = Sign.Plus;
-            }
-            else if (entered[0] == '-')
-            {
-                ent_sign = Sign.Minus;
-            }
-            else
-            {
-                ent_sign = Sign.Empty;
-            }
-
+            Sign ent_sign = getSign(entered);
+            
             // update probabilities
             AddSignError(orig_sign, ent_sign);
 
