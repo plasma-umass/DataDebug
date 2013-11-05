@@ -22,15 +22,40 @@ namespace CheckCellTests
             var s1 = "Hello";
             var s2 = "Heellloo";
             Tuple<int, int>[] shouldbe_a = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 2), new Tuple<int, int>(2, 4), new Tuple<int, int>(3, 5), new Tuple<int, int>(4, 7) };
-            Tuple<int, int>[] shouldnotbe_a = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 2), new Tuple<int, int>(2, 4), new Tuple<int, int>(3, 5), new Tuple<int, int>(4, 6) };
+            Tuple<int, int>[] shouldalsobe_a = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 2), new Tuple<int, int>(2, 4), new Tuple<int, int>(3, 5), new Tuple<int, int>(4, 6) };
             var shouldbe = new System.Collections.Generic.List<Tuple<int, int>>(shouldbe_a);
-            var shouldnotbe = new System.Collections.Generic.List<Tuple<int, int>>(shouldnotbe_a);
+            var shouldalsobe = new System.Collections.Generic.List<Tuple<int, int>>(shouldalsobe_a);
             var sss = LongestCommonSubsequence.LCS_Hash_Char(s1, s2);
+            var found = 0;
             foreach (var ss in sss)
             {
-                Assert.AreEqual(true, ss.SequenceEqual<Tuple<int,int>>(shouldbe));
-                Assert.AreNotEqual(true, ss.SequenceEqual<Tuple<int, int>>(shouldnotbe));
+                if (ss.SequenceEqual<Tuple<int,int>>(shouldbe) || ss.SequenceEqual<Tuple<int, int>>(shouldalsobe))
+                {
+                    found +=1 ;
+                }
             }
+            Assert.AreEqual<int>(2, found);
+        }
+
+        [TestMethod]
+        public void TestCharSequences()
+        {
+            var s1 = "abc";
+            var s2 = "abcc";
+            Tuple<int, int>[] shouldbe_1_a = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
+            Tuple<int, int>[] shouldbe_2_a = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 3) };
+            var shouldbe_1 = new System.Collections.Generic.List<Tuple<int, int>>(shouldbe_1_a);
+            var shouldbe_2 = new System.Collections.Generic.List<Tuple<int, int>>(shouldbe_2_a);
+            var sss = LongestCommonSubsequence.LCS_Hash_Char(s1, s2);
+            Assert.AreEqual(2, sss.Count);
+        }
+
+        [TestMethod]
+        public void TestLeftAlignedLCS()
+        {
+            var s1 = "Hello";
+            var s2 = "Heellloo";
+
         }
     }
 }
