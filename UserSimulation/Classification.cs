@@ -12,7 +12,7 @@ using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
 using OptInt = Microsoft.FSharp.Core.FSharpOption<int>;
 using Sign = LongestCommonSubsequence.Sign;
 
-namespace DataDebugMethods
+namespace UserSimulation
 {
     public class Classification
     {
@@ -27,10 +27,8 @@ namespace DataDebugMethods
         //Dictionaries for all error types:
         // key: <correct sign, entered sign>, value: frequency count
         private Dictionary<Tuple<Sign,Sign>,int> _sign_dict = new Dictionary<Tuple<Sign,Sign>,int>();
-        // key: <decimal location>, value: frequency count
-        private Dictionary<int, int> _decimal_misplacement_dict = new Dictionary<int, int>();
-        // key: <decimal is missing>, value: frequency count
-        private Dictionary<bool, int> _decimal_missing_dict = new Dictionary<bool, int>();
+        // key: Delta (difference from original location; None if decimal is dropped), value: frequency count
+        private Dictionary<OptInt, int> _decimal_misplacement_dict = new Dictionary<OptInt, int>();
         //ErrorTypeDict TranspositionDict = new ErrorTypeDict();
         //ErrorTypeDict DigitOmissionDict = new ErrorTypeDict();
         //ErrorTypeDict DigitAdditionDict = new ErrorTypeDict();
@@ -48,17 +46,18 @@ namespace DataDebugMethods
             }
         }
 
-        public void AddDecimalOmission(bool is_missing)
+        public void AddDecimalOmission()
         {
             int value;
-            if (_decimal_missing_dict.TryGetValue(is_missing, out value)) {
-                _decimal_missing_dict[is_missing] += 1;
+            if (_decimal_misplacement_dict.TryGetValue(OptInt.None, out value))
+            {
+                _decimal_misplacement_dict[OptInt.None] += 1;
             } else {
-                _decimal_missing_dict.Add(is_missing, 1);
+                _decimal_misplacement_dict.Add(OptInt.None, 1);
             }
         }
 
-        public void AddDecimalMisplacement(int delta)
+        public void AddDecimalMisplacement(OptInt delta)
         {
             int value;
             if (_decimal_misplacement_dict.TryGetValue(delta, out value)) {
@@ -184,9 +183,11 @@ namespace DataDebugMethods
                     countDecimalPoints++;
                 }
             }
+            //if there isn't exactly one decimal point in the original, or the entered string doesn't contain a decimal point
+            //then this is not a decimal misplacement
             if (countDecimalPoints != 1 || entered.LastIndexOf('-') == -1)
             {
-                AddDecimalMisplacement(0);
+                AddDecimalMisplacement(OptInt.Some(0));
                 return OptString.None;
             }
 
@@ -196,7 +197,7 @@ namespace DataDebugMethods
             // if the entered string is not as long as the split original's lhs, bail
             if (entered.Length < orig_idx)
             {
-                AddDecimalMisplacement(0);
+                AddDecimalMisplacement(OptInt.Some(0));
                 return OptString.None;
             }
 
@@ -213,25 +214,25 @@ namespace DataDebugMethods
             // there is no decimal on the left
             if (pos_lhs == -1)
             {
-                AddDecimalMisplacement(pos_rhs);
+                AddDecimalMisplacement(OptInt.Some(pos_rhs));
                 return OptString.Some(entered.Remove(orig_idx + pos_rhs).Insert(orig_idx, "."));
             }
             // there is no decimal on the right
             if (pos_rhs == -1)
             {
-                AddDecimalMisplacement(-pos_lhs);
+                AddDecimalMisplacement(OptInt.Some(-pos_lhs));
                 return OptString.Some(entered.Insert(orig_idx, ".").Remove(orig_idx - pos_lhs));
             }
             // there are decimals on both sides, but the left side is closer
             if (pos_lhs < pos_rhs)
             {
-                AddDecimalMisplacement(-pos_lhs);
+                AddDecimalMisplacement(OptInt.Some(-pos_lhs));
                 return OptString.Some(entered.Insert(orig_idx, ".").Remove(orig_idx - pos_lhs));
             }
             // there are decimals on both sides, but the right side is closer
             else
             {
-                AddDecimalMisplacement(pos_rhs);
+                AddDecimalMisplacement(OptInt.Some(pos_rhs));
                 return OptString.Some(entered.Remove(orig_idx + pos_rhs).Insert(orig_idx, "."));
             }
         } //End TestMisplacedDecimal
@@ -255,11 +256,10 @@ namespace DataDebugMethods
             // so we don't care
             if (countDecimalPoints != 1 || entered.LastIndexOf('.') != -1 || entered.Length <= decimal_index)
             {
-                AddDecimalOmission(false);
                 return OptString.None;
             }
 
-            AddDecimalOmission(true);
+            AddDecimalOmission();
             
             return OptString.Some(entered.Insert(decimal_index, "."));
         } //End TestDecimalOmission
