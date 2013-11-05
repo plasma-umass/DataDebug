@@ -55,6 +55,16 @@ namespace CheckCellTests
 
                 return ranges.Count();
             }
+            ~MockWorkbook()
+            {
+                try
+                {
+                    app.Quit();
+                }
+                catch
+                {
+                }
+            }
         }
 
         [TestMethod]
