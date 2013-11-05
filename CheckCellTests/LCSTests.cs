@@ -7,7 +7,7 @@ namespace CheckCellTests
     public class LCSTests
     {
         [TestMethod]
-        public void TestMethod1()
+        public void TestSubstring()
         {
             var s1 = "Hello";
             var s2 = "Helloo";
