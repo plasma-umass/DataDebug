@@ -100,7 +100,19 @@
         // return realigned char list
         newseq
 
-    // this is for C# use
+    // find each missing character in original, by index into original string
+    let GetMissingCharIndices(orig: string, align: (int*int) list) : int list =
+        let all_indices = set[0..orig.Length - 1]
+        let align_indices = List.map (fun (o,_) -> o) align |> Set.ofList
+        Set.difference all_indices align_indices |> Set.toList
+
+    // find each appended character in entered, by index into entered string
+    let GetAddedCharIndices(entered: string, align: (int*int) list) : int list =
+        let all_indices = set[0..entered.Length - 1]
+        let align_indices = List.map (fun (_,e) -> e) align |> Set.ofList
+        Set.difference all_indices align_indices |> Set.toList
+
+    // this is for C# unit test use
     let LeftAlignedLCSList(orig: string, entered: string) : System.Collections.Generic.IEnumerable<(int*int)> =
         LeftAlignedLCS(orig, entered) |> List.toSeq
 

@@ -35,6 +35,7 @@ namespace CheckCellTests
                 }
             }
             Assert.AreEqual<int>(2, found);
+            Assert.AreEqual(12, sss.Count);
         }
 
         [TestMethod]
@@ -62,6 +63,36 @@ namespace CheckCellTests
             Tuple<int, int>[] shouldbe = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
 
             Assert.AreEqual(true, ss.SequenceEqual<Tuple<int, int>>(shouldbe));
+        }
+
+        [TestMethod]
+        public void IndicesAppended()
+        {
+            var s1 = "abc";
+            var s2 = "abcc";
+            // this returns exactly one left-aligned common subsequence, chosen randomly
+            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
+
+            // get the appended indices
+            var idxs = LongestCommonSubsequence.GetAddedCharIndices(s2, ss);
+
+            Assert.AreEqual(1, idxs.Count());
+            Assert.AreEqual(idxs[0], 3);
+        }
+
+        [TestMethod]
+        public void IndicesExcluded()
+        {
+            var s1 = "abc";
+            var s2 = "bc";
+            // this returns exactly one left-aligned common subsequence, chosen randomly
+            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
+
+            // get the excluded indices
+            var idxs = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
+
+            Assert.AreEqual(1, idxs.Count());
+            Assert.AreEqual(idxs[0], 0);
         }
     }
 }
