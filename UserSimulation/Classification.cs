@@ -28,13 +28,8 @@ namespace UserSimulation
         // key: <correct sign, entered sign>, value: frequency count
         private Dictionary<Tuple<Sign,Sign>,int> _sign_dict = new Dictionary<Tuple<Sign,Sign>,int>();
         // key: Delta (difference from original location; None if decimal is dropped), value: frequency count
-        private Dictionary<OptInt, int> _decimal_misplacement_dict = new Dictionary<OptInt, int>();
-        //ErrorTypeDict TranspositionDict = new ErrorTypeDict();
-        //ErrorTypeDict DigitOmissionDict = new ErrorTypeDict();
-        //ErrorTypeDict DigitAdditionDict = new ErrorTypeDict();
-        //ErrorTypeDict DecimalErrorDict = new ErrorTypeDict();
-        //ErrorTypeDict TypoDict = new ErrorTypeDict();
-
+        //private Dictionary<OptInt, int> _decimal_misplacement_dict = new Dictionary<OptInt, int>();
+        
         public void AddSignError(Sign correct, Sign entered)
         {
             var key = new Tuple<Sign,Sign>(correct,entered);
@@ -46,26 +41,26 @@ namespace UserSimulation
             }
         }
 
-        public void AddDecimalOmission()
-        {
-            int value;
-            if (_decimal_misplacement_dict.TryGetValue(OptInt.None, out value))
-            {
-                _decimal_misplacement_dict[OptInt.None] += 1;
-            } else {
-                _decimal_misplacement_dict.Add(OptInt.None, 1);
-            }
-        }
+        //public void AddDecimalOmission()
+        //{
+        //    int value;
+        //    if (_decimal_misplacement_dict.TryGetValue(OptInt.None, out value))
+        //    {
+        //        _decimal_misplacement_dict[OptInt.None] += 1;
+        //    } else {
+        //        _decimal_misplacement_dict.Add(OptInt.None, 1);
+        //    }
+        //}
 
-        public void AddDecimalMisplacement(OptInt delta)
-        {
-            int value;
-            if (_decimal_misplacement_dict.TryGetValue(delta, out value)) {
-                _decimal_misplacement_dict[delta] += 1;
-            } else {
-                _decimal_misplacement_dict.Add(delta, 1);
-            }
-        }
+        //public void AddDecimalMisplacement(OptInt delta)
+        //{
+        //    int value;
+        //    if (_decimal_misplacement_dict.TryGetValue(delta, out value)) {
+        //        _decimal_misplacement_dict[delta] += 1;
+        //    } else {
+        //        _decimal_misplacement_dict.Add(delta, 1);
+        //    }
+        //}
 
         public void ProcessTypos(string original, string entered)
         {
@@ -171,97 +166,97 @@ namespace UserSimulation
             return OptString.None;
         }
 
-        public OptString TestMisplacedDecimal(string original, string entered)
-        {
-            // original must contain at most one decimal point
-            int countDecimalPoints = 0;
-            for (int i = 0; i < original.Length; i++)
-            {
-                if (original[i].Equals('.'))
-                {
-                    countDecimalPoints++;
-                }
-            }
-            //if there isn't exactly one decimal point in the original, or the entered string doesn't contain a decimal point
-            //then this is not a decimal misplacement
-            if (countDecimalPoints != 1 || entered.LastIndexOf('-') == -1)
-            {
-                AddDecimalMisplacement(OptInt.Some(0));
-                return OptString.None;
-            }
+        //public OptString TestMisplacedDecimal(string original, string entered)
+        //{
+        //    // original must contain at most one decimal point
+        //    int countDecimalPoints = 0;
+        //    for (int i = 0; i < original.Length; i++)
+        //    {
+        //        if (original[i].Equals('.'))
+        //        {
+        //            countDecimalPoints++;
+        //        }
+        //    }
+        //    //if there isn't exactly one decimal point in the original, or the entered string doesn't contain a decimal point
+        //    //then this is not a decimal misplacement
+        //    if (countDecimalPoints != 1 || entered.LastIndexOf('-') == -1)
+        //    {
+        //        AddDecimalMisplacement(OptInt.Some(0));
+        //        return OptString.None;
+        //    }
 
-            // index of decimal
-            var orig_idx = original.LastIndexOf('.');
+        //    // index of decimal
+        //    var orig_idx = original.LastIndexOf('.');
 
-            // if the entered string is not as long as the split original's lhs, bail
-            if (entered.Length < orig_idx)
-            {
-                AddDecimalMisplacement(OptInt.Some(0));
-                return OptString.None;
-            }
+        //    // if the entered string is not as long as the split original's lhs, bail
+        //    if (entered.Length < orig_idx)
+        //    {
+        //        AddDecimalMisplacement(OptInt.Some(0));
+        //        return OptString.None;
+        //    }
 
-            // split the error string by the original index
-            var ent_lhs = entered.Substring(0, orig_idx);
-            var ent_rhs = entered.Substring(orig_idx);
+        //    // split the error string by the original index
+        //    var ent_lhs = entered.Substring(0, orig_idx);
+        //    var ent_rhs = entered.Substring(orig_idx);
 
-            // find the first occurence of a decimal for each side
-            var pos_lhs = ent_lhs.LastIndexOf('.');
-            var pos_rhs = ent_rhs.IndexOf('.');
+        //    // find the first occurence of a decimal for each side
+        //    var pos_lhs = ent_lhs.LastIndexOf('.');
+        //    var pos_rhs = ent_rhs.IndexOf('.');
 
 
-            // the order matters here... BE CAREFUL!
-            // there is no decimal on the left
-            if (pos_lhs == -1)
-            {
-                AddDecimalMisplacement(OptInt.Some(pos_rhs));
-                return OptString.Some(entered.Remove(orig_idx + pos_rhs).Insert(orig_idx, "."));
-            }
-            // there is no decimal on the right
-            if (pos_rhs == -1)
-            {
-                AddDecimalMisplacement(OptInt.Some(-pos_lhs));
-                return OptString.Some(entered.Insert(orig_idx, ".").Remove(orig_idx - pos_lhs));
-            }
-            // there are decimals on both sides, but the left side is closer
-            if (pos_lhs < pos_rhs)
-            {
-                AddDecimalMisplacement(OptInt.Some(-pos_lhs));
-                return OptString.Some(entered.Insert(orig_idx, ".").Remove(orig_idx - pos_lhs));
-            }
-            // there are decimals on both sides, but the right side is closer
-            else
-            {
-                AddDecimalMisplacement(OptInt.Some(pos_rhs));
-                return OptString.Some(entered.Remove(orig_idx + pos_rhs).Insert(orig_idx, "."));
-            }
-        } //End TestMisplacedDecimal
+        //    // the order matters here... BE CAREFUL!
+        //    // there is no decimal on the left
+        //    if (pos_lhs == -1)
+        //    {
+        //        AddDecimalMisplacement(OptInt.Some(pos_rhs));
+        //        return OptString.Some(entered.Remove(orig_idx + pos_rhs).Insert(orig_idx, "."));
+        //    }
+        //    // there is no decimal on the right
+        //    if (pos_rhs == -1)
+        //    {
+        //        AddDecimalMisplacement(OptInt.Some(-pos_lhs));
+        //        return OptString.Some(entered.Insert(orig_idx, ".").Remove(orig_idx - pos_lhs));
+        //    }
+        //    // there are decimals on both sides, but the left side is closer
+        //    if (pos_lhs < pos_rhs)
+        //    {
+        //        AddDecimalMisplacement(OptInt.Some(-pos_lhs));
+        //        return OptString.Some(entered.Insert(orig_idx, ".").Remove(orig_idx - pos_lhs));
+        //    }
+        //    // there are decimals on both sides, but the right side is closer
+        //    else
+        //    {
+        //        AddDecimalMisplacement(OptInt.Some(pos_rhs));
+        //        return OptString.Some(entered.Remove(orig_idx + pos_rhs).Insert(orig_idx, "."));
+        //    }
+        //} //End TestMisplacedDecimal
 
-        public OptString TestDecimalOmission(string entered, string original)
-        {
-            // Original string must contain at most one decimal point
-            int countDecimalPoints = 0;
-            int decimal_index = 0;
-            for (int i = 0; i < original.Length; i++)
-            {
-                if (original[i].Equals('.'))
-                {
-                    countDecimalPoints++;
-                    decimal_index = i;
-                }
-            }
-            // if there's more than one decimal in the entered string, it is not a number
-            // or if the entered string contains decimals, this isn't a decimal omission
-            // or if the entered string is shorter than the location of the decimal in the original string (we can't add the decimal in that case)
-            // so we don't care
-            if (countDecimalPoints != 1 || entered.LastIndexOf('.') != -1 || entered.Length <= decimal_index)
-            {
-                return OptString.None;
-            }
+        //public OptString TestDecimalOmission(string entered, string original)
+        //{
+        //    // Original string must contain at most one decimal point
+        //    int countDecimalPoints = 0;
+        //    int decimal_index = 0;
+        //    for (int i = 0; i < original.Length; i++)
+        //    {
+        //        if (original[i].Equals('.'))
+        //        {
+        //            countDecimalPoints++;
+        //            decimal_index = i;
+        //        }
+        //    }
+        //    // if there's more than one decimal in the entered string, it is not a number
+        //    // or if the entered string contains decimals, this isn't a decimal omission
+        //    // or if the entered string is shorter than the location of the decimal in the original string (we can't add the decimal in that case)
+        //    // so we don't care
+        //    if (countDecimalPoints != 1 || entered.LastIndexOf('.') != -1 || entered.Length <= decimal_index)
+        //    {
+        //        return OptString.None;
+        //    }
 
-            AddDecimalOmission();
+        //    AddDecimalOmission();
             
-            return OptString.Some(entered.Insert(decimal_index, "."));
-        } //End TestDecimalOmission
+        //    return OptString.Some(entered.Insert(decimal_index, "."));
+        //} //End TestDecimalOmission
 
 
         //public static bool TestDigitTransposition(string enteredText, string originalText)
