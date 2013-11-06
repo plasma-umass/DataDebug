@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CheckCellTests.cs" />
+    <Compile Include="ErrorGeneratorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ErrorClassifierTests.cs" />
     <Compile Include="LCSTests.cs" />
