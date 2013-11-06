@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Classification.cs" />
     <Compile Include="Error.cs" />
+    <Compile Include="ErrorGenerator.cs" />
     <Compile Include="Simulation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

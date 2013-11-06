@@ -5,28 +5,121 @@ using System.Text;
 using Microsoft.FSharp.Core;
 using Sign = LongestCommonSubsequence.Sign;
 using LCSError = LongestCommonSubsequence.Error;
-using ErrorString = Tuple<string, List<LCSError>>;
+using ErrorString = System.Tuple<string, System.Collections.Generic.List<LongestCommonSubsequence.Error>>;
 
 namespace UserSimulation
 {
-    class ErrorGenerator
+    public class ErrorGenerator
     {
-        public static ErrorString GenerateErrorString(string input)
+        //private _typo_array;
+        //private _transposition_array;
+        //private _sign_array;
+        private Dictionary<Sign, Dictionary<Sign,double>> _sign_distributions_dict = new Dictionary<Sign,Dictionary<Sign,double>>();
+
+        private Dictionary<char, Dictionary<string,double>> _char_distributions_dict = new Dictionary<char,Dictionary<string,double>>();
+
+        public Dictionary<string, double> GetDistributionForChar(char c)
+        {
+            char key = c;
+            Dictionary<string, double> distribution;
+            if (_char_distributions_dict.TryGetValue(key, out distribution))
+            {
+                return distribution;
+            }
+            else
+            {
+                distribution = GenerateDistributionForChar(key);
+                _char_distributions_dict.Add(key, distribution);
+                return distribution;
+            }
+        }
+
+        public Dictionary<Sign, double> GetDistributionForSign(Sign s)
+        {
+            Sign key = s;
+            Dictionary<Sign, double> distribution;
+            if (_sign_distributions_dict.TryGetValue(key, out distribution))
+            {
+                return distribution; 
+            }
+            else
+            {
+                distribution = GenerateDistributionForSign(key);
+                _sign_distributions_dict.Add(key, distribution);
+                return distribution;
+            }
+        }
+
+        public Dictionary<string, double> GenerateDistributionForChar(char c)
+        {
+            Classification classification = new Classification();
+            var sign_dict = classification.GetTypoDict();
+            var kvps = sign_dict.Where(pair => pair.Key.Item1 == c);
+            var sum = kvps.Select(pair => pair.Value).Sum();
+            var distribution = kvps.Select(pair => new KeyValuePair<string,double>(pair.Key.Item2, (double) pair.Value / sum));
+            //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
+            return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+
+        public Dictionary<Sign,double> GenerateDistributionForSign(Sign s)
+        {
+            Classification c = new Classification();
+            var sign_dict = c.GetSignDict();
+            var kvps = sign_dict.Where(pair => pair.Key.Item1 == s);
+            var sum = kvps.Select(pair => pair.Value).Sum();
+            var distribution = kvps.Select(pair => new KeyValuePair<Sign,double>(pair.Key.Item2, (double) pair.Value / sum));
+            //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
+            return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+
+        public Sign GetRandomSignFromDistribution(Dictionary<Sign, double> distribution)
+        {
+            var rng = new Random();
+            var rand = rng.NextDouble();
+            
+            int i = 0;
+            double sum = distribution.ElementAt(i).Value;
+            while (sum < rand)
+            {
+                i++;
+                sum += distribution.ElementAt(i).Value;
+            }
+
+            var kvp = distribution.ElementAt(i);
+            return kvp.Key;
+        }
+
+        public string GetRandomStringFromDistribution(Dictionary<string, double> distribution)
+        {
+            var rng = new Random();
+            var rand = rng.NextDouble();
+
+            int i = 0;
+            double sum = distribution.ElementAt(i).Value;
+            while (sum < rand)
+            {
+                i++;
+                sum += distribution.ElementAt(i).Value;
+            }
+
+            var kvp = distribution.ElementAt(i);
+            return kvp.Key;
+        }
+
+        public ErrorString GenerateErrorString(string input)
         {
             List<LCSError> error_list = new List<LCSError>();
             String modified_input = input;
             //try to add a sign error
-            Sign s = Classification.getSign(input);
-            var kvps = _sign_dict.Where(pair => pair.Key.Item1 == s);
-            var sum = kvps.Select(pair => pair.Value).Sum();
-            var rng = new Random();
-            var bins = kvps.Select(pair => Enumerable.Repeat(pair.Key,pair.Value)).SelectMany( i => i);
-            var tpl = bins.ElementAt(rng.Next(bins.Count()));
-            Sign s2 = tpl.Item2;
-            
+            Sign s = Classification.GetSign(input);
+            Dictionary<Sign,double> distribution = GetDistributionForSign(s);
+
+            Sign s2 = GetRandomSignFromDistribution(distribution);
+            //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
+                        
             if (s != s2)
             {
-                LCSError error = new LCSError(s, s2);
+                LCSError error = LongestCommonSubsequence.Error.NewSignError(s, s2);
                 error_list.Add(error);
                 if (s == Sign.Empty)
                 {

@@ -116,7 +116,7 @@ namespace UserSimulation
             }
         }
 
-        public Sign getSign(string input)
+        public static Sign GetSign(string input)
         {
             Sign s;
             if (input.Length < 1)
@@ -142,7 +142,7 @@ namespace UserSimulation
         public OptString HasSignError(string original, string entered)
         {
             // sign for orig
-            Sign orig_sign = getSign(original);
+            Sign orig_sign = GetSign(original);
           
             //If the entered string is blank, return empty optstring
             if (entered.Length < 1)
@@ -152,7 +152,7 @@ namespace UserSimulation
             }
 
             // sign for entered
-            Sign ent_sign = getSign(entered);
+            Sign ent_sign = GetSign(entered);
             
             // update probabilities
             AddSignError(orig_sign, ent_sign);
@@ -366,7 +366,17 @@ namespace UserSimulation
         //    return 'A';
         //}
 
-        
 
+
+
+        internal Dictionary<Tuple<Sign,Sign>,int> GetSignDict()
+        {
+            return _sign_dict;
+        }
+
+        internal Dictionary<Tuple<char,string>,int> GetTypoDict()
+        {
+            return _typo_dict;
+        }
     }
 }
