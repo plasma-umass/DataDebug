@@ -94,5 +94,24 @@ namespace CheckCellTests
             Assert.AreEqual(1, idxs.Count());
             Assert.AreEqual(idxs[0], 0);
         }
+
+        [TestMethod]
+        public void TranspositionTest()
+        {
+            var s1 = "abc";
+            var s2 = "acb";
+
+            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
+            var additions = LongestCommonSubsequence.GetAddedCharIndices(s2, ss);
+            var omissions = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
+            var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, s1, s2, Microsoft.FSharp.Collections.FSharpList<Tuple<int,int>>.Empty);
+
+            // there should be only 1 transposition here, but depending
+            // on the randomly-chosen alignment, it may be one or the other
+            var t1 = new Tuple<int,int>(2,1);
+            var t2 = new Tuple<int,int>(1,2);
+            Tuple<int, int> TR = transpositions[0];
+            Assert.AreEqual(true, TR.Equals(t1) || TR.Equals(t2));
+        }
     }
 }

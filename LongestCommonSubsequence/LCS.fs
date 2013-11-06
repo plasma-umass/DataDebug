@@ -10,8 +10,6 @@
     // first int is index in orig string; char is the character we we supposed to type;
     // string is what was actually typed
     | TypoError of int*char*string
-    // first int is index in orig string; second is Some(new index) or None if decimal was dropped
-    | DecimalError of int*int option
     // first sign is orig string; second is in retyped string
     | SignError of Sign*Sign
 
@@ -114,29 +112,36 @@
 
     // find all transpositions
     // returns (addition,omission) pairs
-    let rec GetTranspositions(additions: int list, omissions: int list, orig: string, entered: string) : (int*int) list =
+    // unusual structure to make call actually tail-recursive
+    let rec GetTranspositions(additions: int list, omissions: int list, orig: string, entered: string, transpositions: (int*int) list) : (int*int) list =
         if additions.Length = 0 || omissions.Length = 0 then
-            []
+            List.rev transpositions
         else
-            let add = List.toArray additions
-            let om  = List.toArray omissions
-
             // get the character of the first omission
-            let ochar = orig.[om.[0]]
+            let ochar = orig.[omissions.Head]
             // get entered chars to the left of ochar
-            let lhs = Array.filter (fun i -> i <= om.[0]) add
+            let lhs = List.filter (fun i -> i <= omissions.Head) additions
             // get entered chars to the right of ochar
-            let rhs = Array.filter (fun i -> i > om.[0]) add
+            let rhs = List.filter (fun i -> i > omissions.Head) additions
             // get lhs character positions that match ochar
-            let lhs_matches = Array.rev (Array.filter (fun i -> entered.[i] = ochar) lhs)
+            let lhs_matches = List.rev (List.filter (fun i -> entered.[i] = ochar) lhs)
             // get rhs character positions that match ochar
-            let rhs_matches = Array.filter (fun i -> entered.[i] = ochar) rhs
+            let rhs_matches = List.filter (fun i -> entered.[i] = ochar) rhs
             // choose the closest match
-            match lhs_matches,rhs_matches with
-            | l::ls,r::rs -> if System.Math.Abs(om.[i] - r) <= System.Math.Abs(om.[i] - l) then l else r
-            | [],r::rs -> failwith "assmunch"
-            | l::ls,[] -> failwtih "assmunch"
-            | [],[] -> failwith "assmunch"
+            let is_lhs,a_idx = match lhs_matches,rhs_matches with
+                             | l::ls,r::rs -> if System.Math.Abs(omissions.Head - r) <= System.Math.Abs(omissions.Head - l) then false,Some(r) else true,Some(l)
+                             | [],r::rs -> false,Some(r)
+                             | l::ls,[] -> true,Some(l)
+                             | [],[] -> false,None
+            match is_lhs,a_idx with
+            | _,None ->
+                // if no characters match the current omitted character,
+                // discard the character and move on
+                GetTranspositions(additions, omissions.Tail, orig, entered, transpositions)
+            | il,Some(idx) ->
+                let additions' = List.filter (fun a -> a <> idx) additions
+                let omissions' = omissions.Tail
+                GetTranspositions(additions', omissions', orig, entered, (omissions.Head,idx) :: transpositions)
 
     // this is for C# unit test use
     let LeftAlignedLCSList(orig: string, entered: string) : System.Collections.Generic.IEnumerable<(int*int)> =

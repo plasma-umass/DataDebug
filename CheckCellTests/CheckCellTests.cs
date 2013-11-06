@@ -59,6 +59,7 @@ namespace CheckCellTests
             {
                 try
                 {
+                    wb.Close(false, Type.Missing, Type.Missing);
                     app.Quit();
                 }
                 catch
