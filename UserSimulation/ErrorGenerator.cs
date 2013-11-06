@@ -53,9 +53,7 @@ namespace UserSimulation
                 }
             }
             
-            //if there is a decimal in the input, try to add a decimal error
-
-            //Adding a decimal is handled by inserted characters
+            //Decimals are handled by typo model
 
             ErrorString output = new Tuple<string, List<LCSError>>("", null);
             
