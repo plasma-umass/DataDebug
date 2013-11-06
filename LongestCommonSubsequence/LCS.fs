@@ -112,6 +112,32 @@
         let align_indices = List.map (fun (_,e) -> e) align |> Set.ofList
         Set.difference all_indices align_indices |> Set.toList
 
+    // find all transpositions
+    // returns (addition,omission) pairs
+    let rec GetTranspositions(additions: int list, omissions: int list, orig: string, entered: string) : (int*int) list =
+        if additions.Length = 0 || omissions.Length = 0 then
+            []
+        else
+            let add = List.toArray additions
+            let om  = List.toArray omissions
+
+            // get the character of the first omission
+            let ochar = orig.[om.[0]]
+            // get entered chars to the left of ochar
+            let lhs = Array.filter (fun i -> i <= om.[0]) add
+            // get entered chars to the right of ochar
+            let rhs = Array.filter (fun i -> i > om.[0]) add
+            // get lhs character positions that match ochar
+            let lhs_matches = Array.rev (Array.filter (fun i -> entered.[i] = ochar) lhs)
+            // get rhs character positions that match ochar
+            let rhs_matches = Array.filter (fun i -> entered.[i] = ochar) rhs
+            // choose the closest match
+            match lhs_matches,rhs_matches with
+            | l::ls,r::rs -> if System.Math.Abs(om.[i] - r) <= System.Math.Abs(om.[i] - l) then l else r
+            | [],r::rs -> failwith "assmunch"
+            | l::ls,[] -> failwtih "assmunch"
+            | [],[] -> failwith "assmunch"
+
     // this is for C# unit test use
     let LeftAlignedLCSList(orig: string, entered: string) : System.Collections.Generic.IEnumerable<(int*int)> =
         LeftAlignedLCS(orig, entered) |> List.toSeq
