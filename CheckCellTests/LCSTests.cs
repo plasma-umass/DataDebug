@@ -113,5 +113,18 @@ namespace CheckCellTests
             Tuple<int, int> TR = transpositions[0];
             Assert.AreEqual(true, TR.Equals(t1) || TR.Equals(t2));
         }
+
+        [TestMethod]
+        public void NoTranspositionTest()
+        {
+            var s1 = "abc";
+            var s2 = "abc";
+
+            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
+            var additions = LongestCommonSubsequence.GetAddedCharIndices(s2, ss);
+            var omissions = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
+            var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, s1, s2, Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>.Empty);
+            Assert.AreEqual(0, transpositions.Length);
+        }
     }
 }

@@ -112,7 +112,7 @@
 
     // find all transpositions
     // returns (addition,omission) pairs
-    // unusual structure to make call actually tail-recursive
+    // unusual structure to make call tail-recursive
     let rec GetTranspositions(additions: int list, omissions: int list, orig: string, entered: string, transpositions: (int*int) list) : (int*int) list =
         if additions.Length = 0 || omissions.Length = 0 then
             List.rev transpositions
@@ -142,6 +142,33 @@
                 let additions' = List.filter (fun a -> a <> idx) additions
                 let omissions' = omissions.Tail
                 GetTranspositions(additions', omissions', orig, entered, (omissions.Head,idx) :: transpositions)
+
+    // rounds to the nearest positive number, including zero
+    let rnd(z: int) = if z < 0 then 0 else z
+
+//    // return all typos
+//    // this method assumes that you have already removed all transpositions
+//    let GetTypos(alignments: (int*int) list, additions: int list, omissions: int list, orig: string, entered: string) : (int*int list) list =
+//        let rng = System.Random()
+//        let rec typoget(al: (int*int) list, add: int list, om: int list, typos: (int*int list) list) : (int*int list) list =
+//            if additions.Length = 0 && omissions.Length = 0 then
+//                List.rev typos
+//            else
+//                match alignments with
+//                | a1::a2::als ->
+//                    // get all of the characters of the entered string between snd a1 and snd a2-1 inclusive
+//                    let extra_chars = entered.Substring(rnd(snd a1), snd a2 - rnd(snd a1) - 1)
+//                    // get all of the missing characters between fst a1 and fst a2 - 1 inclusive
+//                    let omitted_chars = orig.Substring(rnd(fst a1), fst a2 - rnd(fst a1) - 1)
+//                    // create n random partitions of extra_chars, where n = omitted_chars.Length
+//                    // only one partition includes 
+//                    let parts = Seq.pairwise (List.sort (List.map (fun partition -> rng.Next(0,extra_chars.Length)) [0..omitted_chars.Length-1]))
+//
+//
+//                | a::[] -> failwith "bar"
+//                | [] -> failwith "quux"
+//        // call recursive function, prepending a "start of string" alignment to the list
+//        typoget((-1,-1)::alignments, additions, omissions, [])
 
     // this is for C# unit test use
     let LeftAlignedLCSList(orig: string, entered: string) : System.Collections.Generic.IEnumerable<(int*int)> =
