@@ -27,16 +27,49 @@ namespace UserSimulation
         //Dictionaries for all error types:
         // key: <correct sign, entered sign>, value: frequency count
         private Dictionary<Tuple<Sign,Sign>,int> _sign_dict = new Dictionary<Tuple<Sign,Sign>,int>();
-        // key: Delta (difference from original location; None if decimal is dropped), value: frequency count
-        //private Dictionary<OptInt, int> _decimal_misplacement_dict = new Dictionary<OptInt, int>();
-        
+        // key: <char that was supposed to be typed, string that was typed>, value: frequency count
+        private Dictionary<Tuple<char, string>, int> _typo_dict = new Dictionary<Tuple<char, string>, int>();
+        // key: Delta (difference from original location; 0 if there wasn't a transposition), value: frequency count
+        private Dictionary<int, int> _transposition_dict = new Dictionary<int, int>();
+
+        public void AddTypoError(char intended, string entered)
+        {
+            var key = new Tuple<char, string>(intended, entered);
+            int value; 
+            if (_typo_dict.TryGetValue(key, out value)) 
+            {
+                _typo_dict[key] += 1;
+            } 
+            else 
+            {
+                _typo_dict.Add(key, 1);
+            }
+        }
+
+        public void AddTranspositionError(int delta)
+        {
+            var key = delta;
+            int value;
+            if (_transposition_dict.TryGetValue(key, out value))
+            {
+                _transposition_dict[key] += 1;
+            }
+            else
+            {
+                _transposition_dict.Add(key, 1);
+            }
+        }
+
         public void AddSignError(Sign correct, Sign entered)
         {
             var key = new Tuple<Sign,Sign>(correct,entered);
             int value;
-            if (_sign_dict.TryGetValue(key, out value)) {
+            if (_sign_dict.TryGetValue(key, out value))
+            {
                 _sign_dict[key] += 1;
-            } else {
+            }
+            else
+            {
                 _sign_dict.Add(key, 1);
             }
         }
