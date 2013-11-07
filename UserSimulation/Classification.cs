@@ -379,5 +379,15 @@ namespace UserSimulation
         {
             return _typo_dict;
         }
+
+        public void SetTypoDict(Dictionary<Tuple<OptChar, string>, int> dict)
+        {
+            _typo_dict = dict;
+        }
+
+        public void SetSignDict(Dictionary<Tuple<Sign, Sign>, int> dict)
+        {
+            _sign_dict = dict;
+        }
     }
 }
