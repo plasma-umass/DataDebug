@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using Microsoft.FSharp.Core;
 using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
 using OptInt = Microsoft.FSharp.Core.FSharpOption<int>;
+using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
 using Sign = LongestCommonSubsequence.Sign;
 
 namespace UserSimulation
@@ -28,13 +29,13 @@ namespace UserSimulation
         // key: <correct sign, entered sign>, value: frequency count
         private Dictionary<Tuple<Sign,Sign>,int> _sign_dict = new Dictionary<Tuple<Sign,Sign>,int>();
         // key: <char that was supposed to be typed, string that was typed>, value: frequency count
-        private Dictionary<Tuple<char, string>, int> _typo_dict = new Dictionary<Tuple<char, string>, int>();
+        private Dictionary<Tuple<OptChar, string>, int> _typo_dict = new Dictionary<Tuple<OptChar, string>, int>();
         // key: Delta (difference from original location; 0 if there wasn't a transposition), value: frequency count
         private Dictionary<int, int> _transposition_dict = new Dictionary<int, int>();
 
-        public void AddTypoError(char intended, string entered)
+        public void AddTypoError(OptChar intended, string entered)
         {
-            var key = new Tuple<char, string>(intended, entered);
+            var key = new Tuple<OptChar, string>(intended, entered);
             int value; 
             if (_typo_dict.TryGetValue(key, out value)) 
             {
@@ -374,7 +375,7 @@ namespace UserSimulation
             return _sign_dict;
         }
 
-        internal Dictionary<Tuple<char,string>,int> GetTypoDict()
+        internal Dictionary<Tuple<OptChar,string>,int> GetTypoDict()
         {
             return _typo_dict;
         }

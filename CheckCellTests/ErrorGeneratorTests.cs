@@ -15,7 +15,10 @@ namespace CheckCellTests
         public void TestErrorGenerator()
         {
             var eg = new ErrorGenerator();
-            var result = eg.GenerateErrorString("blah");
+
+            //set dictionaries to explicit ones
+
+            var result = eg.GenerateErrorString("Testing, testing, 123...");
         }
     }
 }

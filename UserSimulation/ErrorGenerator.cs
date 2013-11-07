@@ -6,6 +6,7 @@ using Microsoft.FSharp.Core;
 using Sign = LongestCommonSubsequence.Sign;
 using LCSError = LongestCommonSubsequence.Error;
 using ErrorString = System.Tuple<string, System.Collections.Generic.List<LongestCommonSubsequence.Error>>;
+using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
 
 namespace UserSimulation
 {
@@ -16,11 +17,11 @@ namespace UserSimulation
         //private _sign_array;
         private Dictionary<Sign, Dictionary<Sign,double>> _sign_distributions_dict = new Dictionary<Sign,Dictionary<Sign,double>>();
 
-        private Dictionary<char, Dictionary<string,double>> _char_distributions_dict = new Dictionary<char,Dictionary<string,double>>();
+        private Dictionary<OptChar, Dictionary<string,double>> _char_distributions_dict = new Dictionary<OptChar,Dictionary<string,double>>();
 
-        public Dictionary<string, double> GetDistributionForChar(char c)
+        public Dictionary<string, double> GetDistributionForChar(OptChar c)
         {
-            char key = c;
+            OptChar key = c;
             Dictionary<string, double> distribution;
             if (_char_distributions_dict.TryGetValue(key, out distribution))
             {
@@ -50,7 +51,7 @@ namespace UserSimulation
             }
         }
 
-        public Dictionary<string, double> GenerateDistributionForChar(char c)
+        public Dictionary<string, double> GenerateDistributionForChar(OptChar c)
         {
             Classification classification = new Classification();
             var sign_dict = classification.GetTypoDict();
