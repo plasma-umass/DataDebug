@@ -1,29 +1,47 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using ErrorGenerator = UserSimulation.ErrorGenerator;
-using UserSimulation;
+using Classification = UserSimulation.Classification;
 using Sign = LongestCommonSubsequence.Sign;
 
 namespace CheckCellTests
 {
     [TestClass]
-    class ErrorGeneratorTests
+    public class ErrorGeneratorTests
     {
         [TestMethod]
         public void TestErrorGenerator()
         {
             var eg = new ErrorGenerator();
+            var c = new Classification();
 
-            //set dictionaries to explicit ones
-            Dictionary<Tuple<Sign, Sign>, int> sign_dict = new Dictionary<Tuple<Sign, Sign>, int>();
-            Dictionary<Tuple<char, string>, int> typo_dict = new Dictionary<Tuple<char, string>, int>();
+            ////set dictionaries to explicit ones
+            //Dictionary<Tuple<Sign, Sign>, int> sign_dict = new Dictionary<Tuple<Sign, Sign>, int>();
+            //Dictionary<Tuple<char, string>, int> typo_dict = new Dictionary<Tuple<char, string>, int>();
 
-           // sign_dict.Add(
+            //var key = new Tuple<Sign, Sign>(Sign.Empty, Sign.Plus);
 
-            var result = eg.GenerateErrorString("Testing, testing, 123...");
+            //sign_dict.Add(key, 100);
+
+            //key = new Tuple<Sign, Sign>(Sign.Empty, Sign.Minus);
+            //sign_dict.Add(key, 100);
+
+            //key = new Tuple<Sign, Sign>(Sign.Empty, Sign.Empty);
+            //sign_dict.Add(key, 0);
+
+            //key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Empty);
+            //sign_dict.Add(key, 100);
+
+            //key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Plus);
+            //sign_dict.Add(key, 100);
+
+            //key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Minus);
+            //sign_dict.Add(key, 0);
+
+            //c.SetSignDict(sign_dict);
+            var result = eg.GenerateErrorString("Test");
+            string s = result.ToString();
         }
     }
 }

@@ -53,9 +53,26 @@ namespace UserSimulation
 
         public Dictionary<string, double> GenerateDistributionForChar(OptChar c)
         {
-            Classification classification = new Classification();
-            var sign_dict = classification.GetTypoDict();
-            var kvps = sign_dict.Where(pair => pair.Key.Item1 == c);
+            Dictionary<Tuple<OptChar, string>, int> typo_dict = new Dictionary<Tuple<OptChar, string>, int>();
+
+            var key = new Tuple<OptChar, string>(OptChar.Some('t'), "t");
+            typo_dict.Add(key, 1);
+
+            key = new Tuple<OptChar, string>(OptChar.Some('t'), "blah");
+            typo_dict.Add(key, 1);
+
+            key = new Tuple<OptChar, string>(OptChar.Some('T'), "tt");
+            typo_dict.Add(key, 1);
+
+            key = new Tuple<OptChar, string>(OptChar.Some('e'), "e");
+            typo_dict.Add(key, 1);
+
+            key = new Tuple<OptChar, string>(OptChar.Some('s'), "s");
+            typo_dict.Add(key, 1);
+
+            //Classification classification = new Classification();
+            //var sign_dict = classification.GetTypoDict();
+            var kvps = typo_dict.Where(pair => pair.Key.Item1.Equals(c));
             var sum = kvps.Select(pair => pair.Value).Sum();
             var distribution = kvps.Select(pair => new KeyValuePair<string,double>(pair.Key.Item2, (double) pair.Value / sum));
             //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
@@ -65,7 +82,30 @@ namespace UserSimulation
         public Dictionary<Sign,double> GenerateDistributionForSign(Sign s)
         {
             Classification c = new Classification();
-            var sign_dict = c.GetSignDict();
+            //set sign dictionary to explicit one
+            Dictionary<Tuple<Sign, Sign>, int> sign_dict = new Dictionary<Tuple<Sign, Sign>, int>();
+            
+            var key = new Tuple<Sign, Sign>(Sign.Empty, Sign.Plus);
+            sign_dict.Add(key, 100);
+
+            key = new Tuple<Sign, Sign>(Sign.Empty, Sign.Minus);
+            sign_dict.Add(key, 100);
+
+            key = new Tuple<Sign, Sign>(Sign.Empty, Sign.Empty);
+            sign_dict.Add(key, 0);
+
+            key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Empty);
+            sign_dict.Add(key, 100);
+
+            key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Plus);
+            sign_dict.Add(key, 100);
+
+            key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Minus);
+            sign_dict.Add(key, 0);
+
+            //c.SetSignDict(sign_dict);
+
+            //var sign_dict = c.GetSignDict();
             var kvps = sign_dict.Where(pair => pair.Key.Item1 == s);
             var sum = kvps.Select(pair => pair.Value).Sum();
             var distribution = kvps.Select(pair => new KeyValuePair<Sign,double>(pair.Key.Item2, (double) pair.Value / sum));
@@ -116,6 +156,16 @@ namespace UserSimulation
             Dictionary<Sign,double> distribution = GetDistributionForSign(s);
 
             Sign s2 = GetRandomSignFromDistribution(distribution);
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+                Dictionary<string, double> distribution2 = GetDistributionForChar(OptChar.Some(c));
+                string str = GetRandomStringFromDistribution(distribution2);
+                modified_input = modified_input.Insert(i, str);
+                modified_input = modified_input.Remove(str.Length - 1, 1);
+                i += str.Length;
+            }
             //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
                         
             if (s != s2)
