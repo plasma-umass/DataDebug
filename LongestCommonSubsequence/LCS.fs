@@ -146,29 +146,42 @@
     // rounds to the nearest positive number, including zero
     let rnd(z: int) = if z < 0 then 0 else z
 
-//    // return all typos
-//    // this method assumes that you have already removed all transpositions
-//    let GetTypos(alignments: (int*int) list, additions: int list, omissions: int list, orig: string, entered: string) : (int*int list) list =
-//        let rng = System.Random()
-//        let rec typoget(al: (int*int) list, add: int list, om: int list, typos: (int*int list) list) : (int*int list) list =
-//            if additions.Length = 0 && omissions.Length = 0 then
-//                List.rev typos
-//            else
-//                match alignments with
-//                | a1::a2::als ->
-//                    // get all of the characters of the entered string between snd a1 and snd a2-1 inclusive
-//                    let extra_chars = entered.Substring(rnd(snd a1), snd a2 - rnd(snd a1) - 1)
-//                    // get all of the missing characters between fst a1 and fst a2 - 1 inclusive
-//                    let omitted_chars = orig.Substring(rnd(fst a1), fst a2 - rnd(fst a1) - 1)
-//                    // create n random partitions of extra_chars, where n = omitted_chars.Length
-//                    // only one partition includes 
-//                    let parts = Seq.pairwise (List.sort (List.map (fun partition -> rng.Next(0,extra_chars.Length)) [0..omitted_chars.Length-1]))
-//
-//
-//                | a::[] -> failwith "bar"
-//                | [] -> failwith "quux"
-//        // call recursive function, prepending a "start of string" alignment to the list
-//        typoget((-1,-1)::alignments, additions, omissions, [])
+    // return all typos
+    // this method assumes that you have already removed all transpositions
+    let GetTypos(alignments: (int*int) list, orig: string, entered: string) : (char option*string) list =
+        let rng = System.Random()
+        let rec typoget(al: (int*int) list, typos: (char option*string) list) : (char option*string) list =
+            match al with
+            | a1::a2::als ->
+                // get all of the characters of the entered string between snd a1 and snd a2-1 inclusive
+                let extra_chars = entered.Substring((snd a1) + 1, (snd a2) - (snd a1 + 1))
+                // get all of the missing characters between fst a1 and fst a2 - 1 inclusive
+                let omitted_chars = orig.Substring((fst a1) + 1, (fst a2) - (fst a1 + 1))
+                // create n random partitions of extra_chars, where n = omitted_chars.Length
+                // the first partition is always (0,n >= 1)
+                let parts = Seq.pairwise (List.sort (0 :: List.map (fun partition -> rng.Next(1,extra_chars.Length+1)) [1..omitted_chars.Length] @ [extra_chars.Length])) |> Seq.toList
+                // the first partition is always conditioned on the character in
+                // orig at position fst a1 which may or may not be the empty string
+                let a1_typo = match (fst a1) with
+                                | -1 -> None, extra_chars.Substring(0, snd parts.Head)
+                                | _ -> Some(orig.[fst a1]), orig.[fst a1].ToString() + extra_chars.Substring(0, snd parts.Head)
+                // prepend to typo list
+                // pstart is inclusive
+                // pend is exclusive
+                let typos' = a1_typo :: (List.mapi (fun idx (pstart,pend) -> Some(orig.[idx]),entered.Substring(pstart,pend-pstart)) parts.Tail) @ typos
+                // process remaining typos
+                typoget(a2::als, typos')
+            | a::[] ->
+                // get all the remaining characters
+                let extra_chars = entered.Substring(snd a + 1)
+                let a_char = match (fst a) with
+                             | -1 -> None
+                             | _ -> Some(orig.[fst a])
+                let typos' = (a_char,extra_chars) :: typos
+                typoget([], typos')
+            | [] -> typos
+        // call recursive function, prepending a "start of string" alignment to the list
+        typoget((-1,-1)::alignments, [])
 
     // this is for C# unit test use
     let LeftAlignedLCSList(orig: string, entered: string) : System.Collections.Generic.IEnumerable<(int*int)> =

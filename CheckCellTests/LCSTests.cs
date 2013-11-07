@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
 
 namespace CheckCellTests
 {
@@ -125,6 +126,38 @@ namespace CheckCellTests
             var omissions = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
             var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, s1, s2, Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>.Empty);
             Assert.AreEqual(0, transpositions.Length);
+        }
+
+        [TestMethod]
+        public void TypoTest()
+        {
+            var s1 = "abcd";
+            var s2 = "zdcd";
+
+            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
+            var typos = LongestCommonSubsequence.GetTypos(ss, s1, s2);
+
+            OptChar[] keys = { OptChar.None, new OptChar('a'), new OptChar('b'), new OptChar('c'), new OptChar('d') };
+            char[] values = { 'z', 'd', 'c', 'd' };
+
+            var key_hs = new System.Collections.Generic.HashSet<OptChar>(keys);
+            var value_hs = new System.Collections.Generic.HashSet<char>(values);
+
+            var keys_seen = new System.Collections.Generic.HashSet<OptChar>();
+            var values_seen = new System.Collections.Generic.HashSet<char>(); ;
+            foreach (var typo in typos)
+            {
+                var key = typo.Item1;
+                var str = typo.Item2;
+                keys_seen.Add(key);
+                foreach (char c in str)
+                {
+                    values_seen.Add(c);
+                }
+            }
+
+            Assert.AreEqual(true, key_hs.SetEquals(keys_seen));
+            Assert.AreEqual(true, value_hs.SetEquals(values_seen));
         }
     }
 }
