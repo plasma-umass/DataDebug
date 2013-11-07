@@ -129,10 +129,10 @@
             let rhs_matches = List.filter (fun i -> entered.[i] = ochar) rhs
             // choose the closest match
             let is_lhs,a_idx = match lhs_matches,rhs_matches with
-                             | l::ls,r::rs -> if System.Math.Abs(omissions.Head - r) <= System.Math.Abs(omissions.Head - l) then false,Some(r) else true,Some(l)
-                             | [],r::rs -> false,Some(r)
-                             | l::ls,[] -> true,Some(l)
-                             | [],[] -> false,None
+                               | l::ls,r::rs -> if System.Math.Abs(omissions.Head - r) <= System.Math.Abs(omissions.Head - l) then false,Some(r) else true,Some(l)
+                               | [],r::rs -> false,Some(r)
+                               | l::ls,[] -> true,Some(l)
+                               | [],[] -> false,None
             match is_lhs,a_idx with
             | _,None ->
                 // if no characters match the current omitted character,

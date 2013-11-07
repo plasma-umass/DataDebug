@@ -1,0 +1,3 @@
+[submodule "parcel"]
+	path = parcel
+	url = github.com:plasma-umass/parcel.git
