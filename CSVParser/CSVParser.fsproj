@@ -33,10 +33,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FParsec">
-      <HintPath>..\FParsec\FParsec.dll</HintPath>
+      <HintPath>..\parcel\FParsec\FParsec.dll</HintPath>
     </Reference>
     <Reference Include="FParsecCS">
-      <HintPath>..\FParsec\FParsecCS.dll</HintPath>
+      <HintPath>..\parcel\FParsec\FParsecCS.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
