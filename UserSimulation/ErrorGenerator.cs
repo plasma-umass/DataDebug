@@ -31,10 +31,10 @@ namespace UserSimulation
             else //otherwise generate the distribution and then return it
             {
                 distribution = GenerateDistributionForChar(key, classification);
-                //If our dictionary does not have any information about this character, we return an empty string with probability 1.0                
+                //If our dictionary does not have any information about this character, we return the character with probability 1.0
                 if (distribution.Count == 0)
                 {
-                    distribution.Add("", 1.0);
+                    distribution.Add("" + c.Value, 1.0);
                 }
                 _char_distributions_dict.Add(key, distribution);
                 return distribution;
@@ -54,7 +54,7 @@ namespace UserSimulation
                 distribution = GenerateDistributionForSign(key, classification);
                 if (distribution.Count == 0)
                 {
-                    distribution.Add(Sign.Empty, 1.0);
+                    distribution.Add(s, 1.0);
                 }
                 _sign_distributions_dict.Add(key, distribution);
                 return distribution;
@@ -132,6 +132,7 @@ namespace UserSimulation
                 string str = GetRandomStringFromDistribution(distribution2);
                 modified_input += str;
             }
+
             //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
                         
             if (s != s2)
@@ -164,7 +165,7 @@ namespace UserSimulation
                         modified_input = modified_input.Remove(0, 1);
                     }
                 }
-            }
+            }            
             
             //Decimals are handled by typo model
 
