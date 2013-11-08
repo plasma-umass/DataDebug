@@ -59,7 +59,7 @@ namespace UserSimulation
             typo_dict.Add(key, 1);
 
             key = new Tuple<OptChar, string>(OptChar.Some('t'), "blah");
-            typo_dict.Add(key, 1);
+            typo_dict.Add(key, 0);
 
             key = new Tuple<OptChar, string>(OptChar.Some('T'), "tt");
             typo_dict.Add(key, 1);
@@ -162,9 +162,9 @@ namespace UserSimulation
                 char c = input[i];
                 Dictionary<string, double> distribution2 = GetDistributionForChar(OptChar.Some(c));
                 string str = GetRandomStringFromDistribution(distribution2);
+                modified_input = modified_input.Remove(i, 1);
                 modified_input = modified_input.Insert(i, str);
-                modified_input = modified_input.Remove(str.Length - 1, 1);
-                i += str.Length;
+                i += str.Length - 1;
             }
             //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
                         
