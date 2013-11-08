@@ -71,32 +71,32 @@ namespace UserSimulation
             return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
 
-        public Dictionary<Sign,double> GenerateDistributionForSign(Sign s, Classification classification)
-        {
-            var sign_dict = classification.GetSignDict();
-            var kvps = sign_dict.Where(pair => pair.Key.Item1 == s);
-            var sum = kvps.Select(pair => pair.Value).Sum();
-            var distribution = kvps.Select(pair => new KeyValuePair<Sign,double>(pair.Key.Item2, (double) pair.Value / sum));
-            //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
-            return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
-        }
+        //public Dictionary<Sign,double> GenerateDistributionForSign(Sign s, Classification classification)
+        //{
+        //    var sign_dict = classification.GetSignDict();
+        //    var kvps = sign_dict.Where(pair => pair.Key.Item1 == s);
+        //    var sum = kvps.Select(pair => pair.Value).Sum();
+        //    var distribution = kvps.Select(pair => new KeyValuePair<Sign,double>(pair.Key.Item2, (double) pair.Value / sum));
+        //    //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
+        //    return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
+        //}
 
-        public Sign GetRandomSignFromDistribution(Dictionary<Sign, double> distribution)
-        {
-            var rng = new Random();
-            var rand = rng.NextDouble();
+        //public Sign GetRandomSignFromDistribution(Dictionary<Sign, double> distribution)
+        //{
+        //    var rng = new Random();
+        //    var rand = rng.NextDouble();
             
-            int i = 0;
-            double sum = distribution.ElementAt(i).Value;
-            while (sum < rand)
-            {
-                i++;
-                sum += distribution.ElementAt(i).Value;
-            }
+        //    int i = 0;
+        //    double sum = distribution.ElementAt(i).Value;
+        //    while (sum < rand)
+        //    {
+        //        i++;
+        //        sum += distribution.ElementAt(i).Value;
+        //    }
 
-            var kvp = distribution.ElementAt(i);
-            return kvp.Key;
-        }
+        //    var kvp = distribution.ElementAt(i);
+        //    return kvp.Key;
+        //}
 
         public string GetRandomStringFromDistribution(Dictionary<string, double> distribution)
         {

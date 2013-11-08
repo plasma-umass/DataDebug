@@ -21,6 +21,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExcelParser", "parcel\Parce
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExcelParserConsole", "parcel\ParcelConsole\ExcelParserConsole.fsproj", "{EB5D17BF-060E-41FE-AB6E-E916D68FCBA4}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CSVParser", "CSVParser\CSVParser.fsproj", "{4884A4C1-B94A-4039-964F-ABA88DC60F58}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = DataDebug.vsmdi
@@ -106,8 +108,21 @@ Global
 		{EB5D17BF-060E-41FE-AB6E-E916D68FCBA4}.Release|Mixed Platforms.Build.0 = Release|x86
 		{EB5D17BF-060E-41FE-AB6E-E916D68FCBA4}.Release|x86.ActiveCfg = Release|x86
 		{EB5D17BF-060E-41FE-AB6E-E916D68FCBA4}.Release|x86.Build.0 = Release|x86
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4884A4C1-B94A-4039-964F-ABA88DC60F58} = {2EC7A95C-7017-432F-A22C-7CFA98BBF599}
 	EndGlobalSection
 EndGlobal
