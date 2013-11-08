@@ -41,25 +41,25 @@ namespace UserSimulation
             }
         }
 
-        public Dictionary<Sign, double> GetDistributionForSign(Sign s, Classification classification)
-        {
-            Sign key = s;
-            Dictionary<Sign, double> distribution;
-            if (_sign_distributions_dict.TryGetValue(key, out distribution))
-            {
-                return distribution; 
-            }
-            else
-            {
-                distribution = GenerateDistributionForSign(key, classification);
-                if (distribution.Count == 0)
-                {
-                    distribution.Add(s, 1.0);
-                }
-                _sign_distributions_dict.Add(key, distribution);
-                return distribution;
-            }
-        }
+        //public Dictionary<Sign, double> GetDistributionForSign(Sign s, Classification classification)
+        //{
+        //    Sign key = s;
+        //    Dictionary<Sign, double> distribution;
+        //    if (_sign_distributions_dict.TryGetValue(key, out distribution))
+        //    {
+        //        return distribution; 
+        //    }
+        //    else
+        //    {
+        //        distribution = GenerateDistributionForSign(key, classification);
+        //        if (distribution.Count == 0)
+        //        {
+        //            distribution.Add(s, 1.0);
+        //        }
+        //        _sign_distributions_dict.Add(key, distribution);
+        //        return distribution;
+        //    }
+        //}
 
         public Dictionary<string, double> GenerateDistributionForChar(OptChar c, Classification classification)
         {
@@ -120,10 +120,10 @@ namespace UserSimulation
             List<LCSError> error_list = new List<LCSError>();
             String modified_input = "";
             //try to add a sign error
-            Sign s = Classification.GetSign(input);
-            Dictionary<Sign,double> distribution = GetDistributionForSign(s, classification);
+            //Sign s = Classification.GetSign(input);
+            //Dictionary<Sign,double> distribution = GetDistributionForSign(s, classification);
 
-            Sign s2 = GetRandomSignFromDistribution(distribution);
+            //Sign s2 = GetRandomSignFromDistribution(distribution);
 
             for (int i = 0; i < input.Length; i++)
             {
@@ -135,37 +135,37 @@ namespace UserSimulation
 
             //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
                         
-            if (s != s2)
-            {
-                LCSError error = LongestCommonSubsequence.Error.NewSignError(s, s2);
-                error_list.Add(error);
-                if (s == Sign.Empty)
-                {
-                    if (s2 == Sign.Plus)
-                    {
-                        modified_input = "+" + modified_input;
-                    }
-                    else if (s2 == Sign.Minus)
-                    {
-                        modified_input = "-" + modified_input;
-                    }
-                }
-                else
-                {
-                    if (s2 == Sign.Plus)
-                    {
-                        modified_input = "+" + modified_input.Remove(0,1);
-                    }
-                    else if (s2 == Sign.Minus)
-                    {
-                        modified_input = "-" + modified_input.Remove(0, 1);
-                    }
-                    else
-                    {
-                        modified_input = modified_input.Remove(0, 1);
-                    }
-                }
-            }            
+            //if (s != s2)
+            //{
+            //    LCSError error = LongestCommonSubsequence.Error.NewSignError(s, s2);
+            //    error_list.Add(error);
+            //    if (s == Sign.Empty)
+            //    {
+            //        if (s2 == Sign.Plus)
+            //        {
+            //            modified_input = "+" + modified_input;
+            //        }
+            //        else if (s2 == Sign.Minus)
+            //        {
+            //            modified_input = "-" + modified_input;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        if (s2 == Sign.Plus)
+            //        {
+            //            modified_input = "+" + modified_input.Remove(0,1);
+            //        }
+            //        else if (s2 == Sign.Minus)
+            //        {
+            //            modified_input = "-" + modified_input.Remove(0, 1);
+            //        }
+            //        else
+            //        {
+            //            modified_input = modified_input.Remove(0, 1);
+            //        }
+            //    }
+            //}            
             
             //Decimals are handled by typo model
 
