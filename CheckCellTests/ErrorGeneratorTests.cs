@@ -40,7 +40,7 @@ namespace CheckCellTests
             //sign_dict.Add(key, 0);
 
             //c.SetSignDict(sign_dict);
-            var result = eg.GenerateErrorString("Test");
+            var result = eg.GenerateErrorString("Testing");
             string s = result.ToString();
         }
     }

@@ -23,13 +23,19 @@ namespace UserSimulation
         {
             OptChar key = c;
             Dictionary<string, double> distribution;
+            //if we have already generated a distribution for this character, return it
             if (_char_distributions_dict.TryGetValue(key, out distribution))
             {
                 return distribution;
             }
-            else
+            else //otherwise generate the distribution and then return it
             {
-                distribution = GenerateDistributionForChar(key);
+                distribution = GenerateDistributionForChar(key, new Classification());
+                //If our dictionary does not have any information about this character, we return an empty string with probability 1.0                
+                if (distribution.Count == 0)
+                {
+                    distribution.Add("", 1.0);
+                }
                 _char_distributions_dict.Add(key, distribution);
                 return distribution;
             }
@@ -45,13 +51,17 @@ namespace UserSimulation
             }
             else
             {
-                distribution = GenerateDistributionForSign(key);
+                distribution = GenerateDistributionForSign(key, new Classification());
+                if (distribution.Count == 0)
+                {
+                    distribution.Add(Sign.Empty, 1.0);
+                }
                 _sign_distributions_dict.Add(key, distribution);
                 return distribution;
             }
         }
 
-        public Dictionary<string, double> GenerateDistributionForChar(OptChar c)
+        public Dictionary<string, double> GenerateDistributionForChar(OptChar c, Classification classification)
         {
             Dictionary<Tuple<OptChar, string>, int> typo_dict = new Dictionary<Tuple<OptChar, string>, int>();
 
@@ -70,8 +80,7 @@ namespace UserSimulation
             key = new Tuple<OptChar, string>(OptChar.Some('s'), "s");
             typo_dict.Add(key, 1);
 
-            //Classification classification = new Classification();
-            //var sign_dict = classification.GetTypoDict();
+            //var typo_dict = classification.GetTypoDict();
             var kvps = typo_dict.Where(pair => pair.Key.Item1.Equals(c));
             var sum = kvps.Select(pair => pair.Value).Sum();
             var distribution = kvps.Select(pair => new KeyValuePair<string,double>(pair.Key.Item2, (double) pair.Value / sum));
@@ -79,9 +88,8 @@ namespace UserSimulation
             return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
 
-        public Dictionary<Sign,double> GenerateDistributionForSign(Sign s)
+        public Dictionary<Sign,double> GenerateDistributionForSign(Sign s, Classification classification)
         {
-            Classification c = new Classification();
             //set sign dictionary to explicit one
             Dictionary<Tuple<Sign, Sign>, int> sign_dict = new Dictionary<Tuple<Sign, Sign>, int>();
             
@@ -103,9 +111,7 @@ namespace UserSimulation
             key = new Tuple<Sign, Sign>(Sign.Minus, Sign.Minus);
             sign_dict.Add(key, 0);
 
-            //c.SetSignDict(sign_dict);
-
-            //var sign_dict = c.GetSignDict();
+            //var sign_dict = classification.GetSignDict();
             var kvps = sign_dict.Where(pair => pair.Key.Item1 == s);
             var sum = kvps.Select(pair => pair.Value).Sum();
             var distribution = kvps.Select(pair => new KeyValuePair<Sign,double>(pair.Key.Item2, (double) pair.Value / sum));
@@ -150,7 +156,7 @@ namespace UserSimulation
         public ErrorString GenerateErrorString(string input)
         {
             List<LCSError> error_list = new List<LCSError>();
-            String modified_input = input;
+            String modified_input = "";
             //try to add a sign error
             Sign s = Classification.GetSign(input);
             Dictionary<Sign,double> distribution = GetDistributionForSign(s);
@@ -162,9 +168,7 @@ namespace UserSimulation
                 char c = input[i];
                 Dictionary<string, double> distribution2 = GetDistributionForChar(OptChar.Some(c));
                 string str = GetRandomStringFromDistribution(distribution2);
-                modified_input = modified_input.Remove(i, 1);
-                modified_input = modified_input.Insert(i, str);
-                i += str.Length - 1;
+                modified_input += str;
             }
             //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
                         
