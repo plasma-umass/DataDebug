@@ -49,5 +49,37 @@ namespace CheckCellTests
             var result = eg.GenerateErrorString("Testing", classification);
             string s = result.ToString();
         }
+
+        [TestMethod]
+        public void TestTranspositions()
+        {
+            var eg = new ErrorGenerator();
+            var classification = new Classification();
+
+            //set typo dictionary to explicit one -- it's empty so no typos are possible
+            Dictionary<Tuple<OptChar, string>, int> typo_dict = new Dictionary<Tuple<OptChar, string>, int>();
+
+            //Set the transpositions dictionary to explicit one
+            Dictionary<int, int> transpositions_dict = new Dictionary<int, int>();
+            transpositions_dict.Add(3, 10);
+
+           // transpositions_dict.Add(2, 1);
+            transpositions_dict.Add(0, 1);
+            //transpositions_dict.Add(-1, 1);
+            //transpositions_dict.Add(-2, 1);
+
+            classification.SetTranspositionDict(transpositions_dict);
+            classification.SetTypoDict(typo_dict);
+            var result = eg.GenerateErrorString("abcd", classification);
+            string s = result.Item1;
+            if (result.Item2.Count != 0)
+            {
+                Assert.AreEqual("dbca", s);
+            }
+            else
+            {
+                Assert.AreEqual("abcd", s);
+            }
+        }
     }
 }
