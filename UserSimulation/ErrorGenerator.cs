@@ -15,11 +15,11 @@ namespace UserSimulation
         //private _typo_array;
         //private _transposition_array;
         //private _sign_array;
-        private Dictionary<Sign, Dictionary<Sign,double>> _sign_distributions_dict = new Dictionary<Sign,Dictionary<Sign,double>>();
-
         private Dictionary<OptChar, Dictionary<string,double>> _char_distributions_dict = new Dictionary<OptChar,Dictionary<string,double>>();
 
-        public Dictionary<string, double> GetDistributionForChar(OptChar c, Classification classification)
+        private Dictionary<int, double> _transpositions_distribution_dict = new Dictionary<int, double>();
+
+        private Dictionary<string, double> GetDistributionOfStringsForChar(OptChar c, Classification classification)
         {
             OptChar key = c;
             Dictionary<string, double> distribution;
@@ -41,27 +41,7 @@ namespace UserSimulation
             }
         }
 
-        //public Dictionary<Sign, double> GetDistributionForSign(Sign s, Classification classification)
-        //{
-        //    Sign key = s;
-        //    Dictionary<Sign, double> distribution;
-        //    if (_sign_distributions_dict.TryGetValue(key, out distribution))
-        //    {
-        //        return distribution; 
-        //    }
-        //    else
-        //    {
-        //        distribution = GenerateDistributionForSign(key, classification);
-        //        if (distribution.Count == 0)
-        //        {
-        //            distribution.Add(s, 1.0);
-        //        }
-        //        _sign_distributions_dict.Add(key, distribution);
-        //        return distribution;
-        //    }
-        //}
-
-        public Dictionary<string, double> GenerateDistributionForChar(OptChar c, Classification classification)
+        private Dictionary<string, double> GenerateDistributionForChar(OptChar c, Classification classification)
         {
             var typo_dict = classification.GetTypoDict();
             var kvps = typo_dict.Where(pair => pair.Key.Item1.Equals(c));
@@ -71,34 +51,7 @@ namespace UserSimulation
             return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
 
-        //public Dictionary<Sign,double> GenerateDistributionForSign(Sign s, Classification classification)
-        //{
-        //    var sign_dict = classification.GetSignDict();
-        //    var kvps = sign_dict.Where(pair => pair.Key.Item1 == s);
-        //    var sum = kvps.Select(pair => pair.Value).Sum();
-        //    var distribution = kvps.Select(pair => new KeyValuePair<Sign,double>(pair.Key.Item2, (double) pair.Value / sum));
-        //    //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
-        //    return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
-        //}
-
-        //public Sign GetRandomSignFromDistribution(Dictionary<Sign, double> distribution)
-        //{
-        //    var rng = new Random();
-        //    var rand = rng.NextDouble();
-            
-        //    int i = 0;
-        //    double sum = distribution.ElementAt(i).Value;
-        //    while (sum < rand)
-        //    {
-        //        i++;
-        //        sum += distribution.ElementAt(i).Value;
-        //    }
-
-        //    var kvp = distribution.ElementAt(i);
-        //    return kvp.Key;
-        //}
-
-        public string GetRandomStringFromDistribution(Dictionary<string, double> distribution)
+        private string GetRandomStringFromDistribution(Dictionary<string, double> distribution)
         {
             var rng = new Random();
             var rand = rng.NextDouble();
@@ -115,59 +68,118 @@ namespace UserSimulation
             return kvp.Key;
         }
 
+        private Dictionary<int, double> GetDistributionOfTranspositions(Classification classification)
+        {
+            //if we have already generated a distribution, return it
+            if (_transpositions_distribution_dict.Count != 0)
+            {
+                return _transpositions_distribution_dict;
+            }
+            else //otherwise generate the distribution and then return it
+            {
+                _transpositions_distribution_dict = GenerateTranspositionsDistribution(classification);
+                //If our dictionary does not have any information about transpositions, we add to it delta = 0 with probability 1.0
+                if (_transpositions_distribution_dict.Count == 0)
+                {
+                    _transpositions_distribution_dict.Add(0, 1.0);
+                }
+                return _transpositions_distribution_dict;
+            }
+        }
+
+        private Dictionary<int, double> GenerateTranspositionsDistribution(Classification classification)
+        {
+            var transposition_dict = classification.GetTranspositionDict();
+            //var kvps = transposition_dict.Where(pair => pair.Key.Equals(i));
+            var sum = transposition_dict.Select(pair => pair.Value).Sum();
+            var distribution = transposition_dict.Select(pair => new KeyValuePair<int, double>(pair.Key, (double)pair.Value / sum));
+            return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+        
+        private int GetRandomTranspositionFromDistribution(Dictionary<int, double> transposition_distribution)
+        {
+            var rng = new Random();
+            var rand = rng.NextDouble();
+
+            int i = 0;
+            double sum = transposition_distribution.ElementAt(i).Value;
+            while (sum < rand)
+            {
+                i++;
+                sum += transposition_distribution.ElementAt(i).Value;
+            }
+
+            var kvp = transposition_distribution.ElementAt(i);
+            return kvp.Key;
+        }
+
         public ErrorString GenerateErrorString(string input, Classification classification)
         {
             List<LCSError> error_list = new List<LCSError>();
             String modified_input = "";
-            //try to add a sign error
-            //Sign s = Classification.GetSign(input);
-            //Dictionary<Sign,double> distribution = GetDistributionForSign(s, classification);
-
-            //Sign s2 = GetRandomSignFromDistribution(distribution);
-
+            //Try to add transposition errors
+            Dictionary<int, double> transpositions_distribution = GetDistributionOfTranspositions(classification);
             for (int i = 0; i < input.Length; i++)
             {
                 char c = input[i];
-                Dictionary<string, double> distribution2 = GetDistributionForChar(OptChar.Some(c), classification);
-                string str = GetRandomStringFromDistribution(distribution2);
+                int delta = GetRandomTranspositionFromDistribution(transpositions_distribution);
+                
+                //If this was an error, add it to the error list
+                if (delta != 0)
+                {
+                    LCSError error = LongestCommonSubsequence.Error.NewTranspositionError(i, delta);
+                    error_list.Add(error);
+                }
+
+                //if the delta is too large
+                if (i + delta >= input.Length)
+                {
+                    input = input.Remove(i, 1);
+                    //insert the character at the end
+                    input = input + c;
+                }
+                //if the delta is too small
+                else if (i + delta < 0)
+                {
+                    input = input.Remove(i, 1);
+                    //insert the character at the start
+                    input = c + input;
+                }
+                else
+                {
+                    //if character is being added to the right
+                    if (delta > 0)
+                    {
+                        input = input.Insert(i + delta, c + "");
+                        input = input.Remove(i, 1);
+                    }
+                    //if character is being added to the left
+                    else
+                    {
+                        input = input.Insert(i + delta, c + "");
+                        //The index i has shifted to the right because a character was added before it
+                        input = input.Remove(i + 1, 1);
+                    }
+                }
+            }
+
+            //Try to add typo errors
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+                Dictionary<string, double> distribution = GetDistributionOfStringsForChar(OptChar.Some(c), classification);
+                string str = GetRandomStringFromDistribution(distribution);
+
+                //If this was an error, add it to the error list
+                if (!str.Equals("" + c))
+                {
+                    LCSError error = LongestCommonSubsequence.Error.NewTypoError(i, c, str);
+                    error_list.Add(error);
+                }
                 modified_input += str;
             }
 
-            //TODO if we have a character that we don't have as a key in our dictionary already, we should just return that character
-                        
-            //if (s != s2)
-            //{
-            //    LCSError error = LongestCommonSubsequence.Error.NewSignError(s, s2);
-            //    error_list.Add(error);
-            //    if (s == Sign.Empty)
-            //    {
-            //        if (s2 == Sign.Plus)
-            //        {
-            //            modified_input = "+" + modified_input;
-            //        }
-            //        else if (s2 == Sign.Minus)
-            //        {
-            //            modified_input = "-" + modified_input;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (s2 == Sign.Plus)
-            //        {
-            //            modified_input = "+" + modified_input.Remove(0,1);
-            //        }
-            //        else if (s2 == Sign.Minus)
-            //        {
-            //            modified_input = "-" + modified_input.Remove(0, 1);
-            //        }
-            //        else
-            //        {
-            //            modified_input = modified_input.Remove(0, 1);
-            //        }
-            //    }
-            //}            
-            
-            //Decimals are handled by typo model
+            //Signs and decimals are handled by typo model
 
             ErrorString output = new Tuple<string, List<LCSError>>(modified_input, error_list);
             

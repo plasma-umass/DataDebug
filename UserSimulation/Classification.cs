@@ -204,14 +204,14 @@ namespace UserSimulation
         //    return OptString.None;
         //}
 
-        //internal Dictionary<Tuple<Sign,Sign>,int> GetSignDict()
-        //{
-        //    return _sign_dict;
-        //}
-
         internal Dictionary<Tuple<OptChar,string>,int> GetTypoDict()
         {
             return _typo_dict;
+        }
+
+        internal Dictionary<int, int> GetTranspositionDict()
+        {
+            return _transposition_dict;
         }
 
         public void SetTypoDict(Dictionary<Tuple<OptChar, string>, int> dict)
@@ -219,10 +219,10 @@ namespace UserSimulation
             _typo_dict = dict;
         }
 
-        //public void SetSignDict(Dictionary<Tuple<Sign, Sign>, int> dict)
-        //{
-        //    _sign_dict = dict;
-        //}
+        public void SetTranspositionDict(Dictionary<int, int> dict)
+        {
+            _transposition_dict = dict;
+        }
 
         public void Serialize(string file_name)
         {
