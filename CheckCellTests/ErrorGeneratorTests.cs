@@ -62,11 +62,7 @@ namespace CheckCellTests
             //Set the transpositions dictionary to explicit one
             Dictionary<int, int> transpositions_dict = new Dictionary<int, int>();
             transpositions_dict.Add(3, 10);
-
-           // transpositions_dict.Add(2, 1);
             transpositions_dict.Add(0, 1);
-            //transpositions_dict.Add(-1, 1);
-            //transpositions_dict.Add(-2, 1);
 
             classification.SetTranspositionDict(transpositions_dict);
             classification.SetTypoDict(typo_dict);
@@ -80,6 +76,50 @@ namespace CheckCellTests
             {
                 Assert.AreEqual("abcd", s);
             }
+
+
+            //NOTE: Need a new ErrorGenerator for each test because the distribution tables are associated with it
+            var eg2 = new ErrorGenerator();
+            //Set the transpositions dictionary to explicit one
+            var transpositions_dict2 = new Dictionary<int, int>();
+            transpositions_dict2.Add(1, 10);
+            transpositions_dict2.Add(0, 1);
+            Classification classification2 = new Classification();
+            classification2.SetTranspositionDict(transpositions_dict2);
+            classification2.SetTypoDict(typo_dict);
+            var result2 = eg2.GenerateErrorString("abcd", classification2);
+            string s2 = result2.Item1;
+            if (result2.Item2.Count == 0)
+            {
+                Assert.AreEqual("abcd", s2);
+            }
+            else if (result2.Item2.Count == 2)
+            {
+                Assert.AreEqual("badc", s2);
+            }
+            else if (result2.Item2.Count == 1)
+            {
+                bool outcome = false;
+                if (s2 == "abdc" || s2 == "bacd") 
+                {
+                    outcome = true;
+                }
+                Assert.AreEqual(true, outcome);
+            }
+
+            var eg3 = new ErrorGenerator();
+            //Set the transpositions dictionary to explicit one
+            var transpositions_dict3 = new Dictionary<int, int>();
+            transpositions_dict3.Add(10, 10);
+            transpositions_dict3.Add(-10, 10);
+            transpositions_dict3.Add(0, 1);
+            Classification classification3 = new Classification();
+            classification3.SetTranspositionDict(transpositions_dict3);
+            classification3.SetTypoDict(typo_dict);
+            var result3 = eg3.GenerateErrorString("abcd", classification3);
+            string s3 = result3.Item1;
+            Assert.AreEqual("abcd", s3);
+            Assert.AreEqual(0, result3.Item2.Count);
         }
     }
 }
