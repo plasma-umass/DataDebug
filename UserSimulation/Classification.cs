@@ -102,22 +102,34 @@ namespace UserSimulation
 
         public void ProcessTypos(string original, string entered)
         {
-            //bool has_errors = true;
-            //string entered_mod = entered;
-            //while (has_errors)
+            // get LCS
+            var alignments = LongestCommonSubsequence.LeftAlignedLCS(original, entered);
+            // find all character additions
+            var additions = LongestCommonSubsequence.GetAddedCharIndices(entered, alignments);
+            // find all character omissions
+            var omissions = LongestCommonSubsequence.GetMissingCharIndices(original, alignments);
+            // find all transpositions
+            var emptylist = Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>.Empty;
+            var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, original, entered, emptylist);
+            // remove all transpositions from alignment list
+            //var additions2 = additions.Where(a => !transpositions.Select(tpair => tpair.Item1).Contains(a));
+            //var omissions2 = omissions.Where(o => !transpositions.Select(tpair => tpair.Item2).Contains(o));
+            // remember: alignments is a list of (original position, entered position) pairs
+            //var alignments2 = alignments.Where(apair => 
+            // get typos
+            var typos = LongestCommonSubsequence.GetTypos(alignments, original, entered);
+            // now train the classifier for each remaining error
+            //foreach (var tpair in transpositions)
             //{
-            //    OptString fix = OptString.None;
-            //    has_errors = false;
+            //    // calculate delta = addition position - omission position
+            //    var delta = tpair.Item1 - tpair.Item2;
 
-            //    // look for a sign error
-            //    //fix = HasSignError(original, entered_mod);
-            //    if (fix != OptString.None)
-            //    {
-            //        entered_mod = fix.Value;
-            //        has_errors = true;
-            //    }
+            //    // update probability
+            //    AddTranspositionError(delta);
+            //}
+            //foreach (int addpos in additions2)
+            //{
 
-            //    // next test here
             //}
         }
 

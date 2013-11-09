@@ -83,16 +83,15 @@
         // new sequence
         let mutable newseq: (int*int) list = []
         // realign characters
-        let mutable jstop = 0
+        let mutable jstop = -1
         for (i,j) in charseq do
             // all of the candidates to the left of j, but only as far as jstop
-            let candidate_indices = List.rev [jstop..j]
+            let candidate_indices = [jstop+1..j]
             let mutable keep_looking = true
             for k in candidate_indices do
                 if keep_looking then
                     if entered.[k] = entered.[j] then
                         jstop <- k
-                    else
                         keep_looking <- false
             newseq <- newseq @ [(i,jstop)]
         // return realigned char list
@@ -109,6 +108,80 @@
         let all_indices = set[0..entered.Length - 1]
         let align_indices = List.map (fun (_,e) -> e) align |> Set.ofList
         Set.difference all_indices align_indices |> Set.toList
+
+    // returns:
+    // corrected entered string
+    // new list of alignments
+    // new list of additions
+    // new list of omissions
+    // transposition deltas
+    let FixTranspositions(al: (int*int) list, ad: int list, om: int list, orig: string, entered: string)
+        : string * (int*int) list * int list * int list * int list =
+        // remember that alignments are: (original position, entered position)
+        let rec FT(al: (int*int) list, ad: int list, om: int list, entered: string, tdeltas: int list)
+            : string * (int*int) list * int list * int list * int list =
+            if ad.Length = 0 || om.Length = 0 then
+                entered,al,ad,om,tdeltas
+            else
+                // get the location of the first omission
+                let omloc = om.Head
+                // get the character of the first omission
+                let ochar = orig.[omloc]
+                // get entered chars to the left of ochar
+                let lhs = List.filter (fun i -> i <= omloc) ad
+                // get entered chars to the right of ochar
+                let rhs = List.filter (fun i -> i > omloc) ad
+                // get lhs character positions that match ochar
+                let lhs_matches = List.rev (List.filter (fun i -> entered.[i] = ochar) lhs)
+                // get rhs character positions that match ochar
+                let rhs_matches = List.filter (fun i -> entered.[i] = ochar) rhs
+                // choose the closest matching addition
+                let is_lhs,a_idx = match lhs_matches,rhs_matches with
+                                   | l::ls,r::rs -> if System.Math.Abs(omloc - r) <= System.Math.Abs(omloc - l) then false,Some(r) else true,Some(l)
+                                   | [],r::rs -> false,Some(r)
+                                   | l::ls,[] -> true,Some(l)
+                                   | [],[] -> false,None
+                match is_lhs,a_idx with
+                | _,None ->
+                    // if no characters match the current omitted character,
+                    // discard the omission and move on
+                    FT(al, ad, om.Tail, entered, tdeltas)
+                | il,Some(idx) ->
+                    // find the intended location of the char in the entered string
+                    // this character needs to be moved to the right of the rightmost
+                    // alignment that occurs just before this character
+                    let rightmost = snd (List.rev (List.filter (fun (origpos,entpos) -> origpos < omloc) (List.sortBy (fun (o,e) -> o) al))).Head
+                    let insertpos = rightmost + 1
+
+                    // insert the character in the appropriate location,
+                    // ensuring that the sting is lengthened if the location
+                    // occurs after the end of the string
+                    System.Diagnostics.Debug.Assert(insertpos <= entered.Length)
+                    let entered' = if insertpos = entered.Length then
+                                       entered + ochar.ToString()
+                                   else
+                                       entered.Substring(0,insertpos) + ochar.ToString() + entered.Substring(insertpos)
+                    // remove the character from the entered position
+                    let entered'' = entered'.Substring(0,idx) + entered'.Substring(idx + 1)
+
+                    // adjust the omissions list
+                    let omissions = om.Tail
+
+                    // adjust the additions list
+                    // remove the addition, and then, for all additions between the omission position
+                    // and the insertion position, shift one to the right
+                    let additions = List.filter (fun a -> a <> idx) ad |> List.map (fun a -> if a > idx && a < insertpos then a + 1 else a)
+
+                    // adjust the alignments
+                    let alignments = (omloc, rightmost) :: if omloc < insertpos then
+                                                               List.map (fun (o,e) -> if e > omloc && o < insertpos then (o,e+1) else (o,e)) al
+                                                           else
+                                                               List.map (fun (o,e) -> if e > insertpos then (o,e-1) else (o,e)) al
+                    // process the next transposition
+                    FT(alignments, additions, omissions, entered'', (idx - omloc)::tdeltas)
+        // add the pseudo-start char alignment to ensure that there is
+        // always a rightmost alignment
+        FT((-1,-1)::al, ad, om, entered, [])
 
     // find all transpositions
     // returns (addition,omission) pairs
@@ -148,6 +221,7 @@
 
     // return all typos
     // this method assumes that you have already removed all transpositions
+    // alignments: (original position, entered position)
     let GetTypos(alignments: (int*int) list, orig: string, entered: string) : (char option*string) list =
         let rng = System.Random()
         let rec typoget(al: (int*int) list, typos: (char option*string) list) : (char option*string) list =

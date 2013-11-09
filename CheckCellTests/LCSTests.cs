@@ -64,6 +64,14 @@ namespace CheckCellTests
             Tuple<int, int>[] shouldbe = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
 
             Assert.AreEqual(true, ss.SequenceEqual<Tuple<int, int>>(shouldbe));
+
+            var s3 = "aaab";
+            var s4 = "bzzzaaa";
+            var ss2 = LongestCommonSubsequence.LeftAlignedLCS(s3, s4);
+
+            Tuple<int, int>[] shouldbe2 = { new Tuple<int, int>(0, 4), new Tuple<int, int>(1, 5), new Tuple<int, int>(2, 6) };
+
+            Assert.AreEqual(true, ss2.SequenceEqual<Tuple<int, int>>(shouldbe2));
         }
 
         [TestMethod]
@@ -126,6 +134,26 @@ namespace CheckCellTests
             var omissions = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
             var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, s1, s2, Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>.Empty);
             Assert.AreEqual(0, transpositions.Length);
+        }
+
+        [TestMethod]
+        public void FixTranspositionTest()
+        {
+            var orig = "aaab";
+            var entered = "bzzzaaa";
+
+            var ta = LongestCommonSubsequence.LCS_Char(orig, entered);
+            var alignments = LongestCommonSubsequence.LeftAlignedLCS(orig, entered);
+            var additions = LongestCommonSubsequence.GetAddedCharIndices(entered, alignments);
+            var omissions = LongestCommonSubsequence.GetMissingCharIndices(orig, alignments);
+            var fixedouts = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, orig, entered);
+
+            var entered2 = fixedouts.Item1;
+            var alignments2 = fixedouts.Item2;
+            var additions2 = fixedouts.Item3;
+            var omissions2 = fixedouts.Item4;
+            var deltas = fixedouts.Item5;
+            var a = "hi";
         }
 
         [TestMethod]
