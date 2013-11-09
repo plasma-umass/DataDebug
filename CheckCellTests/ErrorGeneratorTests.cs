@@ -13,7 +13,7 @@ namespace CheckCellTests
     public class ErrorGeneratorTests
     {
         [TestMethod]
-        public void TestErrorGenerator()
+        public void TestTypoGenerator()
         {
             var eg = new ErrorGenerator();
             var classification = new Classification();
@@ -25,7 +25,7 @@ namespace CheckCellTests
             typo_dict.Add(key, 1);
 
             key = new Tuple<OptChar, string>(OptChar.Some('t'), "t");
-            typo_dict.Add(key, 3);
+            typo_dict.Add(key, 0);
 
             key = new Tuple<OptChar, string>(OptChar.Some('T'), "TT");
             typo_dict.Add(key, 1);
@@ -36,22 +36,15 @@ namespace CheckCellTests
             key = new Tuple<OptChar, string>(OptChar.Some('s'), "s");
             typo_dict.Add(key, 1);
 
-            //Set the transpositions dictionary to explicit one
-            Dictionary<int, int> transpositions_dict = new Dictionary<int, int>();
-            transpositions_dict.Add(1, 1);
-            transpositions_dict.Add(2, 1);
-            transpositions_dict.Add(0, 2);
-            transpositions_dict.Add(-1, 1);
-            transpositions_dict.Add(-2, 1);
-            
-            classification.SetTranspositionDict(transpositions_dict);
+            //The transpositions dictionary is empty so no transpositions should occur
             classification.SetTypoDict(typo_dict);
             var result = eg.GenerateErrorString("Testing", classification);
-            string s = result.ToString();
+            string s = result.Item1;
+            Assert.AreEqual("TTesying", s);
         }
 
         [TestMethod]
-        public void TestTranspositions()
+        public void TestTranspositionGenerator()
         {
             var eg = new ErrorGenerator();
             var classification = new Classification();
