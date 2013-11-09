@@ -21,13 +21,13 @@ namespace CheckCellTests
             //set typo dictionary to explicit one
             Dictionary<Tuple<OptChar, string>, int> typo_dict = new Dictionary<Tuple<OptChar, string>, int>();
 
-            var key = new Tuple<OptChar, string>(OptChar.Some('t'), "t");
-            typo_dict.Add(key, 0);
-
-            key = new Tuple<OptChar, string>(OptChar.Some('t'), "blah");
+            var key = new Tuple<OptChar, string>(OptChar.Some('t'), "y");
             typo_dict.Add(key, 1);
 
-            key = new Tuple<OptChar, string>(OptChar.Some('T'), "T--I-can't-type--T");
+            key = new Tuple<OptChar, string>(OptChar.Some('t'), "t");
+            typo_dict.Add(key, 3);
+
+            key = new Tuple<OptChar, string>(OptChar.Some('T'), "TT");
             typo_dict.Add(key, 1);
 
             key = new Tuple<OptChar, string>(OptChar.Some('e'), "e");
@@ -42,6 +42,7 @@ namespace CheckCellTests
             transpositions_dict.Add(2, 1);
             transpositions_dict.Add(0, 2);
             transpositions_dict.Add(-1, 1);
+            transpositions_dict.Add(-2, 1);
             
             classification.SetTranspositionDict(transpositions_dict);
             classification.SetTypoDict(typo_dict);
