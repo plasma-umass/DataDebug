@@ -116,57 +116,68 @@ namespace UserSimulation
         public ErrorString GenerateErrorString(string input, Classification classification)
         {
             List<LCSError> error_list = new List<LCSError>();
-            String modified_input = "";
             //Try to add transposition errors
             Dictionary<int, double> transpositions_distribution = GetDistributionOfTranspositions(classification);
-            for (int i = 0; i < input.Length; i++)
+            
+            //Keeps track of where things have ended up after they have been transposed,
+            //so that we don't move them more than once
+            List<int> transposed_locations = new List<int>();
+
+            string transposed_input = input;
+            for (int i = 0; i < transposed_input.Length; i++)
             {
-                char c = input[i];
+                //if the character in this location has already been transposed, don't transpose it again
+                if (transposed_locations.Contains(i))
+                {
+                    continue;
+                }
+
+                char c = transposed_input[i];
                 int delta = GetRandomTranspositionFromDistribution(transpositions_distribution);
+                int swap_index = i + delta;
+
+                //If this swap_index doesn't work, randomly select a new one until you find one that works
+                //  It might not work for any of these three reasons: 
+                //      1. It's already been transposed
+                //      2. It's too large
+                //      3. It's too small
+                while (transposed_locations.Contains(swap_index) || swap_index < 0 || swap_index > transposed_input.Length - 1)
+                {
+                    delta = GetRandomTranspositionFromDistribution(transpositions_distribution);
+                    swap_index = i + delta;
+                }
+
+                //When we have a swap index that works, we perform the swap
+                char swap_char = transposed_input[swap_index];
+                transposed_input = transposed_input.Remove(i, 1);
+                transposed_input = transposed_input.Insert(i, swap_char + "");
+                transposed_input = transposed_input.Remove(swap_index, 1);
+                transposed_input = transposed_input.Insert(swap_index, c + "");
                 
-                //If this was an error, add it to the error list
+                //Add the error to our error list (only if the delta is non-zero)
                 if (delta != 0)
                 {
                     LCSError error = LongestCommonSubsequence.Error.NewTranspositionError(i, delta);
                     error_list.Add(error);
-                }
-
-                //if the delta is too large
-                if (i + delta >= input.Length)
-                {
-                    input = input.Remove(i, 1);
-                    //insert the character at the end
-                    input = input + c;
-                }
-                //if the delta is too small
-                else if (i + delta < 0)
-                {
-                    input = input.Remove(i, 1);
-                    //insert the character at the start
-                    input = c + input;
-                }
-                else
-                {
-                    //if character is being added to the right
-                    if (delta > 0)
-                    {
-                        input = input.Insert(i + delta, c + "");
-                        input = input.Remove(i, 1);
-                    }
-                    //if character is being added to the left
-                    else
-                    {
-                        input = input.Insert(i + delta, c + "");
-                        //The index i has shifted to the right because a character was added before it
-                        input = input.Remove(i + 1, 1);
-                    }
+                    //And add the indices to the transposed_locations
+                    transposed_locations.Add(i);
+                    transposed_locations.Add(swap_index);
                 }
             }
 
+            String modified_input = "";
             //Try to add typo errors
-            for (int i = 0; i < input.Length; i++)
+            for (int i = 0; i < transposed_input.Length; i++)
             {
-                char c = input[i];
+                char c = transposed_input[i];
+                
+                //If the character in this location has already been transposed, don't introduce typos to it
+                if (transposed_locations.Contains(i))
+                {
+                    modified_input += "" + c;
+                    continue;
+                }
+
                 Dictionary<string, double> distribution = GetDistributionOfStringsForChar(OptChar.Some(c), classification);
                 string str = GetRandomStringFromDistribution(distribution);
 

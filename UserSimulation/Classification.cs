@@ -23,10 +23,6 @@ namespace UserSimulation
     {
         //Error types:
         //  Transposition
-        //  Digit addition
-        //  Digit omission
-        //  Sign error (do we want sign addition/ sign omission?)
-        //  Decimal addition, omission, misplaced
         //  Typo
         
         //Dictionaries for all error types:
@@ -64,41 +60,6 @@ namespace UserSimulation
                 _transposition_dict.Add(key, 1);
             }
         }
-
-        //public void AddSignError(Sign correct, Sign entered)
-        //{
-        //    var key = new Tuple<Sign,Sign>(correct,entered);
-        //    int value;
-        //    if (_sign_dict.TryGetValue(key, out value))
-        //    {
-        //        _sign_dict[key] += 1;
-        //    }
-        //    else
-        //    {
-        //        _sign_dict.Add(key, 1);
-        //    }
-        //}
-
-        //public void AddDecimalOmission()
-        //{
-        //    int value;
-        //    if (_decimal_misplacement_dict.TryGetValue(OptInt.None, out value))
-        //    {
-        //        _decimal_misplacement_dict[OptInt.None] += 1;
-        //    } else {
-        //        _decimal_misplacement_dict.Add(OptInt.None, 1);
-        //    }
-        //}
-
-        //public void AddDecimalMisplacement(OptInt delta)
-        //{
-        //    int value;
-        //    if (_decimal_misplacement_dict.TryGetValue(delta, out value)) {
-        //        _decimal_misplacement_dict[delta] += 1;
-        //    } else {
-        //        _decimal_misplacement_dict.Add(delta, 1);
-        //    }
-        //}
 
         public void ProcessTypos(string original, string entered)
         {
@@ -155,72 +116,12 @@ namespace UserSimulation
             return s;
         }
 
-        //public OptString HasSignError(string original, string entered)
-        //{
-        //    // sign for orig
-        //    Sign orig_sign = GetSign(original);
-          
-        //    //If the entered string is blank, return empty optstring
-        //    if (entered.Length < 1)
-        //    {
-        //        AddSignError(orig_sign, Sign.Empty);
-        //        return OptString.None;
-        //    }
-
-        //    // sign for entered
-        //    Sign ent_sign = GetSign(entered);
-            
-        //    // update probabilities
-        //    AddSignError(orig_sign, ent_sign);
-
-        //    // look at the first characters
-        //    var fc_orig = original[0];
-        //    var fc_ent = entered[0];
-
-        //    // does the original string have a sign?
-        //    var orig_has_sign = false;
-        //    if (fc_orig == '-' || fc_orig == '+')
-        //    {
-        //        orig_has_sign = true;
-        //    }
-
-        //    // does the entered string have a sign?
-        //    var ent_has_sign = false;
-        //    if (fc_ent == '-' || fc_ent == '+')
-        //    {
-        //        ent_has_sign = true;
-        //    }
-
-        //    // if the original string had no sign but the entered one did
-        //    // erase the sign in the entered string
-        //    if (ent_has_sign && !orig_has_sign)
-        //    {
-        //        return new OptString(entered.Remove(0, 1));
-        //    }
-
-        //    // if the original string had a sign but the entered string
-        //    // did not, remove the sign in the entered string
-        //    if (!ent_has_sign && orig_has_sign)
-        //    {
-        //        return new OptString(fc_orig + entered);
-        //    }
-
-        //    // both have signs but are not the same
-        //    if (ent_has_sign && orig_has_sign && (orig_sign != ent_sign))
-        //    {
-        //        return new OptString(fc_orig + entered.Remove(0,1));
-        //    }
-
-        //    // no sign errors
-        //    return OptString.None;
-        //}
-
-        internal Dictionary<Tuple<OptChar,string>,int> GetTypoDict()
+        public Dictionary<Tuple<OptChar,string>,int> GetTypoDict()
         {
             return _typo_dict;
         }
 
-        internal Dictionary<int, int> GetTranspositionDict()
+        public Dictionary<int, int> GetTranspositionDict()
         {
             return _transposition_dict;
         }
