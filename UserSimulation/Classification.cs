@@ -216,12 +216,12 @@ namespace UserSimulation
         //    return OptString.None;
         //}
 
-        internal Dictionary<Tuple<OptChar,string>,int> GetTypoDict()
+        public Dictionary<Tuple<OptChar,string>,int> GetTypoDict()
         {
             return _typo_dict;
         }
 
-        internal Dictionary<int, int> GetTranspositionDict()
+        public Dictionary<int, int> GetTranspositionDict()
         {
             return _transposition_dict;
         }

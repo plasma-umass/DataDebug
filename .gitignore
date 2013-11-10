@@ -18,3 +18,4 @@ obj
 *.trx
 AgentRestart.dat
 TestResults
+CheckCellTests/.gitignore
