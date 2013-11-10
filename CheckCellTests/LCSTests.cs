@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
+using FSIntList = Microsoft.FSharp.Collections.FSharpList<int>;
 
 namespace CheckCellTests
 {
@@ -105,42 +106,10 @@ namespace CheckCellTests
         }
 
         [TestMethod]
-        public void TranspositionTest()
-        {
-            var s1 = "abc";
-            var s2 = "acb";
-
-            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
-            var additions = LongestCommonSubsequence.GetAddedCharIndices(s2, ss);
-            var omissions = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
-            var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, s1, s2, Microsoft.FSharp.Collections.FSharpList<Tuple<int,int>>.Empty);
-
-            // there should be only 1 transposition here, but depending
-            // on the randomly-chosen alignment, it may be one or the other
-            var t1 = new Tuple<int,int>(2,1);
-            var t2 = new Tuple<int,int>(1,2);
-            Tuple<int, int> TR = transpositions[0];
-            Assert.AreEqual(true, TR.Equals(t1) || TR.Equals(t2));
-        }
-
-        [TestMethod]
-        public void NoTranspositionTest()
-        {
-            var s1 = "abc";
-            var s2 = "abc";
-
-            var ss = LongestCommonSubsequence.LeftAlignedLCS(s1, s2);
-            var additions = LongestCommonSubsequence.GetAddedCharIndices(s2, ss);
-            var omissions = LongestCommonSubsequence.GetMissingCharIndices(s1, ss);
-            var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, s1, s2, Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>.Empty);
-            Assert.AreEqual(0, transpositions.Length);
-        }
-
-        [TestMethod]
         public void FixTranspositionTest()
         {
-            var orig = "aaab";
-            var entered = "bzzzaaa";
+            var orig = "aaabq";
+            var entered = "bbzzzaaaq";
 
             var ta = LongestCommonSubsequence.LCS_Char(orig, entered);
             var alignments = LongestCommonSubsequence.LeftAlignedLCS(orig, entered);
@@ -153,7 +122,95 @@ namespace CheckCellTests
             var additions2 = fixedouts.Item3;
             var omissions2 = fixedouts.Item4;
             var deltas = fixedouts.Item5;
-            var a = "hi";
+
+            Assert.AreEqual(-3, deltas.Head);
+            Assert.AreEqual("bzzzaaabq", entered2);
+            int[] correct_additions = { 0, 1, 2, 3 };
+            Assert.AreEqual(true, correct_additions.SequenceEqual<int>(additions2));
+            int[] correct_omissions = {};
+            Assert.AreEqual(true, correct_omissions.SequenceEqual<int>(omissions2));
+            Tuple<int,int>[] correct_alignments = { new Tuple<int,int>(0,4), new Tuple<int,int>(1,5), new Tuple<int,int>(2,6), new Tuple<int,int>(3,7), new Tuple<int,int>(4,8) };
+            Assert.AreEqual(true, correct_alignments.SequenceEqual<Tuple<int,int>>(alignments2));
+        }
+
+        [TestMethod]
+        public void FixTranspositionTest2()
+        {
+            var orig = "baaaq";
+            var entered = "zzzaaabbq";
+
+            var alignments = LongestCommonSubsequence.LeftAlignedLCS(orig, entered);
+            var additions = LongestCommonSubsequence.GetAddedCharIndices(entered, alignments);
+            var omissions = LongestCommonSubsequence.GetMissingCharIndices(orig, alignments);
+            var fixedouts = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, orig, entered);
+
+            var entered2 = fixedouts.Item1;
+            var alignments2 = fixedouts.Item2;
+            var additions2 = fixedouts.Item3;
+            var omissions2 = fixedouts.Item4;
+            var deltas = fixedouts.Item5;
+
+            Assert.AreEqual(3, deltas.Head);
+            Assert.AreEqual("bzzzaaabq", entered2);
+            int[] correct_additions = { 1, 2, 3, 7 };
+            Assert.AreEqual(true, correct_additions.SequenceEqual<int>(additions2));
+            int[] correct_omissions = { };
+            Assert.AreEqual(true, correct_omissions.SequenceEqual<int>(omissions2));
+            Tuple<int, int>[] correct_alignments = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 4), new Tuple<int, int>(2, 5), new Tuple<int, int>(3, 6), new Tuple<int, int>(4, 8) };
+            Assert.AreEqual(true, correct_alignments.SequenceEqual<Tuple<int, int>>(alignments2));
+        }
+
+        [TestMethod]
+        public void EnumFixTranspositionTests()
+        {
+            var orig1 = "acc";
+            var ent1 = "cca";
+            var al1 = LongestCommonSubsequence.LeftAlignedLCS(orig1, ent1);
+            var ad1 = LongestCommonSubsequence.GetAddedCharIndices(ent1, al1);
+            var om1 = LongestCommonSubsequence.GetMissingCharIndices(orig1, al1);
+            var fix1 = LongestCommonSubsequence.FixTranspositions(al1, ad1, om1, orig1, ent1);
+            Assert.AreEqual(orig1, fix1.Item1);
+            Tuple<int, int>[] correct_alignments = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
+            Assert.AreEqual(true, correct_alignments.SequenceEqual<Tuple<int, int>>(fix1.Item2));
+            int [] correct_additions = {};
+            Assert.AreEqual(true, correct_additions.SequenceEqual<int>(fix1.Item3));
+            int[] correct_omissions = { };
+            Assert.AreEqual(true, correct_omissions.SequenceEqual<int>(fix1.Item4));
+            Assert.AreEqual(2, fix1.Item5.Head);
+
+            var orig2 = "acc";
+            var ent2 = "cac";
+            // this line is to avoid nondeterministic choice of alignments
+            Tuple<int, int>[] al2_a = { new Tuple<int, int>(0, 1), new Tuple<int, int>(2, 2) };
+            var al2 = LongestCommonSubsequence.ToFSList(al2_a);
+            var ad2 = LongestCommonSubsequence.GetAddedCharIndices(ent2, al2);
+            var om2 = LongestCommonSubsequence.GetMissingCharIndices(orig2, al2);
+            var fix2 = LongestCommonSubsequence.FixTranspositions(al2, ad2, om2, orig2, ent2);
+            Assert.AreEqual(orig2, fix2.Item1);
+            Tuple<int, int>[] correct_alignments2 = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
+            Assert.AreEqual(true, correct_alignments2.SequenceEqual<Tuple<int, int>>(fix2.Item2));
+            int[] correct_additions2 = { };
+            Assert.AreEqual(true, correct_additions2.SequenceEqual<int>(fix2.Item3));
+            int[] correct_omissions2 = { };
+            Assert.AreEqual(true, correct_omissions2.SequenceEqual<int>(fix2.Item4));
+            Assert.AreEqual(-1, fix2.Item5.Head);
+
+            var orig3 = "cac";
+            var ent3 = "acc";
+            // this line is to avoid nondeterministic choice of alignments
+            Tuple<int, int>[] al3_a = { new Tuple<int, int>(0, 1), new Tuple<int, int>(2, 2) };
+            var al3 = LongestCommonSubsequence.ToFSList(al3_a);
+            var ad3 = LongestCommonSubsequence.GetAddedCharIndices(ent3, al3);
+            var om3 = LongestCommonSubsequence.GetMissingCharIndices(orig3, al3);
+            var fix3 = LongestCommonSubsequence.FixTranspositions(al3, ad3, om3, orig3, ent3);
+            Assert.AreEqual(orig3, fix3.Item1);
+            Tuple<int, int>[] correct_alignments3 = { new Tuple<int, int>(0, 0), new Tuple<int, int>(1, 1), new Tuple<int, int>(2, 2) };
+            Assert.AreEqual(true, correct_alignments3.SequenceEqual<Tuple<int, int>>(fix2.Item2));
+            int[] correct_additions3 = { };
+            Assert.AreEqual(true, correct_additions3.SequenceEqual<int>(fix2.Item3));
+            int[] correct_omissions3 = { };
+            Assert.AreEqual(true, correct_omissions3.SequenceEqual<int>(fix2.Item4));
+            Assert.AreEqual(-1, fix3.Item5.Head);
         }
 
         [TestMethod]

@@ -109,8 +109,7 @@ namespace UserSimulation
             // find all character omissions
             var omissions = LongestCommonSubsequence.GetMissingCharIndices(original, alignments);
             // find all transpositions
-            var emptylist = Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>.Empty;
-            var transpositions = LongestCommonSubsequence.GetTranspositions(additions, omissions, original, entered, emptylist);
+            var transpositions = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, original, entered);
             // remove all transpositions from alignment list
             //var additions2 = additions.Where(a => !transpositions.Select(tpair => tpair.Item1).Contains(a));
             //var omissions2 = omissions.Where(o => !transpositions.Select(tpair => tpair.Item2).Contains(o));

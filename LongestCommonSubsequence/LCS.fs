@@ -121,16 +121,22 @@
         let rec FT(al: (int*int) list, ad: int list, om: int list, entered: string, tdeltas: int list)
             : string * (int*int) list * int list * int list * int list =
             if ad.Length = 0 || om.Length = 0 then
-                entered,al,ad,om,tdeltas
+                // we strip the (-1,-1) pseudo-alignment out of the list
+                entered,al.Tail,ad,om,tdeltas
             else
                 // get the location of the first omission
                 let omloc = om.Head
                 // get the character of the first omission
                 let ochar = orig.[omloc]
-                // get entered chars to the left of ochar
-                let lhs = List.filter (fun i -> i <= omloc) ad
-                // get entered chars to the right of ochar
-                let rhs = List.filter (fun i -> i > omloc) ad
+                // find the intended location of the char in the entered string
+                // this character needs to be moved to the right of the rightmost
+                // alignment that occurs just before this character
+                let rightmost = snd (List.rev (List.filter (fun (origpos,entpos) -> origpos < omloc) (List.sortBy (fun (o,e) -> o) al))).Head
+                let insertpos = rightmost + 1
+                // get additions to the left of insertpos
+                let lhs = List.filter (fun i -> i < insertpos) ad
+                // get additions to the right of insertpos
+                let rhs = List.filter (fun i -> i >= insertpos) ad
                 // get lhs character positions that match ochar
                 let lhs_matches = List.rev (List.filter (fun i -> entered.[i] = ochar) lhs)
                 // get rhs character positions that match ochar
@@ -146,12 +152,8 @@
                     // if no characters match the current omitted character,
                     // discard the omission and move on
                     FT(al, ad, om.Tail, entered, tdeltas)
-                | il,Some(idx) ->
-                    // find the intended location of the char in the entered string
-                    // this character needs to be moved to the right of the rightmost
-                    // alignment that occurs just before this character
-                    let rightmost = snd (List.rev (List.filter (fun (origpos,entpos) -> origpos < omloc) (List.sortBy (fun (o,e) -> o) al))).Head
-                    let insertpos = rightmost + 1
+                | il,Some(rempos) ->
+                    
 
                     // insert the character in the appropriate location,
                     // ensuring that the sting is lengthened if the location
@@ -162,7 +164,10 @@
                                    else
                                        entered.Substring(0,insertpos) + ochar.ToString() + entered.Substring(insertpos)
                     // remove the character from the entered position
-                    let entered'' = entered'.Substring(0,idx) + entered'.Substring(idx + 1)
+                    let entered'' = if rempos < insertpos then
+                                        entered'.Substring(0,rempos) + entered'.Substring(rempos + 1)
+                                    else
+                                        entered'.Substring(0,rempos + 1) + entered'.Substring(rempos + 2)
 
                     // adjust the omissions list
                     let omissions = om.Tail
@@ -170,51 +175,34 @@
                     // adjust the additions list
                     // remove the addition, and then, for all additions between the omission position
                     // and the insertion position, shift one to the right
-                    let additions = List.filter (fun a -> a <> idx) ad |> List.map (fun a -> if a > idx && a < insertpos then a + 1 else a)
+                    let additions = if rempos < insertpos then
+                                        List.filter (fun a -> a <> rempos) ad |> List.map (fun a -> if a >= rempos && a < insertpos then a - 1 else a) 
+                                    else
+                                        List.filter (fun a -> a <> rempos) ad |> List.map (fun a -> if a >= insertpos && a < rempos then a + 1 else a) 
 
                     // adjust the alignments
-                    let alignments = (omloc, rightmost) :: if omloc < insertpos then
-                                                               List.map (fun (o,e) -> if e > omloc && o < insertpos then (o,e+1) else (o,e)) al
-                                                           else
-                                                               List.map (fun (o,e) -> if e > insertpos then (o,e-1) else (o,e)) al
+                    let alignmentz = if rempos < insertpos then
+                                         (omloc, insertpos - 1) :: List.map (fun (o,e) -> if e >= rempos && e < insertpos then (o,e-1) else (o,e)) al
+                                     else
+                                         (omloc, insertpos) :: List.map (fun (o,e) -> if e >= insertpos && e < rempos then (o,e+1) else (o,e)) al
+                    // sort
+                    let alignments = List.sortBy (fun (o,e) -> o) alignmentz
+
+                    // calculate the new delta
+                    // since we generate transpositions before we generate additions/omissions, we do
+                    // only want to count the characters in the ORIGINAL string
+                    let dpos = if rempos < insertpos then
+                                   let betweens = List.filter (fun (o,e) -> e <= insertpos && e > rempos) al
+                                   fst (betweens.Head)
+                               else
+                                   let betweens = List.filter (fun (o,e) -> e > insertpos && e <= rempos) al
+                                   fst ((List.rev betweens).Head)
+
                     // process the next transposition
-                    FT(alignments, additions, omissions, entered'', (idx - omloc)::tdeltas)
+                    FT(alignments, additions, omissions, entered'', (dpos - omloc)::tdeltas)
         // add the pseudo-start char alignment to ensure that there is
         // always a rightmost alignment
         FT((-1,-1)::al, ad, om, entered, [])
-
-    // find all transpositions
-    // returns (addition,omission) pairs
-    // unusual structure to make call tail-recursive
-    let rec GetTranspositions(additions: int list, omissions: int list, orig: string, entered: string, transpositions: (int*int) list) : (int*int) list =
-        if additions.Length = 0 || omissions.Length = 0 then
-            List.rev transpositions
-        else
-            // get the character of the first omission
-            let ochar = orig.[omissions.Head]
-            // get entered chars to the left of ochar
-            let lhs = List.filter (fun i -> i <= omissions.Head) additions
-            // get entered chars to the right of ochar
-            let rhs = List.filter (fun i -> i > omissions.Head) additions
-            // get lhs character positions that match ochar
-            let lhs_matches = List.rev (List.filter (fun i -> entered.[i] = ochar) lhs)
-            // get rhs character positions that match ochar
-            let rhs_matches = List.filter (fun i -> entered.[i] = ochar) rhs
-            // choose the closest match
-            let is_lhs,a_idx = match lhs_matches,rhs_matches with
-                               | l::ls,r::rs -> if System.Math.Abs(omissions.Head - r) <= System.Math.Abs(omissions.Head - l) then false,Some(r) else true,Some(l)
-                               | [],r::rs -> false,Some(r)
-                               | l::ls,[] -> true,Some(l)
-                               | [],[] -> false,None
-            match is_lhs,a_idx with
-            | _,None ->
-                // if no characters match the current omitted character,
-                // discard the character and move on
-                GetTranspositions(additions, omissions.Tail, orig, entered, transpositions)
-            | il,Some(idx) ->
-                let additions' = List.filter (fun a -> a <> idx) additions
-                let omissions' = omissions.Tail
-                GetTranspositions(additions', omissions', orig, entered, (omissions.Head,idx) :: transpositions)
 
     // rounds to the nearest positive number, including zero
     let rnd(z: int) = if z < 0 then 0 else z
@@ -270,3 +258,5 @@
         let hs = new System.Collections.Generic.HashSet<System.Collections.Generic.IEnumerable<int*int>>()
         for ls in LCS_Char(X,Y) do hs.Add(ls |> List.toSeq) |> ignore
         hs
+
+    let ToFSList(arr: 'a[]) : 'a list = List.ofArray arr
