@@ -1,4 +1,7 @@
 ﻿module LongestCommonSubsequence
+    open System
+    open System.Threading.Tasks
+
     type Sign =
     | Plus = 0
     | Minus = 1
@@ -82,13 +85,30 @@
         let n = Y.Length
         let C = LCSLength(X,Y)
         backtrackAll(C, X, Y, m, n)
+        
+    type Async with
+        static member AsCancellable computation =
+            let func = new Func<'T>(computation)
+            let beginFunc (callback, _) = func.BeginInvoke(callback, ())
+            let endFunc ar = func.EndInvoke(ar)
+            Async.FromBeginEnd(beginFunc, endFunc)
+
+        static member RunWithCancellation (timeout:int) computation =
+            let async = Async.AsCancellable computation
+            let timeoutSource = new System.Threading.CancellationTokenSource()
+            Async.RunSynchronously(async, timeout, cancellationToken = timeoutSource.Token)
 
     // compute the set of longest character pair sequences
     let LCS_Char(X: string, Y: string) : Set<(int*int) list> =
+        let timeout = 5 * 1000 // 5 seconds
         let m = X.Length
         let n = Y.Length
         let C = LCSLength(X,Y)
         getCharPairs(C, X, Y, m, n)
+//        try
+//            Async.RunWithCancellation(timeout)(fun () -> getCharPairs(C, X, Y, m, n))
+//        with
+//        | :? TimeoutException -> set[getCharPairs_single(C, X, Y, m, n)]
 
     // "pull" each Y index to the left as far as it will go
     // this allows key-repeat typos to be counted correctly

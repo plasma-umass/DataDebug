@@ -273,5 +273,35 @@ namespace CheckCellTests
             }
             Assert.AreEqual(true, found);
         }
+
+        [TestMethod]
+        public void TypoString()
+        {
+            var original = "Testing";
+            var entered = "Tesying";
+
+            // get LCS
+            var alignments = LongestCommonSubsequence.LeftAlignedLCS(original, entered);
+            // find all character additions
+            var additions = LongestCommonSubsequence.GetAddedCharIndices(entered, alignments);
+            // find all character omissions
+            var omissions = LongestCommonSubsequence.GetMissingCharIndices(original, alignments);
+            // find all transpositions
+            var outputs = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, original, entered);
+            // new string
+            string entered2 = outputs.Item1;
+            // new alignments
+            var alignments2 = outputs.Item2;
+            // new additions
+            var additions2 = outputs.Item3;
+            // new omissions
+            var omissions2 = outputs.Item4;
+            // deltas
+            var deltas = outputs.Item5;
+            // get typos
+            var typos = LongestCommonSubsequence.GetTypos(alignments2, original, entered2);
+
+            var hi = "hi";
+        }
     }
 }
