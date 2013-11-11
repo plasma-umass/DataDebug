@@ -65,11 +65,6 @@ namespace UserSimulation
         {
             // get LCS
             var alignments = LongestCommonSubsequence.LeftAlignedLCS(original, entered);
-            // train the model for all non-transpositions
-            foreach (var alignment in alignments)
-            {
-                AddTranspositionError(0);
-            }
             // find all character additions
             var additions = LongestCommonSubsequence.GetAddedCharIndices(entered, alignments);
             // find all character omissions
@@ -86,14 +81,31 @@ namespace UserSimulation
             var omissions2 = outputs.Item4;
             // deltas
             var deltas = outputs.Item5;
-            // train the model for all real transpositions
+            // get typos
+            var typos = LongestCommonSubsequence.GetTypos(alignments2, original, entered2);
+
+            // train the model for all non-transpositions
+            foreach (var alignment in alignments)
+            {
+                AddTranspositionError(0);
+            }
+
+            // train the model for all non-typos
+            foreach (var alignment in alignments2)
+            {
+                // both orig and entered chars are guaranteed to be the same
+                // otherwise they would not be aligned
+                var origchar = original[alignment.Item1];
+                AddTypoError(OptChar.Some(origchar), origchar.ToString());
+            }
+
+            // train the model for all actual transpositions
             foreach (var delta in deltas)
             {
                 AddTranspositionError(delta);
             }
-            // get typos
-            var typos = LongestCommonSubsequence.GetTypos(alignments2, original, entered2);
-            // now train the classifier for each remaining error
+            
+            // train the model for each remaining typo
             foreach (var typo in typos)
             {
                 OptChar c = typo.Item1;

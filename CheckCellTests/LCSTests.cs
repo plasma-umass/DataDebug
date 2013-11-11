@@ -244,5 +244,34 @@ namespace CheckCellTests
             Assert.AreEqual(true, key_hs.SetEquals(keys_seen));
             Assert.AreEqual(true, value_hs.SetEquals(values_seen));
         }
+
+        [TestMethod]
+        public void LCSSingleFindsLCSInLCSMulti()
+        {
+            var s1 = "aacc";
+            var s2 = "aaaccac";
+
+            // Run LCS
+            var m = s1.Length;
+            var n = s2.Length;
+            var C = LongestCommonSubsequence.LCSLength(s1,s2);
+
+            // Run backtrack-all
+            var multi = LongestCommonSubsequence.getCharPairs(C, s1, s2, m, n);
+
+            // Run backtrack-single
+            var single = LongestCommonSubsequence.getCharPairs_single(C, s1, s2, m, n);
+
+            // single should be in multi
+            var found = false;
+            foreach (var alignment in multi)
+            {
+                if (alignment.SequenceEqual(single))
+                {
+                    found = true;
+                }
+            }
+            Assert.AreEqual(true, found);
+        }
     }
 }

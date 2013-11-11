@@ -40,6 +40,23 @@
                 R <- Set.union R (backtrackAll(C, X, Y, i-1, j))
             R
 
+    // like backtrack except that it returns a character pair sequence
+    // instead of a string
+    // for each character pair: (X pos, Y pos)
+    let rec getCharPairs_single(C: int[,], X: string, Y: string, i: int, j: int) : (int*int) list =
+        if i = 0 || j = 0 then
+            []
+        else if X.[i-1] = Y.[j-1] then
+            // append instead of prepend so that alignments
+            // are in ascending order
+            // we adjust offsets because C is 1-based
+            getCharPairs_single(C, X, Y, i-1, j-1) @ [(i-1,j-1)]
+        else
+            if C.[i, j-1] > C.[i-1, j] then
+                getCharPairs_single(C, X, Y, i, j-1)
+            else
+                getCharPairs_single(C, X, Y, i-1, j)
+
     // like backtrackAll except that it returns a set of character pair
     // sequences instead of a set of strings
     // for each character pair: (X pos, Y pos)
