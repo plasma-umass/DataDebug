@@ -65,32 +65,41 @@ namespace UserSimulation
         {
             // get LCS
             var alignments = LongestCommonSubsequence.LeftAlignedLCS(original, entered);
+            // train the model for all non-transpositions
+            foreach (var alignment in alignments)
+            {
+                AddTranspositionError(0);
+            }
             // find all character additions
             var additions = LongestCommonSubsequence.GetAddedCharIndices(entered, alignments);
             // find all character omissions
             var omissions = LongestCommonSubsequence.GetMissingCharIndices(original, alignments);
             // find all transpositions
-            var transpositions = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, original, entered);
-            // remove all transpositions from alignment list
-            //var additions2 = additions.Where(a => !transpositions.Select(tpair => tpair.Item1).Contains(a));
-            //var omissions2 = omissions.Where(o => !transpositions.Select(tpair => tpair.Item2).Contains(o));
-            // remember: alignments is a list of (original position, entered position) pairs
-            //var alignments2 = alignments.Where(apair => 
+            var outputs = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, original, entered);
+            // new string
+            string entered2 = outputs.Item1;
+            // new alignments
+            var alignments2 = outputs.Item2;
+            // new additions
+            var additions2 = outputs.Item3;
+            // new omissions
+            var omissions2 = outputs.Item4;
+            // deltas
+            var deltas = outputs.Item5;
+            // train the model for all real transpositions
+            foreach (var delta in deltas)
+            {
+                AddTranspositionError(delta);
+            }
             // get typos
-            var typos = LongestCommonSubsequence.GetTypos(alignments, original, entered);
+            var typos = LongestCommonSubsequence.GetTypos(alignments2, original, entered2);
             // now train the classifier for each remaining error
-            //foreach (var tpair in transpositions)
-            //{
-            //    // calculate delta = addition position - omission position
-            //    var delta = tpair.Item1 - tpair.Item2;
-
-            //    // update probability
-            //    AddTranspositionError(delta);
-            //}
-            //foreach (int addpos in additions2)
-            //{
-
-            //}
+            foreach (var typo in typos)
+            {
+                OptChar c = typo.Item1;
+                string s = typo.Item2;
+                AddTypoError(c, s);
+            }
         }
 
         public static Sign GetSign(string input)
