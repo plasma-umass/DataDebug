@@ -106,6 +106,7 @@ type Data(csvdata: string[][], _inputs_per_hit: int) =
     member self.WorkerIDsSortedByAccuracy = 
         Seq.sortBy (fun (pair: KeyValuePair<string, AST.Address list>) -> -self.WorkerAccuracy pair.Key) worker_ids |>
         Seq.map (fun (pair: KeyValuePair<string, AST.Address list>) -> pair.Key)
+    member self.StringPairs = Seq.map (fun (pair: KeyValuePair<AST.Address,string*string>) -> pair.Value) input_pairs
 
 [<EntryPoint>]
 let main argv = 
@@ -131,6 +132,15 @@ let main argv =
         for worker_id in data.WorkerIDsSortedByAccuracy do
             Console.WriteLine("Worker {0} completed {1} assignments with an accuracy of {2:P}.", worker_id, data.WorkerAssignments(worker_id), data.WorkerAccuracy(worker_id)) |> ignore
 
-        Console.ReadLine() |> ignore
+        // train classifier
+        let total_inputs = data.NumInputs
+        let c = UserSimulation.Classification()
+        Seq.iteri (fun i (orig,entered) ->
+            Console.Write("\r{0:P} strings classified", System.Convert.ToDouble(i) / System.Convert.ToDouble(total_inputs))
+            c.ProcessTypos(orig,entered)
+        ) data.StringPairs
+        Console.Write("\n")
+
+        let d = c
 
         0   // A-OK
