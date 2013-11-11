@@ -196,10 +196,7 @@ namespace UserSimulation
                     //And add the indices to the transposed_locations
                     transposed_locations.Add(target_index);
                 }
-                else
-                {
-                    transposed_locations.Add(i);
-                }
+
                 //If the delta was greater than 0, the next i gets shifted to the left because we remove the current character from its place and move it to the right
                 if (delta > 0)
                 {
