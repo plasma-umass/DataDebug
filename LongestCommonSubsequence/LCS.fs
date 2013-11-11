@@ -7,7 +7,7 @@
     type Error = 
     // first int is index in orig string; second int is delta
     | TranspositionError of int*int
-    // first int is index in orig string; char is the character we we supposed to type;
+    // first int is index in orig string; char is the character we were supposed to type;
     // string is what was actually typed
     | TypoError of int*char*string
     // first sign is orig string; second is in retyped string

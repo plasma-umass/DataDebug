@@ -202,8 +202,6 @@ namespace UserSimulation
                 {
                     i--;
                 }
-                //TODO get rid of error_list; instead, at the end of GenerateErrors, check if the input 
-                //  was changed at all; if yes, run the classifier to find out how it changed
             }
 
             String modified_input = "";
@@ -233,6 +231,59 @@ namespace UserSimulation
 
             //Signs and decimals are handled by typo model
 
+            //TODO get rid of error_list; instead, at the end of GenerateErrors, check if the input 
+            //  was changed at all; if yes, run the classifier to find out how it changed
+            if (!modified_input.Equals(input))
+            {
+                //error_list = get errors from Classification
+
+                error_list.Clear();
+                // get LCS
+                var alignments = LongestCommonSubsequence.LeftAlignedLCS(input, modified_input);
+                // find all character additions
+                var additions = LongestCommonSubsequence.GetAddedCharIndices(modified_input, alignments);
+                // find all character omissions
+                var omissions = LongestCommonSubsequence.GetMissingCharIndices(input, alignments);
+                // find all transpositions
+                var outputs = LongestCommonSubsequence.FixTranspositions(alignments, additions, omissions, input, modified_input);
+                // new string
+                string modified_input2 = outputs.Item1;
+                // new alignments
+                var alignments2 = outputs.Item2;
+                // new additions
+                var additions2 = outputs.Item3;
+                // new omissions
+                var omissions2 = outputs.Item4;
+                // deltas
+                var deltas = outputs.Item5;
+                // get typos
+                var typos = LongestCommonSubsequence.GetTypos(alignments2, input, modified_input2);
+                foreach (Tuple<OptChar, string> typo_error in typos)
+                {
+                    if (typo_error.Item1 != null)
+                    {
+                        if (!typo_error.Item2.Equals(typo_error.Item1.Value + ""))
+                        {
+                            LCSError error = LongestCommonSubsequence.Error.NewTypoError(0, typo_error.Item1.Value, typo_error.Item2);
+                            error_list.Add(error);
+                        }
+                    }
+                    else
+                    {
+                        if (!typo_error.Item2.Equals(""))
+                        {
+                            LCSError error = LongestCommonSubsequence.Error.NewTypoError(0, '\0', typo_error.Item2);
+                            error_list.Add(error);
+                        }
+                    }
+                }
+                foreach (int delta in deltas)
+                {
+                    LCSError error = LongestCommonSubsequence.Error.NewTranspositionError(0, delta);
+                    error_list.Add(error);
+                }
+            }
+            
             ErrorString output = new Tuple<string, List<LCSError>>(modified_input, error_list);
             
             return output;
