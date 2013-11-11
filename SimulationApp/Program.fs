@@ -141,6 +141,4 @@ let main argv =
         ) data.StringPairs
         Console.Write("\n")
 
-        let d = c
-
         0   // A-OK
