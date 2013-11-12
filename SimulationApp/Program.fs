@@ -137,7 +137,7 @@ let main argv =
         let c = UserSimulation.Classification()
         Seq.iteri (fun i (orig,entered) ->
             Console.Write("\r{0:P} strings classified", System.Convert.ToDouble(i) / System.Convert.ToDouble(total_inputs))
-            c.ProcessTypos(orig,entered)
+            c.ProcessTypos(orig,entered) |> ignore
         ) data.StringPairs
         Console.Write("\n")
 

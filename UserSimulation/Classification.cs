@@ -61,7 +61,7 @@ namespace UserSimulation
             }
         }
 
-        public void ProcessTypos(string original, string entered)
+        public Tuple<int,int> ProcessTypos(string original, string entered)
         {
             // get LCS
             var alignments = LongestCommonSubsequence.LeftAlignedLCS(original, entered);
@@ -84,6 +84,9 @@ namespace UserSimulation
             // get typos
             var typos = LongestCommonSubsequence.GetTypos(alignments2, original, entered2);
 
+            int count_deltas = 0;
+            int count_typos = 0;
+
             // train the model for all non-transpositions
             foreach (var alignment in alignments)
             {
@@ -94,6 +97,7 @@ namespace UserSimulation
             foreach (var delta in deltas)
             {
                 AddTranspositionError(delta);
+                count_deltas += 1;
             }
             
             // train the model for each "typo", including non-typos
@@ -102,7 +106,19 @@ namespace UserSimulation
                 OptChar c = typo.Item1;
                 string s = typo.Item2;
                 AddTypoError(c, s);
+
+                // non-empty string
+                if (OptChar.get_IsSome(c))
+                {
+                    count_typos += c.Value.ToString().Equals(s) ? 0 : 1;
+                }
+                // empty string
+                else
+                {
+                    count_typos += s.Equals("") ? 0 : 1;
+                }
             }
+            return new Tuple<int,int>(count_deltas, count_typos);
         }
 
         public static Sign GetSign(string input)

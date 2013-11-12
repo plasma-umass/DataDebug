@@ -312,29 +312,41 @@ namespace CheckCellTests
         [TestMethod]
         public void TypoClassify()
         {
+            int NUMTRIALS = 100000;
+            double EPSILON = 0.00001;
             var original = "Testing";
-            string[] errors = { "Tesying", "eTsting", "Tessting" };
+            string[] errors = { "Tesying", "eTTsting", "Tessting" };
 
-            // traing the model with 5% errors
+            // traing the model with 5% erroneous strings
             var c = new UserSimulation.Classification();
             var rnd = new Random();
             var p_correct = 0.95;
-            for (int i = 0; i < 1000; i++)
+            int total_char_count = 0;
+            int bad_char_count = 0;
+            for (int i = 0; i < NUMTRIALS; i++)
             {
                 var j = rnd.NextDouble();
                 if (j <= p_correct)
                 {
-                    c.ProcessTypos(original, original);
+                    var outcome = c.ProcessTypos(original, original);
+                    Assert.AreEqual(outcome.Item2, 0);
+                    bad_char_count += outcome.Item2;
+                    total_char_count += original.Length;
                 }
                 else
                 {
                     var entered = errors[rnd.Next(3)];
-                    c.ProcessTypos(original, entered);
+                    var outcome = c.ProcessTypos(original, entered);
+                    Assert.AreNotEqual(outcome.Item2, 0);
+                    bad_char_count += outcome.Item2;
+                    total_char_count += original.Length;
                 }
             }
             
-            // the model should actually have 5% errors
-            Assert.AreEqual(true, c.CharErrorRate() < 0.06);
+            // the per-character error rate should be at most the following:
+            double shouldbe_p_incorrect = (double)bad_char_count / (double)total_char_count + EPSILON;
+            double observed_p_incorrect = c.CharErrorRate();
+            Assert.AreEqual(true, observed_p_incorrect <= shouldbe_p_incorrect);
         }
     }
 }
