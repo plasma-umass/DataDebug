@@ -317,7 +317,7 @@ namespace CheckCellTests
             var original = "Testing";
             string[] errors = { "Tesying", "eTTsting", "Tessting" };
 
-            // traing the model with 5% erroneous strings
+            // training the model with 5% erroneous strings
             var c = new UserSimulation.Classification();
             var rnd = new Random();
             var p_correct = 0.95;
@@ -331,7 +331,7 @@ namespace CheckCellTests
                     var outcome = c.ProcessTypos(original, original);
                     Assert.AreEqual(outcome.Item2, 0);
                     bad_char_count += outcome.Item2;
-                    total_char_count += original.Length;
+                    total_char_count += original.Length + 1;
                 }
                 else
                 {
@@ -339,7 +339,7 @@ namespace CheckCellTests
                     var outcome = c.ProcessTypos(original, entered);
                     Assert.AreNotEqual(outcome.Item2, 0);
                     bad_char_count += outcome.Item2;
-                    total_char_count += original.Length;
+                    total_char_count += original.Length + 1;
                 }
             }
             

@@ -25,9 +25,7 @@ namespace UserSimulation
         //  Transposition
         //  Typo
         
-        //Dictionaries for all error types:
-        // key: <correct sign, entered sign>, value: frequency count
-        //private Dictionary<Tuple<Sign,Sign>,int> _sign_dict = new Dictionary<Tuple<Sign,Sign>,int>();
+        //Dictionaries for the two error types:
         // key: <char that was supposed to be typed, string that was typed>, value: frequency count
         private Dictionary<Tuple<OptChar, string>, int> _typo_dict = new Dictionary<Tuple<OptChar, string>, int>();
         // key: Delta (difference from original location; 0 if there wasn't a transposition), value: frequency count
