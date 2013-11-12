@@ -258,16 +258,22 @@
                 let omitted_chars = orig.Substring((fst a1) + 1, (fst a2) - (fst a1 + 1))
                 // create n random partitions of extra_chars, where n = omitted_chars.Length
                 // the first partition is always (0,n >= 1)
-                let parts = Seq.pairwise (List.sort (0 :: List.map (fun partition -> rng.Next(1,extra_chars.Length+1)) [1..omitted_chars.Length] @ [extra_chars.Length])) |> Seq.toList
+                let parts = Seq.pairwise (List.sort (0 :: List.map (fun partition -> rng.Next(0,extra_chars.Length+1)) [1..omitted_chars.Length] @ [extra_chars.Length])) |> Seq.toList
                 // the first partition is always conditioned on the character in
                 // orig at position fst a1 which may or may not be the empty string
                 let a1_typo = match (fst a1) with
                                 | -1 -> None, extra_chars.Substring(0, snd parts.Head)
                                 | _ -> Some(orig.[fst a1]), orig.[fst a1].ToString() + extra_chars.Substring(0, snd parts.Head)
                 // prepend to typo list
-                // pstart is inclusive
-                // pend is exclusive
-                let typos' = a1_typo :: (List.mapi (fun idx (pstart,pend) -> Some(orig.[idx]),entered.Substring(pstart,pend-pstart)) parts.Tail) @ typos
+                // divvy up the extra_chars among the omitted_chars
+                let typos' = (List.mapi (fun idx (pstart,pend) ->
+                                            let echars = extra_chars
+                                            let condchar = Some(omitted_chars.[idx])
+                                            let length = pend-pstart
+                                            let typostr = echars.Substring(pstart,length)
+                                            condchar,typostr
+                                        ) parts.Tail
+                             ) @ a1_typo :: typos
                 // process remaining typos
                 typoget(a2::als, typos')
             | a::[] ->
@@ -276,9 +282,9 @@
                 let a_char = match (fst a) with
                              | -1 -> None
                              | _ -> Some(orig.[fst a])
-                let typos' = (a_char,extra_chars) :: typos
+                let typos' = (a_char,orig.[snd a].ToString() + extra_chars) :: typos
                 typoget([], typos')
-            | [] -> typos
+            | [] -> List.rev typos
         // call recursive function, prepending a "start of string" alignment to the list
         typoget((-1,-1)::alignments, [])
 

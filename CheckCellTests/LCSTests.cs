@@ -301,7 +301,12 @@ namespace CheckCellTests
             // get typos
             var typos = LongestCommonSubsequence.GetTypos(alignments2, original, entered2);
 
-            var hi = "hi";
+            // there are two outcomes:
+            // 1) 's' -> "sy" and 't' -> ""
+            // 2) 's' -> "s" and 't' -> "y"
+            Tuple<OptChar, string>[] t1 = { new Tuple<OptChar, string>(OptChar.None, ""), new Tuple<OptChar, string>(OptChar.Some('T'), "T"), new Tuple<OptChar, string>(OptChar.Some('e'), "e"), new Tuple<OptChar, string>(OptChar.Some('s'), "sy"), new Tuple<OptChar, string>(OptChar.Some('t'), ""), new Tuple<OptChar, string>(OptChar.Some('i'), "i"), new Tuple<OptChar, string>(OptChar.Some('n'), "n"), new Tuple<OptChar, string>(OptChar.Some('g'), "g") };
+            Tuple<OptChar, string>[] t2 = { new Tuple<OptChar, string>(OptChar.None, ""), new Tuple<OptChar, string>(OptChar.Some('T'), "T"), new Tuple<OptChar, string>(OptChar.Some('e'), "e"), new Tuple<OptChar, string>(OptChar.Some('s'), "s"), new Tuple<OptChar, string>(OptChar.Some('t'), "y"), new Tuple<OptChar, string>(OptChar.Some('i'), "i"), new Tuple<OptChar, string>(OptChar.Some('n'), "n"), new Tuple<OptChar, string>(OptChar.Some('g'), "g") };
+            Assert.AreEqual(true, typos.SequenceEqual(t1) || typos.SequenceEqual(t2));
         }
     }
 }
