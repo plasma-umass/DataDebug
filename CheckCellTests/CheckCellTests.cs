@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Windows.Forms;
 using DataDebugMethods;
+using System.Runtime.InteropServices;
 
 namespace CheckCellTests
 {
@@ -61,6 +62,12 @@ namespace CheckCellTests
                 {
                     wb.Close(false, Type.Missing, Type.Missing);
                     app.Quit();
+                    Marshal.ReleaseComObject(ws);
+                    Marshal.ReleaseComObject(wb);
+                    Marshal.ReleaseComObject(app);
+                    ws = null;
+                    wb = null;
+                    app = null;
                 }
                 catch
                 {

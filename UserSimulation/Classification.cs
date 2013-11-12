@@ -169,5 +169,45 @@ namespace UserSimulation
             }
             return classification;
         }
+
+        public double CharErrorRate()
+        {
+            // find the total number of typo classifications
+            var total = _typo_dict.Select(pair => pair.Value).Sum();
+
+            // find the total number of correct classifications
+            var t_correct = _typo_dict.Where(pair =>
+            {
+                OptChar intended_ochar = pair.Key.Item1;
+                string entered_str = pair.Key.Item2;
+                // an actual character
+                if (OptChar.get_IsSome(intended_ochar))
+                {
+                    var intended_char = intended_ochar.Value;
+                    if (intended_char.ToString().Equals(entered_str))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                // this is the empty character
+                else
+                {
+                    if (entered_str.Equals(""))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }).Select(pair => pair.Value).Sum();
+
+            return 1 - (double)t_correct / (double)total;
+        }
     }
 }

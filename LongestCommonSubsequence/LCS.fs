@@ -282,7 +282,7 @@
                 let a_char = match (fst a) with
                              | -1 -> None
                              | _ -> Some(orig.[fst a])
-                let typos' = (a_char,orig.[snd a].ToString() + extra_chars) :: typos
+                let typos' = (a_char,entered.[snd a].ToString() + extra_chars) :: typos
                 typoget([], typos')
             | [] -> List.rev typos
         // call recursive function, prepending a "start of string" alignment to the list

@@ -308,5 +308,33 @@ namespace CheckCellTests
             Tuple<OptChar, string>[] t2 = { new Tuple<OptChar, string>(OptChar.None, ""), new Tuple<OptChar, string>(OptChar.Some('T'), "T"), new Tuple<OptChar, string>(OptChar.Some('e'), "e"), new Tuple<OptChar, string>(OptChar.Some('s'), "s"), new Tuple<OptChar, string>(OptChar.Some('t'), "y"), new Tuple<OptChar, string>(OptChar.Some('i'), "i"), new Tuple<OptChar, string>(OptChar.Some('n'), "n"), new Tuple<OptChar, string>(OptChar.Some('g'), "g") };
             Assert.AreEqual(true, typos.SequenceEqual(t1) || typos.SequenceEqual(t2));
         }
+
+        [TestMethod]
+        public void TypoClassify()
+        {
+            var original = "Testing";
+            string[] errors = { "Tesying", "eTsting", "Tessting" };
+
+            // traing the model with 5% errors
+            var c = new UserSimulation.Classification();
+            var rnd = new Random();
+            var p_correct = 0.95;
+            for (int i = 0; i < 1000; i++)
+            {
+                var j = rnd.NextDouble();
+                if (j <= p_correct)
+                {
+                    c.ProcessTypos(original, original);
+                }
+                else
+                {
+                    var entered = errors[rnd.Next(3)];
+                    c.ProcessTypos(original, entered);
+                }
+            }
+            
+            // the model should actually have 5% errors
+            Assert.AreEqual(true, c.CharErrorRate() < 0.06);
+        }
     }
 }
