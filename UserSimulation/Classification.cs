@@ -90,22 +90,13 @@ namespace UserSimulation
                 AddTranspositionError(0);
             }
 
-            // train the model for all non-typos
-            foreach (var alignment in alignments2)
-            {
-                // both orig and entered chars are guaranteed to be the same
-                // otherwise they would not be aligned
-                var origchar = original[alignment.Item1];
-                AddTypoError(OptChar.Some(origchar), origchar.ToString());
-            }
-
             // train the model for all actual transpositions
             foreach (var delta in deltas)
             {
                 AddTranspositionError(delta);
             }
             
-            // train the model for each remaining typo
+            // train the model for each "typo", including non-typos
             foreach (var typo in typos)
             {
                 OptChar c = typo.Item1;
