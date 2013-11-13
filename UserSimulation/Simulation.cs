@@ -11,6 +11,7 @@ using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 using System.Diagnostics;
 using DataDebugMethods;
 using Serialization = System.Runtime.Serialization;
+using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
 
 namespace UserSimulation
 {
@@ -106,6 +107,60 @@ namespace UserSimulation
 
                 // save function outputs
                 CellDict correct_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+
+                //Look for 'touchy' cells among the inputs:
+                //  for each input 
+                //      generate K erroneous versions
+                //      pick the one which causes the largest total relative error
+                //  sort the inputs based on how much total error they are able to produce
+                //  pick top 5% for example, and introduce errors
+                Dictionary<TreeNode, double> max_error_produced_dictionary = new Dictionary<TreeNode, double>();
+
+                foreach (TreeNode inputNode in data.TerminalInputNodes())
+                {
+                    string orig_value = inputNode.getCOMValueAsString();
+                    var eg = new ErrorGenerator();
+
+                    //Load in the classification's dictionaries
+                    var classification = Classification.Deserialize();
+                    double max_error_produced = 0.0;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        //Generate error string from orig_value
+                        var result = eg.GenerateErrorString(orig_value, classification);
+                        //If it's no different from the original, try again
+                        if (result.Item1.Equals(orig_value))
+                        {
+                            i--;
+                        }
+                        //If there was an error, find the total error in the outputs introduced by it
+                        else
+                        {
+                            // save function outputs
+                            CellDict perturbed_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                            // error
+                            ErrorDict err_dict = CalculateError(app, correct_outputs, perturbed_outputs);
+                            double total_rel_err = TotalRelativeError(err_dict);
+                            //keep track of the largest observed max error
+                            if (Math.Abs(total_rel_err) > Math.Abs(max_error_produced))
+                            {
+                                max_error_produced = total_rel_err;
+                            }
+                        }
+                    }
+                    //Add entry for this TreeNode in our dictionary with its max_error_produced
+                    max_error_produced_dictionary.Add(inputNode, max_error_produced);
+                }
+
+                //Sort the dictionary to find the most important inputs
+                //max_error_produced_dictionary.OrderBy
+                //List top_inputs = [];
+                //while top_inputs.count / inputs.count < 5%
+                //  s = largest entry in dictionary
+                //  dict.remove(s)
+                //  top_inputs.add(s)
+
+                //Now we want to inject errors in the top_inputs
 
                 // inject errors
                 InjectValues(app, wb, errord);

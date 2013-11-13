@@ -184,6 +184,31 @@ namespace UserSimulation
             return classification;
         }
 
+
+        //TODO Decide where we are going to keep our trained dictionaries
+        public void Serialize()
+        {
+            string file_name = "TODO";
+            IFormatter formatter = new BinaryFormatter();
+            using (Stream stream = new FileStream(file_name, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                formatter.Serialize(stream, this);
+            }
+        }
+
+        public static Classification Deserialize()
+        {
+            string file_name = "TODO";
+            Classification classification;
+
+            using (Stream stream = new FileStream(file_name, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                IFormatter formatter = new BinaryFormatter();
+                classification = (Classification)formatter.Deserialize(stream);
+            }
+            return classification;
+        }
+
         public double CharErrorRate()
         {
             // find the total number of typo classifications
