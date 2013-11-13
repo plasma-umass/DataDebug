@@ -256,8 +256,13 @@ namespace CheckCellTests
             var n = s2.Length;
             var C = LongestCommonSubsequence.LCSLength(s1,s2);
 
+            // Set timeout
+            var t = new TimeSpan(0, 0, 1);
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             // Run backtrack-all
-            var multi = LongestCommonSubsequence.getCharPairs(C, s1, s2, m, n);
+            var multi = LongestCommonSubsequence.getCharPairs(C, s1, s2, m, n, sw, t);
 
             // Run backtrack-single
             var single = LongestCommonSubsequence.getCharPairs_single(C, s1, s2, m, n);
