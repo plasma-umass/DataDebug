@@ -9,7 +9,7 @@ type FieldType = Microsoft.VisualBasic.FileIO.FieldType
 
 // VisualBasic.NET has a handy-dandy CSV parser
 let ParseCSV(path: string) =
-    let parser = TextFieldParser(path)
+    let parser = new TextFieldParser(path)
     parser.TextFieldType <- FieldType.Delimited
     parser.SetDelimiters(",")
     let mutable rows = []
@@ -44,14 +44,17 @@ type Offsets =
     // last two columns are for "Approve" and "Reject"
 
 // all processed data goes into one of these
-type Data(csvdata: string[][], _inputs_per_hit: int) =
+type Data() =
     // address -> (original value, retyped value)
     let input_pairs = new Dictionary<AST.Address, string*string>()
     // worker_id -> address list
     let worker_ids = new Dictionary<string, AST.Address list>()
     // this data structure is for sanity-check purposes
     let addresses = new HashSet<AST.Address>()
-    do
+    member self.LearnFromCSV(csvdata: string[][]) =
+        // get width
+        let inputs_per_hit = Data.CalculateNumInputs(csvdata)
+
         // each row
         Array.iteri (fun i row ->
             // create worker ID key in dictionary if it doesn't alreay exist
@@ -68,7 +71,7 @@ type Data(csvdata: string[][], _inputs_per_hit: int) =
                 let addr_c = Int32.Parse(csvdata.[i].[Offsets.OFFSET_HITDEFS + j * Offsets.HITDEF_WIDTH + Offsets.OFFSET_COL])
                 let image_url = csvdata.[i].[Offsets.OFFSET_HITDEFS + j * Offsets.HITDEF_WIDTH + Offsets.OFFSET_URL]
                 let original_string = csvdata.[i].[Offsets.OFFSET_HITDEFS + j * Offsets.HITDEF_WIDTH + Offsets.OFFSET_ORIG]
-                let retyped_string = csvdata.[i].[Offsets.OFFSET_ANSWERS(_inputs_per_hit) + j]
+                let retyped_string = csvdata.[i].[Offsets.OFFSET_ANSWERS(inputs_per_hit) + j]
 
                 // get address object
                 let addr = AST.Address.FromR1C1(addr_r, addr_c, worksheet, workbook, path)
@@ -81,7 +84,7 @@ type Data(csvdata: string[][], _inputs_per_hit: int) =
 
                 // add input pairs
                 input_pairs.Add(addr, (original_string, retyped_string))
-            ) [|0.._inputs_per_hit-1|]
+            ) [|0..inputs_per_hit-1|]
         ) csvdata
     member self.OverallAccuracy =
         let numsame = Seq.fold (fun acc (pair: KeyValuePair<AST.Address,string*string>) ->
@@ -107,28 +110,38 @@ type Data(csvdata: string[][], _inputs_per_hit: int) =
         Seq.sortBy (fun (pair: KeyValuePair<string, AST.Address list>) -> -self.WorkerAccuracy pair.Key) worker_ids |>
         Seq.map (fun (pair: KeyValuePair<string, AST.Address list>) -> pair.Key)
     member self.StringPairs = Seq.map (fun (pair: KeyValuePair<AST.Address,string*string>) -> pair.Value) input_pairs
+    static member private CalculateNumInputs(csvdata: string[][]) : int =
+        let total_width = csvdata.[0].Length
+        let payload_cols = total_width - Offsets.OFFSET_HITDEFS
+        payload_cols / (Offsets.HITDEF_WIDTH + 1) // the +1 is to include the input's answer column
 
 [<EntryPoint>]
 let main argv = 
-    if argv.Length <> 2 then
-        Console.WriteLine("Usage: SimulationApp.exe [MTurk input CSV] [inputs per HIT]") |> ignore
+    if argv.Length < 1 then
+        Console.WriteLine("Usage: SimulationApp.exe [MTurk input CSV 1] ... [MTurk input CSV N]") |> ignore
         1
     else
         // process args
-        let filename = argv.[0]
-        let inputs_per_hit = System.Int32.Parse(argv.[1])
+        let files = argv
+        let numfiles = argv.Length
 
         // parse the data
-        let csvdata = ParseCSV filename
+        let csvdatas = Array.map (fun f -> ParseCSV f) files
 
         // process data
-        let data = Data(csvdata, inputs_per_hit)
+        let data = Data()
+        Array.iter (fun csvdata -> data.LearnFromCSV csvdata) csvdatas
 
         // get basic stats
         Console.WriteLine("{0:P} of inputs typed correctly.", data.OverallAccuracy) |> ignore
         Console.WriteLine("{0} workers participated.", data.NumWorkers) |> ignore
         Console.WriteLine("The fastest worker completed {0} data re-entries", data.MaxWorker) |> ignore
         Console.WriteLine("The fastest worker had an accuracy of {0:P}", data.WorkerAccuracy(data.MaxWorkerID)) |> ignore
+
+        // pause
+//        Console.WriteLine("Press any key to continue.") |> ignore
+//        Console.ReadLine() |> ignore
+
         for worker_id in data.WorkerIDsSortedByAccuracy do
             Console.WriteLine("Worker {0} completed {1} assignments with an accuracy of {2:P}.", worker_id, data.WorkerAssignments(worker_id), data.WorkerAccuracy(worker_id)) |> ignore
 
