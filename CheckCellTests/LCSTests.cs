@@ -161,6 +161,67 @@ namespace CheckCellTests
         }
 
         [TestMethod]
+        public void TestEmptyEntered()
+        {
+            string a = "0";
+            string b = "";
+            // get LCS
+            var al = LongestCommonSubsequence.LeftAlignedLCS(a, b);
+            // find all character additions
+            var ad = LongestCommonSubsequence.GetAddedCharIndices(b, al);
+            // find all character omissions
+            var om = LongestCommonSubsequence.GetMissingCharIndices(a, al);
+            // find all transpositions
+            var ou = LongestCommonSubsequence.FixTranspositions(al, ad, om, a, b);
+            // new string
+            string b2 = ou.Item1;
+            // new alignments
+            var al2 = ou.Item2;
+            // new additions
+            var ad2 = ou.Item3;
+            // new omissions
+            var om2 = ou.Item4;
+            // deltas
+            var d = ou.Item5;
+            // get typos
+            var t = LongestCommonSubsequence.GetTypos(al2, a, b2);
+
+            Assert.AreEqual(1, om.Count());
+            Assert.AreEqual(1, t.Count());
+        }
+
+        [TestMethod]
+        public void TestAddedAtStart()
+        {
+            string a = "abc";
+            string b = "ddabc";
+            // get LCS
+            var al = LongestCommonSubsequence.LeftAlignedLCS(a, b);
+            // find all character additions
+            var ad = LongestCommonSubsequence.GetAddedCharIndices(b, al);
+            // find all character omissions
+            var om = LongestCommonSubsequence.GetMissingCharIndices(a, al);
+            // find all transpositions
+            var ou = LongestCommonSubsequence.FixTranspositions(al, ad, om, a, b);
+            // new string
+            string b2 = ou.Item1;
+            // new alignments
+            var al2 = ou.Item2;
+            // new additions
+            var ad2 = ou.Item3;
+            // new omissions
+            var om2 = ou.Item4;
+            // deltas
+            var d = ou.Item5;
+            // get typos
+            var t = LongestCommonSubsequence.GetTypos(al2, a, b2);
+
+            Assert.AreEqual(0, om.Count());
+            Assert.AreEqual(4, t.Count());
+            Assert.AreEqual(2, ad.Count());
+        }
+
+        [TestMethod]
         public void EnumFixTranspositionTests()
         {
             var orig1 = "acc";
