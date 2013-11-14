@@ -175,22 +175,18 @@ let main argv =
         let a = DataDebugMethods.Utility.NewApplicationInstance() :?> Application
 
         // run user simulation experiment for every spreadsheet in xlsdir
-        // NUMTRIALS times
+        // NUMTRIALS times & save in outdir
         let xlss = EnumSpreadsheets(xlsdir) |> Seq.toArray
+        let wbr = System.Text.RegularExpressions.Regex(@"\\\\(.+\\)*(.+\..+)$", System.Text.RegularExpressions.RegexOptions.Compiled)
         let results = Array.map (fun xls ->
                           Array.map (fun i ->
+                              let xlfile = wbr.Match(xls).Groups.[2].Value
                               let usersim = new UserSimulation.Simulation()
                               usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD)
-                              (xls,usersim)
+                              usersim.Serialize(outdir + "\\" + xlfile + "_" + i.ToString() + ".bin")
+                              usersim
                           ) [|0..NUMTRIALS-1|]
                       ) xlss
-
-        // save user simulation results
-        Array.iter (fun sims ->
-            Array.iteri (fun i (xls: string, sim: UserSimulation.Simulation) ->
-                sim.Serialize(outdir + "\\" + xls + "_" + i.ToString() + ".bin")
-            ) sims
-        ) results
 
         // print results
         Console.WriteLine("Print stuff.") |> ignore

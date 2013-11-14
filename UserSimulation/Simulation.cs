@@ -31,6 +31,7 @@ namespace UserSimulation
     public class Simulation
     {
         private ErrorCondition _exit_state = ErrorCondition.OK;
+        private string _exception_message = "";
         private UserResults _user;
         private ErrorDict _error;
         private double _total_relative_error = 0;
@@ -204,6 +205,11 @@ namespace UserSimulation
 
                 // save original spreadsheet state
                 CellDict original_inputs = SaveInputs(data.TerminalInputNodes(), wb);
+                if (original_inputs.Count() == 0)
+                {
+                    _exit_state = ErrorCondition.ContainsNoInputs;
+                    return;
+                }
 
                 // force a recalculation before saving outputs, otherwise we may
                 // erroneously conclude that the procedure did the wrong thing
@@ -225,8 +231,9 @@ namespace UserSimulation
                 var top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
 
                 //Now we want to inject the errors in top_errors
-                //InjectValues(app, wb, top_errors);
                 InjectValues(app, wb, top_errors);
+
+                // TODO: save a copy of the workbook for later inspection
 
                 // save function outputs
                 CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
@@ -254,9 +261,10 @@ namespace UserSimulation
                 wb = null;
                 app = null;
             }
-            catch
+            catch (Exception e)
             {
                 _exit_state = ErrorCondition.Exception;
+                _exception_message = e.Message;
             }
         }
 
