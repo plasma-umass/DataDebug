@@ -7,7 +7,7 @@ type App = Microsoft.Office.Interop.Excel.Application
 type TextFieldParser = Microsoft.VisualBasic.FileIO.TextFieldParser
 type FieldType = Microsoft.VisualBasic.FileIO.FieldType
 
-let NUMTRIALS = 30
+let NUMTRIALS = 1
 let NBOOTS = System.Convert.ToInt32(Math.E * 1000.0)
 let SIGNIFICANCE = 0.95
 let THRESHOLD = 0.05
@@ -27,11 +27,8 @@ let ParseCSV(path: string) =
     outarray.[1..outarray.Length-1]
 
 // recursively get all spreadsheets that don't have the "bad" prefix in their filename
-let EnumSpreadsheets(dir: string) : seq<string> =
-    let xlfiles = System.IO.Directory.EnumerateDirectories(dir)
-    let r = System.Text.RegularExpressions.Regex(@"bad\\.+\.xls$", System.Text.RegularExpressions.RegexOptions.Compiled)
-    let r_ok = System.Text.RegularExpressions.Regex(@"\.xls$", System.Text.RegularExpressions.RegexOptions.Compiled)
-    Seq.filter (fun xlfile ->  not (r.IsMatch(xlfile)) && r_ok.IsMatch(xlfile)) xlfiles
+let EnumSpreadsheets(dir: string) : string[] =
+    System.IO.Directory.GetFiles(dir, "*.xls", System.IO.SearchOption.AllDirectories)
 
 // some constants
 type Offsets =
@@ -141,20 +138,21 @@ let Classify(data: Data, serfile: string) : UserSimulation.Classification =
 [<EntryPoint>]
 let main argv = 
     if argv.Length < 3 then
-        Console.WriteLine("Usage: SimulationApp.exe [serialization file] [spreadsheet dir] [MTurk input CSV 1] ... [MTurk input CSV N]") |> ignore
+        Console.WriteLine("Usage: SimulationApp.exe [classification file] [spreadsheet dir] [output dir] [MTurk input CSV 1] ... [MTurk input CSV N]") |> ignore
         1
     else
         // process args
         let serfile = argv.[0]
         let xlsdir = argv.[1]
-        let files = argv.[2..]
+        let outdir = argv.[2]
+        let files = argv.[3..]
         let numfiles = argv.Length
 
-        // parse the data
-        let csvdatas = Array.map (fun f -> ParseCSV f) files
-
-        // process data
+        // process data if we haven't already
         let c = if not (System.IO.File.Exists(serfile)) then
+                    // parse the data
+                    let csvdatas = Array.map (fun f -> ParseCSV f) files
+
                     let data = Data()
                     Array.iter (fun csvdata -> data.LearnFromCSV csvdata) csvdatas
 
@@ -167,9 +165,10 @@ let main argv =
 //                    for worker_id in data.WorkerIDsSortedByAccuracy do
 //                        Console.WriteLine("Worker {0} completed {1} assignments with an accuracy of {2:P}.", worker_id, data.WorkerAssignments(worker_id), data.WorkerAccuracy(worker_id)) |> ignore
 
-                    // train classifier
+                    // train classifier & save output as a side-effect
                     Classify(data, serfile)
                 else
+                    Console.WriteLine("Reopening previously-saved classification database: {0}", serfile) |> ignore
                     UserSimulation.Classification.Deserialize(serfile)
 
         // start up a copy of Excel
@@ -177,13 +176,21 @@ let main argv =
 
         // run user simulation experiment for every spreadsheet in xlsdir
         // NUMTRIALS times
+        let xlss = EnumSpreadsheets(xlsdir) |> Seq.toArray
         let results = Array.map (fun xls ->
                           Array.map (fun i ->
                               let usersim = new UserSimulation.Simulation()
                               usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD)
-                              usersim
+                              (xls,usersim)
                           ) [|0..NUMTRIALS-1|]
-                      ) (EnumSpreadsheets(xlsdir) |> Seq.toArray)
+                      ) xlss
+
+        // save user simulation results
+        Array.iter (fun sims ->
+            Array.iteri (fun i (xls: string, sim: UserSimulation.Simulation) ->
+                sim.Serialize(outdir + "\\" + xls + "_" + i.ToString() + ".bin")
+            ) sims
+        ) results
 
         // print results
         Console.WriteLine("Print stuff.") |> ignore

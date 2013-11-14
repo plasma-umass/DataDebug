@@ -13,6 +13,9 @@ using DataDebugMethods;
 using Serialization = System.Runtime.Serialization;
 using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace UserSimulation
 {
@@ -78,6 +81,28 @@ namespace UserSimulation
         public double GetRelativeEffort()
         {
             return _relative_effort;
+        }
+
+        public void Serialize(string file_name)
+        {
+            IFormatter formatter = new BinaryFormatter();
+            using (Stream stream = new FileStream(file_name, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                formatter.Serialize(stream, this);
+            }
+        }
+
+        public static Simulation Deserialize(string file_name)
+        {
+            Simulation sim;
+
+            using (Stream stream = new FileStream(file_name, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                // deserialize
+                IFormatter formatter = new BinaryFormatter();
+                sim = (Simulation)formatter.Deserialize(stream);
+            }
+            return sim;
         }
 
         // Get dictionary of inputs and the error they produce
@@ -170,7 +195,7 @@ namespace UserSimulation
                 Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
 
                 // build dependency graph
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
+                var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
                 if (data.TerminalInputNodes().Length == 0)
                 {
                     _exit_state = ErrorCondition.ContainsNoInputs;

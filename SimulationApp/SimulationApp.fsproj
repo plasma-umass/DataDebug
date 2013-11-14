@@ -23,7 +23,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\SimulationApp.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartArguments>"Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\turk_outputs_2013_11_11.csv" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\turk_outputs_2013_11_12.csv"</StartArguments>
+    <StartArguments>"Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\ClassificationData_2013-11-14.bin" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\spreadsheets" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\simulations" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\turk_outputs_2013_11_11.csv" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\turk_outputs_2013_11_12.csv"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
