@@ -23,6 +23,19 @@ namespace UserSimulation
         {
             OptChar key = c;
             Dictionary<string, double> distribution;
+            distribution = GenerateDistributionForChar(key, classification);
+            //If our dictionary does not have any information about this character, we return the character with probability 1.0
+            if (distribution.Count == 0)
+            {
+                distribution.Add("" + c.Value, 1.0);
+            }
+            return distribution;
+        }
+
+        private Dictionary<string, double> GetDistributionOfStringsForChaz(OptChar c, Classification classification)
+        {
+            OptChar key = c;
+            Dictionary<string, double> distribution;
             //if we have already generated a distribution for this character, return it
             if (_char_distributions_dict.TryGetValue(key, out distribution))
             {
@@ -40,11 +53,38 @@ namespace UserSimulation
                 return distribution;
             }
         }
+        public string[] GenerateErrorStrings(string orig, Classification c, int k)
+        {
+            var e = Enumerable.Range(0, k);
+            var strs = e.AsParallel().Select( i => {
+                var outstr = "";
+                while ((outstr = GenerateErrorString(orig, c).Item1).Equals(orig))
+                {
+
+                }
+                return outstr;
+            });
+            return strs.ToArray();
+        }
+
 
         private Dictionary<string, double> GenerateDistributionForChar(OptChar c, Classification classification)
         {
             var typo_dict = classification.GetTypoDict();
-            var kvps = typo_dict.Where(pair => pair.Key.Item1.Equals(c));
+            var kvps = typo_dict.Where(pair => {
+                if (OptChar.get_IsNone(pair.Key.Item1))
+                {
+                    if (OptChar.get_IsNone(c))
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+                else
+                {
+                    return pair.Key.Item1.Equals(c);
+                }
+            }).ToArray();
             var sum = kvps.Select(pair => pair.Value).Sum();
             var distribution = kvps.Select(pair => new KeyValuePair<string,double>(pair.Key.Item2, (double) pair.Value / sum));
             //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
@@ -204,30 +244,21 @@ namespace UserSimulation
                 }
             }
 
-            String modified_input = "";
-            //Try to add typo errors
-            for (int i = 0; i < transposed_input.Length; i++)
+            string[] ti = transposed_input.ToCharArray().Select(c => c.ToString()).ToArray();
+
+            string modified_input = ti.AsParallel().Select((c, i) =>
             {
-                char c = transposed_input[i];
-                
+                char mychar = c[0];
+
                 //If the character in this location has already been transposed, don't introduce typos to it
                 if (transposed_locations.Contains(i))
                 {
-                    modified_input += "" + c;
-                    continue;
+                    return c;
                 }
 
-                Dictionary<string, double> distribution = GetDistributionOfStringsForChar(OptChar.Some(c), classification);
-                string str = GetRandomStringFromDistribution(distribution);
-
-                //If this was an error, add it to the error list
-                if (!str.Equals("" + c))
-                {
-                    LCSError error = LongestCommonSubsequence.Error.NewTypoError(i, c, str);
-                    error_list.Add(error);
-                }
-                modified_input += str;
-            }
+                Dictionary<string, double> distribution = GetDistributionOfStringsForChar(OptChar.Some(mychar), classification);
+                return GetRandomStringFromDistribution(distribution);
+            }).Aggregate("", (acc, s) => acc + s);
 
             //Signs and decimals are handled by typo model
 

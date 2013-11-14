@@ -122,39 +122,32 @@ namespace UserSimulation
                     //Load in the classification's dictionaries
                     double max_error_produced = 0.0;
                     string max_error_string = "";
+
+                    // get k strings, in parallel
+                    string[] errorstrings = eg.GenerateErrorStrings(orig_value, c, k);
+
                     for (int i = 0; i < k; i++)
                     {
-                        //Generate error string from orig_value
-                        var result = eg.GenerateErrorString(orig_value, c);
-                        //If it's no different from the original, try again
-                        if (result.Item1.Equals(orig_value))
+                        CellDict cd = new CellDict();
+                        cd.Add(inputNode.GetAddress(), errorstrings[i]);
+                        //inject the typo 
+                        InjectValues(app, wb, cd);
+
+                        // save function outputs
+                        CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+
+                        //remove the typo that was introduced
+                        cd.Clear();
+                        cd.Add(inputNode.GetAddress(), orig_value);
+                        InjectValues(app, wb, cd);
+
+                        double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
+
+                        //keep track of the largest observed max error
+                        if (total_error > max_error_produced)
                         {
-                            i--;
-                        }
-                        //If there was an error, find the total error in the outputs introduced by it
-                        else
-                        {
-                            CellDict cd = new CellDict();
-                            cd.Add(inputNode.GetAddress(), result.Item1);
-                            //inject the typo 
-                            InjectValues(app, wb, cd);
-
-                            // save function outputs
-                            CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
-
-                            //remove the typo that was introduced
-                            cd.Clear();
-                            cd.Add(inputNode.GetAddress(), orig_value);
-                            InjectValues(app, wb, cd);
-
-                            double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
-
-                            //keep track of the largest observed max error
-                            if (total_error > max_error_produced)
-                            {
-                                max_error_produced = total_error;
-                                max_error_string = result.Item1;
-                            }
+                            max_error_produced = total_error;
+                            max_error_string = errorstrings[i];
                         }
                     }
                     //Add entry for this TreeNode in our dictionary with its max_error_produced
@@ -402,6 +395,9 @@ namespace UserSimulation
                                                Excel.Application app)
         {
             var o = new UserResults();
+            o.false_negatives = new HashSet<AST.Address>();
+            o.false_positives = new List<AST.Address>();
+            o.true_positives = new List<AST.Address>();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
 
             // initialize
