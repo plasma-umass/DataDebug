@@ -23,6 +23,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExcelParserConsole", "parce
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SimulationApp", "SimulationApp\SimulationApp.fsproj", "{02D0177A-7078-4C4C-B15B-E44FC1263341}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MTurkParser", "MTurkParser\MTurkParser.fsproj", "{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = DataDebug.vsmdi
@@ -118,6 +120,16 @@ Global
 		{02D0177A-7078-4C4C-B15B-E44FC1263341}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{02D0177A-7078-4C4C-B15B-E44FC1263341}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{02D0177A-7078-4C4C-B15B-E44FC1263341}.Release|x86.ActiveCfg = Release|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

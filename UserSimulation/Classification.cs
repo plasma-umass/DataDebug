@@ -210,6 +210,23 @@ namespace UserSimulation
             return classification;
         }
 
+        public static Classification Classify(MTurkParser.Data data, string serfile)
+        {
+            var total_inputs = data.NumInputs;
+            var c = new Classification();
+            var stringpairs = data.StringPairs.ToArray();
+            for (int i = 0; i < stringpairs.Length; i++)
+            {
+                var original = stringpairs[i].Item1;
+                var entered = stringpairs[i].Item2;
+                Console.Write("\r{0:P} strings classified", System.Convert.ToDouble(i) / System.Convert.ToDouble(total_inputs));
+                c.ProcessTypos(original, entered);
+            }
+            Console.Write("\n");
+            c.Serialize(serfile);
+            return c;
+        }
+
         public double CharErrorRate()
         {
             // find the total number of typo classifications
