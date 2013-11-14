@@ -7,6 +7,11 @@ type App = Microsoft.Office.Interop.Excel.Application
 type TextFieldParser = Microsoft.VisualBasic.FileIO.TextFieldParser
 type FieldType = Microsoft.VisualBasic.FileIO.FieldType
 
+let NUMTRIALS = 30
+let NBOOTS = System.Convert.ToInt32(Math.E * 1000.0)
+let SIGNIFICANCE = 0.95
+let THRESHOLD = 0.05
+
 // VisualBasic.NET has a handy-dandy CSV parser
 let ParseCSV(path: string) =
     let parser = new TextFieldParser(path)
@@ -20,6 +25,13 @@ let ParseCSV(path: string) =
     let outarray = List.rev rows |> List.toArray
     // exclude the first element
     outarray.[1..outarray.Length-1]
+
+// recursively get all spreadsheets that don't have the "bad" prefix in their filename
+let EnumSpreadsheets(dir: string) : seq<string> =
+    let xlfiles = System.IO.Directory.EnumerateDirectories(dir)
+    let r = System.Text.RegularExpressions.Regex(@"bad\\.+\.xls$", System.Text.RegularExpressions.RegexOptions.Compiled)
+    let r_ok = System.Text.RegularExpressions.Regex(@"\.xls$", System.Text.RegularExpressions.RegexOptions.Compiled)
+    Seq.filter (fun xlfile ->  not (r.IsMatch(xlfile)) && r_ok.IsMatch(xlfile)) xlfiles
 
 // some constants
 type Offsets =
@@ -115,43 +127,65 @@ type Data() =
         let payload_cols = total_width - Offsets.OFFSET_HITDEFS
         payload_cols / (Offsets.HITDEF_WIDTH + 1) // the +1 is to include the input's answer column
 
+let Classify(data: Data, serfile: string) : UserSimulation.Classification =
+    let total_inputs = data.NumInputs
+    let c = UserSimulation.Classification()
+    Seq.iteri (fun i (orig,entered) ->
+        Console.Write("\r{0:P} strings classified", System.Convert.ToDouble(i) / System.Convert.ToDouble(total_inputs))
+        c.ProcessTypos(orig,entered) |> ignore
+    ) data.StringPairs
+    Console.Write("\n")
+    c.Serialize(serfile)
+    c
+
 [<EntryPoint>]
 let main argv = 
-    if argv.Length < 1 then
-        Console.WriteLine("Usage: SimulationApp.exe [MTurk input CSV 1] ... [MTurk input CSV N]") |> ignore
+    if argv.Length < 3 then
+        Console.WriteLine("Usage: SimulationApp.exe [serialization file] [spreadsheet dir] [MTurk input CSV 1] ... [MTurk input CSV N]") |> ignore
         1
     else
         // process args
-        let files = argv
+        let serfile = argv.[0]
+        let xlsdir = argv.[1]
+        let files = argv.[2..]
         let numfiles = argv.Length
 
         // parse the data
         let csvdatas = Array.map (fun f -> ParseCSV f) files
 
         // process data
-        let data = Data()
-        Array.iter (fun csvdata -> data.LearnFromCSV csvdata) csvdatas
+        let c = if not (System.IO.File.Exists(serfile)) then
+                    let data = Data()
+                    Array.iter (fun csvdata -> data.LearnFromCSV csvdata) csvdatas
 
-        // get basic stats
-        Console.WriteLine("{0:P} of inputs typed correctly.", data.OverallAccuracy) |> ignore
-        Console.WriteLine("{0} workers participated.", data.NumWorkers) |> ignore
-        Console.WriteLine("The fastest worker completed {0} data re-entries", data.MaxWorker) |> ignore
-        Console.WriteLine("The fastest worker had an accuracy of {0:P}", data.WorkerAccuracy(data.MaxWorkerID)) |> ignore
+                    // get basic stats
+                    Console.WriteLine("{0:P} of inputs typed correctly.", data.OverallAccuracy) |> ignore
+                    Console.WriteLine("{0} workers participated.", data.NumWorkers) |> ignore
+                    Console.WriteLine("The fastest worker completed {0} data re-entries", data.MaxWorker) |> ignore
+                    Console.WriteLine("The fastest worker had an accuracy of {0:P}", data.WorkerAccuracy(data.MaxWorkerID)) |> ignore
 
-        // pause
-//        Console.WriteLine("Press any key to continue.") |> ignore
-//        Console.ReadLine() |> ignore
+//                    for worker_id in data.WorkerIDsSortedByAccuracy do
+//                        Console.WriteLine("Worker {0} completed {1} assignments with an accuracy of {2:P}.", worker_id, data.WorkerAssignments(worker_id), data.WorkerAccuracy(worker_id)) |> ignore
 
-        for worker_id in data.WorkerIDsSortedByAccuracy do
-            Console.WriteLine("Worker {0} completed {1} assignments with an accuracy of {2:P}.", worker_id, data.WorkerAssignments(worker_id), data.WorkerAccuracy(worker_id)) |> ignore
+                    // train classifier
+                    Classify(data, serfile)
+                else
+                    UserSimulation.Classification.Deserialize(serfile)
 
-        // train classifier
-        let total_inputs = data.NumInputs
-        let c = UserSimulation.Classification()
-        Seq.iteri (fun i (orig,entered) ->
-            Console.Write("\r{0:P} strings classified", System.Convert.ToDouble(i) / System.Convert.ToDouble(total_inputs))
-            c.ProcessTypos(orig,entered) |> ignore
-        ) data.StringPairs
-        Console.Write("\n")
+        // start up a copy of Excel
+        let a = DataDebugMethods.Utility.NewApplicationInstance() :?> Application
+
+        // run user simulation experiment for every spreadsheet in xlsdir
+        // NUMTRIALS times
+        let results = Array.map (fun xls ->
+                          Array.map (fun i ->
+                              let usersim = new UserSimulation.Simulation()
+                              usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD)
+                              usersim
+                          ) [|0..NUMTRIALS-1|]
+                      ) (EnumSpreadsheets(xlsdir) |> Seq.toArray)
+
+        // print results
+        Console.WriteLine("Print stuff.") |> ignore
 
         0   // A-OK

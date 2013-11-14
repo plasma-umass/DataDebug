@@ -9,6 +9,11 @@ namespace DataDebugMethods
 {
     public class Utility
     {
+        public static Excel.Application NewApplicationInstance()
+        {
+            return new Excel.Application();
+        }
+
         public static Excel.Workbook OpenWorkbook(string filename, Excel.Application app)
         {
             // we need to disable all alerts, e.g., password prompts, etc.
