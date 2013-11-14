@@ -23,7 +23,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\SimulationApp.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartArguments>"Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\ClassificationData_2013-11-14.bin" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\spreadsheets" "Z:\\Dropbox\UMass\PLASMA\Code\experiments\simulations" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\turk_outputs_2013_11_11.csv" "Z:\\\\Dropbox\\UMass\\PLASMA\\Code\\experiments\\turk_outputs_2013_11_12.csv"</StartArguments>
+    <StartArguments>"C:\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin" "C:\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments" "C:\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments" "C:\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\turk_outputs_2013_11_11.csv" "C:\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\turk_outputs_2013_11_12.csv"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -37,12 +37,10 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c" />
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />

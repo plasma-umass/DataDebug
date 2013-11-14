@@ -188,7 +188,7 @@ namespace UserSimulation
         //TODO Decide where we are going to keep our trained dictionaries
         public void Serialize()
         {
-            string file_name = "TODO";
+            string file_name = "C.classification";
             IFormatter formatter = new BinaryFormatter();
             using (Stream stream = new FileStream(file_name, FileMode.Create, FileAccess.Write, FileShare.None))
             {
@@ -198,7 +198,7 @@ namespace UserSimulation
 
         public static Classification Deserialize()
         {
-            string file_name = "TODO";
+            string file_name = "C:\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin";
             Classification classification;
 
             using (Stream stream = new FileStream(file_name, FileMode.Open, FileAccess.Read, FileShare.Read))

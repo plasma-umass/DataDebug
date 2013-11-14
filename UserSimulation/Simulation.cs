@@ -113,50 +113,53 @@ namespace UserSimulation
             var c = Classification.Deserialize();
             var max_error_produced_dictionary = new Dictionary<TreeNode, Tuple<string, double>>();
 
-            foreach (TreeNode inputNode in data.TerminalInputNodes())
+            foreach (TreeNode inputRange in data.TerminalInputNodes())
             {
-                string orig_value = inputNode.getCOMValueAsString();
-
-                //Load in the classification's dictionaries
-                double max_error_produced = 0.0;
-                string max_error_string = "";
-                for (int i = 0; i < k; i++)
+                foreach (TreeNode inputNode in inputRange.getInputs())
                 {
-                    //Generate error string from orig_value
-                    var result = eg.GenerateErrorString(orig_value, c);
-                    //If it's no different from the original, try again
-                    if (result.Item1.Equals(orig_value))
+                    string orig_value = inputNode.getCOMValueAsString();
+
+                    //Load in the classification's dictionaries
+                    double max_error_produced = 0.0;
+                    string max_error_string = "";
+                    for (int i = 0; i < k; i++)
                     {
-                        i--;
-                    }
-                    //If there was an error, find the total error in the outputs introduced by it
-                    else
-                    {
-                        CellDict cd = new CellDict();
-                        cd.Add(inputNode.GetAddress(), result.Item1);
-                        //inject the typo 
-                        InjectValues(app, wb, cd);
-
-                        // save function outputs
-                        CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
-
-                        //remove the typo that was introduced
-                        cd.Clear();
-                        cd.Add(inputNode.GetAddress(), orig_value);
-                        InjectValues(app, wb, cd);
-
-                        double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
-
-                        //keep track of the largest observed max error
-                        if (total_error > max_error_produced)
+                        //Generate error string from orig_value
+                        var result = eg.GenerateErrorString(orig_value, c);
+                        //If it's no different from the original, try again
+                        if (result.Item1.Equals(orig_value))
                         {
-                            max_error_produced = total_error;
-                            max_error_string = result.Item1;
+                            i--;
+                        }
+                        //If there was an error, find the total error in the outputs introduced by it
+                        else
+                        {
+                            CellDict cd = new CellDict();
+                            cd.Add(inputNode.GetAddress(), result.Item1);
+                            //inject the typo 
+                            InjectValues(app, wb, cd);
+
+                            // save function outputs
+                            CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+
+                            //remove the typo that was introduced
+                            cd.Clear();
+                            cd.Add(inputNode.GetAddress(), orig_value);
+                            InjectValues(app, wb, cd);
+
+                            double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
+
+                            //keep track of the largest observed max error
+                            if (total_error > max_error_produced)
+                            {
+                                max_error_produced = total_error;
+                                max_error_string = result.Item1;
+                            }
                         }
                     }
+                    //Add entry for this TreeNode in our dictionary with its max_error_produced
+                    max_error_produced_dictionary.Add(inputNode, new Tuple<string, double>(max_error_string, max_error_produced));
                 }
-                //Add entry for this TreeNode in our dictionary with its max_error_produced
-                max_error_produced_dictionary.Add(inputNode, new Tuple<string, double>(max_error_string, max_error_produced));
             }
             return max_error_produced_dictionary;
         }
@@ -508,7 +511,7 @@ namespace UserSimulation
             foreach (TreeNode formula_cell in formula_nodes)
             {
                 // throw an exception in debug mode, because this should never happen
-                Debug.Assert(formula_cell.getCOMObject().HasFormula);
+                Debug.Assert((bool)formula_cell.getCOMObject().HasFormula);
                 // save value
                 cd.Add(formula_cell.GetAddress(), formula_cell.getCOMValueAsString());
             }
