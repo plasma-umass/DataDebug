@@ -12,6 +12,7 @@ using System.Diagnostics;
 using DataDebugMethods;
 using Serialization = System.Runtime.Serialization;
 using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
+using System.Runtime.InteropServices;
 
 namespace UserSimulation
 {
@@ -79,15 +80,94 @@ namespace UserSimulation
             return _relative_effort;
         }
 
-        // create and run a CheckCell simulation
-        public void Run(int nboots, string filename, double significance, ErrorDB errors, Excel.Application app)
+        // Get dictionary of inputs and the error they produce
+        public Dictionary<TreeNode, Tuple<string, double>> TopOfKErrors(AnalysisData data, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb)
         {
-            var errord = ErrorDBToCellDict(errors);
+            var eg = new ErrorGenerator();
+            var c = Classification.Deserialize();
+            var max_error_produced_dictionary = new Dictionary<TreeNode, Tuple<string, double>>();
 
+            foreach (TreeNode inputNode in data.TerminalInputNodes())
+            {
+                string orig_value = inputNode.getCOMValueAsString();
+
+                //Load in the classification's dictionaries
+                double max_error_produced = 0.0;
+                string max_error_string = "";
+                for (int i = 0; i < k; i++)
+                {
+                    //Generate error string from orig_value
+                    var result = eg.GenerateErrorString(orig_value, c);
+                    //If it's no different from the original, try again
+                    if (result.Item1.Equals(orig_value))
+                    {
+                        i--;
+                    }
+                    //If there was an error, find the total error in the outputs introduced by it
+                    else
+                    {
+                        CellDict cd = new CellDict();
+                        cd.Add(inputNode.GetAddress(), result.Item1);
+                        //inject the typo 
+                        InjectValues(app, wb, cd);
+
+                        // save function outputs
+                        CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+
+                        //remove the typo that was introduced
+                        cd.Clear();
+                        cd.Add(inputNode.GetAddress(), orig_value);
+                        InjectValues(app, wb, cd);
+
+                        double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
+
+                        //keep track of the largest observed max error
+                        if (total_error > max_error_produced)
+                        {
+                            max_error_produced = total_error;
+                            max_error_string = result.Item1;
+                        }
+                    }
+                }
+                //Add entry for this TreeNode in our dictionary with its max_error_produced
+                max_error_produced_dictionary.Add(inputNode, new Tuple<string, double>(max_error_string, max_error_produced));
+            }
+            return max_error_produced_dictionary;
+        }
+
+        public CellDict GetTopErrors(Dictionary<TreeNode, Tuple<string, double>> max_error_produced_dictionary, double threshold)
+        {
+            int inputs_count = max_error_produced_dictionary.Count;
+            CellDict top_errors = new CellDict();
+            while ((top_errors.Count / (double)inputs_count) < threshold)
+            {
+                double max = 0.0;
+                TreeNode max_node = null;
+                string max_node_string = "";
+                //Find the max_node
+                foreach (var kvp in max_error_produced_dictionary)
+                {
+                    if (kvp.Value.Item2 >= max)
+                    {
+                        max = kvp.Value.Item2;
+                        max_node = kvp.Key;
+                        max_node_string = kvp.Value.Item1;
+                    }
+                }
+                max_error_produced_dictionary.Remove(max_node);
+                top_errors.Add(max_node.GetAddress(), max_node_string);
+            }
+
+            return top_errors;
+        }
+
+        // create and run a CheckCell simulation
+        public void Run(int nboots, string xlfile, double significance, Excel.Application app, double threshold)
+        {
             try
             {
                 // open workbook
-                Excel.Workbook wb = Utility.OpenWorkbook(filename, app);
+                Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
 
                 // build dependency graph
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
@@ -111,68 +191,29 @@ namespace UserSimulation
                 //Look for 'touchy' cells among the inputs:
                 //  for each input 
                 //      generate K erroneous versions
-                //      pick the one which causes the largest total relative error
+                //      pick the one that causes the largest total relative error
                 //  sort the inputs based on how much total error they are able to produce
                 //  pick top 5% for example, and introduce errors
-                Dictionary<TreeNode, double> max_error_produced_dictionary = new Dictionary<TreeNode, double>();
+                var max_error_produced_dictionary = TopOfKErrors(data, 10, correct_outputs, app, wb);
 
-                foreach (TreeNode inputNode in data.TerminalInputNodes())
-                {
-                    string orig_value = inputNode.getCOMValueAsString();
-                    var eg = new ErrorGenerator();
+                //Now we want to take the inputs that produce the greatest errors
+                var top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
 
-                    //Load in the classification's dictionaries
-                    var classification = Classification.Deserialize();
-                    double max_error_produced = 0.0;
-                    for (int i = 0; i < 10; i++)
-                    {
-                        //Generate error string from orig_value
-                        var result = eg.GenerateErrorString(orig_value, classification);
-                        //If it's no different from the original, try again
-                        if (result.Item1.Equals(orig_value))
-                        {
-                            i--;
-                        }
-                        //If there was an error, find the total error in the outputs introduced by it
-                        else
-                        {
-                            // save function outputs
-                            CellDict perturbed_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
-                            // error
-                            ErrorDict err_dict = CalculateError(app, correct_outputs, perturbed_outputs);
-                            double total_rel_err = TotalRelativeError(err_dict);
-                            //keep track of the largest observed max error
-                            if (Math.Abs(total_rel_err) > Math.Abs(max_error_produced))
-                            {
-                                max_error_produced = total_rel_err;
-                            }
-                        }
-                    }
-                    //Add entry for this TreeNode in our dictionary with its max_error_produced
-                    max_error_produced_dictionary.Add(inputNode, max_error_produced);
-                }
-
-                //Sort the dictionary to find the most important inputs
-                //max_error_produced_dictionary.OrderBy
-                //List top_inputs = [];
-                //while top_inputs.count / inputs.count < 5%
-                //  s = largest entry in dictionary
-                //  dict.remove(s)
-                //  top_inputs.add(s)
-
-                //Now we want to inject errors in the top_inputs
-
-                // inject errors
-                InjectValues(app, wb, errord);
+                //Now we want to inject the errors in top_errors
+                //InjectValues(app, wb, top_errors);
+                InjectValues(app, wb, top_errors);
 
                 // save function outputs
                 CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, errord, app);
+                _user = SimulateUser(nboots, significance, data, original_inputs, top_errors, correct_outputs, wb, app);
 
-                // error
-                _error = CalculateError(app, correct_outputs, incorrect_outputs);
+                //// save partially-corrected outputs
+                var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+
+                // compute total relative error
+                _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
                 _total_relative_error = TotalRelativeError(_error);
 
                 // effort
@@ -182,11 +223,76 @@ namespace UserSimulation
 
                 // close workbook without saving
                 wb.Close(false, "", false);
+                app.Quit();
+                Marshal.ReleaseComObject(wb);
+                Marshal.ReleaseComObject(app);
+                wb = null;
+                app = null;
             }
             catch
             {
                 _exit_state = ErrorCondition.Exception;
             }
+        }
+
+        private static void UpdatePerFunctionMaxError(CellDict correct_outputs, CellDict incorrect_outputs, ErrorDict max_errors)
+        {
+            foreach (var kvp in correct_outputs)
+            {
+                var addr = kvp.Key;
+                var correct_value = correct_outputs[addr];
+                var incorrect_value = incorrect_outputs[addr];
+                if (ExcelParser.isNumeric(correct_value) && ExcelParser.isNumeric(incorrect_value))
+                {
+                    var error = Math.Abs(System.Convert.ToDouble(correct_value) - System.Convert.ToDouble(incorrect_value));
+                    if (max_errors.ContainsKey(addr))
+                    {
+                        if (max_errors[addr] < error)
+                        {
+                            max_errors[addr] = error;
+                        }
+                    }
+                    else
+                    {
+                        max_errors.Add(addr, error);
+                    }
+                }
+                else
+                {
+                    var error = correct_value.Equals(incorrect_value) ? 0.0 : 1.0;
+                    if (max_errors.ContainsKey(addr))
+                    {
+                        if (error > 0)
+                        {
+                            max_errors[addr] = error;
+                        }
+                    }
+                    else
+                    {
+                        max_errors.Add(addr, error);
+                    }
+                }
+            }
+        }
+
+        private static double CalculateTotalError(CellDict correct_outputs, CellDict incorrect_outputs)
+        {
+            double total_error = 0.0;
+            foreach (var kvp in correct_outputs)
+            {
+                var addr = kvp.Key;
+                var correct_value = correct_outputs[addr];
+                var incorrect_value = incorrect_outputs[addr];
+                if (ExcelParser.isNumeric(correct_value) && ExcelParser.isNumeric(incorrect_value))
+                {
+                    total_error += Math.Abs(System.Convert.ToDouble(correct_value) - System.Convert.ToDouble(incorrect_value));
+                }
+                else
+                {
+                    total_error += correct_value.Equals(incorrect_value) ? 0.0 : 1.0;
+                }
+            }
+            return total_error;
         }
 
         [Serializable]
@@ -195,6 +301,7 @@ namespace UserSimulation
             public List<AST.Address> true_positives;
             public List<AST.Address> false_positives;
             public HashSet<AST.Address> false_negatives;
+            public ErrorDict max_errors;
         }
 
         private static double TotalRelativeError(ErrorDict error)
@@ -202,29 +309,27 @@ namespace UserSimulation
             return error.Select(pair => pair.Value).Sum() / (double)error.Count();
         }
 
-        private static ErrorDict CalculateError(Excel.Application app, CellDict correct_outputs, CellDict incorrect_outputs)
+        private static ErrorDict CalculateNormalizedError(CellDict correct_outputs, CellDict partially_corrected_outputs, ErrorDict max_errors)
         {
             var ed = new ErrorDict();
 
             foreach (KeyValuePair<AST.Address, string> orig in correct_outputs)
             {
                 var addr = orig.Key;
-                string original_value = orig.Value;
-                string perturbed_value = System.Convert.ToString(addr.GetCOMObject(app).Value2);
-                string corrected_value = System.Convert.ToString(correct_outputs[addr]);
+                string correct_value = orig.Value;
+                string partially_corrected_value = System.Convert.ToString(partially_corrected_outputs[addr]);
                 // if the function produces numeric outputs, calculate distance
-                if (ExcelParser.isNumeric(original_value) &&
-                    ExcelParser.isNumeric(perturbed_value) &&
-                    ExcelParser.isNumeric(corrected_value))
+                if (ExcelParser.isNumeric(correct_value) &&
+                    ExcelParser.isNumeric(partially_corrected_value))
                 {
-                    ed.Add(addr, RelativeNumericError(System.Convert.ToDouble(original_value),
-                                                      System.Convert.ToDouble(perturbed_value),
-                                                      System.Convert.ToDouble(corrected_value)));
+                    ed.Add(addr, RelativeNumericError(System.Convert.ToDouble(correct_value),
+                                                      System.Convert.ToDouble(partially_corrected_value),
+                                                      max_errors[addr]));
                 }
                 // calculate indicator function
                 else
                 {
-                    ed.Add(addr, RelativeCategoricalError(original_value, corrected_value));
+                    ed.Add(addr, RelativeCategoricalError(correct_value, partially_corrected_value));
                 }
             }
 
@@ -234,15 +339,15 @@ namespace UserSimulation
         // compares the corrected function output against the incorrected output
         // 0 means that the error has been completely corrected; 1 means that
         // the error totally remains
-        private static double RelativeNumericError(double original_value, double perturbed_value, double corrected_value)
+        private static double RelativeNumericError(double correct_value, double partially_corrected_value, double max_error)
         {
-            //|f(I'') - f(I)| / |f(I') - f(I)|
-            return Math.Abs(corrected_value - original_value) / Math.Abs(perturbed_value - original_value);
+            //|f(I'') - f(I)| / max f(I')
+            return Math.Abs(partially_corrected_value - correct_value) / max_error;
         }
 
-        private static double RelativeCategoricalError(string original_value, string corrected_value)
+        private static double RelativeCategoricalError(string original_value, string partially_corrected_value)
         {
-            if (String.Equals(original_value, corrected_value))
+            if (String.Equals(original_value, partially_corrected_value))
             {
                 return 0;
             } else {
@@ -256,12 +361,20 @@ namespace UserSimulation
                                                AnalysisData data,
                                                CellDict original_inputs,
                                                CellDict errord,
+                                               CellDict correct_outputs,
+                                               Excel.Workbook wb,
                                                Excel.Application app)
         {
             var o = new UserResults();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
 
+            // initialize
             var errors_remain = true;
+            var max_errors = new ErrorDict();
+            var incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+            UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
+
+            // remove errors
             while (errors_remain)
             {
                 // Get bootstraps
@@ -292,6 +405,8 @@ namespace UserSimulation
 
                     // correct flagged cell
                     flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
+                    var partially_correct_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                    UpdatePerFunctionMaxError(correct_outputs, partially_correct_outputs, max_errors);
 
                     // mark it as known good
                     known_good.Add(flagged_cell);
@@ -300,6 +415,7 @@ namespace UserSimulation
 
             // find all of the false negatives
             o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errord);
+            o.max_errors = max_errors;
 
             return o;
         }
@@ -339,7 +455,7 @@ namespace UserSimulation
             var cd = new CellDict();
             foreach (TreeNode input_range in input_ranges)
             {
-                foreach (TreeNode cell in input_range.getChildren())
+                foreach (TreeNode cell in input_range.getOutputs())
                 {
                     // never save formula; there's no point since we don't perturb them
                     var comcell = cell.getCOMObject();
@@ -379,7 +495,7 @@ namespace UserSimulation
                 if (!comcell.HasFormula)
                 {
                     // inject error
-                    addr.GetCOMObject(app).Value2 = errorstr;
+                    comcell.Value2 = errorstr;
                 }
             }
         }

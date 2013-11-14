@@ -210,7 +210,7 @@ namespace DataDebugMethods
         public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted)
         {
             // this function's input cells
-            var input_cells = rangeNode.getParents().ToArray();
+            var input_cells = rangeNode.getInputs().ToArray();
 
             // scores
             var iexc_scores = new TreeScore();
@@ -257,7 +257,7 @@ namespace DataDebugMethods
         public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted)
         {
             // this function's input cells
-            var input_cells = rangeNode.getParents().ToArray();
+            var input_cells = rangeNode.getInputs().ToArray();
 
             // scores
             var input_exclusion_scores = new TreeScore();
@@ -660,7 +660,7 @@ namespace DataDebugMethods
 
         private static int PropagateTreeNodeWeight(TreeNode t)
         {
-            var inputs = t.getParents();
+            var inputs = t.getInputs();
             // if we have no inputs, then we ARE an input
             if (inputs.Count() == 0)
             {

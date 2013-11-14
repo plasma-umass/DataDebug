@@ -68,7 +68,7 @@ namespace DataDebugMethods
             // return only the formula nodes which do not provide
             // input to any other cell and which are also not
             // in our list of excluded functions
-            return formula_nodes.Where(pair => pair.Value.getChildren().Count == 0)
+            return formula_nodes.Where(pair => pair.Value.getOutputs().Count == 0)
                                 .Select(pair => pair.Value).ToArray();
         }
 

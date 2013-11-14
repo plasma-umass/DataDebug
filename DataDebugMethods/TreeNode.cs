@@ -223,13 +223,13 @@ namespace DataDebugMethods
         }
 
         //Retuns the List<TreeNode> of children of this node
-        public HashSet<TreeNode> getChildren()
+        public HashSet<TreeNode> getOutputs()
         {
             return _outputs;
         }
 
         //Retuns the List<TreeNode> of parents of this node
-        public HashSet<TreeNode> getParents()
+        public HashSet<TreeNode> getInputs()
         {
             return _inputs;
         }
@@ -283,24 +283,24 @@ namespace DataDebugMethods
             else
             {
                 int denominator = 0;  //keeps track of how many objects we are dividing the influence by
-                foreach (TreeNode parent in node.getParents())
+                foreach (TreeNode parent in node.getInputs())
                 {
                     if (parent.isRange() || parent.isChart())
-                        denominator = denominator + parent.getParents().Count;
+                        denominator = denominator + parent.getInputs().Count;
                     else
                         denominator = denominator + 1;
                 }
-                foreach (TreeNode parent in node.getParents())
+                foreach (TreeNode parent in node.getInputs())
                 {
                     if (parent.isRange() || parent.isChart())
                     {
-                        parent.setWeight(parent.getWeight() + passed_down_weight * parent.getParents().Count / denominator);
-                        propagateWeight(parent, passed_down_weight * parent.getParents().Count / denominator);
+                        parent.setWeight(parent.getWeight() + passed_down_weight * parent.getInputs().Count / denominator);
+                        propagateWeight(parent, passed_down_weight * parent.getInputs().Count / denominator);
                     }
                     else
                     {
-                        parent.setWeight(parent.getWeight() + passed_down_weight / node.getParents().Count);
-                        propagateWeight(parent, passed_down_weight / node.getParents().Count);
+                        parent.setWeight(parent.getWeight() + passed_down_weight / node.getInputs().Count);
+                        propagateWeight(parent, passed_down_weight / node.getInputs().Count);
                     }
                 }
             }

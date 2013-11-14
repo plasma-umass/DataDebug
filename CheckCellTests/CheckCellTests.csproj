@@ -57,6 +57,7 @@
     <Compile Include="ErrorClassifierTests.cs" />
     <Compile Include="LCSTests.cs" />
     <Compile Include="ClassificationTests.cs" />
+    <Compile Include="SimulationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DataDebugMethods\DataDebugMethods.csproj">
