@@ -488,7 +488,7 @@ namespace UserSimulation
             var cd = new CellDict();
             foreach (TreeNode input_range in input_ranges)
             {
-                foreach (TreeNode cell in input_range.getOutputs())
+                foreach (TreeNode cell in input_range.getInputs())
                 {
                     // never save formula; there's no point since we don't perturb them
                     var comcell = cell.getCOMObject();
