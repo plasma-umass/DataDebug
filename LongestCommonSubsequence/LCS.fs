@@ -1,6 +1,6 @@
 ﻿module LongestCommonSubsequence
     open System
-    open System.Threading.Tasks
+    open System.Diagnostics
 
     type Sign =
     | Plus = 0
@@ -63,20 +63,22 @@
     // like backtrackAll except that it returns a set of character pair
     // sequences instead of a set of strings
     // for each character pair: (X pos, Y pos)
-    let rec getCharPairs(C: int[,], X: string, Y: string, i: int, j: int) : Set<(int*int) list> =
+    let rec getCharPairs(C: int[,], X: string, Y: string, i: int, j: int, sw: Stopwatch, timeout: TimeSpan) : Set<(int*int) list> =
+        if sw.Elapsed > timeout then
+            raise (TimeoutException())
         if i = 0 || j = 0 then
             set[[]]
         else if X.[i-1] = Y.[j-1] then
-            let mutable ZS = Set.map (fun (Z: (int*int) list) -> Z @ [(i-1,j-1)] ) (getCharPairs(C, X, Y, i-1, j-1))
+            let mutable ZS = Set.map (fun (Z: (int*int) list) -> Z @ [(i-1,j-1)] ) (getCharPairs(C, X, Y, i-1, j-1, sw, timeout))
             if (C.[i,j] = C.[i,j-1]) then 
-                ZS <- Set.union ZS (getCharPairs(C, X, Y, i, j-1))
+                ZS <- Set.union ZS (getCharPairs(C, X, Y, i, j-1, sw, timeout))
             ZS
         else
             let mutable R = Set.empty
             if C.[i,j-1] >= C.[i-1,j] then
-                R <- getCharPairs(C, X, Y, i, j-1)
+                R <- getCharPairs(C, X, Y, i, j-1, sw, timeout)
             if C.[i-1,j] >= C.[i,j-1] then
-                R <- Set.union R (getCharPairs(C, X, Y, i-1, j))
+                R <- Set.union R (getCharPairs(C, X, Y, i-1, j, sw, timeout))
             R
 
     // compute the set of longest strings
@@ -85,30 +87,19 @@
         let n = Y.Length
         let C = LCSLength(X,Y)
         backtrackAll(C, X, Y, m, n)
-        
-    type Async with
-        static member AsCancellable computation =
-            let func = new Func<'T>(computation)
-            let beginFunc (callback, _) = func.BeginInvoke(callback, ())
-            let endFunc ar = func.EndInvoke(ar)
-            Async.FromBeginEnd(beginFunc, endFunc)
-
-        static member RunWithCancellation (timeout:int) computation =
-            let async = Async.AsCancellable computation
-            let timeoutSource = new System.Threading.CancellationTokenSource()
-            Async.RunSynchronously(async, timeout, cancellationToken = timeoutSource.Token)
 
     // compute the set of longest character pair sequences
     let LCS_Char(X: string, Y: string) : Set<(int*int) list> =
-        let timeout = 5 * 1000 // 5 seconds
+        let timeout = TimeSpan(0,0,1) // 1 second
         let m = X.Length
         let n = Y.Length
         let C = LCSLength(X,Y)
-        getCharPairs(C, X, Y, m, n)
-//        try
-//            Async.RunWithCancellation(timeout)(fun () -> getCharPairs(C, X, Y, m, n))
-//        with
-//        | :? TimeoutException -> set[getCharPairs_single(C, X, Y, m, n)]
+        let sw = new Stopwatch()
+        sw.Start()
+        try
+            getCharPairs(C, X, Y, m, n, sw, timeout)
+        with
+        | :? TimeoutException -> set [getCharPairs_single(C, X, Y, m, n)]
 
     // "pull" each Y index to the left as far as it will go
     // this allows key-repeat typos to be counted correctly
@@ -189,9 +180,7 @@
                     // if no characters match the current omitted character,
                     // discard the omission and move on
                     FT(al, ad, om.Tail, entered, tdeltas)
-                | il,Some(rempos) ->
-                    
-
+                | il,Some(wrong_pos) ->
                     // insert the character in the appropriate location,
                     // ensuring that the sting is lengthened if the location
                     // occurs after the end of the string
@@ -201,10 +190,10 @@
                                    else
                                        entered.Substring(0,insertpos) + ochar.ToString() + entered.Substring(insertpos)
                     // remove the character from the entered position
-                    let entered'' = if rempos < insertpos then
-                                        entered'.Substring(0,rempos) + entered'.Substring(rempos + 1)
+                    let entered'' = if wrong_pos < insertpos then
+                                        entered'.Substring(0,wrong_pos) + entered'.Substring(wrong_pos + 1)
                                     else
-                                        entered'.Substring(0,rempos + 1) + entered'.Substring(rempos + 2)
+                                        entered'.Substring(0,wrong_pos + 1) + entered'.Substring(wrong_pos + 2)
 
                     // adjust the omissions list
                     let omissions = om.Tail
@@ -212,31 +201,33 @@
                     // adjust the additions list
                     // remove the addition, and then, for all additions between the omission position
                     // and the insertion position, shift one to the right
-                    let additions = if rempos < insertpos then
-                                        List.filter (fun a -> a <> rempos) ad |> List.map (fun a -> if a >= rempos && a < insertpos then a - 1 else a) 
+                    let additions = if wrong_pos < insertpos then
+                                        List.filter (fun a -> a <> wrong_pos) ad |> List.map (fun a -> if a >= wrong_pos && a < insertpos then a - 1 else a) 
                                     else
-                                        List.filter (fun a -> a <> rempos) ad |> List.map (fun a -> if a >= insertpos && a < rempos then a + 1 else a) 
+                                        List.filter (fun a -> a <> wrong_pos) ad |> List.map (fun a -> if a >= insertpos && a < wrong_pos then a + 1 else a) 
+
+                    // correcting a transposition is guaranteed to produce an additional alignment, namely
+                    let align = if wrong_pos < insertpos then (omloc, insertpos - 1) else (omloc, insertpos)
 
                     // adjust the alignments
-                    let alignmentz = if rempos < insertpos then
-                                         (omloc, insertpos - 1) :: List.map (fun (o,e) -> if e >= rempos && e < insertpos then (o,e-1) else (o,e)) al
+                    let alignmentz = if wrong_pos < insertpos then
+                                         align :: List.map (fun (o,e) -> if e >= wrong_pos && e < insertpos then (o,e-1) else (o,e)) al
                                      else
-                                         (omloc, insertpos) :: List.map (fun (o,e) -> if e >= insertpos && e < rempos then (o,e+1) else (o,e)) al
+                                         align :: List.map (fun (o,e) -> if e >= insertpos && e < wrong_pos then (o,e+1) else (o,e)) al
                     // sort
                     let alignments = List.sortBy (fun (o,e) -> o) alignmentz
 
-                    // calculate the new delta
-                    // since we generate transpositions before we generate additions/omissions, we do
-                    // only want to count the characters in the ORIGINAL string
-                    let dpos = if rempos < insertpos then
-                                   let betweens = List.filter (fun (o,e) -> e <= insertpos && e > rempos) al
-                                   fst (betweens.Head)
-                               else
-                                   let betweens = List.filter (fun (o,e) -> e > insertpos && e <= rempos) al
-                                   fst ((List.rev betweens).Head)
+                    // to calculate the delta of this transposition, we want to calculate the number
+                    // of alignments crossed by this character move
+                    let delta: int = if il then
+                                     // the character was accidentally entered to the LEFT of where it should have been
+                                     -(List.filter (fun (o,e) -> o < omloc && e > wrong_pos) al).Length
+                                     else
+                                     // the character was accidentally entered to the RIGHT of where it should have been
+                                     (List.filter (fun (o,e) -> o > omloc && e < wrong_pos) al).Length
 
                     // process the next transposition
-                    FT(alignments, additions, omissions, entered'', (dpos - omloc)::tdeltas)
+                    FT(alignments, additions, omissions, entered'', delta::tdeltas)
         // add the pseudo-start char alignment to ensure that there is
         // always a rightmost alignment
         FT((-1,-1)::al, ad, om, entered, [])
