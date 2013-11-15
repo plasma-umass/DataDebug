@@ -78,7 +78,6 @@ namespace DataDebugMethods
             {
                 _is_formula = false;
             }
-            _dont_perturb = true;
         }
 
         //public override bool Equals(object obj)
@@ -169,38 +168,40 @@ namespace DataDebugMethods
             _weight = w;
         }
 
-        //Adds a parent to the list of parent nodes; checks for duplicates before adding it
+        // adds an input to a TreeNode's input list
         public void addInput(TreeNode node)
         {
-            //Make sure we are not adding a parent more than once
-            bool parent_already_added = false;
-            foreach (TreeNode n in _inputs)
+            // never add self
+            if (node == this)
             {
-                if (node.getName() == n.getName())
-                    parent_already_added = true;
+                throw new Exception(String.Format("Attempted to add {0} as an input to itself.", this._name));
             }
-            //If the parent is not on the list, add it
-            if (!parent_already_added)
-                _inputs.Add(node);
+            // never re-add input
+            if (_inputs.Contains(node))
+            {
+                return;
+            }
+            _inputs.Add(node);
         }
 
-        //Adds a child to the list of child nodes; checks for duplicates before adding it
+        // adds an output to a TreeNode's output list
         public void addOutput(TreeNode node)
         {
-            //Make sure we are not adding a child more than once
-            bool child_already_added = false;
-            foreach (TreeNode n in _outputs)
+            // never add self
+            if (node == this)
             {
-                if (node.getName() == n.getName())
-                    child_already_added = true;
+                throw new Exception(String.Format("Attempted to add {0} as an output to itself.", this._name));
             }
-            //If the child is not on the list, add it
-            if (!child_already_added)
-                _outputs.Add(node);
+            // never re-add output
+            if (_outputs.Contains(node))
+            {
+                return;
+            }
+            _outputs.Add(node);
         }
 
         //Checks if this node has any children
-        public bool hasChildren()
+        public bool hasOutputs()
         {
             if (_outputs.Count == 0)
                 return false;
@@ -209,7 +210,7 @@ namespace DataDebugMethods
         }
 
         //Checks if this node has any parents
-        public bool hasParents()
+        public bool hasInputs()
         {
             if (_inputs.Count == 0)
                 return false;
@@ -291,7 +292,7 @@ namespace DataDebugMethods
          */
         public static void propagateWeight(TreeNode node, double passed_down_weight)
         {
-            if (!node.hasParents())
+            if (!node.hasInputs())
             {
                 return;
             }

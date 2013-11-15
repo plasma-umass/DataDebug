@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
+using RangeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.TreeNode>;
 using System.Diagnostics;
 
 namespace DataDebugMethods
@@ -11,7 +12,7 @@ namespace DataDebugMethods
     public class AnalysisData
     {
         public List<TreeNode> nodelist;     // holds all the TreeNodes in the Excel fileTreeNode
-        public TreeDict input_ranges;
+        public RangeDict input_ranges;
         private bool no_progress;
         private ProgBar pb;
         public TreeDict formula_nodes;
@@ -29,7 +30,7 @@ namespace DataDebugMethods
             no_progress = dont_show_progbar;
             charts = wb.Charts;
             nodelist = new List<TreeNode>();
-            input_ranges = new TreeDict();
+            input_ranges = new RangeDict();
             cell_nodes = new TreeDict();
 
             // Create a progress bar

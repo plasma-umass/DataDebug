@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeList = System.Collections.Generic.List<DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using RangeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.TreeNode>;
+
 using Microsoft.FSharp.Core;
 
 namespace DataDebugMethods
@@ -158,9 +160,9 @@ namespace DataDebugMethods
                 }
 
                 // Allow perturbation of every input_range that contains at least one value
-                if (!cell.HasFormula && cell.Value2 != null)
+                if (cell.HasFormula || cell.Value2 == null)
                 {
-                    input_range.Perturb();
+                    input_range.DontPerturb();
                 }
 
                 // link cell, range, and formula inputs and outputs together
@@ -170,10 +172,11 @@ namespace DataDebugMethods
             }
         }
 
-        public static TreeNode MakeRangeTreeNode(TreeDict input_ranges, Excel.Range input_range, TreeNode parent)
+        public static TreeNode MakeRangeTreeNode(RangeDict input_ranges, Excel.Range input_range, TreeNode parent)
         {
             // parse the address
-            var addr = AST.Address.AddressFromCOMObject(input_range, parent.getWorkbookObject());
+            //var addr = AST.Address.AddressFromCOMObject(input_range, parent.getWorkbookObject());
+            var addr = String.Intern(input_range.Address);
 
             // get it from dictionary, or, if it does not exist, create it, add to dict, and return new ref
             TreeNode tn;
