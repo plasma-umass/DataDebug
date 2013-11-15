@@ -249,6 +249,9 @@ namespace UserSimulation
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _relative_effort = (double)_effort / (double)_max_effort;
 
+                string text_out = wb.Name + "," + _total_relative_error + "," + _effort.ToString() + "," + _max_effort + "," + _relative_effort;
+                ToCSV(wb, text_out);
+
                 // close workbook without saving
                 wb.Close(false, "", false);
                 app.Quit();
@@ -262,6 +265,28 @@ namespace UserSimulation
                 _exit_state = ErrorCondition.Exception;
                 _exception_message = e.Message;
             }
+        }
+
+        public void ToCSV(Excel.Workbook wb, string out_text)
+        {
+            string dir_path = wb.Path;
+            string file_path = dir_path + "\\Results.csv";
+            //if file exists, read it and append to it
+            if (System.IO.File.Exists(file_path))
+            {
+                string text = System.IO.File.ReadAllText(file_path);
+                text += "\n" + out_text;
+                System.IO.File.WriteAllText(file_path, text);
+            }
+            //otherwise create the file and write to it
+            else
+            {
+                //System.IO.File.Create(file_path);
+                string text = "Workbook name:,Total rel. error:,Effort:,Max effort:,Relative effort:" +
+                    "\n" + out_text;
+                System.IO.File.WriteAllText(file_path, text);
+            }
+
         }
 
         private static void UpdatePerFunctionMaxError(CellDict correct_outputs, CellDict incorrect_outputs, ErrorDict max_errors)
@@ -371,7 +396,14 @@ namespace UserSimulation
         private static double RelativeNumericError(double correct_value, double partially_corrected_value, double max_error)
         {
             //|f(I'') - f(I)| / max f(I')
-            return Math.Abs(partially_corrected_value - correct_value) / max_error;
+            if (max_error != 0.0)
+            {
+                return Math.Abs(partially_corrected_value - correct_value) / max_error;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
         private static double RelativeCategoricalError(string original_value, string partially_corrected_value)
