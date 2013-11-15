@@ -567,7 +567,10 @@ namespace DataDebugMethods
         {
             // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
-            
+            if (boots_exc.Length == 0)
+            {
+                return 0.5;
+            }
             // index for value greater than 2.5% of the lowest values; we want to round down here
             var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * .025));
             // index for value greater than 97.5% of the lowest values; we want to round up here

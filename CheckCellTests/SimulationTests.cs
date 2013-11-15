@@ -16,6 +16,7 @@ namespace CheckCellTests
             UserSimulation.Simulation sim = new UserSimulation.Simulation();
             //sim.Run(100, "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\OOPSLA-2013\\Spreadsheets\\test\\accurate_runtimes2.xlsx", 0.95, new Excel.Application(), 0.05);
             sim.Run(100, "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\OOPSLA-2013\\Spreadsheets\\test\\Test2.xlsx", 0.95, new Excel.Application(), 0.05);
+            //sim.Run(100, "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\OOPSLA-2013\\Spreadsheets\\test\\no_inputs.xlsx", 0.95, new Excel.Application(), 0.05);
         }
     }
 }
