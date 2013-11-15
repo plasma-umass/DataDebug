@@ -37,7 +37,7 @@ namespace UserSimulation
         private double _total_relative_error = 0;
         private int _max_effort = 1;
         private int _effort = 0;
-        private double _relative_effort = 0;
+        private double _expended_effort = 0;
 
         public ErrorCondition GetExitState()
         {
@@ -81,7 +81,7 @@ namespace UserSimulation
 
         public double GetRelativeEffort()
         {
-            return _relative_effort;
+            return _expended_effort;
         }
 
         public void Serialize(string file_name)
@@ -244,6 +244,12 @@ namespace UserSimulation
                 _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
                 _total_relative_error = TotalRelativeError(_error);
 
+                // computer starting total relative error (normalized by max_errors)
+                ErrorDict starting_error = CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
+                double starting_total_relative_error = TotalRelativeError(starting_error);
+
+                double remaining_error = _total_relative_error / starting_total_relative_error;
+
                 // effort
                 _max_effort = 0;
                 foreach (TreeNode input_range in data.TerminalFormulaNodes())
@@ -252,9 +258,20 @@ namespace UserSimulation
                 }
                 //_max_effort = data.TerminalInputNodes().Length;
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
-                _relative_effort = (double)_effort / (double)_max_effort;
+                _expended_effort = (double)_effort / (double)_max_effort;
 
-                string text_out = wb.Name + "," + _total_relative_error + "," + _effort.ToString() + "," + _max_effort + "," + _relative_effort + "," + top_errors.Count + "," + _user.true_positives.Count + "," + _user.false_positives.Count + "," + _user.false_negatives.Count;
+                //"Workbook name:,Starting total rel. error:,Ending total rel. error:,Error remaining:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:"
+                string text_out = wb.Name + "," + 
+                    starting_total_relative_error + "," + 
+                    _total_relative_error + "," + 
+                    remaining_error + "," + 
+                    _effort.ToString() + "," + 
+                    _max_effort + "," + 
+                    _expended_effort + "," + 
+                    top_errors.Count + "," + 
+                    _user.true_positives.Count + "," + 
+                    _user.false_positives.Count + "," + 
+                    _user.false_negatives.Count;
                 ToCSV(wb, text_out);
 
                 // close workbook without saving
@@ -287,7 +304,7 @@ namespace UserSimulation
             else
             {
                 //System.IO.File.Create(file_path);
-                string text = "Workbook name:,Total rel. error:,Effort:,Max effort:,Relative effort:,Num. errors:,True positives:,False positives:,False negatives:" + "\n" + out_text;
+                string text = "Workbook name:,Starting total rel. error:,Ending total rel. error:,Remaining error:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:" + "\n" + out_text;
                 System.IO.File.WriteAllText(file_path, text);
             }
 
@@ -359,7 +376,7 @@ namespace UserSimulation
             public List<AST.Address> true_positives;
             public List<AST.Address> false_positives;
             public HashSet<AST.Address> false_negatives;
-            public ErrorDict max_errors;
+            public ErrorDict max_errors; //Keeps track of the largest errors we observe during the simulation for each output
         }
 
         private static double TotalRelativeError(ErrorDict error)
