@@ -31,11 +31,15 @@ namespace DataDebugMethods
         private int _height = 1;
         private int _width = 1;
         private AST.Address _addr;
+        bool _is_a_cell = false;
         public TreeNode(Excel.Range com, Excel.Worksheet ws, Excel.Workbook wb)
         {
             _inputs = new HashSet<TreeNode>();
             _outputs = new HashSet<TreeNode>();
-            _name = com.Address;
+            _name = String.Intern(com.Address);
+            _height = com.Rows.Count;
+            _width = com.Columns.Count;
+            _is_a_cell = _height == 1 && _width == 1;
             _worksheet = ws;
             if (_worksheet == null)
             {
@@ -49,12 +53,13 @@ namespace DataDebugMethods
             _weight = 0.0;
             _chart = false;
             _COM = com;
-            _height = com.Rows.Count;
-            _width = com.Columns.Count;
             
             // save parsed address of THIS cell;
             // used frequently in equality comparisons
-            _addr = AST.Address.AddressFromCOMObject(_COM, _workbook);
+            if (_is_a_cell)
+            {
+                _addr = AST.Address.AddressFromCOMObject(_COM, _workbook);
+            }
 
             // might be a single cell or formula
             if (_height == 1 && _width == 1)
@@ -76,18 +81,28 @@ namespace DataDebugMethods
             _dont_perturb = true;
         }
 
-        public override bool Equals(object obj)
+        //public override bool Equals(object obj)
+        //{
+        //    return _addr == ((TreeNode)obj).GetAddress();
+        //}
+
+        public override bool Equals(object o)
         {
-            return _addr == ((TreeNode)obj).GetAddress();
+            return _name == ((TreeNode)o)._name;
         }
 
         public override int GetHashCode()
         {
-            return _addr.AddressAsInt32();
+            //return _addr.AddressAsInt32();
+            return _name.GetHashCode();
         }
 
         public AST.Address GetAddress()
         {
+            if (!_is_a_cell)
+            {
+                throw new Exception("Cannot get AST.Address for a TreeNode representing a range of cells.");
+            }
             return _addr;
         }
 
