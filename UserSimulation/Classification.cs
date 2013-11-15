@@ -198,7 +198,7 @@ namespace UserSimulation
 
         public static Classification Deserialize()
         {
-            string file_name = "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin";
+            //string file_name = "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin";
             string fn = "C:\\\\Users\\\\Dimitar Gochev\\\\Documents\\\\GitHub\\\\papers\\\\DataDebug\\\\PLDI-2014\\\\Experiments\\\\ClassificationData_2013-11-14.bin";
             Classification classification;
 

@@ -62,14 +62,16 @@ let main argv =
         let results = Array.map (fun xls ->
                           Array.map (fun i ->
                               let xlfile = wbr.Match(xls).Groups.[2].Value
+                              Console.WriteLine("Opening {0}", xlfile) |> ignore
                               let usersim = new UserSimulation.Simulation()
-                              usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD)
+                              usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD, serfile)
                               usersim.Serialize(outdir + "\\" + xlfile + "_" + i.ToString() + ".bin")
+                              Console.WriteLine("Closing {0}", xlfile) |> ignore
                               usersim
                           ) [|0..NUMTRIALS-1|]
                       ) xlss
 
         // print results
-        Console.WriteLine("Print stuff.") |> ignore
+        Console.WriteLine("Done.") |> ignore
 
         0   // A-OK

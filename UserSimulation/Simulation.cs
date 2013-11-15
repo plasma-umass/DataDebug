@@ -107,10 +107,10 @@ namespace UserSimulation
         }
 
         // Get dictionary of inputs and the error they produce
-        public Dictionary<TreeNode, Tuple<string, double>> TopOfKErrors(AnalysisData data, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb)
+        public Dictionary<TreeNode, Tuple<string, double>> TopOfKErrors(AnalysisData data, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb, string classification_file)
         {
             var eg = new ErrorGenerator();
-            var c = Classification.Deserialize();
+            var c = Classification.Deserialize(classification_file);
             var max_error_produced_dictionary = new Dictionary<TreeNode, Tuple<string, double>>();
 
             foreach (TreeNode inputRange in data.TerminalInputNodes())
@@ -184,7 +184,7 @@ namespace UserSimulation
         }
 
         // create and run a CheckCell simulation
-        public void Run(int nboots, string xlfile, double significance, Excel.Application app, double threshold)
+        public void Run(int nboots, string xlfile, double significance, Excel.Application app, double threshold, string classification_file)
         {
             try
             {
@@ -221,7 +221,7 @@ namespace UserSimulation
                 //      pick the one that causes the largest total relative error
                 //  sort the inputs based on how much total error they are able to produce
                 //  pick top 5% for example, and introduce errors
-                var max_error_produced_dictionary = TopOfKErrors(data, 10, correct_outputs, app, wb);
+                var max_error_produced_dictionary = TopOfKErrors(data, 10, correct_outputs, app, wb, classification_file);
 
                 //Now we want to take the inputs that produce the greatest errors
                 var top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
