@@ -42,7 +42,7 @@ namespace DataDebugMethods
                     // this function both creates a TreeNode and adds it to AnalysisData.input_ranges
                     TreeNode range_node = ConstructTree.MakeRangeTreeNode(data.input_ranges, input_range, formula_node);
                     // this function both creates cell TreeNodes for a range and adds it to AnalysisData.cell_nodes
-                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, data.formula_nodes, data.cell_nodes);
+                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, data.formula_nodes, data.cell_nodes, wb);
                 }
 
                 // For each single-cell input found in the formula by the parser,
@@ -142,7 +142,7 @@ namespace DataDebugMethods
             return nodes;
         }
 
-        public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes)
+        public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes, Excel.Workbook wb)
         {
             foreach (Excel.Range cell in input_range.getCOMObject())
             {
@@ -160,7 +160,9 @@ namespace DataDebugMethods
                 }
 
                 // Allow perturbation of every input_range that contains at least one value
-                if (cell.HasFormula || cell.Value2 == null)
+                // TODO: fix; the Workbook reference here is not correct in the case of cross-workbook reference;
+                // that said, having the wrong workbook doesn't actually have any bearing on the correctness of this call
+                if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb).Count() > 0) || cell.Value2 == null)
                 {
                     input_range.DontPerturb();
                 }
