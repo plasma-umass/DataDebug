@@ -36,7 +36,7 @@ namespace DataDebugMethods
         {
             _inputs = new HashSet<TreeNode>();
             _outputs = new HashSet<TreeNode>();
-            _name = String.Intern(com.Address);
+            _name = String.Intern(wb.FullName + ws.Name + com.Address);
             _height = com.Rows.Count;
             _width = com.Columns.Count;
             _is_a_cell = _height == 1 && _width == 1;
