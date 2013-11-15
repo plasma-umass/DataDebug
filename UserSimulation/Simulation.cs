@@ -245,11 +245,16 @@ namespace UserSimulation
                 _total_relative_error = TotalRelativeError(_error);
 
                 // effort
-                _max_effort = data.TerminalInputNodes().Length;
+                _max_effort = 0;
+                foreach (TreeNode input_range in data.TerminalFormulaNodes())
+                {
+                    _max_effort += input_range.getInputs().Count;
+                }
+                //_max_effort = data.TerminalInputNodes().Length;
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _relative_effort = (double)_effort / (double)_max_effort;
 
-                string text_out = wb.Name + "," + _total_relative_error + "," + _effort.ToString() + "," + _max_effort + "," + _relative_effort;
+                string text_out = wb.Name + "," + _total_relative_error + "," + _effort.ToString() + "," + _max_effort + "," + _relative_effort + "," + top_errors.Count + "," + _user.true_positives.Count + "," + _user.false_positives.Count + "," + _user.false_negatives.Count;
                 ToCSV(wb, text_out);
 
                 // close workbook without saving
@@ -282,8 +287,7 @@ namespace UserSimulation
             else
             {
                 //System.IO.File.Create(file_path);
-                string text = "Workbook name:,Total rel. error:,Effort:,Max effort:,Relative effort:" +
-                    "\n" + out_text;
+                string text = "Workbook name:,Total rel. error:,Effort:,Max effort:,Relative effort:,Num. errors:,True positives:,False positives:,False negatives:" + "\n" + out_text;
                 System.IO.File.WriteAllText(file_path, text);
             }
 
