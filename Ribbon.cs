@@ -253,20 +253,17 @@ namespace DataDebug
 
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            //var ofd = new System.Windows.Forms.OpenFileDialog();
-            //ofd.ShowDialog();
-            //var filename = ofd.SafeFileName;
-            //var sim = new UserSimulation.Simulation();
-            //sim.Run(5000, filename, 0.95, errors, app);
-            var sfd = new System.Windows.Forms.SaveFileDialog();
-            sfd.ShowDialog();
-            var filename = sfd.FileName;
-            var errors = new UserSimulation.ErrorDB();
-            errors.AddError(1, 1, "worksheet", "workbook", "path", "badcell");
-            errors.AddError(2, 3, "worksheet", "workbook", "path", "anotherbadcell");
-            errors.Serialize(filename);
-            var errors2 = UserSimulation.ErrorDB.Deserialize(filename);
-            System.Windows.Forms.MessageBox.Show("Everything works.");
+            current_workbook = app.ActiveWorkbook;
+
+            // Disable screen updating during analysis to speed things up
+            app.ScreenUpdating = false;
+
+            // Build dependency graph (modifies data)
+            var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
+
+            int count = data.TerminalInputNodes().Sum(tn => tn.getInputs().Count());
+            
+            System.Windows.Forms.MessageBox.Show(String.Format("Number of inputs: {0}", count.ToString()));
         }
     }
 }
