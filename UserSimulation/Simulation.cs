@@ -107,64 +107,62 @@ namespace UserSimulation
         }
 
         // Get dictionary of inputs and the error they produce
-        public Dictionary<TreeNode, Tuple<string, double>> TopOfKErrors(AnalysisData data, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb, string classification_file)
+        public Dictionary<AST.Address, Tuple<string, double>> TopOfKErrors(TreeNode[] terminal_formula_nodes, CellDict inputs, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb, string classification_file)
         {
             var eg = new ErrorGenerator();
             var c = Classification.Deserialize(classification_file);
-            var max_error_produced_dictionary = new Dictionary<TreeNode, Tuple<string, double>>();
+            var max_error_produced_dictionary = new Dictionary<AST.Address, Tuple<string, double>>();
 
-            foreach (TreeNode inputRange in data.TerminalInputNodes())
+            foreach (KeyValuePair<AST.Address,string> pair in inputs)
             {
-                foreach (TreeNode inputNode in inputRange.getInputs())
+                AST.Address addr = pair.Key;
+                string orig_value = pair.Value;
+
+                //Load in the classification's dictionaries
+                double max_error_produced = 0.0;
+                string max_error_string = "";
+
+                // get k strings, in parallel
+                string[] errorstrings = eg.GenerateErrorStrings(orig_value, c, k);
+
+                for (int i = 0; i < k; i++)
                 {
-                    string orig_value = inputNode.getCOMValueAsString();
+                    CellDict cd = new CellDict();
+                    cd.Add(addr, errorstrings[i]);
+                    //inject the typo 
+                    InjectValues(app, wb, cd);
 
-                    //Load in the classification's dictionaries
-                    double max_error_produced = 0.0;
-                    string max_error_string = "";
+                    // save function outputs
+                    CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
-                    // get k strings, in parallel
-                    string[] errorstrings = eg.GenerateErrorStrings(orig_value, c, k);
+                    //remove the typo that was introduced
+                    cd.Clear();
+                    cd.Add(addr, orig_value);
+                    InjectValues(app, wb, cd);
 
-                    for (int i = 0; i < k; i++)
+                    double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
+
+                    //keep track of the largest observed max error
+                    if (total_error > max_error_produced)
                     {
-                        CellDict cd = new CellDict();
-                        cd.Add(inputNode.GetAddress(), errorstrings[i]);
-                        //inject the typo 
-                        InjectValues(app, wb, cd);
-
-                        // save function outputs
-                        CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
-
-                        //remove the typo that was introduced
-                        cd.Clear();
-                        cd.Add(inputNode.GetAddress(), orig_value);
-                        InjectValues(app, wb, cd);
-
-                        double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
-
-                        //keep track of the largest observed max error
-                        if (total_error > max_error_produced)
-                        {
-                            max_error_produced = total_error;
-                            max_error_string = errorstrings[i];
-                        }
+                        max_error_produced = total_error;
+                        max_error_string = errorstrings[i];
                     }
-                    //Add entry for this TreeNode in our dictionary with its max_error_produced
-                    max_error_produced_dictionary.Add(inputNode, new Tuple<string, double>(max_error_string, max_error_produced));
                 }
+                //Add entry for this TreeNode in our dictionary with its max_error_produced
+                max_error_produced_dictionary.Add(addr, new Tuple<string, double>(max_error_string, max_error_produced));
             }
             return max_error_produced_dictionary;
         }
 
-        public CellDict GetTopErrors(Dictionary<TreeNode, Tuple<string, double>> max_error_produced_dictionary, double threshold)
+        public CellDict GetTopErrors(Dictionary<AST.Address, Tuple<string, double>> max_error_produced_dictionary, double threshold)
         {
             int inputs_count = max_error_produced_dictionary.Count;
             CellDict top_errors = new CellDict();
             while ((top_errors.Count / (double)inputs_count) < threshold)
             {
                 double max = 0.0;
-                TreeNode max_node = null;
+                AST.Address max_addr = null;
                 string max_node_string = "";
                 //Find the max_node
                 foreach (var kvp in max_error_produced_dictionary)
@@ -172,12 +170,12 @@ namespace UserSimulation
                     if (kvp.Value.Item2 >= max)
                     {
                         max = kvp.Value.Item2;
-                        max_node = kvp.Key;
+                        max_addr = kvp.Key;
                         max_node_string = kvp.Value.Item1;
                     }
                 }
-                max_error_produced_dictionary.Remove(max_node);
-                top_errors.Add(max_node.GetAddress(), max_node_string);
+                max_error_produced_dictionary.Remove(max_addr);
+                top_errors.Add(max_addr, max_node_string);
             }
 
             return top_errors;
@@ -193,14 +191,18 @@ namespace UserSimulation
 
                 // build dependency graph
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
-                if (data.TerminalInputNodes().Length == 0)
+                // get terminal input and terminal formula nodes once
+                var terminal_input_nodes = data.TerminalInputNodes();
+                var terminal_formula_nodes = data.TerminalFormulaNodes();
+
+                if (terminal_input_nodes.Length == 0)
                 {
                     _exit_state = ErrorCondition.ContainsNoInputs;
                     return;
                 }
 
                 // save original spreadsheet state
-                CellDict original_inputs = SaveInputs(data.TerminalInputNodes(), wb);
+                CellDict original_inputs = SaveInputs(terminal_input_nodes, wb);
                 if (original_inputs.Count() == 0)
                 {
                     _exit_state = ErrorCondition.ContainsNoInputs;
@@ -213,7 +215,7 @@ namespace UserSimulation
                 InjectValues(app, wb, original_inputs);
 
                 // save function outputs
-                CellDict correct_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 //Look for 'touchy' cells among the inputs:
                 //  for each input 
@@ -221,7 +223,7 @@ namespace UserSimulation
                 //      pick the one that causes the largest total relative error
                 //  sort the inputs based on how much total error they are able to produce
                 //  pick top 5% for example, and introduce errors
-                var max_error_produced_dictionary = TopOfKErrors(data, 10, correct_outputs, app, wb, classification_file);
+                var max_error_produced_dictionary = TopOfKErrors(terminal_formula_nodes, original_inputs, 10, correct_outputs, app, wb, classification_file);
 
                 //Now we want to take the inputs that produce the greatest errors
                 var top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
@@ -232,13 +234,13 @@ namespace UserSimulation
                 // TODO: save a copy of the workbook for later inspection
 
                 // save function outputs
-                CellDict incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
                 _user = SimulateUser(nboots, significance, data, original_inputs, top_errors, correct_outputs, wb, app);
 
                 //// save partially-corrected outputs
-                var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // compute total relative error
                 _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
@@ -252,11 +254,10 @@ namespace UserSimulation
 
                 // effort
                 _max_effort = 0;
-                foreach (TreeNode input_range in data.TerminalFormulaNodes())
+                foreach (TreeNode input_range in terminal_input_nodes)
                 {
                     _max_effort += input_range.getInputs().Count;
                 }
-                //_max_effort = data.TerminalInputNodes().Length;
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _expended_effort = (double)_effort / (double)_max_effort;
 
@@ -537,20 +538,31 @@ namespace UserSimulation
         // save spreadsheet inputs to a CellDict
         private static CellDict SaveInputs(TreeNode[] input_ranges, Excel.Workbook wb)
         {
-            var cd = new CellDict();
-            foreach (TreeNode input_range in input_ranges)
+            try
             {
-                foreach (TreeNode cell in input_range.getInputs())
+                var cd = new CellDict();
+                foreach (TreeNode input_range in input_ranges)
                 {
-                    // never save formula; there's no point since we don't perturb them
-                    var comcell = cell.getCOMObject();
-                    if (!comcell.HasFormula)
+                    foreach (TreeNode cell in input_range.getInputs())
                     {
-                        cd.Add(cell.GetAddress(), cell.getCOMValueAsString());
+                        // never save formula; there's no point since we don't perturb them
+                        var comcell = cell.getCOMObject();
+                        if (!comcell.HasFormula)
+                        {
+                            var addr = cell.GetAddress();
+                            if (!cd.ContainsKey(addr))
+                            {
+                                cd.Add(addr, cell.getCOMValueAsString());
+                            }
+                        }
                     }
                 }
+                return cd;
             }
-            return cd;
+            catch (Exception e)
+            {
+                throw new Exception(String.Format("Failed in SaveInputs: {0}", e.Message));
+            }
         }
 
         // save spreadsheet outputs to a CellDict
@@ -561,8 +573,16 @@ namespace UserSimulation
             {
                 // throw an exception in debug mode, because this should never happen
                 Debug.Assert((bool)formula_cell.getCOMObject().HasFormula);
+
+                var addr = formula_cell.GetAddress();
                 // save value
-                cd.Add(formula_cell.GetAddress(), formula_cell.getCOMValueAsString());
+                
+                if (cd.ContainsKey(addr))
+                {
+                    throw new Exception(String.Format("Failed in SaveOutputs."));
+                } else {
+                    cd.Add(addr, formula_cell.getCOMValueAsString());
+                }
             }
             return cd;
         }
