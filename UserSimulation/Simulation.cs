@@ -547,13 +547,10 @@ namespace UserSimulation
                     {
                         // never save formula; there's no point since we don't perturb them
                         var comcell = cell.getCOMObject();
-                        if (!comcell.HasFormula)
+                        var addr = cell.GetAddress();
+                        if (!cd.ContainsKey(addr))
                         {
-                            var addr = cell.GetAddress();
-                            if (!cd.ContainsKey(addr))
-                            {
-                                cd.Add(addr, cell.getCOMValueAsString());
-                            }
+                            cd.Add(addr, cell.getCOMValueAsString());
                         }
                     }
                 }
