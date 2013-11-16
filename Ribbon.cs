@@ -255,15 +255,23 @@ namespace DataDebug
         {
             current_workbook = app.ActiveWorkbook;
 
-            // Disable screen updating during analysis to speed things up
-            app.ScreenUpdating = false;
-
             // Build dependency graph (modifies data)
             var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
 
-            int count = data.TerminalInputNodes().Sum(tn => tn.getInputs().Count());
-            
-            System.Windows.Forms.MessageBox.Show(String.Format("Number of inputs: {0}", count.ToString()));
+            var d = new Dictionary<AST.Address, string>();
+            foreach (TreeNode range in data.TerminalInputNodes())
+            {
+                foreach (TreeNode cell in range.getInputs())
+                {
+                    var addr = cell.GetAddress();
+                    if (!d.ContainsKey(addr))
+                    {
+                        d.Add(addr, cell.getName());
+                    }
+                }
+            }
+
+            System.Windows.Forms.MessageBox.Show(String.Format("Number of inputs: {0}", d.Count().ToString()));
         }
     }
 }
