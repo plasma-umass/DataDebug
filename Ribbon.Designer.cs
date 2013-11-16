@@ -43,6 +43,7 @@ namespace DataDebug
             this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
             this.TestStuff = this.Factory.CreateRibbonButton();
+            this.RunSimulation = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -58,6 +59,7 @@ namespace DataDebug
             // 
             this.ccgroup.Items.Add(this.buttonGroup1);
             this.ccgroup.Items.Add(this.SensitivityTextBox);
+            this.ccgroup.Items.Add(this.RunSimulation);
             this.ccgroup.Items.Add(this.TestStuff);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
@@ -114,6 +116,12 @@ namespace DataDebug
             this.TestStuff.Name = "TestStuff";
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
+            // RunSimulation
+            // 
+            this.RunSimulation.Label = "Run Simulation";
+            this.RunSimulation.Name = "RunSimulation";
+            this.RunSimulation.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunSimulation_Click);
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -140,6 +148,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton TestStuff;
         internal Microsoft.Office.Tools.Ribbon.RibbonEditBox SensitivityTextBox;
         internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton RunSimulation;
     }
 
     partial class ThisRibbonCollection

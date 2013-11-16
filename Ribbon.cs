@@ -273,5 +273,15 @@ namespace DataDebug
 
             System.Windows.Forms.MessageBox.Show(String.Format("Number of inputs: {0}", d.Count().ToString()));
         }
+
+        private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
+        {
+            var filename = app.ActiveWorkbook.FullName;
+
+            app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);
+
+            UserSimulation.Simulation sim = new UserSimulation.Simulation();
+            sim.Run(2700, filename, 0.95, app, 0.05, "C:\\\\Users\\Dan Barowy\\Documents\\Visual Studio 2010\\Projects\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin");
+        }
     }
 }

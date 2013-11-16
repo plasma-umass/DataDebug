@@ -290,6 +290,29 @@ namespace UserSimulation
             }
         }
 
+        public static void ToTimeseriesCSV(Excel.Workbook wb, double current_error, double current_effort)
+        {
+            string dir_path = wb.Path;
+            string file_path = dir_path + "\\timeseries_results.csv";
+            string text = "";
+
+            //if file exists, read existing data
+            if (System.IO.File.Exists(file_path))
+            {
+                text = System.IO.File.ReadAllText(file_path);
+                text += "\n";
+            }
+            //otherwise write header
+            else
+            {
+                text = "workbook_name,current_error,current_effort\n";
+            }
+
+            text += String.Format("{0},{1},{2}\n", wb.Name, current_error, current_effort);
+
+            System.IO.File.WriteAllText(file_path, text);
+        }
+
         public void ToCSV(Excel.Workbook wb, string out_text)
         {
             string dir_path = wb.Path;
@@ -378,6 +401,7 @@ namespace UserSimulation
             public List<AST.Address> false_positives;
             public HashSet<AST.Address> false_negatives;
             public ErrorDict max_errors; //Keeps track of the largest errors we observe during the simulation for each output
+            public List<double> current_total_error;
         }
 
         private static double TotalRelativeError(ErrorDict error)
@@ -452,6 +476,7 @@ namespace UserSimulation
             o.false_negatives = new HashSet<AST.Address>();
             o.false_positives = new List<AST.Address>();
             o.true_positives = new List<AST.Address>();
+            o.current_total_error = new List<double>();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
 
             // initialize
@@ -461,8 +486,12 @@ namespace UserSimulation
             UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
 
             // remove errors
+            var current_effort = 0;
             while (errors_remain)
             {
+                current_effort += 1;
+                Console.Write(".");
+
                 // Get bootstraps
                 TreeScore scores = Analysis.Bootstrap(nboots, data, app, true);
 
@@ -491,13 +520,22 @@ namespace UserSimulation
 
                     // correct flagged cell
                     flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
-                    var partially_correct_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
-                    UpdatePerFunctionMaxError(correct_outputs, partially_correct_outputs, max_errors);
+                    var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                    UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
 
                     // mark it as known good
                     known_good.Add(flagged_cell);
+
+                    // compute total error after applying this correction
+                    var current_total_error = CalculateTotalError(correct_outputs, partially_corrected_outputs);
+                    o.current_total_error.Add(current_total_error);
+
+                    // write CSV line
+                    ToTimeseriesCSV(wb, current_total_error, current_effort);
                 }
             }
+
+            Console.Write("\n");
 
             // find all of the false negatives
             o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errord);
