@@ -313,6 +313,7 @@ namespace UserSimulation
             System.IO.File.WriteAllText(file_path, text);
         }
 
+        //Creates a CSV file with information about the error reduction
         public void ToCSV(Excel.Workbook wb, string out_text)
         {
             string dir_path = wb.Path;
