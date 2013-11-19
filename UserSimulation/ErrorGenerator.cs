@@ -12,9 +12,6 @@ namespace UserSimulation
 {
     public class ErrorGenerator
     {
-        //private _typo_array;
-        //private _transposition_array;
-        //private _sign_array;
         private Dictionary<OptChar, Dictionary<string,double>> _char_distributions_dict = new Dictionary<OptChar,Dictionary<string,double>>();
 
         private Dictionary<int, double> _transpositions_distribution_dict = new Dictionary<int, double>();
@@ -87,10 +84,13 @@ namespace UserSimulation
             }).ToArray();
             var sum = kvps.Select(pair => pair.Value).Sum();
             var distribution = kvps.Select(pair => new KeyValuePair<string,double>(pair.Key.Item2, (double) pair.Value / sum));
-            //var distribution = kvps.Select(pair => Enumerable.Repeat(pair.Key, pair.Value)).SelectMany(i => i);
             return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
 
+        /// <summary>
+        /// Given a distribution, this method chooses a string from the distribution at random
+        /// based on the probabilities given in the distribution.
+        /// </summary>
         private string GetRandomStringFromDistribution(Dictionary<string, double> distribution)
         {
             var rng = new Random();
@@ -130,7 +130,6 @@ namespace UserSimulation
         private Dictionary<int, double> GenerateTranspositionsDistribution(Classification classification)
         {
             var transposition_dict = classification.GetTranspositionDict();
-            //var kvps = transposition_dict.Where(pair => pair.Key.Equals(i));
             var sum = transposition_dict.Select(pair => pair.Value).Sum();
             var distribution = transposition_dict.Select(pair => new KeyValuePair<int, double>(pair.Key, (double)pair.Value / sum));
             return distribution.ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -155,7 +154,6 @@ namespace UserSimulation
 
         public ErrorString GenerateErrorString(string input, Classification classification)
         {
-            List<LCSError> error_list = new List<LCSError>();
             //Try to add transposition errors
             Dictionary<int, double> transpositions_distribution = GetDistributionOfTranspositions(classification);
             
@@ -232,7 +230,6 @@ namespace UserSimulation
                     transposed_input = transposed_input.Insert(target_index, c + "");
 
                     LCSError error = LongestCommonSubsequence.Error.NewTranspositionError(i, delta);
-                    error_list.Add(error);
                     //And add the indices to the transposed_locations
                     transposed_locations.Add(target_index);
                 }
@@ -262,13 +259,9 @@ namespace UserSimulation
 
             //Signs and decimals are handled by typo model
 
-            //TODO get rid of error_list; instead, at the end of GenerateErrors, check if the input 
-            //  was changed at all; if yes, run the classifier to find out how it changed
+            List<LCSError> error_list = new List<LCSError>();
             if (!modified_input.Equals(input))
             {
-                //error_list = get errors from Classification
-
-                error_list.Clear();
                 // get LCS
                 var alignments = LongestCommonSubsequence.LeftAlignedLCS(input, modified_input);
                 // find all character additions

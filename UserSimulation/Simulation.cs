@@ -290,8 +290,10 @@ namespace UserSimulation
             }
         }
 
+        //This method creates a csv file that shows the error reduction after each fix is applied
         public static void ToTimeseriesCSV(Excel.Workbook wb, double current_error, double current_effort)
         {
+            //The file (timeseries_results.csv) is created in the same directory as the file currently being analyzed
             string dir_path = wb.Path;
             string file_path = dir_path + "\\timeseries_results.csv";
             string text = "";
@@ -316,6 +318,7 @@ namespace UserSimulation
         //Creates a CSV file with information about the error reduction
         public void ToCSV(Excel.Workbook wb, string out_text)
         {
+            //The file (Results.csv) is created in the same directory as the file currently being analyzed
             string dir_path = wb.Path;
             string file_path = dir_path + "\\Results.csv";
             //if file exists, read it and append to it
@@ -325,10 +328,9 @@ namespace UserSimulation
                 text += "\n" + out_text;
                 System.IO.File.WriteAllText(file_path, text);
             }
-            //otherwise create the file and write to it
+            //otherwise create the file, adding the column headers, and write to it
             else
             {
-                //System.IO.File.Create(file_path);
                 string text = "Workbook name:,Starting total rel. error:,Ending total rel. error:,Remaining error:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:" + "\n" + out_text;
                 System.IO.File.WriteAllText(file_path, text);
             }
@@ -375,6 +377,7 @@ namespace UserSimulation
             }
         }
 
+        //The total error is the sum of the absolute errors of all outputs
         private static double CalculateTotalError(CellDict correct_outputs, CellDict incorrect_outputs)
         {
             double total_error = 0.0;
