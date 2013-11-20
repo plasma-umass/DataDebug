@@ -567,6 +567,7 @@ namespace DataDebugMethods
         {
             // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
+            //return neutral (0.5) if we are having a sparsity problem
             if (boots_exc.Length == 0)
             {
                 return 0.5;

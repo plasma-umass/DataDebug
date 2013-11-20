@@ -380,6 +380,7 @@ namespace UserSimulation
         //The total error is the sum of the absolute errors of all outputs
         private static double CalculateTotalError(CellDict correct_outputs, CellDict incorrect_outputs)
         {
+            //Iterate over all outputs and accumulate the total error
             double total_error = 0.0;
             foreach (var kvp in correct_outputs)
             {

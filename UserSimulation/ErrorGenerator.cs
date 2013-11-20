@@ -20,6 +20,7 @@ namespace UserSimulation
         {
             OptChar key = c;
             Dictionary<string, double> distribution;
+            //Generate the probability distribution based on the classification, which contains counts of observations
             distribution = GenerateDistributionForChar(key, classification);
             //If our dictionary does not have any information about this character, we return the character with probability 1.0
             if (distribution.Count == 0)
@@ -38,7 +39,8 @@ namespace UserSimulation
             {
                 return distribution;
             }
-            else //otherwise generate the distribution and then return it
+            //otherwise generate the distribution and then return it
+            else
             {
                 distribution = GenerateDistributionForChar(key, classification);
                 //If our dictionary does not have any information about this character, we return the character with probability 1.0
