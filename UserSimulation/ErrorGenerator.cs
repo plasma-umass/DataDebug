@@ -12,10 +12,13 @@ namespace UserSimulation
 {
     public class ErrorGenerator
     {
+        //Keeps the distributions that have been generated so far, so that they don't have to be generated again later
         private Dictionary<OptChar, Dictionary<string,double>> _char_distributions_dict = new Dictionary<OptChar,Dictionary<string,double>>();
 
         private Dictionary<int, double> _transpositions_distribution_dict = new Dictionary<int, double>();
 
+        //Gets the distribution of strings for a particular character
+        //DOES NOT use previously generated distributions; generates the distribution every time
         private Dictionary<string, double> GetDistributionOfStringsForChar(OptChar c, Classification classification)
         {
             OptChar key = c;
@@ -30,7 +33,10 @@ namespace UserSimulation
             return distribution;
         }
 
-        private Dictionary<string, double> GetDistributionOfStringsForChaz(OptChar c, Classification classification)
+
+        //Gets the distribution of strings for a particular character
+        //If the distribution has been generated before, it is reused from the _char_distributions_dict
+        private Dictionary<string, double> GetDistributionOfStringsForCharReuse(OptChar c, Classification classification)
         {
             OptChar key = c;
             Dictionary<string, double> distribution;
@@ -52,6 +58,7 @@ namespace UserSimulation
                 return distribution;
             }
         }
+
         public string[] GenerateErrorStrings(string orig, Classification c, int k)
         {
             var e = Enumerable.Range(0, k);
@@ -66,7 +73,7 @@ namespace UserSimulation
             return strs.ToArray();
         }
 
-
+        //Generates the distribution of strings for a particular character given a classification
         private Dictionary<string, double> GenerateDistributionForChar(OptChar c, Classification classification)
         {
             var typo_dict = classification.GetTypoDict();
