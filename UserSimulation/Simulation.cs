@@ -409,6 +409,8 @@ namespace UserSimulation
             public List<double> current_total_error;
         }
 
+        //Computes total relative error
+        //TODO Not sure why we divide by the count at the end -- that would make it the average, not the total
         private static double TotalRelativeError(ErrorDict error)
         {
             return error.Select(pair => pair.Value).Sum() / (double)error.Count();
