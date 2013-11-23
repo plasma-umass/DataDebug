@@ -410,7 +410,8 @@ namespace UserSimulation
         }
 
         //Computes total relative error
-        //TODO Not sure why we divide by the count at the end -- that would make it the average, not the total
+        //Each entry in the dictionary is normalized to its max value, so they are all <= 1.0.
+        //We sum them up and divide by the total number of entries to get the total relative error
         private static double TotalRelativeError(ErrorDict error)
         {
             return error.Select(pair => pair.Value).Sum() / (double)error.Count();
