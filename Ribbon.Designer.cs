@@ -42,8 +42,8 @@ namespace DataDebug
             this.FixError = this.Factory.CreateRibbonButton();
             this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
-            this.TestStuff = this.Factory.CreateRibbonButton();
             this.RunSimulation = this.Factory.CreateRibbonButton();
+            this.TestStuff = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -83,7 +83,7 @@ namespace DataDebug
             // MarkAsOK
             // 
             this.MarkAsOK.Image = global::DataDebug.Properties.Resources.mark_as_ok_small;
-            this.MarkAsOK.Label = "Mark As OK";
+            this.MarkAsOK.Label = "Mark as OK";
             this.MarkAsOK.Name = "MarkAsOK";
             this.MarkAsOK.ShowImage = true;
             this.MarkAsOK.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.MarkAsOK_Click);
@@ -102,6 +102,7 @@ namespace DataDebug
             this.clearColoringButton.Label = "Start Over";
             this.clearColoringButton.Name = "clearColoringButton";
             this.clearColoringButton.ShowImage = true;
+            this.clearColoringButton.Visible = false;
             this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
             // 
             // SensitivityTextBox
@@ -110,17 +111,19 @@ namespace DataDebug
             this.SensitivityTextBox.Name = "SensitivityTextBox";
             this.SensitivityTextBox.Text = "5.0";
             // 
-            // TestStuff
-            // 
-            this.TestStuff.Label = "Test";
-            this.TestStuff.Name = "TestStuff";
-            this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
-            // 
             // RunSimulation
             // 
             this.RunSimulation.Label = "Run Simulation";
             this.RunSimulation.Name = "RunSimulation";
+            this.RunSimulation.Visible = false;
             this.RunSimulation.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunSimulation_Click);
+            // 
+            // TestStuff
+            // 
+            this.TestStuff.Label = "Test";
+            this.TestStuff.Name = "TestStuff";
+            this.TestStuff.Visible = false;
+            this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
             // Ribbon
             // 
