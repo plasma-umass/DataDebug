@@ -15,8 +15,8 @@ You will need Microsoft Excel 2010.
 
 Installing CheckCell
 --------------------
-A release version of checkCell is available in the "Release" folder. Simply download the contents of the folder, run "setup.exe", and follow the instructions.
-You are now ready to use CheckCell. When you open Excel, you will find CheckCell in the "Add-Ins" tab in the ribbon.
+A release version of checkCell is available in the "Release.zip" archive. Simply extract the contents of the archive, run "setup.exe", and follow the instructions.
+You are now ready to use CheckCell. You will find CheckCell in Excel, under the "Add-Ins" tab in the ribbon.
 
 Uninstalling CheckCell
 ----------------------
