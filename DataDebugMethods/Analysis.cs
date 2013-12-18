@@ -57,8 +57,7 @@ namespace DataDebugMethods
             // the resampled values go here
             var ss = new InputSample[num_bootstraps];
             
-            // sample with replacement to get i
-            // bootstrapped samples
+            // sample with replacement to get i bootstrapped samples
             for (var i = 0; i < num_bootstraps; i++)
             {
                 var s = new InputSample(orig_vals.Rows(), orig_vals.Columns());
@@ -90,7 +89,6 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        // All of this is pretty ugly.
         public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted)
         {
             // this modifies the weights of each node
