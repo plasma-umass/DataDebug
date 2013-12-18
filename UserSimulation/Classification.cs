@@ -199,10 +199,10 @@ namespace UserSimulation
         public static Classification Deserialize()
         {
             //string file_name = "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin";
-            string fn = "C:\\\\Users\\\\Dimitar Gochev\\\\Documents\\\\GitHub\\\\papers\\\\DataDebug\\\\PLDI-2014\\\\Experiments\\\\ClassificationData_2013-11-14.bin";
+            string file_name = "C:\\\\Users\\\\Dimitar Gochev\\\\Documents\\\\GitHub\\\\papers\\\\DataDebug\\\\PLDI-2014\\\\Experiments\\\\ClassificationData_2013-11-14.bin";
             Classification classification;
 
-            using (Stream stream = new FileStream(fn, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (Stream stream = new FileStream(file_name, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 IFormatter formatter = new BinaryFormatter();
                 classification = (Classification)formatter.Deserialize(stream);
