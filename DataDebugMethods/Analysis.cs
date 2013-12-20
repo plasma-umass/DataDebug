@@ -624,24 +624,24 @@ namespace DataDebugMethods
             // in loop, choose the next value, look for repeats of that value,
             // increment your pointer to the last instance of the value,
             // and then calculate the proportion of values to the left of the pointer (inclusive)
-            int ptr = 0;
-            while (ptr < sorted_values.Length)
+            int index = 0;
+            while (index < sorted_values.Length)
             {
                 // get current value
-                var current_value = sorted_values[ptr].Item1;
+                var current_value = sorted_values[index].Item1;
 
-                while (ptr + 1 < sorted_values.Length && current_value.Equals(sorted_values[ptr + 1].Item1))
+                while (index + 1 < sorted_values.Length && current_value.Equals(sorted_values[index + 1].Item1))
                 {
-                    ptr += 1;
+                    index += 1;
                 }
 
                 // calculate proportion of values to the left of the ptr
-                var quantile = (double)(ptr + 1) / (double)sorted_values.Length;
+                var quantile = (double)(index + 1) / (double)sorted_values.Length;
 
                 // update output with value
-                outputs.Add(new Tuple<double,V>(quantile, sorted_values[ptr].Item2));
+                outputs.Add(new Tuple<double,V>(quantile, sorted_values[index].Item2));
 
-                ptr += 1;
+                index += 1;
             }
 
             return outputs;
