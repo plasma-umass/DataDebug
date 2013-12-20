@@ -186,6 +186,8 @@ namespace UserSimulation
 
 
         //TODO Decide where we are going to keep our trained dictionaries
+
+        //Output serialized classification file
         public void Serialize()
         {
             string file_name = "C.classification";
@@ -196,6 +198,7 @@ namespace UserSimulation
             }
         }
 
+        //Read in a classification file
         public static Classification Deserialize()
         {
             //string file_name = "C:\\\\Users\\Dimitar Gochev\\Documents\\GitHub\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin";
