@@ -253,25 +253,7 @@ namespace DataDebug
 
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            current_workbook = app.ActiveWorkbook;
-
-            // Build dependency graph (modifies data)
-            var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
-
-            var d = new Dictionary<AST.Address, string>();
-            foreach (TreeNode range in data.TerminalInputNodes())
-            {
-                foreach (TreeNode cell in range.getInputs())
-                {
-                    var addr = cell.GetAddress();
-                    if (!d.ContainsKey(addr))
-                    {
-                        d.Add(addr, cell.getName());
-                    }
-                }
-            }
-
-            System.Windows.Forms.MessageBox.Show(String.Format("Number of inputs: {0}", d.Count().ToString()));
+            RunSimulation_Click(sender, e);
         }
 
         private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
@@ -281,7 +263,13 @@ namespace DataDebug
             app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);
 
             UserSimulation.Simulation sim = new UserSimulation.Simulation();
-            sim.Run(2700, filename, 0.95, app, 0.05, "C:\\\\Users\\Dan Barowy\\Documents\\Visual Studio 2010\\Projects\\papers\\DataDebug\\PLDI-2014\\Experiments\\ClassificationData_2013-11-14.bin");
+
+            var directory = @"C:\\Users\dbarowy\Documents\Visual Studio 2012\Projects\papers\DataDebug\PLDI-2014\Experiments";
+            var classification_data = System.IO.Path.Combine(directory, "ClassificationData_2013-11-14.bin");
+            var output_csv = System.IO.Path.Combine(directory, filename + "_results.csv");
+
+            sim.Run(2700, filename, 0.95, app, 0.05, classification_data);
+            sim.ToCSV(output_csv);
         }
     }
 }

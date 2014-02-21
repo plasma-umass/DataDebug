@@ -27,9 +27,14 @@ namespace UserSimulation
         Exception
     }
 
+    public class SimulationNotRunException : Exception {} 
+
     [Serializable]
     public class Simulation
     {
+        private bool _simulation_run = false;    // was the simulation run?
+        private String _wb_name = "";
+        private String _wb_path = "";
         private ErrorCondition _exit_state = ErrorCondition.OK;
         private string _exception_message = "";
         private UserResults _user;
@@ -38,6 +43,8 @@ namespace UserSimulation
         private int _max_effort = 1;
         private int _effort = 0;
         private double _expended_effort = 0;
+        private double _initial_total_relative_error = 0;
+        private Dictionary<AST.Address, string> _top_errors = new Dictionary<AST.Address, string>();
 
         public ErrorCondition GetExitState()
         {
@@ -184,10 +191,16 @@ namespace UserSimulation
         // create and run a CheckCell simulation
         public void Run(int nboots, string xlfile, double significance, Excel.Application app, double threshold, string classification_file)
         {
+            // set wbname
+            _wb_name = xlfile;
+
             try
             {
                 // open workbook
                 Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
+
+                // set path
+                _wb_path = wb.Path;
 
                 // build dependency graph
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
@@ -226,10 +239,10 @@ namespace UserSimulation
                 var max_error_produced_dictionary = TopOfKErrors(terminal_formula_nodes, original_inputs, 10, correct_outputs, app, wb, classification_file);
 
                 //Now we want to take the inputs that produce the greatest errors
-                var top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
+                _top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
 
                 //Now we want to inject the errors in top_errors
-                InjectValues(app, wb, top_errors);
+                InjectValues(app, wb, _top_errors);
 
                 // TODO: save a copy of the workbook for later inspection
 
@@ -237,9 +250,9 @@ namespace UserSimulation
                 CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, top_errors, correct_outputs, wb, app);
+                _user = SimulateUser(nboots, significance, data, original_inputs, _top_errors, correct_outputs, wb, app);
 
-                //// save partially-corrected outputs
+                // save partially-corrected outputs
                 var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // compute total relative error
@@ -248,9 +261,7 @@ namespace UserSimulation
 
                 // computer starting total relative error (normalized by max_errors)
                 ErrorDict starting_error = CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
-                double starting_total_relative_error = TotalRelativeError(starting_error);
-
-                double remaining_error = _total_relative_error / starting_total_relative_error;
+                _initial_total_relative_error = TotalRelativeError(starting_error);
 
                 // effort
                 _max_effort = 0;
@@ -261,33 +272,38 @@ namespace UserSimulation
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _expended_effort = (double)_effort / (double)_max_effort;
 
-                //"Workbook name:,Starting total rel. error:,Ending total rel. error:,Error remaining:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:"
-                string text_out = wb.Name + "," + 
-                    starting_total_relative_error + "," + 
-                    _total_relative_error + "," + 
-                    remaining_error + "," + 
-                    _effort.ToString() + "," + 
-                    _max_effort + "," + 
-                    _expended_effort + "," + 
-                    top_errors.Count + "," + 
-                    _user.true_positives.Count + "," + 
-                    _user.false_positives.Count + "," + 
-                    _user.false_negatives.Count;
-                ToCSV(wb, text_out);
-
                 // close workbook without saving
                 wb.Close(false, "", false);
-                app.Quit();
                 Marshal.ReleaseComObject(wb);
-                Marshal.ReleaseComObject(app);
-                wb = null;
-                app = null;
+
+                // flag that we're done; safe to print output results
+                _simulation_run = true;
             }
             catch (Exception e)
             {
                 _exit_state = ErrorCondition.Exception;
                 _exception_message = e.Message;
             }
+        }
+
+        public double RemainingError()
+        {
+            return _total_relative_error / _initial_total_relative_error;
+        }
+
+        public String FormatResultsAsCSV()
+        {
+            return  _wb_name + "," +                        // workbook name
+                    _initial_total_relative_error + "," +   // initial total relative error
+                    _total_relative_error + "," +           // final total relative error
+                    RemainingError() + "," +                // remaining error
+                    _effort.ToString() + "," +              // effort
+                    _max_effort + "," +                     // max effort
+                    _expended_effort + "," +                // expended effort
+                    _top_errors.Count + "," +               // number of errors
+                    _user.true_positives.Count + "," +      // number of true positives
+                    _user.false_positives.Count + "," +     // number of false positives
+                    _user.false_negatives.Count;            // number of false negatives
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
@@ -315,26 +331,33 @@ namespace UserSimulation
             System.IO.File.WriteAllText(file_path, text);
         }
 
-        //Creates a CSV file with information about the error reduction
-        public void ToCSV(Excel.Workbook wb, string out_text)
+        /// <summary>
+        /// Creates a CSV file with information about the CheckCell oracle simulation.
+        /// </summary>
+        /// <param name="output_filename">Path for writing CSV.</param>
+        public void ToCSV(string output_filename)
         {
-            //The file (Results.csv) is created in the same directory as the file currently being analyzed
-            string dir_path = wb.Path;
-            string file_path = dir_path + "\\Results.csv";
-            //if file exists, read it and append to it
-            if (System.IO.File.Exists(file_path))
+            if (_simulation_run)
             {
-                string text = System.IO.File.ReadAllText(file_path);
-                text += "\n" + out_text;
-                System.IO.File.WriteAllText(file_path, text);
+                // the file is created at the following path
+                // if file exists, read it and append to it
+                if (System.IO.File.Exists(output_filename))
+                {
+                    string text = System.IO.File.ReadAllText(output_filename);
+                    text += "\n" + FormatResultsAsCSV();
+                    System.IO.File.WriteAllText(output_filename, text);
+                }
+                // otherwise create the file, adding the column headers, and write to it
+                else
+                {
+                    string header = "Workbook name:,Starting total rel. error:,Ending total rel. error:,Remaining error:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:";
+                    System.IO.File.WriteAllText(output_filename, header + "\n" + FormatResultsAsCSV());
+                }
             }
-            //otherwise create the file, adding the column headers, and write to it
             else
             {
-                string text = "Workbook name:,Starting total rel. error:,Ending total rel. error:,Remaining error:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:" + "\n" + out_text;
-                System.IO.File.WriteAllText(file_path, text);
+                throw new SimulationNotRunException();
             }
-
         }
 
         private static void UpdatePerFunctionMaxError(CellDict correct_outputs, CellDict incorrect_outputs, ErrorDict max_errors)

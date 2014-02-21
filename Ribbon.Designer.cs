@@ -122,7 +122,6 @@ namespace DataDebug
             // 
             this.TestStuff.Label = "Test";
             this.TestStuff.Name = "TestStuff";
-            this.TestStuff.Visible = false;
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
             // Ribbon
