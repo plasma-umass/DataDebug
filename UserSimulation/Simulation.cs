@@ -44,7 +44,8 @@ namespace UserSimulation
         private int _effort = 0;
         private double _expended_effort = 0;
         private double _initial_total_relative_error = 0;
-        private Dictionary<AST.Address, string> _top_errors = new Dictionary<AST.Address, string>();
+        private Dictionary<AST.Address, string> _errors = new Dictionary<AST.Address, string>();
+        private double _average_precision = 0;
 
         public ErrorCondition GetExitState()
         {
@@ -239,10 +240,13 @@ namespace UserSimulation
                 var max_error_produced_dictionary = TopOfKErrors(terminal_formula_nodes, original_inputs, 10, correct_outputs, app, wb, classification_file);
 
                 //Now we want to take the inputs that produce the greatest errors
-                _top_errors = GetTopErrors(max_error_produced_dictionary, threshold);
+                // TODO: actually, we don't; rather we should just repeat the experiment
+                // k times to get a distribution, where k is the number required for
+                // significance
+                _errors = GetTopErrors(max_error_produced_dictionary, threshold);
 
                 //Now we want to inject the errors in top_errors
-                InjectValues(app, wb, _top_errors);
+                InjectValues(app, wb, _errors);
 
                 // TODO: save a copy of the workbook for later inspection
 
@@ -250,7 +254,7 @@ namespace UserSimulation
                 CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, _top_errors, correct_outputs, wb, app);
+                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app);
 
                 // save partially-corrected outputs
                 var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
@@ -259,7 +263,7 @@ namespace UserSimulation
                 _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
                 _total_relative_error = TotalRelativeError(_error);
 
-                // computer starting total relative error (normalized by max_errors)
+                // compute starting total relative error (normalized by max_errors)
                 ErrorDict starting_error = CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
                 _initial_total_relative_error = TotalRelativeError(starting_error);
 
@@ -271,6 +275,9 @@ namespace UserSimulation
                 }
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _expended_effort = (double)_effort / (double)_max_effort;
+
+                // compute average precision
+                _average_precision = _user.precision_at_step_k.Sum() / (double)_effort;
 
                 // close workbook without saving
                 wb.Close(false, "", false);
@@ -291,19 +298,37 @@ namespace UserSimulation
             return _total_relative_error / _initial_total_relative_error;
         }
 
+        public static String HeaderRowForCSV()
+        {
+            return String.Format("{0},{1},{2},{3},{4},{5},{7},{8},{9},{10},{11}",
+                                 "workbook_name",
+                                 "initial_total_relative_error",
+                                 "total_relative_error",
+                                 "remaining_error",
+                                 "effort",
+                                 "max_effort",
+                                 "expended_effort",
+                                 "number_of_errors",
+                                 "true_positives",
+                                 "false_positives",
+                                 "false_negatives",
+                                 "average_precision");
+        }
+
         public String FormatResultsAsCSV()
         {
-            return  _wb_name + "," +                        // workbook name
+            return _wb_name + "," +                         // workbook name
                     _initial_total_relative_error + "," +   // initial total relative error
                     _total_relative_error + "," +           // final total relative error
                     RemainingError() + "," +                // remaining error
                     _effort.ToString() + "," +              // effort
                     _max_effort + "," +                     // max effort
                     _expended_effort + "," +                // expended effort
-                    _top_errors.Count + "," +               // number of errors
+                    _errors.Count + "," +                   // number of errors
                     _user.true_positives.Count + "," +      // number of true positives
                     _user.false_positives.Count + "," +     // number of false positives
-                    _user.false_negatives.Count;            // number of false negatives
+                    _user.false_negatives.Count + "," +     // number of false negatives
+                    _average_precision;                     // average precision
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
@@ -350,8 +375,7 @@ namespace UserSimulation
                 // otherwise create the file, adding the column headers, and write to it
                 else
                 {
-                    string header = "Workbook name:,Starting total rel. error:,Ending total rel. error:,Remaining error:,Effort:,Max effort:,Expended effort:,Num. errors:,True positives:,False positives:,False negatives:";
-                    System.IO.File.WriteAllText(output_filename, header + "\n" + FormatResultsAsCSV());
+                    System.IO.File.WriteAllText(output_filename, HeaderRowForCSV() + "\n" + FormatResultsAsCSV());
                 }
             }
             else
@@ -430,6 +454,7 @@ namespace UserSimulation
             public HashSet<AST.Address> false_negatives;
             public ErrorDict max_errors; //Keeps track of the largest errors we observe during the simulation for each output
             public List<double> current_total_error;
+            public List<double> precision_at_step_k;
         }
 
         //Computes total relative error
@@ -503,24 +528,28 @@ namespace UserSimulation
                                                Excel.Workbook wb,
                                                Excel.Application app)
         {
+            // init user results data structure
             var o = new UserResults();
             o.false_negatives = new HashSet<AST.Address>();
             o.false_positives = new List<AST.Address>();
             o.true_positives = new List<AST.Address>();
             o.current_total_error = new List<double>();
+            o.precision_at_step_k = new List<double>();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
 
-            // initialize
+            // initialize procedure
             var errors_remain = true;
             var max_errors = new ErrorDict();
             var incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+            var errors_found = 0;
+            var number_of_true_errors = errord.Count;
             UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
 
             // remove errors
-            var current_effort = 0;
+            var cells_inspected = 0;
             while (errors_remain)
             {
-                current_effort += 1;
+                cells_inspected += 1;
                 Console.Write(".");
 
                 // Get bootstraps
@@ -542,10 +571,13 @@ namespace UserSimulation
                     // check to see if the flagged value is actually an error
                     if (errord.ContainsKey(flagged_cell))
                     {
+                        errors_found += 1;
+                        o.precision_at_step_k.Add(errors_found / (double)cells_inspected);
                         o.true_positives.Add(flagged_cell);
                     }
                     else
                     {
+                        o.precision_at_step_k.Add(0);
                         o.false_positives.Add(flagged_cell);
                     }
 
@@ -562,11 +594,11 @@ namespace UserSimulation
                     o.current_total_error.Add(current_total_error);
 
                     // write CSV line
-                    ToTimeseriesCSV(wb, current_total_error, current_effort);
+                    //ToTimeseriesCSV(wb, current_total_error, cells_inspected);
                 }
             }
 
-            Console.Write("\n");
+            //Console.Write("\n");
 
             // find all of the false negatives
             o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errord);

@@ -258,18 +258,31 @@ namespace DataDebug
 
         private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
         {
+            // the full path of this workbook
             var filename = app.ActiveWorkbook.FullName;
 
-            app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);
+            // the default output filename
+            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
+            var default_output_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + "_sim_results.csv";
 
-            UserSimulation.Simulation sim = new UserSimulation.Simulation();
+            // ask the user for the classification data
+            var ofd = new System.Windows.Forms.OpenFileDialog();
+            ofd.FileName = "ClassificationData-2013-11-14.bin";
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                // ask the user where the output data should go
+                var sfd = new System.Windows.Forms.SaveFileDialog();
+                sfd.FileName = default_output_file;
 
-            var directory = @"C:\\Users\dbarowy\Documents\Visual Studio 2012\Projects\papers\DataDebug\PLDI-2014\Experiments";
-            var classification_data = System.IO.Path.Combine(directory, "ClassificationData_2013-11-14.bin");
-            var output_csv = System.IO.Path.Combine(directory, filename + "_results.csv");
-
-            sim.Run(2700, filename, 0.95, app, 0.05, classification_data);
-            sim.ToCSV(output_csv);
+                if (sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    // run the simulation
+                    app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
+                    UserSimulation.Simulation sim = new UserSimulation.Simulation();
+                    sim.Run(2700, filename, 0.95, app, 0.05, ofd.FileName);
+                    sim.ToCSV(sfd.FileName);
+                }
+            }
         }
     }
 }
