@@ -57,19 +57,19 @@ let main argv =
 
         // run user simulation experiment for every spreadsheet in xlsdir
         // NUMTRIALS times & save in outdir
-        let xlss = EnumSpreadsheets(xlsdir) |> Seq.toArray
-        let wbr = System.Text.RegularExpressions.Regex(@"\\\\(.+\\)*(.+\..+)$", System.Text.RegularExpressions.RegexOptions.Compiled)
-        let results = Array.map (fun xls ->
-                          Array.map (fun i ->
-                              let xlfile = wbr.Match(xls).Groups.[2].Value
-                              Console.WriteLine("Opening {0}", xlfile) |> ignore
-                              let usersim = new UserSimulation.Simulation()
-                              usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD, serfile)
-                              usersim.Serialize(outdir + "\\" + xlfile + "_" + i.ToString() + ".bin")
-                              Console.WriteLine("Closing {0}", xlfile) |> ignore
-                              usersim
-                          ) [|0..NUMTRIALS-1|]
-                      ) xlss
+//        let xlss = EnumSpreadsheets(xlsdir) |> Seq.toArray
+//        let wbr = System.Text.RegularExpressions.Regex(@"\\\\(.+\\)*(.+\..+)$", System.Text.RegularExpressions.RegexOptions.Compiled)
+//        let results = Array.map (fun xls ->
+//                          Array.map (fun i ->
+//                              let xlfile = wbr.Match(xls).Groups.[2].Value
+//                              Console.WriteLine("Opening {0}", xlfile) |> ignore
+//                              let usersim = new UserSimulation.Simulation()
+//                              usersim.Run(NBOOTS, xls, SIGNIFICANCE, a, THRESHOLD, serfile, rng)
+//                              usersim.Serialize(outdir + "\\" + xlfile + "_" + i.ToString() + ".bin")
+//                              Console.WriteLine("Closing {0}", xlfile) |> ignore
+//                              usersim
+//                          ) [|0..NUMTRIALS-1|]
+//                      ) xlss
 
         // print results
         Console.WriteLine("Done.") |> ignore

@@ -265,11 +265,17 @@ namespace DataDebug
             var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
             var default_output_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + "_sim_results.csv";
 
+            // init a RNG
+            var rng = new Random();
+
             // ask the user for the classification data
             var ofd = new System.Windows.Forms.OpenFileDialog();
             ofd.FileName = "ClassificationData-2013-11-14.bin";
             if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+                // deserialize classification
+                var c = UserSimulation.Classification.Deserialize(ofd.FileName);
+
                 // ask the user where the output data should go
                 var sfd = new System.Windows.Forms.SaveFileDialog();
                 sfd.FileName = default_output_file;
@@ -279,7 +285,7 @@ namespace DataDebug
                     // run the simulation
                     app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
                     UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    sim.Run(2700, filename, 0.95, app, 0.05, ofd.FileName);
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng);
                     sim.ToCSV(sfd.FileName);
                 }
             }

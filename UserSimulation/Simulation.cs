@@ -137,7 +137,7 @@ namespace UserSimulation
                 {
                     CellDict cd = new CellDict();
                     cd.Add(addr, errorstrings[i]);
-                    //inject the typo 
+                    //inject the typo
                     InjectValues(app, wb, cd);
 
                     // save function outputs
@@ -190,10 +190,20 @@ namespace UserSimulation
         }
 
         // create and run a CheckCell simulation
-        public void Run(int nboots, string xlfile, double significance, Excel.Application app, double threshold, string classification_file)
+        public void Run(int nboots,                 // number of bootstraps
+                        string xlfile,              // name of the workbook
+                        double significance,        // significance threshold for test
+                        Excel.Application app,      // reference to Excel app
+                        double threshold,           // percentage of erroneous cells
+                        Classification c,           // data from which to generate errors
+                        Random r                    // a random number generator
+                       )
         {
             // set wbname
             _wb_name = xlfile;
+
+            // create ErrorGenerator object
+            var egen = new ErrorGenerator();
 
             try
             {
@@ -231,21 +241,12 @@ namespace UserSimulation
                 // save function outputs
                 CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
-                //Look for 'touchy' cells among the inputs:
-                //  for each input 
-                //      generate K erroneous versions
-                //      pick the one that causes the largest total relative error
-                //  sort the inputs based on how much total error they are able to produce
-                //  pick top 5% for example, and introduce errors
-                var max_error_produced_dictionary = TopOfKErrors(terminal_formula_nodes, original_inputs, 10, correct_outputs, app, wb, classification_file);
+                // generate errors
+                //_errors = GenerateErrors(original_inputs, threshold, r);
 
-                //Now we want to take the inputs that produce the greatest errors
-                // TODO: actually, we don't; rather we should just repeat the experiment
-                // k times to get a distribution, where k is the number required for
-                // significance
-                _errors = GetTopErrors(max_error_produced_dictionary, threshold);
+                var error = egen.GenerateErrorString_new(original_inputs.First().Value, c, r);
 
-                //Now we want to inject the errors in top_errors
+                //Now we want to inject the errors from top_errors
                 InjectValues(app, wb, _errors);
 
                 // TODO: save a copy of the workbook for later inspection

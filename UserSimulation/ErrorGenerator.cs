@@ -161,6 +161,210 @@ namespace UserSimulation
             return kvp.Key;
         }
 
+        private static string OptCharToString(OptChar ch)
+        {
+            if (OptChar.get_IsSome(ch))
+            {
+                return ch.Value.ToString();
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// Samples randomly from a multinomial probability vector.
+        /// </summary>
+        /// <param name="probabilities">A double[] containing p values; must sum to 1!</param>
+        /// <param name="r">A random number generator</param>
+        /// <returns></returns>
+        public int MultinomialSample(double[] probabilities, Random r)
+        {
+            const double EPSILON = 0.01;
+            System.Diagnostics.Debug.Assert(probabilities.Sum() > 1 - EPSILON && probabilities.Sum() < 1 + EPSILON);
+
+            // draw intervals
+            double[] intervals = probabilities.Select((pr_1, i) => probabilities.Where((pr_2, j) => j < i).Sum() + pr_1).ToArray();
+
+            // draw a sample
+            var s = r.NextDouble();
+
+            // the inputchars at index idx is the char to mistype
+            for (int i = 0; i < intervals.Length; i++)
+            {
+                if (s > intervals[i])
+                {
+                    continue;
+                }
+                else
+                {
+                    return i;
+                }
+            }
+
+            throw new Exception("Cannot find appropriate bin.");
+        }
+
+        public OptChar[] Transposize(OptChar[] input,
+                                     Dictionary<int,int> transpositions,
+                                     int guar,
+                                     Random r)
+        {
+            // strip leading and trailing whitspace
+            OptChar[] output = new OptChar[input.Length - 2];
+            Array.Copy(input, 1, output, 0, input.Length - 1);
+
+            // for each character in the string, sample from the transposition dict
+            for (int i = 0; i < input.Length; i++)
+            {
+                // condition on the number of possible transpositions to the right
+                // if the character is a "guaranteed transposition", ensure that
+                // the 0-transposition is not in the distribution
+                var dist = transpositions.Where(kvp => kvp.Key < input.Length - i
+                                                       && i == guar ? kvp.Key != 0 : true);
+                var total = dist.Select(kvp => kvp.Value).Sum();
+                var prs = dist.Select(kvp => (double)kvp.Value / total).ToArray();
+                // sample (in this case, bins always start at zero and are in order,
+                // so j == # of transpositions to right)
+                var j = MultinomialSample(prs, r);
+                // swap chars
+                OptChar ith = output[i];
+                output[i] = output[j];
+                output[j] = ith;
+            }
+
+            return output;
+        }
+
+        public string Typoize(OptChar[] input,
+                              Dictionary<Tuple<OptChar, string>, int> typos,
+                              int guar,
+                              Random r)
+        {
+            var output = "";
+
+            // for each character in the string, sample from the typo dict
+            for (int i = 0; i < input.Length; i++)
+            {
+                KeyValuePair<Tuple<OptChar, String>, int>[] dist;
+                // handle case where the input character is an empty char
+                // and condition on the possible typos for this optchar
+                if (OptChar.get_IsNone(input[i]))
+                {
+                    // the input character is the empty char, so condition on empty chars
+                    var dist_1 = typos.Where(kvp => kvp.Key.Item1 == null);
+                    // if the current character is a guaranteed typo, ensure that
+                    // an empty character does not appear in the output
+                    dist = (i == guar ? dist_1.Where(kvp => !kvp.Key.Item2.Equals("")) : dist_1).ToArray();
+                }
+                else
+                {
+                    // condition on the possible typos for this particular OptChar
+                    var dist_1 = typos.Where(kvp => input[i].Equals(kvp.Key.Item1));
+                    // if the current character is a guaranteed typo, ensure that
+                    // the conditioned OptChar does not appear in the output
+                    dist = (i == guar ? dist_1.Where(kvp => !kvp.Key.Item2.Equals(input[i])) : dist_1).ToArray();
+                }
+                
+                var total = dist.Select(kvp => kvp.Value).Sum();
+                var prs = dist.Select(kvp => (double)kvp.Value / total).ToArray();
+                // sample
+                var j = MultinomialSample(prs, r);
+                // j corresponds to what typo string?
+                output += dist[j].Key.Item2;
+            }
+
+            return output;
+        }
+
+        public OptChar[] StringToOptCharArray(string input)
+        {
+            return input.ToCharArray().Select(ch => new OptChar(ch)).ToArray();
+        }
+
+        public OptChar[] AddLeadingTrailingSpace(OptChar[] input)
+        {
+            input.ToList().Add(OptChar.None);                           // add trailing empty string
+            List<OptChar> leading = new[] { OptChar.None }.ToList();    // add leading empty string
+            return leading.Concat(input).ToArray();
+        }
+
+        public string GenerateErrorString_new(string input, Classification c, Random r)
+        {
+            // get typo dict
+            var td = c.GetTypoDict();
+
+            // get transposition dict
+            var trd = c.GetTranspositionDict();
+
+            // convert the input into a char array
+            var ochars = StringToOptCharArray(input);
+
+            // add leading and trailing 'empty characters'
+            var inputchars = AddLeadingTrailingSpace(ochars);
+
+            // calculate the marginal probabilities of NOT making a typo for each char in input
+            double[] PrsCharNotTypo = inputchars.Select(oc =>
+            {
+                var key = new Tuple<OptChar, string>(oc, OptCharToString(oc));
+                int count = td[key];
+                // funny case to handle the fact that FSharpOption.None == null
+                var cond_dist = td.Where(kvp => kvp.Key.Item1 == null ? oc == null : kvp.Key.Item1.Equals(oc));
+                int total = cond_dist.Aggregate(0, (acc, kvp) => acc + kvp.Value);
+                return (double)count / total;
+            }).ToArray();
+
+            // calculate the probability of making at least one error
+            // might need log-probs here
+            double PrTypo = 1.0 - PrsCharNotTypo.Aggregate(1.0, (acc, pr_not_typo) => acc * pr_not_typo);
+
+            // calculate the marginal probabilities of NOT making a
+            // transposition for each position in the input
+            // note that we do NOT consider the empty strings here
+            double[] PrsPosNotTrans = ochars.ToArray().Select((oc, idx) =>
+            {
+                int count = trd[0];
+                int total = trd.Where(kvp => kvp.Key <= input.Length - idx).Select(kvp => kvp.Value).Sum();
+                return (double)count / total;
+            }).ToArray();
+
+            // calculate the probability of having at least one transposition
+            double PrTrans = 1.0 - PrsPosNotTrans.Aggregate(1.0, (acc, pr_not_trans) => acc * pr_not_trans);
+
+            // calculate the relative probability of making a typo vs a transposition
+            double RelPrTypo = PrTypo / (PrTypo + PrTrans);
+
+            string output;
+
+            // flip a coin to determine whether our guaranteed error is a typo or a transposition
+            if (r.NextDouble() < RelPrTypo)
+            {   // is a typo
+                // determine the index of the guaranteed typo
+                double[] PrsMistype = PrsCharNotTypo.Select(pr => 1.0 - pr).ToArray();
+                var i = MultinomialSample(PrsMistype, r);
+                // run transposition algorithm & add leading/trailing empty chars
+                // we set the guaranteed transposition index to -1 to ensure that no
+                // transpositions are guaranteed
+                OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1, r));
+                // run typo algorithm
+                output = Typoize(input_t, td, i, r);
+            }
+            else
+            {   // is a transposition
+                // determine the index of the guaranteed transposition
+                double[] PrsMistype = PrsPosNotTrans.Select(pr => 1.0 - pr).ToArray();
+                var i = MultinomialSample(PrsMistype, r);
+                // run transposition algorithm & add leading/trailing empty chars
+                OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i, r));
+                // run typo algorithm; set guaranteed typo index to -1 to ensure that no
+                // type is guaranteed
+                output = Typoize(input_t, td, -1, r);
+            }
+
+            return input;
+        }
+
         public ErrorString GenerateErrorString(string input, Classification classification)
         {
             //Try to add transposition errors
