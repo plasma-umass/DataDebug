@@ -12,6 +12,7 @@ namespace UserSimulation
 {
     public class ErrorGenerator
     {
+        private Random r = new Random();
         //Keeps the distributions that have been generated so far, so that they don't have to be generated again later
         private Dictionary<OptChar, Dictionary<string,double>> _char_distributions_dict = new Dictionary<OptChar,Dictionary<string,double>>();
 
@@ -61,15 +62,9 @@ namespace UserSimulation
 
         public string[] GenerateErrorStrings(string orig, Classification c, int k)
         {
+            var r = new Random();
             var e = Enumerable.Range(0, k);
-            var strs = e.AsParallel().Select( i => {
-                var outstr = "";
-                while ((outstr = GenerateErrorString(orig, c).Item1).Equals(orig))
-                {
-
-                }
-                return outstr;
-            });
+            var strs = e.AsParallel().Select( i => GenerateErrorString(orig, c) );
             return strs.ToArray();
         }
 
@@ -179,7 +174,7 @@ namespace UserSimulation
         /// <param name="probabilities">A double[] containing p values; must sum to 1!</param>
         /// <param name="r">A random number generator</param>
         /// <returns></returns>
-        public int MultinomialSample(double[] probabilities, Random r)
+        public int MultinomialSample(double[] probabilities)
         {
             const double EPSILON = 0.01;
             System.Diagnostics.Debug.Assert(probabilities.Sum() > 1 - EPSILON && probabilities.Sum() < 1 + EPSILON);
@@ -208,8 +203,7 @@ namespace UserSimulation
 
         public OptChar[] Transposize(OptChar[] input,
                                      Dictionary<int,int> transpositions,
-                                     int guar,
-                                     Random r)
+                                     int guar)
         {
             // strip leading and trailing whitspace
             OptChar[] output = new OptChar[input.Length - 2];
@@ -227,7 +221,7 @@ namespace UserSimulation
                 var prs = dist.Select(kvp => (double)kvp.Value / total).ToArray();
                 // sample (in this case, bins always start at zero and are in order,
                 // so j == # of transpositions to right)
-                var j = MultinomialSample(prs, r);
+                var j = MultinomialSample(prs);
                 // swap chars
                 OptChar ith = output[i];
                 output[i] = output[j];
@@ -239,8 +233,7 @@ namespace UserSimulation
 
         public string Typoize(OptChar[] input,
                               Dictionary<Tuple<OptChar, string>, int> typos,
-                              int guar,
-                              Random r)
+                              int guar)
         {
             var output = "";
 
@@ -270,7 +263,7 @@ namespace UserSimulation
                 var total = dist.Select(kvp => kvp.Value).Sum();
                 var prs = dist.Select(kvp => (double)kvp.Value / total).ToArray();
                 // sample
-                var j = MultinomialSample(prs, r);
+                var j = MultinomialSample(prs);
                 // j corresponds to what typo string?
                 output += dist[j].Key.Item2;
             }
@@ -290,7 +283,7 @@ namespace UserSimulation
             return leading.Concat(input).ToArray();
         }
 
-        public string GenerateErrorString_new(string input, Classification c, Random r)
+        public string GenerateErrorString(string input, Classification c)
         {
             // get typo dict
             var td = c.GetTypoDict();
@@ -337,7 +330,7 @@ namespace UserSimulation
 
             string output = "";
 
-            // the while loop ensures that we do not return an unmodified string
+            // the while loop ensures that we do not return an unmodified string.
             // for most strings, returning an unmodified string is very unlikely
             do
             {
@@ -346,24 +339,24 @@ namespace UserSimulation
                 {   // is a typo
                     // determine the index of the guaranteed typo
                     double[] PrsMistype = PrsCharNotTypo.Select(pr => 1.0 - pr).ToArray();
-                    var i = MultinomialSample(PrsMistype, r);
+                    var i = MultinomialSample(PrsMistype);
                     // run transposition algorithm & add leading/trailing empty chars
                     // we set the guaranteed transposition index to -1 to ensure that no
                     // transpositions are guaranteed
-                    OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1, r));
+                    OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1));
                     // run typo algorithm
-                    output = Typoize(input_t, td, i, r);
+                    output = Typoize(input_t, td, i);
                 }
                 else
                 {   // is a transposition
                     // determine the index of the guaranteed transposition
                     double[] PrsMistype = PrsPosNotTrans.Select(pr => 1.0 - pr).ToArray();
-                    var i = MultinomialSample(PrsMistype, r);
+                    var i = MultinomialSample(PrsMistype);
                     // run transposition algorithm & add leading/trailing empty chars
-                    OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i, r));
+                    OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i));
                     // run typo algorithm; set guaranteed typo index to -1 to ensure that no
                     // type is guaranteed
-                    output = Typoize(input_t, td, -1, r);
+                    output = Typoize(input_t, td, -1);
                 }
             } while (input == output);
 

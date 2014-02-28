@@ -242,9 +242,13 @@ namespace UserSimulation
                 CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // generate errors
+
                 //_errors = GenerateErrors(original_inputs, threshold, r);
 
-                var error = egen.GenerateErrorString_new(original_inputs.First().Value, c, r);
+                // TODO: finish modifying this generator to produce some set of errors
+                // for the entire spreadsheet
+
+                var error = egen.GenerateErrorString(original_inputs.First().Value, c);
 
                 //Now we want to inject the errors from top_errors
                 InjectValues(app, wb, _errors);

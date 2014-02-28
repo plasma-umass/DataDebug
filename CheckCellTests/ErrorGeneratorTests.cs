@@ -38,8 +38,7 @@ namespace CheckCellTests
 
             //The transpositions dictionary is empty so no transpositions should occur
             classification.SetTypoDict(typo_dict);
-            var result = eg.GenerateErrorString("Testing", classification);
-            string s = result.Item1;
+            var s = eg.GenerateErrorString("Testing", classification);
             Assert.AreEqual("TTesying", s);
         }
 
@@ -59,8 +58,7 @@ namespace CheckCellTests
 
             classification.SetTranspositionDict(transpositions_dict);
             classification.SetTypoDict(typo_dict);
-            var result = eg.GenerateErrorString("abcd", classification);
-            string s = result.Item1;
+            string s = eg.GenerateErrorString("abcd", classification);
             Assert.AreEqual("abcd", s);
             
             //NOTE: Need a new ErrorGenerator for each test because the distribution tables are associated with it
@@ -72,8 +70,7 @@ namespace CheckCellTests
             Classification classification2 = new Classification();
             classification2.SetTranspositionDict(transpositions_dict2);
             classification2.SetTypoDict(typo_dict);
-            var result2 = eg2.GenerateErrorString("abcd", classification2);
-            string s2 = result2.Item1;
+            string s2 = eg2.GenerateErrorString("abcd", classification2);
             Assert.AreEqual("abcd", s2);
             
             var eg3 = new ErrorGenerator();
@@ -85,10 +82,11 @@ namespace CheckCellTests
             Classification classification3 = new Classification();
             classification3.SetTranspositionDict(transpositions_dict3);
             classification3.SetTypoDict(typo_dict);
-            var result3 = eg3.GenerateErrorString("abcd", classification3);
-            string s3 = result3.Item1;
+            string s3 = eg3.GenerateErrorString("abcd", classification3);
             Assert.AreEqual("abcd", s3);
-            Assert.AreEqual(0, result3.Item2.Count);
+            // TODO: this test originally checked that a certain class of error
+            // was impossible; what kind of error?
+            //Assert.AreEqual(0, result3.Item2.Count);
         }
     }
 }
