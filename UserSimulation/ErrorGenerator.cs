@@ -335,34 +335,39 @@ namespace UserSimulation
             // calculate the relative probability of making a typo vs a transposition
             double RelPrTypo = PrTypo / (PrTypo + PrTrans);
 
-            string output;
+            string output = "";
 
-            // flip a coin to determine whether our guaranteed error is a typo or a transposition
-            if (r.NextDouble() < RelPrTypo)
-            {   // is a typo
-                // determine the index of the guaranteed typo
-                double[] PrsMistype = PrsCharNotTypo.Select(pr => 1.0 - pr).ToArray();
-                var i = MultinomialSample(PrsMistype, r);
-                // run transposition algorithm & add leading/trailing empty chars
-                // we set the guaranteed transposition index to -1 to ensure that no
-                // transpositions are guaranteed
-                OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1, r));
-                // run typo algorithm
-                output = Typoize(input_t, td, i, r);
-            }
-            else
-            {   // is a transposition
-                // determine the index of the guaranteed transposition
-                double[] PrsMistype = PrsPosNotTrans.Select(pr => 1.0 - pr).ToArray();
-                var i = MultinomialSample(PrsMistype, r);
-                // run transposition algorithm & add leading/trailing empty chars
-                OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i, r));
-                // run typo algorithm; set guaranteed typo index to -1 to ensure that no
-                // type is guaranteed
-                output = Typoize(input_t, td, -1, r);
-            }
+            // the while loop ensures that we do not return an unmodified string
+            // for most strings, returning an unmodified string is very unlikely
+            do
+            {
+                // flip a coin to determine whether our guaranteed error is a typo or a transposition
+                if (r.NextDouble() < RelPrTypo)
+                {   // is a typo
+                    // determine the index of the guaranteed typo
+                    double[] PrsMistype = PrsCharNotTypo.Select(pr => 1.0 - pr).ToArray();
+                    var i = MultinomialSample(PrsMistype, r);
+                    // run transposition algorithm & add leading/trailing empty chars
+                    // we set the guaranteed transposition index to -1 to ensure that no
+                    // transpositions are guaranteed
+                    OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1, r));
+                    // run typo algorithm
+                    output = Typoize(input_t, td, i, r);
+                }
+                else
+                {   // is a transposition
+                    // determine the index of the guaranteed transposition
+                    double[] PrsMistype = PrsPosNotTrans.Select(pr => 1.0 - pr).ToArray();
+                    var i = MultinomialSample(PrsMistype, r);
+                    // run transposition algorithm & add leading/trailing empty chars
+                    OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i, r));
+                    // run typo algorithm; set guaranteed typo index to -1 to ensure that no
+                    // type is guaranteed
+                    output = Typoize(input_t, td, -1, r);
+                }
+            } while (input == output);
 
-            return input;
+            return output;
         }
     }
 }
