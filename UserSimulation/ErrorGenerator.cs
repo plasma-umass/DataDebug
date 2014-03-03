@@ -233,13 +233,23 @@ namespace UserSimulation
             throw new Exception("Cannot find appropriate bin.");
         }
 
+        /// <summary>
+        /// Transpose characters.  This function expects an OptChar array with no
+        /// leading or trailing empty characters, i.e., OptChar.None.  If guar == -1
+        /// then there are no guaranteed transpositions, otherwise guar is the index
+        /// of the element that must be transposed.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="transpositions"></param>
+        /// <param name="guar"></param>
+        /// <returns>The input array with transpositions applied.</returns>
         public OptChar[] Transposize(OptChar[] input,
                                      Dictionary<int,int> transpositions,
                                      int guar)
         {
-            // strip leading and trailing whitspace
-            OptChar[] output = new OptChar[input.Length - 2];
-            Array.Copy(input, 1, output, 0, input.Length - 1);
+            // copy input to new array
+            OptChar[] output = new OptChar[input.Length];
+            Array.Copy(input, output, input.Length);
 
             // for each character in the string, sample from the transposition dict
             for (int i = 0; i < input.Length; i++)
@@ -310,9 +320,10 @@ namespace UserSimulation
 
         public OptChar[] AddLeadingTrailingSpace(OptChar[] input)
         {
-            input.ToList().Add(OptChar.None);                           // add trailing empty string
+            List<OptChar> trailing = input.ToList();
+            trailing.Add(OptChar.None);                                 // add trailing empty string
             List<OptChar> leading = new[] { OptChar.None }.ToList();    // add leading empty string
-            return leading.Concat(input).ToArray();
+            return leading.Concat(trailing).ToArray();
         }
 
         public string GenerateErrorString(string input, Classification c)
