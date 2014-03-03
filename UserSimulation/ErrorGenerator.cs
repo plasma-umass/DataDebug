@@ -387,8 +387,8 @@ namespace UserSimulation
                     // we set the guaranteed transposition index to -1 to ensure that no
                     // transpositions are guaranteed
                     OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1));
-                    // run typo algorithm
-                    output = Typoize(input_t, td, i);
+                    // run typo algorithm (adjust i for leading space)
+                    output = Typoize(input_t, td, i + 1);
                 }
                 else
                 {   // is a transposition
