@@ -7,6 +7,7 @@ using Sign = LongestCommonSubsequence.Sign;
 using LCSError = LongestCommonSubsequence.Error;
 using ErrorString = System.Tuple<string, System.Collections.Generic.List<LongestCommonSubsequence.Error>>;
 using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
+using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
 
 namespace UserSimulation
 {
@@ -62,10 +63,36 @@ namespace UserSimulation
 
         public string[] GenerateErrorStrings(string orig, Classification c, int k)
         {
-            var r = new Random();
             var e = Enumerable.Range(0, k);
             var strs = e.AsParallel().Select( i => GenerateErrorString(orig, c) );
             return strs.ToArray();
+        }
+
+        public CellDict RandomlyGenerateErrors(CellDict original_inputs, Classification c, double proportion)
+        {
+            // number of cells to typo
+            int n = (int)Math.Ceiling(original_inputs.Count * proportion);
+
+            var output = new CellDict();
+            var oi = original_inputs.ToArray();
+
+            int i = 0;
+            while (i < n)
+            {
+                int idx = r.Next(oi.Length);
+                KeyValuePair<AST.Address,String> cell = oi[idx];
+                if (output.ContainsKey(cell.Key))
+                {   // if we've already typo'ed this value, move on
+                    continue;
+                }
+                else
+                {
+                    output.Add(cell.Key, GenerateErrorString(cell.Value, c));
+                }
+                i++;
+            }
+
+            return output;
         }
 
         //Generates the distribution of strings for a particular character given a classification
@@ -177,10 +204,15 @@ namespace UserSimulation
         public int MultinomialSample(double[] probabilities)
         {
             const double EPSILON = 0.01;
-            System.Diagnostics.Debug.Assert(probabilities.Sum() > 1 - EPSILON && probabilities.Sum() < 1 + EPSILON);
+
+            // normalize probabilities
+            var k = 1.0 / probabilities.Sum();
+            var probs = probabilities.Select(pr => k * pr);
+
+            System.Diagnostics.Debug.Assert(probs.Sum() > 1 - EPSILON && probs.Sum() < 1 + EPSILON);
 
             // draw intervals
-            double[] intervals = probabilities.Select((pr_1, i) => probabilities.Where((pr_2, j) => j < i).Sum() + pr_1).ToArray();
+            double[] intervals = probs.Select((pr_1, i) => probs.Where((pr_2, j) => j < i).Sum() + pr_1).ToArray();
 
             // draw a sample
             var s = r.NextDouble();
