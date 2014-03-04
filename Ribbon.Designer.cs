@@ -34,6 +34,8 @@ namespace DataDebug
         /// </summary>
         private void InitializeComponent()
         {
+            Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl1 = this.Factory.CreateRibbonDropDownItem();
+            Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl2 = this.Factory.CreateRibbonDropDownItem();
             this.tab1 = this.Factory.CreateRibbonTab();
             this.ccgroup = this.Factory.CreateRibbonGroup();
             this.buttonGroup1 = this.Factory.CreateRibbonButtonGroup();
@@ -44,6 +46,7 @@ namespace DataDebug
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
             this.RunSimulation = this.Factory.CreateRibbonButton();
             this.TestStuff = this.Factory.CreateRibbonButton();
+            this.analysisType = this.Factory.CreateRibbonDropDown();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -61,6 +64,7 @@ namespace DataDebug
             this.ccgroup.Items.Add(this.SensitivityTextBox);
             this.ccgroup.Items.Add(this.RunSimulation);
             this.ccgroup.Items.Add(this.TestStuff);
+            this.ccgroup.Items.Add(this.analysisType);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
             // 
@@ -115,7 +119,6 @@ namespace DataDebug
             // 
             this.RunSimulation.Label = "Run Simulation";
             this.RunSimulation.Name = "RunSimulation";
-            this.RunSimulation.Visible = false;
             this.RunSimulation.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunSimulation_Click);
             // 
             // TestStuff
@@ -123,6 +126,15 @@ namespace DataDebug
             this.TestStuff.Label = "Test";
             this.TestStuff.Name = "TestStuff";
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
+            // 
+            // analysisType
+            // 
+            ribbonDropDownItemImpl1.Label = "CheckCell";
+            ribbonDropDownItemImpl2.Label = "Normal";
+            this.analysisType.Items.Add(ribbonDropDownItemImpl1);
+            this.analysisType.Items.Add(ribbonDropDownItemImpl2);
+            this.analysisType.Label = "Analysis Type";
+            this.analysisType.Name = "analysisType";
             // 
             // Ribbon
             // 
@@ -151,6 +163,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonEditBox SensitivityTextBox;
         internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton RunSimulation;
+        internal Microsoft.Office.Tools.Ribbon.RibbonDropDown analysisType;
     }
 
     partial class ThisRibbonCollection
