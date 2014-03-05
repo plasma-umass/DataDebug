@@ -47,6 +47,34 @@ namespace DataDebug
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
+            ////Randomly select the version of the tool that should be shown;
+            //int tool_versions = 3;
+            //Random rand = new Random();
+            //int i = rand.Next(tool_versions);
+            //i = 0;
+
+            //if (i == 0)
+            //{
+            //    //CheckCell shown; others hidden
+            //    ccgroup.Visible = true;
+            //    group1.Visible = false;
+            //    group2.Visible = false;
+            //}
+            //else if (i == 1)
+            //{
+            //    //Normal shown; others hidden
+            //    ccgroup.Visible = false;
+            //    group1.Visible = true;
+            //    group2.Visible = false;
+            //}
+            //else
+            //{
+            //    //Grubb's shown; others hidden
+            //    ccgroup.Visible = false;
+            //    group1.Visible = false;
+            //    group2.Visible = true;
+            //}
+
             // start tool in deactivated state
             DeactivateTool();
 
