@@ -36,6 +36,7 @@ namespace DataDebug
         {
             Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl1 = this.Factory.CreateRibbonDropDownItem();
             Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl2 = this.Factory.CreateRibbonDropDownItem();
+            Microsoft.Office.Tools.Ribbon.RibbonDropDownItem ribbonDropDownItemImpl3 = this.Factory.CreateRibbonDropDownItem();
             this.tab1 = this.Factory.CreateRibbonTab();
             this.ccgroup = this.Factory.CreateRibbonGroup();
             this.buttonGroup1 = this.Factory.CreateRibbonButtonGroup();
@@ -130,9 +131,11 @@ namespace DataDebug
             // analysisType
             // 
             ribbonDropDownItemImpl1.Label = "CheckCell";
-            ribbonDropDownItemImpl2.Label = "Normal";
+            ribbonDropDownItemImpl2.Label = "Normal (per range)";
+            ribbonDropDownItemImpl3.Label = "Normal (per worksheet)";
             this.analysisType.Items.Add(ribbonDropDownItemImpl1);
             this.analysisType.Items.Add(ribbonDropDownItemImpl2);
+            this.analysisType.Items.Add(ribbonDropDownItemImpl3);
             this.analysisType.Label = "Analysis Type";
             this.analysisType.Name = "analysisType";
             // 

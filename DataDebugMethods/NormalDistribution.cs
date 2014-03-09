@@ -10,6 +10,7 @@ namespace DataDebugMethods
 {
     public class NormalDistribution
     {
+        //TODO Add checks for non-numeric data in all methods of this class
         private readonly Excel.Range _cells;
         private readonly int _size;
         private readonly Double _mean;
@@ -17,28 +18,41 @@ namespace DataDebugMethods
         private readonly Double _standard_deviation;
         private Dictionary<Excel.Range, Double> _error;
         public List<Excel.Range> _ranked_errors;
-
+        private int numeric_count = 0;
         // PRIVATE METHODS
         private Dictionary<Excel.Range, Double> __error()
         {
             Dictionary<Excel.Range, Double> d = new Dictionary<Excel.Range, Double>();
             foreach (Excel.Range cell in _cells)
             {
-                if (Math.Abs(_mean - cell.Value)/_standard_deviation > 2.0)
-                    d.Add(cell, (double)Math.Abs(_mean - cell.Value)/_standard_deviation);
+                if (cell.Value != null)
+                {
+                    if (Math.Abs(_mean - cell.Value) / _standard_deviation > 2.0)
+                    {
+                        d.Add(cell, (double)Math.Abs(_mean - cell.Value) / _standard_deviation);
+                    }
+                }
             }
             return d;
         }
 
         private Double __mean()
         {
-
-            double sum = 0;
+            double sum = 0.0;
             foreach (Excel.Range cell in _cells)
             {
-                sum += cell.Value;
+                if (cell.Value != null)
+                {
+                    sum += cell.Value;
+                    numeric_count++;
+                }
+                else
+                {
+                    MessageBox.Show("empty cell " + cell.Address);
+                }
             }
-            return sum / _size;
+            return sum / numeric_count;
+            //return sum / _size;
         }
 
         private List<Excel.Range> __rank_errors()
@@ -59,15 +73,20 @@ namespace DataDebugMethods
             Double mymean = Mean();
             foreach (Excel.Range cell in _cells)
             {
-                distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
-            }
-            return distance_sum_sq / _size;
+                if (cell.Value != null)
+                {
+                    distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                }
+            } 
+            return distance_sum_sq / numeric_count;
+            //return distance_sum_sq / _size;
         }
 
         // PUBLIC METHODS
         public int Length()
         {
-            return _size;
+            return numeric_count;
+            //return _size;
         }
 
         public Double Mean()
@@ -77,6 +96,7 @@ namespace DataDebugMethods
 
         public NormalDistribution(Excel.Range r)
         {
+            //TODO add a loop here over all cells in the range to remove the ones that are empty or strings
             _cells = r;
             _size = r.Count;
             _mean = __mean();
@@ -84,6 +104,11 @@ namespace DataDebugMethods
             _standard_deviation = __standard_deviation();
             _error = __error();
             _ranked_errors = __rank_errors();
+        }
+
+        public void PrintMsg(string msg)
+        {
+            MessageBox.Show(msg);
         }
 
         public Dictionary<Excel.Range, System.Drawing.Color> PeirceOutliers()

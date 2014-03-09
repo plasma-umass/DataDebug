@@ -197,7 +197,7 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        string analysisType         // the type of analysis to run -- "CheckCell" or "Normal"
+                        string analysisType         // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
                        )
         {
             // set wbname
@@ -258,9 +258,13 @@ namespace UserSimulation
                 {
                     _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell");
                 }
-                else    //Normal
+                else if (analysisType.Equals("Normal (per range)"))    //Normal (per range)
                 {
                     _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal");
+                }
+                else
+                {
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2");
                 }
 
                 // save partially-corrected outputs
@@ -593,7 +597,6 @@ namespace UserSimulation
                                 if (known_good.Contains(flagged_cell))
                                 {
                                     flagged_cell = null;
-                                    continue;
                                 }
                                 else
                                 {
@@ -601,6 +604,33 @@ namespace UserSimulation
                                 }
                             }
                         }
+                    }
+                }
+                else if (analysis_type.Equals("normal2"))
+                {
+                    //Generate normal distributions for every worksheet
+                    foreach (Excel.Worksheet ws in wb.Worksheets)
+                    {
+                        var normal_dist = new DataDebugMethods.NormalDistribution(ws.UsedRange);
+
+                        // Get top outlier
+                        if (normal_dist.errorsCount() > 0)
+                        {
+                            for (int i = 0; i < normal_dist.errorsCount(); i++)
+                            {
+                                var flagged_com = normal_dist.getError(i);
+                                flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                                if (known_good.Contains(flagged_cell))
+                                {
+                                    flagged_cell = null;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        //normal_dist.PrintMsg("here");
                     }
                 }
 
