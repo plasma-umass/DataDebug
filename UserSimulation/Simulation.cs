@@ -243,7 +243,7 @@ namespace UserSimulation
                 CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // generate errors
-                _errors = egen.RandomlyGenerateErrors(correct_outputs, c, threshold);
+                _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
                 //Now we want to inject the errors from top_errors
                 InjectValues(app, wb, _errors);
@@ -265,6 +265,7 @@ namespace UserSimulation
                 else
                 {
                     _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2");
+                    int zx = 1; 
                 }
 
                 // save partially-corrected outputs

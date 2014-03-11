@@ -175,6 +175,7 @@ namespace DataDebug
             );
 
             // Color top outlier, zoom to worksheet, and save in ribbon state
+            //TODO color in yellow the outputs that depend on the outlier being flagged
             flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
             if (flagged_cell == null)
             {
@@ -308,6 +309,11 @@ namespace DataDebug
                 data.KillPB();
                 app.ScreenUpdating = true;
                 return;
+            }
+
+            foreach (var node in data.TerminalFormulaNodes())
+            {
+                node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
             }
 
             foreach (var range in data.input_ranges.Values)
