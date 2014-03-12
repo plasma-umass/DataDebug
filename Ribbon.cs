@@ -184,6 +184,17 @@ namespace DataDebug
             }
             else
             {
+                TreeNode flagged_node;
+                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
+                
+                if (flagged_node.hasOutputs())
+                {
+                    foreach (var output in flagged_node.getOutputs())
+                    {
+                        exploreNode(output);
+                    }
+                }
+
                 tool_highlights.Add(flagged_cell);
 
                 // go to highlighted cell
@@ -280,6 +291,21 @@ namespace DataDebug
             fixform.Show();
         }
 
+        private void exploreNode(TreeNode node)
+        {
+            if (node.hasOutputs())
+            {
+                foreach (var o in node.getOutputs())
+                {
+                    exploreNode(o);
+                }
+            }
+            else
+            {
+                node.getCOMObject().Interior.Color = System.Drawing.Color.Orange;
+            }
+        }
+
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
             System.Windows.Forms.MessageBox.Show("" + analysisType.SelectedItem);
@@ -311,9 +337,25 @@ namespace DataDebug
                 return;
             }
 
-            foreach (var node in data.TerminalFormulaNodes())
+            //foreach (var node in data.TerminalFormulaNodes())
+            //{
+            //    node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
+            //}
+            var tin = data.TerminalInputNodes();
+
+            foreach (var input_range in data.TerminalInputNodes())
             {
-                node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
+                foreach (var input_node in input_range.getInputs())
+                {
+                    //find the ultimate outputs for this input
+                    if (input_node.hasOutputs())
+                    {
+                        foreach (var output in input_node.getOutputs())
+                        {
+                            exploreNode(output);
+                        }
+                    }
+                }
             }
 
             foreach (var range in data.input_ranges.Values)
