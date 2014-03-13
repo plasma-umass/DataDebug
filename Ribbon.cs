@@ -453,7 +453,7 @@ namespace DataDebug
             var cursor = app.ActiveCell;
 
             // get string at current cursor
-            String data = cursor.Value2;
+            String data = System.Convert.ToString(cursor.Value2);
 
             // get error string
             String baddata = egen.GenerateErrorString(data, c);
