@@ -28,6 +28,7 @@ namespace DataDebug
         IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
         AST.Address flagged_cell = null;
         System.Drawing.Color GREEN = System.Drawing.Color.Green;
+        string classification_file;
 
         private void ActivateTool()
         {
@@ -289,6 +290,33 @@ namespace DataDebug
                     sim.ToCSV(sfd.FileName);
                 }
             }
+        }
+
+        private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)
+        {
+            // open classifier file
+            if (classification_file == null)
+            {
+                var ofd = new System.Windows.Forms.OpenFileDialog();
+                if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    classification_file = ofd.FileName;
+                }
+            }
+            var c = UserSimulation.Classification.Deserialize(classification_file);
+            var egen = new UserSimulation.ErrorGenerator();
+
+            // get cursor
+            var cursor = app.ActiveCell;
+
+            // get string at current cursor
+            String data = cursor.Value2;
+
+            // get error string
+            String baddata = egen.GenerateErrorString(data, c);
+
+            // put string back into spreadsheet
+            cursor.Value2 = baddata;
         }
     }
 }

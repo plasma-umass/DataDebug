@@ -44,6 +44,7 @@ namespace DataDebug
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
             this.RunSimulation = this.Factory.CreateRibbonButton();
             this.TestStuff = this.Factory.CreateRibbonButton();
+            this.ErrorBtn = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -60,6 +61,7 @@ namespace DataDebug
             this.ccgroup.Items.Add(this.buttonGroup1);
             this.ccgroup.Items.Add(this.SensitivityTextBox);
             this.ccgroup.Items.Add(this.RunSimulation);
+            this.ccgroup.Items.Add(this.ErrorBtn);
             this.ccgroup.Items.Add(this.TestStuff);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
@@ -124,6 +126,12 @@ namespace DataDebug
             this.TestStuff.Name = "TestStuff";
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
+            // ErrorBtn
+            // 
+            this.ErrorBtn.Label = "Make Error";
+            this.ErrorBtn.Name = "ErrorBtn";
+            this.ErrorBtn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ErrorBtn_Click);
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -151,6 +159,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonEditBox SensitivityTextBox;
         internal Microsoft.Office.Tools.Ribbon.RibbonButtonGroup buttonGroup1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton RunSimulation;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton ErrorBtn;
     }
 
     partial class ThisRibbonCollection
