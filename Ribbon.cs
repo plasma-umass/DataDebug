@@ -446,20 +446,25 @@ namespace DataDebug
                     classification_file = ofd.FileName;
                 }
             }
-            var c = UserSimulation.Classification.Deserialize(classification_file);
-            var egen = new UserSimulation.ErrorGenerator();
 
-            // get cursor
-            var cursor = app.ActiveCell;
 
-            // get string at current cursor
-            String data = System.Convert.ToString(cursor.Value2);
+            if (classification_file != null)
+            {
+                var c = UserSimulation.Classification.Deserialize(classification_file);
+                var egen = new UserSimulation.ErrorGenerator();
 
-            // get error string
-            String baddata = egen.GenerateErrorString(data, c);
+                // get cursor
+                var cursor = app.ActiveCell;
 
-            // put string back into spreadsheet
-            cursor.Value2 = baddata;
+                // get string at current cursor
+                String data = System.Convert.ToString(cursor.Value2);
+
+                // get error string
+                String baddata = egen.GenerateErrorString(data, c);
+
+                // put string back into spreadsheet
+                cursor.Value2 = baddata;
+            }
         }
     }
 }

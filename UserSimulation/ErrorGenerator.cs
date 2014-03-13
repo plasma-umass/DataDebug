@@ -297,9 +297,12 @@ namespace UserSimulation
                 {
                     // condition on the possible typos for this particular OptChar
                     var dist_1 = typos.Where(kvp => input[i].Equals(kvp.Key.Item1));
+                    // get the string corresponding to the current OptChar
+                    var str_i = OptChar.get_IsNone(input[i]) ? "" : input[i].Value.ToString();
+
                     // if the current character is a guaranteed typo, ensure that
                     // the conditioned OptChar does not appear in the output
-                    dist = (i == guar ? dist_1.Where(kvp => !kvp.Key.Item2.Equals(input[i])) : dist_1).ToArray();
+                    dist = (i == guar ? dist_1.Where(kvp => !kvp.Key.Item2.Equals(str_i)) : dist_1).ToArray();
                 }
                 
                 var total = dist.Select(kvp => kvp.Value).Sum();
@@ -315,7 +318,14 @@ namespace UserSimulation
 
         public OptChar[] StringToOptCharArray(string input)
         {
-            return input.ToCharArray().Select(ch => new OptChar(ch)).ToArray();
+            if (input.Length == 0)
+            {
+                return new [] { OptChar.None };
+            }
+            else
+            {
+                return input.ToCharArray().Select(ch => new OptChar(ch)).ToArray();
+            }
         }
 
         public OptChar[] AddLeadingTrailingSpace(OptChar[] input)
@@ -358,12 +368,14 @@ namespace UserSimulation
             // calculate the marginal probabilities of NOT making a
             // transposition for each position in the input
             // note that we do NOT consider the empty strings here
-            double[] PrsPosNotTrans = ochars.ToArray().Select((oc, idx) =>
+            // For strings of length 1, the probability of not making a
+            // transposition should be exactly 1. 
+            double[] PrsPosNotTrans = ochars.Length != 1 ? ochars.ToArray().Select((oc, idx) =>
             {
                 int count = trd[0];
                 int total = trd.Where(kvp => kvp.Key <= input.Length - idx).Select(kvp => kvp.Value).Sum();
                 return (double)count / total;
-            }).ToArray();
+            }).ToArray() : new [] { 1.0 };
 
             // calculate the probability of having at least one transposition
             double PrTrans = 1.0 - PrsPosNotTrans.Aggregate(1.0, (acc, pr_not_trans) => acc * pr_not_trans);
@@ -388,7 +400,7 @@ namespace UserSimulation
                     // transpositions are guaranteed
                     OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, -1));
                     // run typo algorithm (adjust i for leading space)
-                    output = Typoize(input_t, td, i + 1);
+                    output = Typoize(input_t, td, i);
                 }
                 else
                 {   // is a transposition
@@ -398,7 +410,7 @@ namespace UserSimulation
                     // run transposition algorithm & add leading/trailing empty chars
                     OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i));
                     // run typo algorithm; set guaranteed typo index to -1 to ensure that no
-                    // type is guaranteed
+                    // typo is guaranteed
                     output = Typoize(input_t, td, -1);
                 }
             } while (input == output);
