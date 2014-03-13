@@ -196,7 +196,8 @@ namespace UserSimulation
                         Excel.Application app,      // reference to Excel app
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
-                        Random r                    // a random number generator
+                        Random r,                   // a random number generator
+                        string analysisType         // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
                        )
         {
             // set wbname
@@ -242,7 +243,7 @@ namespace UserSimulation
                 CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // generate errors
-                _errors = egen.RandomlyGenerateErrors(correct_outputs, c, threshold);
+                _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
                 //Now we want to inject the errors from top_errors
                 InjectValues(app, wb, _errors);
@@ -253,7 +254,19 @@ namespace UserSimulation
                 CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app);
+                if (analysisType.Equals("CheckCell"))
+                {
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell");
+                }
+                else if (analysisType.Equals("Normal (per range)"))    //Normal (per range)
+                {
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal");
+                }
+                else
+                {
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2");
+                    int zx = 1; 
+                }
 
                 // save partially-corrected outputs
                 var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
@@ -525,7 +538,9 @@ namespace UserSimulation
                                                CellDict errord,
                                                CellDict correct_outputs,
                                                Excel.Workbook wb,
-                                               Excel.Application app)
+                                               Excel.Application app,
+                                               string analysis_type
+                                            )
         {
             // init user results data structure
             var o = new UserResults();
@@ -551,16 +566,75 @@ namespace UserSimulation
                 cells_inspected += 1;
                 Console.Write(".");
 
-                // Get bootstraps
-                TreeScore scores = Analysis.Bootstrap(nboots, data, app, true);
+                AST.Address flagged_cell = null;
 
-                // Compute quantiles based on user-supplied sensitivity
-                var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-                    pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-                );
+                if (analysis_type.Equals("checkcell"))
+                {
+                    // Get bootstraps
+                    TreeScore scores = Analysis.Bootstrap(nboots, data, app, true);
 
-                // Get top outlier
-                var flagged_cell = Analysis.GetTopOutlier(quantiles, known_good, significance);
+                    // Compute quantiles based on user-supplied sensitivity
+                    var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+                        pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+                    );
+
+                    // Get top outlier
+                    flagged_cell = Analysis.GetTopOutlier(quantiles, known_good, significance);
+                }
+                else if (analysis_type.Equals("normal"))
+                {
+                    //Generate normal distributions for every input range
+                    foreach (var range in data.input_ranges.Values)
+                    {
+                        var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
+
+                        // Get top outlier
+                        if (normal_dist.errorsCount() > 0)
+                        {
+                            for (int i = 0; i < normal_dist.errorsCount(); i++)
+                            {
+                                var flagged_com = normal_dist.getError(i);
+                                flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                                if (known_good.Contains(flagged_cell))
+                                {
+                                    flagged_cell = null;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (analysis_type.Equals("normal2"))
+                {
+                    //Generate normal distributions for every worksheet
+                    foreach (Excel.Worksheet ws in wb.Worksheets)
+                    {
+                        var normal_dist = new DataDebugMethods.NormalDistribution(ws.UsedRange);
+
+                        // Get top outlier
+                        if (normal_dist.errorsCount() > 0)
+                        {
+                            for (int i = 0; i < normal_dist.errorsCount(); i++)
+                            {
+                                var flagged_com = normal_dist.getError(i);
+                                flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                                if (known_good.Contains(flagged_cell))
+                                {
+                                    flagged_cell = null;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        //normal_dist.PrintMsg("here");
+                    }
+                }
+
                 if (flagged_cell == null)
                 {
                     errors_remain = false;

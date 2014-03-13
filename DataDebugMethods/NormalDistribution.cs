@@ -8,36 +8,51 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace DataDebugMethods
 {
-    class NormalDistribution
+    public class NormalDistribution
     {
+        //TODO Add checks for non-numeric data in all methods of this class
         private readonly Excel.Range _cells;
         private readonly int _size;
         private readonly Double _mean;
         private readonly Double _variance;
         private readonly Double _standard_deviation;
-        private readonly Dictionary<Excel.Range, Double> _error;
-        private readonly List<Excel.Range> _ranked_errors;
-
+        private Dictionary<Excel.Range, Double> _error;
+        public List<Excel.Range> _ranked_errors;
+        private int numeric_count = 0;
         // PRIVATE METHODS
         private Dictionary<Excel.Range, Double> __error()
         {
             Dictionary<Excel.Range, Double> d = new Dictionary<Excel.Range, Double>();
             foreach (Excel.Range cell in _cells)
             {
-                d.Add(cell, Math.Abs(_mean - cell.Value));
+                if (cell.Value != null)
+                {
+                    if (Math.Abs(_mean - cell.Value) / _standard_deviation > 2.0)
+                    {
+                        d.Add(cell, (double)Math.Abs(_mean - cell.Value) / _standard_deviation);
+                    }
+                }
             }
             return d;
         }
 
         private Double __mean()
         {
-
-            double sum = 0;
+            double sum = 0.0;
             foreach (Excel.Range cell in _cells)
             {
-                sum += cell.Value;
+                if (cell.Value != null)
+                {
+                    sum += cell.Value;
+                    numeric_count++;
+                }
+                else
+                {
+                    MessageBox.Show("empty cell " + cell.Address);
+                }
             }
-            return sum / _size;
+            return sum / numeric_count;
+            //return sum / _size;
         }
 
         private List<Excel.Range> __rank_errors()
@@ -58,15 +73,20 @@ namespace DataDebugMethods
             Double mymean = Mean();
             foreach (Excel.Range cell in _cells)
             {
-                distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
-            }
-            return distance_sum_sq / _size;
+                if (cell.Value != null)
+                {
+                    distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                }
+            } 
+            return distance_sum_sq / numeric_count;
+            //return distance_sum_sq / _size;
         }
 
         // PUBLIC METHODS
         public int Length()
         {
-            return _size;
+            return numeric_count;
+            //return _size;
         }
 
         public Double Mean()
@@ -76,6 +96,7 @@ namespace DataDebugMethods
 
         public NormalDistribution(Excel.Range r)
         {
+            //TODO add a loop here over all cells in the range to remove the ones that are empty or strings
             _cells = r;
             _size = r.Count;
             _mean = __mean();
@@ -83,6 +104,11 @@ namespace DataDebugMethods
             _standard_deviation = __standard_deviation();
             _error = __error();
             _ranked_errors = __rank_errors();
+        }
+
+        public void PrintMsg(string msg)
+        {
+            MessageBox.Show(msg);
         }
 
         public Dictionary<Excel.Range, System.Drawing.Color> PeirceOutliers()
@@ -232,6 +258,75 @@ namespace DataDebugMethods
         public Excel.Range WorstError()
         {
             return _ranked_errors.First();
+        }
+
+        //Error function (erf)
+        public static double erf(double x)
+        {
+            //Save the sign of x
+            int sign;
+            if (x >= 0) sign = 1;
+            else sign = -1;
+            x = Math.Abs(x);
+            //Constants
+            double a1 = 0.254829592;
+            double a2 = -0.284496736;
+            double a3 = 1.421413741;
+            double a4 = -1.453152027;
+            double a5 = 1.061405429;
+            double p = 0.3275911;
+
+            double t = 1.0 / (1.0 + p * x);
+            double y = 1.0 - (a1 * t + a2 * Math.Pow(t, 2.0) + a3 * Math.Pow(t, 3.0) + a4 * Math.Pow(t, 4.0) + a5 * Math.Pow(t, 5.0)) * Math.Exp(-x * x);
+            //double y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.Exp(-x*x);
+
+            return sign * y;   //erf(-x) = -erf(x)
+        }
+
+        //Complementary error function (erfc)
+        public static double erfc(double x)
+        {
+            return (1.0 - erf(x));
+        }
+        //Computes the phi function given a z-score. (This is the CDF for the normal distribution.)
+        public static double __phi(double x)
+        {
+            // constants
+            double a1 = 0.254829592;
+            double a2 = -0.284496736;
+            double a3 = 1.421413741;
+            double a4 = -1.453152027;
+            double a5 = 1.061405429;
+            double p = 0.3275911;
+
+            // Save the sign of x
+            int sign = 1;
+            if (x < 0)
+            {
+                sign = -1;
+            }
+            x = Math.Abs(x) / Math.Sqrt(2.0);
+
+            // A&S formula 7.1.26
+            double t = 1.0 / (1.0 + p * x);
+            double y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.Exp(-x * x);
+ 
+            return 0.5 * (1.0 + sign * y);
+         }
+
+        public List<Excel.Range> getRankedErrors()
+        {
+            return _ranked_errors;
+        }
+
+        public Excel.Range getError(int rank)
+        {
+            return _ranked_errors[rank];
+        }
+
+        public int errorsCount()
+        {
+            return _ranked_errors.Count;
         }
     }
 }

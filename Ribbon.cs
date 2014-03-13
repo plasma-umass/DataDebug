@@ -48,6 +48,34 @@ namespace DataDebug
 
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
+            ////Randomly select the version of the tool that should be shown;
+            //int tool_versions = 3;
+            //Random rand = new Random();
+            //int i = rand.Next(tool_versions);
+            //i = 0;
+
+            //if (i == 0)
+            //{
+            //    //CheckCell shown; others hidden
+            //    ccgroup.Visible = true;
+            //    group1.Visible = false;
+            //    group2.Visible = false;
+            //}
+            //else if (i == 1)
+            //{
+            //    //Normal shown; others hidden
+            //    ccgroup.Visible = false;
+            //    group1.Visible = true;
+            //    group2.Visible = false;
+            //}
+            //else
+            //{
+            //    //Grubb's shown; others hidden
+            //    ccgroup.Visible = false;
+            //    group1.Visible = false;
+            //    group2.Visible = true;
+            //}
+
             // start tool in deactivated state
             DeactivateTool();
 
@@ -148,6 +176,7 @@ namespace DataDebug
             );
 
             // Color top outlier, zoom to worksheet, and save in ribbon state
+            //TODO color in yellow the outputs that depend on the outlier being flagged
             flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
             if (flagged_cell == null)
             {
@@ -156,6 +185,17 @@ namespace DataDebug
             }
             else
             {
+                TreeNode flagged_node;
+                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
+                
+                if (flagged_node.hasOutputs())
+                {
+                    foreach (var output in flagged_node.getOutputs())
+                    {
+                        exploreNode(output);
+                    }
+                }
+
                 tool_highlights.Add(flagged_cell);
 
                 // go to highlighted cell
@@ -252,9 +292,112 @@ namespace DataDebug
             fixform.Show();
         }
 
+        private void exploreNode(TreeNode node)
+        {
+            if (node.hasOutputs())
+            {
+                foreach (var o in node.getOutputs())
+                {
+                    exploreNode(o);
+                }
+            }
+            else
+            {
+                node.getCOMObject().Interior.Color = System.Drawing.Color.Orange;
+            }
+        }
+
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            RunSimulation_Click(sender, e);
+            System.Windows.Forms.MessageBox.Show("" + analysisType.SelectedItem);
+
+            //RunSimulation_Click(sender, e);
+            var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
+            if (sig == FSharpOption<double>.None)
+            {
+                return;
+            }
+            else
+            {
+                tool_significance = sig.Value;
+            }
+
+            current_workbook = app.ActiveWorkbook;
+
+            // Disable screen updating during analysis to speed things up
+            app.ScreenUpdating = false;
+
+            // Build dependency graph (modifies data)
+            var data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
+
+            if (data.TerminalInputNodes().Length == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
+                data.KillPB();
+                app.ScreenUpdating = true;
+                return;
+            }
+
+            //foreach (var node in data.TerminalFormulaNodes())
+            //{
+            //    node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
+            //}
+            var tin = data.TerminalInputNodes();
+
+            foreach (var input_range in data.TerminalInputNodes())
+            {
+                foreach (var input_node in input_range.getInputs())
+                {
+                    //find the ultimate outputs for this input
+                    if (input_node.hasOutputs())
+                    {
+                        foreach (var output in input_node.getOutputs())
+                        {
+                            exploreNode(output);
+                        }
+                    }
+                }
+            }
+
+            foreach (var range in data.input_ranges.Values)
+            {
+                var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
+
+                for (int error_index = 0; error_index < normal_dist.errorsCount(); error_index++)
+                {
+                    normal_dist.getError(error_index).Interior.Color = System.Drawing.Color.Violet;
+                }
+            }
+            /**
+            // Get bootstraps
+            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
+
+            // Compute quantiles based on user-supplied sensitivity
+            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+            );
+
+            // Color top outlier, zoom to worksheet, and save in ribbon state
+            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
+            if (flagged_cell == null)
+            {
+                System.Windows.Forms.MessageBox.Show("No bugs remain.");
+                ResetTool();
+            }
+            else
+            {
+                tool_highlights.Add(flagged_cell);
+
+                // go to highlighted cell
+                ActivateAndCenterOn(flagged_cell, app);
+
+                // enable auditing buttons
+                ActivateTool();
+            }
+            **/
+            // Enable screen updating when we're done
+            data.KillPB();
+            app.ScreenUpdating = true;
         }
 
         private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
@@ -286,7 +429,7 @@ namespace DataDebug
                     // run the simulation
                     app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
                     UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng);
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString());
                     sim.ToCSV(sfd.FileName);
                 }
             }
