@@ -46,6 +46,7 @@ namespace UserSimulation
         private double _initial_total_relative_error = 0;
         private Dictionary<AST.Address, string> _errors = new Dictionary<AST.Address, string>();
         private double _average_precision = 0;
+        private string _analysis_type;
 
         public ErrorCondition GetExitState()
         {
@@ -203,6 +204,8 @@ namespace UserSimulation
             // set wbname
             _wb_name = xlfile;
 
+            _analysis_type = analysisType;
+
             // create ErrorGenerator object
             var egen = new ErrorGenerator();
 
@@ -311,7 +314,7 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{7},{8},{9},{10},{11}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}",
                                  "workbook_name",
                                  "initial_total_relative_error",
                                  "total_relative_error",
@@ -323,7 +326,8 @@ namespace UserSimulation
                                  "true_positives",
                                  "false_positives",
                                  "false_negatives",
-                                 "average_precision");
+                                 "average_precision",
+                                 "analysis_type");
         }
 
         public String FormatResultsAsCSV()
@@ -339,7 +343,8 @@ namespace UserSimulation
                     _user.true_positives.Count + "," +      // number of true positives
                     _user.false_positives.Count + "," +     // number of false positives
                     _user.false_negatives.Count + "," +     // number of false negatives
-                    _average_precision;                     // average precision
+                    _average_precision + "," +              // average precision
+                    _analysis_type;                         // anaysis type (CheckCell, Normal per range, normal per worksheet
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
@@ -630,7 +635,6 @@ namespace UserSimulation
                                 }
                             }
                         }
-                        //normal_dist.PrintMsg("here");
                     }
                 }
 
@@ -646,6 +650,15 @@ namespace UserSimulation
                         errors_found += 1;
                         o.precision_at_step_k.Add(errors_found / (double)cells_inspected);
                         o.true_positives.Add(flagged_cell);
+
+                        // correct flagged cell -- only need to do this if the flagged cell was an error
+                        flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
+                        var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                        UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
+                        
+                        // compute total error after applying this correction
+                        var current_total_error = CalculateTotalError(correct_outputs, partially_corrected_outputs);
+                        o.current_total_error.Add(current_total_error);
                     }
                     else
                     {
@@ -653,17 +666,9 @@ namespace UserSimulation
                         o.false_positives.Add(flagged_cell);
                     }
 
-                    // correct flagged cell
-                    flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
-                    var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
-                    UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
-
-                    // mark it as known good
+                    // mark it as known good -- at this point the cell has been 
+                    //      'inspected' regardless of whether it was an error
                     known_good.Add(flagged_cell);
-
-                    // compute total error after applying this correction
-                    var current_total_error = CalculateTotalError(correct_outputs, partially_corrected_outputs);
-                    o.current_total_error.Add(current_total_error);
 
                     // write CSV line
                     //ToTimeseriesCSV(wb, current_total_error, cells_inspected);
