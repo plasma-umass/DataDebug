@@ -304,7 +304,7 @@ namespace DataDebug
             }
             else
             {
-                node.getCOMObject().Interior.Color = System.Drawing.Color.Orange;
+                node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
             }
         }
 
