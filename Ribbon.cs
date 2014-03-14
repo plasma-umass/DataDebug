@@ -29,6 +29,7 @@ namespace DataDebug
         AST.Address flagged_cell = null;
         System.Drawing.Color GREEN = System.Drawing.Color.Green;
         string classification_file;
+        AnalysisData data;
 
         private void ActivateTool()
         {
@@ -157,7 +158,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // Build dependency graph (modifies data)
-            var data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
+            data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
 
             if (data.TerminalInputNodes().Length == 0)
             {
@@ -276,6 +277,19 @@ namespace DataDebug
             }
             else
             {
+                TreeNode flagged_node;
+                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
+
+                if (flagged_node.hasOutputs())
+                {
+                    foreach (var output in flagged_node.getOutputs())
+                    {
+                        exploreNode(output);
+                    }
+                }
+
+                tool_highlights.Add(flagged_cell);
+
                 // go to highlighted cell
                 ActivateAndCenterOn(flagged_cell, app);
             }
