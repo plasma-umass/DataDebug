@@ -55,10 +55,6 @@ namespace DataDebugMethods
                         numeric_count++;
                     } catch { }
                 }
-                else
-                {
-                    MessageBox.Show("empty cell " + cell.Address);
-                }
             }
             return sum / numeric_count;
             //return sum / _size;

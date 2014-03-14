@@ -265,7 +265,6 @@ namespace UserSimulation
                 else
                 {
                     _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2");
-                    int zx = 1; 
                 }
 
                 // save partially-corrected outputs
