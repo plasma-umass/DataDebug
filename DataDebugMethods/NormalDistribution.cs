@@ -25,12 +25,17 @@ namespace DataDebugMethods
             Dictionary<Excel.Range, Double> d = new Dictionary<Excel.Range, Double>();
             foreach (Excel.Range cell in _cells)
             {
-                if (cell.Value != null)
+                if (cell.Value2 != null)
                 {
-                    if (Math.Abs(_mean - cell.Value) / _standard_deviation > 2.0)
+                    try
                     {
-                        d.Add(cell, (double)Math.Abs(_mean - cell.Value) / _standard_deviation);
+                        var val = System.Convert.ToDouble(cell.Value2);
+                        if (Math.Abs(_mean - val) / _standard_deviation > 2.0)
+                        {
+                            d.Add(cell, (double)Math.Abs(_mean - val) / _standard_deviation);
+                        }
                     }
+                    catch { }
                 }
             }
             return d;
@@ -41,10 +46,14 @@ namespace DataDebugMethods
             double sum = 0.0;
             foreach (Excel.Range cell in _cells)
             {
-                if (cell.Value != null)
+                if (cell.Value2 != null)
                 {
-                    sum += cell.Value;
-                    numeric_count++;
+                    try
+                    {
+                        var val = System.Convert.ToDouble(cell.Value2);
+                        sum += val;
+                        numeric_count++;
+                    } catch { }
                 }
                 else
                 {
@@ -73,9 +82,13 @@ namespace DataDebugMethods
             Double mymean = Mean();
             foreach (Excel.Range cell in _cells)
             {
-                if (cell.Value != null)
+                if (cell.Value2 != null)
                 {
-                    distance_sum_sq += Math.Pow(mymean - cell.Value, 2);
+                    try
+                    {
+                        var val = System.Convert.ToDouble(cell.Value2);
+                        distance_sum_sq += Math.Pow(mymean - val, 2);
+                    } catch { }
                 }
             } 
             return distance_sum_sq / numeric_count;

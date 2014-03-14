@@ -291,6 +291,7 @@ namespace DataDebug
             fixform.Show();
         }
 
+        //Recursive method for highlighting the outputs reachable from a certain TreeNode
         private void exploreNode(TreeNode node)
         {
             if (node.hasOutputs())

@@ -87,6 +87,12 @@ namespace UserSimulation
                 }
                 else
                 {
+                    //For testing the errors produced by the generator
+                    string[] errors = new string[20];
+                    for (int x = 0; x < 20; x++)
+                    {
+                        errors[x] = GenerateErrorString(cell.Value, c);
+                    }
                     output.Add(cell.Key, GenerateErrorString(cell.Value, c));
                 }
                 i++;
