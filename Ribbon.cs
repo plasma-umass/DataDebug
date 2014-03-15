@@ -170,15 +170,87 @@ namespace DataDebug
 
             // Get bootstraps
             var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
+            var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
+
+            //Should we be using an outlier test for 
+            //highlighting scores that fall outside of two standard deviations from the others?
+            //Or do we always want to be highlighting the top 5% of the scores?
+            //Currently, if we have something like this, we don't flag anything 
+            //because the 1 value that is weird is an entire 20% of the total:
+            //     1,1,1,1000,1     =SUM(A1:A5)
+            //-Dimitar
+
+            //Code for doing normal outlier analysis on the scores:
+            //find mean:
+            double sum = 0.0;
+            foreach (double d in scores.Values)
+            {
+                sum += d;
+            }
+            double mean = sum / scores.Values.Count;
+            //find variance
+            double distance_sum_sq = 0.0;
+            foreach (double d in scores.Values)
+            {
+                distance_sum_sq += Math.Pow(mean - d, 2);
+            }
+            double variance = distance_sum_sq / scores.Values.Count;
+
+            //find std. deviation
+            double std_deviation = Math.Sqrt(variance);
+
+            //scores_list = scores_list.Where
+
+            int start_ptr = 0;
+            int end_ptr = 0; 
+            List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode,int>>();
+
+            while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
+            {
+                //while the scores at the start and end pointers are the same, bump the end pointer
+                while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
+                {
+                    end_ptr++;
+                }
+                //Now the end_pointer points to the first index with a lower score
+                //If the end pointer is still above the significance cutoff, add all values of this score to the high_scores list
+                if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance)
+                {
+                    //add all values of the current score to high_scores list
+                    for (; start_ptr < end_ptr; start_ptr++)
+                    {
+                        high_scores.Add(scores_list[start_ptr]);
+                    }
+                    //Increment the start pointer to the start of the next score region
+                    start_ptr++;
+                }
+                else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
+                {
+                    break;
+                }
+            }
+
+            // filter out cells marked as OK
+            var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            AST.Address flagged_cell;
+            if (filtered_scores.Count() != 0)
+            {
+                // get TreeNode corresponding to most unusual score
+                flagged_cell = filtered_scores[0].Key.GetAddress();
+            }
+            else
+            {
+                flagged_cell = null;
+            }
 
             // Compute quantiles based on user-supplied sensitivity
-            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-            );
+//            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+//                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+//            );
 
             // Color top outlier, zoom to worksheet, and save in ribbon state
             //TODO color in yellow the outputs that depend on the outlier being flagged
-            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
+//            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
             if (flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
@@ -208,8 +280,8 @@ namespace DataDebug
 
             // Enable screen updating when we're done
             app.ScreenUpdating = true;
-
-            return quantiles;
+            return null;
+            //return quantiles;
         }
 
         private void ActivateAndCenterOn(AST.Address cell, Excel.Application app)
