@@ -124,10 +124,10 @@ namespace DataDebugMethods
                     {
                         var addr = AST.Address.AddressFromCOMObject(cell, wb);
                         var n = new TreeNode(cell, cell.Worksheet, wb);
-                        
+
                         if (cell.HasFormula)
                         {
-                            n.setIsFormula();
+                            //n.setIsFormula();   // I believe that this is unnecessary
                             n.DontPerturb();
                             if (cell.Formula == null)
                             {

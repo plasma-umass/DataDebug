@@ -86,5 +86,18 @@ namespace DataDebugMethods
             return input_ranges.Where(pair => !pair.Value.GetDontPerturb())
                                .Select(pair => pair.Value).ToArray();
         }
+
+        /// <summary>
+        /// This method returns all input TreeNodes that are guaranteed to be:
+        /// 1. leaf nodes, and
+        /// 2. strictly data-containing (no formulas).
+        /// </summary>
+        /// <returns></returns>
+        public TreeNode[] TerminalInputCells()
+        {
+            return TerminalInputNodes().SelectMany(pair => pair.getInputs())
+                                       .Where(node => !node.isFormula() && node.isLeaf())
+                                       .ToArray();
+        }
     }
 }
