@@ -174,6 +174,7 @@ namespace DataDebug
 
             //Should we be using an outlier test for 
             //highlighting scores that fall outside of two standard deviations from the others?
+            //(The one-sided 5% cutoff for the normal distribution is 1.6448.)
             //Or do we always want to be highlighting the top 5% of the scores?
             //Currently, if we have something like this, we don't flag anything 
             //because the 1 value that is weird is an entire 20% of the total:
@@ -203,6 +204,8 @@ namespace DataDebug
 
             int start_ptr = 0;
             int end_ptr = 0; 
+
+            var weird_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation*1.6448).ToList();
             List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode,int>>();
 
             while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
