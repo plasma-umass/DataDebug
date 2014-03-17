@@ -67,13 +67,20 @@ namespace DataDebugMethods
             if (!no_progress) pb.Close();
         }
 
-        public TreeNode[] TerminalFormulaNodes()
+        public TreeNode[] TerminalFormulaNodes(bool all_outputs)
         {
             // return only the formula nodes which do not provide
             // input to any other cell and which are also not
             // in our list of excluded functions
-            return formula_nodes.Where(pair => pair.Value.getOutputs().Count == 0)
-                                .Select(pair => pair.Value).ToArray();
+            if (all_outputs)
+            {
+                return formula_nodes.Select(pair => pair.Value).ToArray();
+            }
+            else
+            {
+                return formula_nodes.Where(pair => pair.Value.getOutputs().Count == 0)
+                                    .Select(pair => pair.Value).ToArray();
+            }
         }
 
         public TreeNode[] TerminalInputNodes()
@@ -85,6 +92,19 @@ namespace DataDebugMethods
             // 2. the range is actually a formula cell
             return input_ranges.Where(pair => !pair.Value.GetDontPerturb())
                                .Select(pair => pair.Value).ToArray();
+        }
+
+        /// <summary>
+        /// This method returns all input TreeNodes that are guaranteed to be:
+        /// 1. leaf nodes, and
+        /// 2. strictly data-containing (no formulas).
+        /// </summary>
+        /// <returns></returns>
+        public TreeNode[] TerminalInputCells()
+        {
+            return TerminalInputNodes().SelectMany(pair => pair.getInputs())
+                                       .Where(node => !node.isFormula() && node.isLeaf())
+                                       .ToArray();
         }
     }
 }

@@ -89,13 +89,13 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted)
+        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted, bool all_outputs)
         {
             // this modifies the weights of each node
             PropagateWeights(data);
 
             // filter out non-terminal functions
-            var output_fns = data.TerminalFormulaNodes();
+            var output_fns = data.TerminalFormulaNodes(all_outputs);
             // filter out non-terminal inputs
             var input_rngs = data.TerminalInputNodes();
 
@@ -314,8 +314,20 @@ namespace DataDebugMethods
                 return null;
             }
 
+            //only flag quantiles that begin past the significance cutoff
+            //identify the quantile which straddles the significance cutoff
+            double last_excluded_quantile = 1.0;
+            foreach (var q in quantiles)
+            {
+                if (q.Item1 >= significance)
+                {
+                    last_excluded_quantile = q.Item1;
+                    break;
+                }
+            }
+
             // filter out cells below our significance level
-            var significant_scores = quantiles.Where(tup => tup.Item1 >= significance);
+            var significant_scores = quantiles.Where(tup => tup.Item1 > last_excluded_quantile);
 
             // filter out cells marked as OK
             var filtered_scores = significant_scores.Where(tup => !known_good.Contains(tup.Item2.GetAddress()));
@@ -651,7 +663,7 @@ namespace DataDebugMethods
         private static void PropagateWeights(AnalysisData data)
         {
             // starting set of functions; roots in the forest
-            var functions = data.TerminalFormulaNodes();
+            var functions = data.TerminalFormulaNodes(false);
 
             // for each forest
             foreach (TreeNode fn in functions)

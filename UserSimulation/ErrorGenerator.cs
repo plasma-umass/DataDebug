@@ -87,6 +87,27 @@ namespace UserSimulation
                 }
                 else
                 {
+                    //For verifying the error distribution produced by the generator
+                    //Dictionary<string, int> errors_dict = new Dictionary<string, int>();
+                    //for (int x = 0; x < 2000; x++)
+                    //{
+                    //    string error = GenerateErrorString(cell.Value, c);
+                    //    if (errors_dict.ContainsKey(error))
+                    //    {
+                    //        //update the value
+                    //        int count;
+                    //        if (errors_dict.TryGetValue(error, out count))
+                    //        {
+                    //            errors_dict.Remove(error);
+                    //            errors_dict.Add(error, count + 1);
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        //add the string with value 1
+                    //        errors_dict.Add(error, 1);
+                    //    }
+                    //}
                     output.Add(cell.Key, GenerateErrorString(cell.Value, c));
                 }
                 i++;
