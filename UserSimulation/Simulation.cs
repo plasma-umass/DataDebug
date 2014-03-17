@@ -197,7 +197,8 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        string analysisType         // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        string analysisType,         // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        bool all_outputs            // if !all_outputs, we only consider terminal outputs
                        )
         {
             // set wbname
@@ -218,7 +219,7 @@ namespace UserSimulation
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
                 // get terminal input and terminal formula nodes once
                 var terminal_input_nodes = data.TerminalInputNodes();
-                var terminal_formula_nodes = data.TerminalFormulaNodes();
+                var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
 
                 if (terminal_input_nodes.Length == 0)
                 {
@@ -256,15 +257,15 @@ namespace UserSimulation
                 // remove errors until none remain; MODIFIES WORKBOOK
                 if (analysisType.Equals("CheckCell"))
                 {
-                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell");
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell", false);
                 }
                 else if (analysisType.Equals("Normal (per range)"))    //Normal (per range)
                 {
-                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal");
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal", false);
                 }
                 else
                 {
-                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2");
+                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2", false);
                     int zx = 1; 
                 }
 
@@ -539,7 +540,8 @@ namespace UserSimulation
                                                CellDict correct_outputs,
                                                Excel.Workbook wb,
                                                Excel.Application app,
-                                               string analysis_type
+                                               string analysis_type,
+                                               bool all_outputs
                                             )
         {
             // init user results data structure
@@ -554,7 +556,7 @@ namespace UserSimulation
             // initialize procedure
             var errors_remain = true;
             var max_errors = new ErrorDict();
-            var incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+            var incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs), wb);
             var errors_found = 0;
             var number_of_true_errors = errord.Count;
             UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
@@ -571,7 +573,7 @@ namespace UserSimulation
                 if (analysis_type.Equals("checkcell"))
                 {
                     // Get bootstraps
-                    TreeScore scores = Analysis.Bootstrap(nboots, data, app, true);
+                    TreeScore scores = Analysis.Bootstrap(nboots, data, app, true, false);
 
                     // Compute quantiles based on user-supplied sensitivity
                     var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
@@ -656,7 +658,7 @@ namespace UserSimulation
 
                     // correct flagged cell
                     flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
-                    var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(), wb);
+                    var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs), wb);
                     UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
 
                     // mark it as known good

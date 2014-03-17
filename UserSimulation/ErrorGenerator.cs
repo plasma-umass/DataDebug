@@ -254,13 +254,18 @@ namespace UserSimulation
             // for each character in the string, sample from the transposition dict
             for (int i = 0; i < input.Length; i++)
             {
-                // condition on the number of possible transpositions to the right
+                // condition on the number of possible transpositions
+                // to the right and to the left
                 // if the character is a "guaranteed transposition", ensure that
                 // the 0-transposition is not in the distribution
                 var dist = transpositions.Where(kvp => kvp.Key < input.Length - i
-                                                       && i == guar ? kvp.Key != 0 : true);
-                var total = dist.Select(kvp => kvp.Value).Sum();
-                var prs = dist.Select(kvp => (double)kvp.Value / total).ToArray();
+                                                       && kvp.Key >= -i
+                                                       && i == guar ? kvp.Key != 0 : true)
+                                         .ToDictionary(pair => pair.Key, pair => pair.Value);
+                var counts = Enumerable.Range(-i, input.Length - i)
+                                       .Select(z => dist.ContainsKey(z) ? dist[z] : 0);
+                var total = counts.Sum();
+                var prs = counts.Select(z => (double)z / total).ToArray();
                 // sample (in this case, bins always start at zero and are in order,
                 // so j == # of transpositions to right)
                 var j = MultinomialSample(prs);
@@ -370,10 +375,10 @@ namespace UserSimulation
             // note that we do NOT consider the empty strings here
             // For strings of length 1, the probability of not making a
             // transposition should be exactly 1. 
-            double[] PrsPosNotTrans = ochars.Length != 1 ? ochars.ToArray().Select((oc, idx) =>
+            double[] PrsPosNotTrans = ochars.Length > 1 ? ochars.ToArray().Select((oc, idx) =>
             {
                 int count = trd[0];
-                int total = trd.Where(kvp => kvp.Key <= input.Length - idx).Select(kvp => kvp.Value).Sum();
+                int total = trd.Where(kvp => kvp.Key < input.Length - idx && kvp.Key >= -idx).Select(kvp => kvp.Value).Sum();
                 return (double)count / total;
             }).ToArray() : new [] { 1.0 };
 
