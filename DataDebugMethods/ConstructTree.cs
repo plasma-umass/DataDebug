@@ -162,7 +162,7 @@ namespace DataDebugMethods
                 // Allow perturbation of every input_range that contains at least one value
                 // TODO: fix; the Workbook reference here is not correct in the case of cross-workbook reference;
                 // that said, having the wrong workbook doesn't actually have any bearing on the correctness of this call
-                if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb).Count() > 0) || cell.Value2 == null)
+                if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb).Count() > 0)) //|| cell.Value2 != null)
                 {
                     input_range.DontPerturb();
                 }
