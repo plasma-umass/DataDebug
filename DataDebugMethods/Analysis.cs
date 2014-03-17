@@ -314,8 +314,20 @@ namespace DataDebugMethods
                 return null;
             }
 
+            //only flag quantiles that begin past the significance cutoff
+            //identify the quantile which straddles the significance cutoff
+            double last_excluded_quantile = 1.0;
+            foreach (var q in quantiles)
+            {
+                if (q.Item1 >= significance)
+                {
+                    last_excluded_quantile = q.Item1;
+                    break;
+                }
+            }
+
             // filter out cells below our significance level
-            var significant_scores = quantiles.Where(tup => tup.Item1 >= significance);
+            var significant_scores = quantiles.Where(tup => tup.Item1 > last_excluded_quantile);
 
             // filter out cells marked as OK
             var filtered_scores = significant_scores.Where(tup => !known_good.Contains(tup.Item2.GetAddress()));

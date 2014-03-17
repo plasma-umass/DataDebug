@@ -55,10 +55,6 @@ namespace DataDebugMethods
                         numeric_count++;
                     } catch { }
                 }
-                else
-                {
-                    MessageBox.Show("empty cell " + cell.Address);
-                }
             }
             return sum / numeric_count;
             //return sum / _size;
@@ -117,11 +113,6 @@ namespace DataDebugMethods
             _standard_deviation = __standard_deviation();
             _error = __error();
             _ranked_errors = __rank_errors();
-        }
-
-        public void PrintMsg(string msg)
-        {
-            MessageBox.Show(msg);
         }
 
         public Dictionary<Excel.Range, System.Drawing.Color> PeirceOutliers()
