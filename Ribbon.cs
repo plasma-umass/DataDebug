@@ -181,6 +181,9 @@ namespace DataDebug
             //     1,1,1,1000,1     =SUM(A1:A5)
             //-Dimitar
 
+            // TODO: don't forget that we never want to flag a cell that failed
+            // zero hypothesis tests.
+
             //Code for doing normal outlier analysis on the scores:
             //find mean:
             double sum = 0.0;
