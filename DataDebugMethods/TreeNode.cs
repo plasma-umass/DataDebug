@@ -24,7 +24,7 @@ namespace DataDebugMethods
         private Excel.Worksheet _worksheet; // A reference to the actual worksheet where this TreeNode is located
         private double _weight = 0.0;  //The weight of the node as computed by propagating values down the tree
         private bool _chart;
-        private bool _is_formula; //this indicates whether this node is a formula
+        private bool _is_formula = false; //this indicates whether this node is a formula
         private string _formula;
         private Excel.Range _COM;
         private bool _dont_perturb = false; // this flag indicates that this is an input range which contains non-perturbable elements, like function outputs.  We assume, by default, that all treenodes are perturbable.
@@ -61,22 +61,11 @@ namespace DataDebugMethods
                 _addr = AST.Address.AddressFromCOMObject(_COM, _workbook);
             }
 
-            // might be a single cell or formula
-            if (_height == 1 && _width == 1)
+            // node is formula iff the COM object is both a single cell and a formula
+            if (_height == 1 && _width == 1 && com.HasFormula == true)
             {
-                if (com.HasFormula == true)
-                {
-                    _is_formula = true;
-                    _formula = com.Formula;
-                }
-                else
-                {
-                    _is_formula = false;
-                }
-            }
-            else
-            {
-                _is_formula = false;
+                _is_formula = true;
+                _formula = com.Formula;
             }
         }
 
@@ -274,14 +263,7 @@ namespace DataDebugMethods
 
         public bool isFormula()
         {
-            if (_is_formula == true)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return _is_formula;
         }
 
         /**
@@ -340,6 +322,11 @@ namespace DataDebugMethods
         public string getCOMValueAsString()
         {
             return System.Convert.ToString(this.getCOMObject().Value2);
+        }
+
+        public bool isLeaf()
+        {
+            return _inputs.Count == 0;
         }
     }
 }
