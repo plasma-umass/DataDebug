@@ -89,13 +89,13 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted)
+        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted, bool all_outputs)
         {
             // this modifies the weights of each node
             PropagateWeights(data);
 
             // filter out non-terminal functions
-            var output_fns = data.TerminalFormulaNodes();
+            var output_fns = data.TerminalFormulaNodes(all_outputs);
             // filter out non-terminal inputs
             var input_rngs = data.TerminalInputNodes();
 
@@ -663,7 +663,7 @@ namespace DataDebugMethods
         private static void PropagateWeights(AnalysisData data)
         {
             // starting set of functions; roots in the forest
-            var functions = data.TerminalFormulaNodes();
+            var functions = data.TerminalFormulaNodes(false);
 
             // for each forest
             foreach (TreeNode fn in functions)

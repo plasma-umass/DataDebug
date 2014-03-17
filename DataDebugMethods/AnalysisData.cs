@@ -67,13 +67,20 @@ namespace DataDebugMethods
             if (!no_progress) pb.Close();
         }
 
-        public TreeNode[] TerminalFormulaNodes()
+        public TreeNode[] TerminalFormulaNodes(bool all_outputs)
         {
             // return only the formula nodes which do not provide
             // input to any other cell and which are also not
             // in our list of excluded functions
-            return formula_nodes.Where(pair => pair.Value.getOutputs().Count == 0)
-                                .Select(pair => pair.Value).ToArray();
+            if (all_outputs)
+            {
+                return formula_nodes.Select(pair => pair.Value).ToArray();
+            }
+            else
+            {
+                return formula_nodes.Where(pair => pair.Value.getOutputs().Count == 0)
+                                    .Select(pair => pair.Value).ToArray();
+            }
         }
 
         public TreeNode[] TerminalInputNodes()
