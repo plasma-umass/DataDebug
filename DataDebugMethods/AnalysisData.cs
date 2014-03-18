@@ -13,38 +13,31 @@ namespace DataDebugMethods
     {
         public List<TreeNode> nodelist;     // holds all the TreeNodes in the Excel fileTreeNode
         public RangeDict input_ranges;
-        private bool no_progress;
-        private ProgBar pb;
         public TreeDict formula_nodes;
         public TreeDict cell_nodes;
         public Excel.Sheets charts;
-
-        public const int PROGRESS_LOW = 0;
-        public const int PROGRESS_HIGH = 100;
+        private ProgBar pb;
 
         private int _pb_max;
         private int _pb_count = 0;
 
-        public AnalysisData(Excel.Application application, Excel.Workbook wb, bool dont_show_progbar)
+        public AnalysisData(Excel.Application application, Excel.Workbook wb) 
         {
-            no_progress = dont_show_progbar;
             charts = wb.Charts;
             nodelist = new List<TreeNode>();
             input_ranges = new RangeDict();
             cell_nodes = new TreeDict();
+        }
 
-            // Create a progress bar
-            if (!no_progress)
-            {
-                pb = new ProgBar(PROGRESS_LOW, PROGRESS_HIGH);
-                pb.SetProgress(0);
-            }
+        public AnalysisData(Excel.Application application, Excel.Workbook wb, ProgBar progbar)
+            : this (application, wb)
+        {
+            pb = progbar;
         }
 
         public void SetProgress(int i)
         {
-            Debug.Assert(i >= PROGRESS_LOW && i <= PROGRESS_HIGH);
-            if (!no_progress) pb.SetProgress(i);
+            if (pb != null) pb.SetProgress(i);
         }
 
         public void SetPBMax(int max)
@@ -54,17 +47,17 @@ namespace DataDebugMethods
 
         public void PokePB()
         {
-            if (!no_progress)
+            if (pb != null)
             {
                 _pb_count += 1;
                 this.SetProgress(_pb_count * 100 / _pb_max);
             }
         }
 
-        public void KillPB()
+        private void KillPB()
         {
             // Kill progress bar
-            if (!no_progress) pb.Close();
+            if (pb != null) pb.Close();
         }
 
         public TreeNode[] TerminalFormulaNodes(bool all_outputs)

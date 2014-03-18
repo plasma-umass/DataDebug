@@ -9,6 +9,9 @@ using System.Windows.Forms;
 
 namespace DataDebugMethods
 {
+    /// <summary>
+    /// This progress bar's lifecycle should be managed by the UI layer.
+    /// </summary>
     public partial class ProgBar : Form
     {
         int Maximum;
@@ -29,6 +32,7 @@ namespace DataDebugMethods
 
         public void SetProgress(int progress)
         {
+            System.Diagnostics.Debug.Assert(progress >= Minimum && progress <= Maximum);
             progressBar1.Value = progress;
         }
 

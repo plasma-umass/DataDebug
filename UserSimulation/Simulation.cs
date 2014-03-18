@@ -219,7 +219,7 @@ namespace UserSimulation
                 _wb_path = wb.Path;
 
                 // build dependency graph
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app, false);
+                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
                 // get terminal input and terminal formula nodes once
                 var terminal_input_nodes = data.TerminalInputNodes();
                 var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);

@@ -482,9 +482,6 @@ namespace DataDebugMethods
                 BootMemo.ReplaceExcelRange(com, initial_inputs[t]);
             }
 
-            // Kill progress bar
-            data.KillPB();
-
             sw.Stop();
 
             return bootstraps;
