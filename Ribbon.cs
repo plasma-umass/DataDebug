@@ -337,6 +337,7 @@ namespace DataDebug
                 }
                 catch (ExcelParserUtility.ParseException ex)
                 {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
                     System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
                     return;
                 }
@@ -403,6 +404,7 @@ namespace DataDebug
                 }
                 catch (ExcelParserUtility.ParseException ex)
                 {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
                     System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
                     return;
                 }
