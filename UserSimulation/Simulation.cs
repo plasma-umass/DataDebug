@@ -198,9 +198,8 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        string analysisType,         // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool all_outputs,            // if !all_outputs, we only consider terminal outputs
-                        ProgBar pb
+                        string analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        bool all_outputs            // if !all_outputs, we only consider terminal outputs
                        )
         {
             // set wbname
@@ -220,7 +219,7 @@ namespace UserSimulation
                 _wb_path = wb.Path;
 
                 // build dependency graph
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
+                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
                 // get terminal input and terminal formula nodes once
                 var terminal_input_nodes = data.TerminalInputNodes();
                 var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
