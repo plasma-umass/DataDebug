@@ -561,7 +561,7 @@ namespace DataDebug
                     // run the simulation
                     app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
                     UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString());
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString(), false);
                     sim.ToCSV(sfd.FileName);
                 }
             }
