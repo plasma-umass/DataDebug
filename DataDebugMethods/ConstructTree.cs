@@ -16,11 +16,16 @@ namespace DataDebugMethods
 {
     public static class ConstructTree
     {
+        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app)
+        {
+            return constructTree(wb, app, null);
+        }
+
         // This method constructs the dependency graph from the workbook.
-        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, bool show_progbar)
+        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, ProgBar pb)
         {
             // Make a new analysisData object
-            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, !show_progbar);
+            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, pb);
 
             // Get a range representing the formula cells for each worksheet in each workbook
             ArrayList formulaRanges = ConstructTree.GetFormulaRanges(wb.Worksheets, app);

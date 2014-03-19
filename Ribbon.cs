@@ -152,139 +152,153 @@ namespace DataDebug
 
         private IEnumerable<Tuple<double,TreeNode>> Analyze()
         {
-            current_workbook = app.ActiveWorkbook;
-
-            // Disable screen updating during analysis to speed things up
-            app.ScreenUpdating = false;
-
-            // Build dependency graph (modifies data)
-            data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
-
-            if (data.TerminalInputNodes().Length == 0)
+            using (var pb = new ProgBar(0, 100))
             {
-                System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
-                data.KillPB();
+                current_workbook = app.ActiveWorkbook;
+
+                // Disable screen updating during analysis to speed things up
+                app.ScreenUpdating = false;
+
+                // Build dependency graph (modifies data)
+                try
+                {
+                    data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
+                }
+                catch (ExcelParserUtility.ParseException e)
+                {
+                    // cleanup UI and then rethrow
+                    app.ScreenUpdating = true;
+                    throw e;
+                }
+
+                if (data.TerminalInputNodes().Length == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
+                    app.ScreenUpdating = true;
+                    return new List<Tuple<double, TreeNode>>();
+                }
+
+                // Get bootstraps
+                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, false);
+                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
+
+                //Should we be using an outlier test for 
+                //highlighting scores that fall outside of two standard deviations from the others?
+                //(The one-sided 5% cutoff for the normal distribution is 1.6448.)
+                //Or do we always want to be highlighting the top 5% of the scores?
+                //Currently, if we have something like this, we don't flag anything 
+                //because the 1 value that is weird is an entire 20% of the total:
+                //     1,1,1,1000,1     =SUM(A1:A5)
+                //-Dimitar
+
+                // TODO: don't forget that we never want to flag a cell that failed
+                // zero hypothesis tests.
+
+                //Code for doing normal outlier analysis on the scores:
+                //find mean:
+                double sum = 0.0;
+                foreach (double d in scores.Values)
+                {
+                    sum += d;
+                }
+                double mean = sum / scores.Values.Count;
+                //find variance
+                double distance_sum_sq = 0.0;
+                foreach (double d in scores.Values)
+                {
+                    distance_sum_sq += Math.Pow(mean - d, 2);
+                }
+                double variance = distance_sum_sq / scores.Values.Count;
+
+                //find std. deviation
+                double std_deviation = Math.Sqrt(variance);
+
+                //scores_list = scores_list.Where
+
+                int start_ptr = 0;
+                int end_ptr = 0;
+
+                var weird_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
+                List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
+
+                while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
+                {
+                    //while the scores at the start and end pointers are the same, bump the end pointer
+                    while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
+                    {
+                        end_ptr++;
+                    }
+                    //Now the end_pointer points to the first index with a lower score
+                    //If the end pointer is still above the significance cutoff, add all values of this score to the high_scores list
+                    if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance)
+                    {
+                        //add all values of the current score to high_scores list
+                        for (; start_ptr < end_ptr; start_ptr++)
+                        {
+                            high_scores.Add(scores_list[start_ptr]);
+                        }
+                        //Increment the start pointer to the start of the next score region
+                        start_ptr++;
+                    }
+                    else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
+                    {
+                        break;
+                    }
+                }
+
+                // filter out cells marked as OK
+                var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+                AST.Address flagged_cell;
+                if (filtered_scores.Count() != 0)
+                {
+                    // get TreeNode corresponding to most unusual score
+                    flagged_cell = filtered_scores[0].Key.GetAddress();
+                }
+                else
+                {
+                    flagged_cell = null;
+                }
+
+                // Compute quantiles based on user-supplied sensitivity
+                //            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+                //                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+                //            );
+
+                // Color top outlier, zoom to worksheet, and save in ribbon state
+                //TODO color in yellow the outputs that depend on the outlier being flagged
+                //            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
+                if (flagged_cell == null)
+                {
+                    System.Windows.Forms.MessageBox.Show("No bugs remain.");
+                    ResetTool();
+                }
+                else
+                {
+                    TreeNode flagged_node;
+                    data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
+
+                    if (flagged_node.hasOutputs())
+                    {
+                        foreach (var output in flagged_node.getOutputs())
+                        {
+                            exploreNode(output);
+                        }
+                    }
+
+                    tool_highlights.Add(flagged_cell);
+
+                    // go to highlighted cell
+                    ActivateAndCenterOn(flagged_cell, app);
+
+                    // enable auditing buttons
+                    ActivateTool();
+                }
+
+                // Enable screen updating when we're done
                 app.ScreenUpdating = true;
-                return new List<Tuple<double, TreeNode>>();
+                return null;
+                //return quantiles;
             }
-
-            // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
-            var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
-
-            //Should we be using an outlier test for 
-            //highlighting scores that fall outside of two standard deviations from the others?
-            //(The one-sided 5% cutoff for the normal distribution is 1.6448.)
-            //Or do we always want to be highlighting the top 5% of the scores?
-            //Currently, if we have something like this, we don't flag anything 
-            //because the 1 value that is weird is an entire 20% of the total:
-            //     1,1,1,1000,1     =SUM(A1:A5)
-            //-Dimitar
-
-            //Code for doing normal outlier analysis on the scores:
-            //find mean:
-            double sum = 0.0;
-            foreach (double d in scores.Values)
-            {
-                sum += d;
-            }
-            double mean = sum / scores.Values.Count;
-            //find variance
-            double distance_sum_sq = 0.0;
-            foreach (double d in scores.Values)
-            {
-                distance_sum_sq += Math.Pow(mean - d, 2);
-            }
-            double variance = distance_sum_sq / scores.Values.Count;
-
-            //find std. deviation
-            double std_deviation = Math.Sqrt(variance);
-
-            //scores_list = scores_list.Where
-
-            int start_ptr = 0;
-            int end_ptr = 0; 
-
-            var weird_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation*1.6448).ToList();
-            List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode,int>>();
-
-            while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
-            {
-                //while the scores at the start and end pointers are the same, bump the end pointer
-                while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
-                {
-                    end_ptr++;
-                }
-                //Now the end_pointer points to the first index with a lower score
-                //If the end pointer is still above the significance cutoff, add all values of this score to the high_scores list
-                if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance)
-                {
-                    //add all values of the current score to high_scores list
-                    for (; start_ptr < end_ptr; start_ptr++)
-                    {
-                        high_scores.Add(scores_list[start_ptr]);
-                    }
-                    //Increment the start pointer to the start of the next score region
-                    start_ptr++;
-                }
-                else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                {
-                    break;
-                }
-            }
-
-            // filter out cells marked as OK
-            var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-            //AST.Address flagged_cell;
-            if (filtered_scores.Count() != 0)
-            {
-                // get TreeNode corresponding to most unusual score
-                flagged_cell = filtered_scores[0].Key.GetAddress();
-            }
-            else
-            {
-                flagged_cell = null;
-            }
-
-            // Compute quantiles based on user-supplied sensitivity
-//            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-//                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-//            );
-
-            // Color top outlier, zoom to worksheet, and save in ribbon state
-            //TODO color in yellow the outputs that depend on the outlier being flagged
-//            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
-            if (flagged_cell == null)
-            {
-                System.Windows.Forms.MessageBox.Show("No bugs remain.");
-                ResetTool();
-            }
-            else
-            {
-                TreeNode flagged_node;
-                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
-                
-                if (flagged_node.hasOutputs())
-                {
-                    foreach (var output in flagged_node.getOutputs())
-                    {
-                        exploreNode(output);
-                    }
-                }
-
-                tool_highlights.Add(flagged_cell);
-
-                // go to highlighted cell
-                ActivateAndCenterOn(flagged_cell, app);
-
-                // enable auditing buttons
-                ActivateTool();
-            }
-
-            // Enable screen updating when we're done
-            app.ScreenUpdating = true;
-            return null;
-            //return quantiles;
         }
 
         private void ActivateAndCenterOn(AST.Address cell, Excel.Application app)
@@ -317,7 +331,16 @@ namespace DataDebug
             else
             {
                 tool_significance = sig.Value;
-                analysis_results = Analyze();
+                try
+                {
+                    analysis_results = Analyze();
+                }
+                catch (ExcelParserUtility.ParseException ex)
+                {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
+                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
+                    return;
+                }
             }
         }
 
@@ -375,7 +398,16 @@ namespace DataDebug
             var comcell = flagged_cell.GetCOMObject(app);
             System.Action callback = () => {
                 flagged_cell = null;
-                analysis_results = Analyze();
+                try
+                {
+                    analysis_results = Analyze();
+                }
+                catch (ExcelParserUtility.ParseException ex)
+                {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
+                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
+                    return;
+                }
             };
             var fixform = new CellFixForm(comcell, GREEN, callback);
             fixform.Show();
@@ -399,95 +431,105 @@ namespace DataDebug
 
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("" + analysisType.SelectedItem);
+            using (var pb = new ProgBar(0,100)) {
+                System.Windows.Forms.MessageBox.Show("" + analysisType.SelectedItem);
 
-            //RunSimulation_Click(sender, e);
-            var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
-            if (sig == FSharpOption<double>.None)
-            {
-                return;
-            }
-            else
-            {
-                tool_significance = sig.Value;
-            }
-
-            current_workbook = app.ActiveWorkbook;
-
-            // Disable screen updating during analysis to speed things up
-            app.ScreenUpdating = false;
-
-            // Build dependency graph (modifies data)
-            var data = ConstructTree.constructTree(app.ActiveWorkbook, app, true);
-
-            if (data.TerminalInputNodes().Length == 0)
-            {
-                System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
-                data.KillPB();
-                app.ScreenUpdating = true;
-                return;
-            }
-
-            //foreach (var node in data.TerminalFormulaNodes())
-            //{
-            //    node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
-            //}
-            var tin = data.TerminalInputNodes();
-
-            foreach (var input_range in data.TerminalInputNodes())
-            {
-                foreach (var input_node in input_range.getInputs())
+                //RunSimulation_Click(sender, e);
+                var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
+                if (sig == FSharpOption<double>.None)
                 {
-                    //find the ultimate outputs for this input
-                    if (input_node.hasOutputs())
+                    return;
+                }
+                else
+                {
+                    tool_significance = sig.Value;
+                }
+
+                current_workbook = app.ActiveWorkbook;
+
+                // Disable screen updating during analysis to speed things up
+                app.ScreenUpdating = false;
+
+                // Build dependency graph (modifies data)
+                AnalysisData data;
+                try
+                {
+                    data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
+                }
+                catch (ExcelParserUtility.ParseException ex)
+                {
+                    // cleanup UI and rethrow
+                    app.ScreenUpdating = true;
+                    throw ex;
+                }
+
+                if (data.TerminalInputNodes().Length == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
+                    app.ScreenUpdating = true;
+                    return;
+                }
+
+                //foreach (var node in data.TerminalFormulaNodes())
+                //{
+                //    node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
+                //}
+                var tin = data.TerminalInputNodes();
+
+                foreach (var input_range in data.TerminalInputNodes())
+                {
+                    foreach (var input_node in input_range.getInputs())
                     {
-                        foreach (var output in input_node.getOutputs())
+                        //find the ultimate outputs for this input
+                        if (input_node.hasOutputs())
                         {
-                            exploreNode(output);
+                            foreach (var output in input_node.getOutputs())
+                            {
+                                exploreNode(output);
+                            }
                         }
                     }
                 }
-            }
 
-            foreach (var range in data.input_ranges.Values)
-            {
-                var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
-
-                for (int error_index = 0; error_index < normal_dist.errorsCount(); error_index++)
+                foreach (var range in data.input_ranges.Values)
                 {
-                    normal_dist.getError(error_index).Interior.Color = System.Drawing.Color.Violet;
+                    var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
+
+                    for (int error_index = 0; error_index < normal_dist.errorsCount(); error_index++)
+                    {
+                        normal_dist.getError(error_index).Interior.Color = System.Drawing.Color.Violet;
+                    }
                 }
+                /**
+                // Get bootstraps
+                var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
+
+                // Compute quantiles based on user-supplied sensitivity
+                var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+                    pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+                );
+
+                // Color top outlier, zoom to worksheet, and save in ribbon state
+                flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
+                if (flagged_cell == null)
+                {
+                    System.Windows.Forms.MessageBox.Show("No bugs remain.");
+                    ResetTool();
+                }
+                else
+                {
+                    tool_highlights.Add(flagged_cell);
+
+                    // go to highlighted cell
+                    ActivateAndCenterOn(flagged_cell, app);
+
+                    // enable auditing buttons
+                    ActivateTool();
+                }
+                **/
+                // Enable screen updating when we're done
+                app.ScreenUpdating = true;
             }
-            /**
-            // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
-
-            // Compute quantiles based on user-supplied sensitivity
-            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-            );
-
-            // Color top outlier, zoom to worksheet, and save in ribbon state
-            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
-            if (flagged_cell == null)
-            {
-                System.Windows.Forms.MessageBox.Show("No bugs remain.");
-                ResetTool();
-            }
-            else
-            {
-                tool_highlights.Add(flagged_cell);
-
-                // go to highlighted cell
-                ActivateAndCenterOn(flagged_cell, app);
-
-                // enable auditing buttons
-                ActivateTool();
-            }
-            **/
-            // Enable screen updating when we're done
-            data.KillPB();
-            app.ScreenUpdating = true;
         }
 
         private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
