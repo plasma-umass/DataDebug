@@ -248,7 +248,7 @@ namespace DataDebug
 
                 // filter out cells marked as OK
                 var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-                AST.Address flagged_cell;
+                //AST.Address flagged_cell;
                 if (filtered_scores.Count() != 0)
                 {
                     // get TreeNode corresponding to most unusual score
@@ -289,6 +289,7 @@ namespace DataDebug
 
                     // go to highlighted cell
                     ActivateAndCenterOn(flagged_cell, app);
+                    //WHY IS STUFF NOT GETTING FLAGGED IN RED???
 
                     // enable auditing buttons
                     ActivateTool();
@@ -304,10 +305,10 @@ namespace DataDebug
         private void ActivateAndCenterOn(AST.Address cell, Excel.Application app)
         {
             // go to worksheet
-            RibbonHelper.GetWorksheetByName(flagged_cell.A1Worksheet(), current_workbook.Worksheets).Activate();
+            RibbonHelper.GetWorksheetByName(cell.A1Worksheet(), current_workbook.Worksheets).Activate();
 
             // COM object
-            var comobj = flagged_cell.GetCOMObject(app);
+            var comobj = cell.GetCOMObject(app);
 
             // center screen on cell
             var visible_columns = app.ActiveWindow.VisibleRange.Columns.Count;

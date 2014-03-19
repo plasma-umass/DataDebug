@@ -310,6 +310,7 @@ namespace DataDebugMethods
 
         public static AST.Address GetTopOutlier(IEnumerable<Tuple<double, TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance)
         {
+            //TODO This needs to be fixed since we're not using quantiles
             if (quantiles.Count() == 0)
             {
                 return null;
