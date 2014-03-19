@@ -275,11 +275,12 @@ namespace DataDebugMethods
 
                 // add weight to score if test fails
                 TreeNode xtree = input_cells[i];
-                if (weighted)
-                {
-                    // the weight of the function value of interest
-                    weight = (int)functionNode.getWeight();
-                }
+//  Decided not to use weighted scoring
+//                if (weighted)
+//                {
+//                    // the weight of the function value of interest
+//                    weight = (int)functionNode.getWeight();
+//                }
 
                 double outlieriness = RejectNullHypothesis(sorted_num_boots, initial_output, i);
 
