@@ -124,7 +124,7 @@ namespace DataDebugMethods
             string parents_string = "";
             foreach (TreeNode node in _inputs)
             {
-                parents_string += node.getWorksheet() + " " + node.getName() + ", ";
+                parents_string += node.getWorksheetName() + " " + node.getName() + ", ";
             }
             string children_string = "";
             foreach (TreeNode node in _outputs)
@@ -240,7 +240,7 @@ namespace DataDebugMethods
         }
 
         //Returns the name of the worksheet that holds this cell/range/chart
-        public string getWorksheet()
+        public string getWorksheetName()
         {
             return _worksheet_name;
         }
