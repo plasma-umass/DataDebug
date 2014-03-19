@@ -169,7 +169,7 @@ namespace DataDebug
             }
 
             // Get bootstraps
-            var scores = Analysis.Bootstrap(NBOOTS, data, app, true, false);
+            var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
             var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
 
             //Should we be using an outlier test for 
@@ -180,9 +180,6 @@ namespace DataDebug
             //because the 1 value that is weird is an entire 20% of the total:
             //     1,1,1,1000,1     =SUM(A1:A5)
             //-Dimitar
-
-            // TODO: don't forget that we never want to flag a cell that failed
-            // zero hypothesis tests.
 
             //Code for doing normal outlier analysis on the scores:
             //find mean:
@@ -238,7 +235,7 @@ namespace DataDebug
 
             // filter out cells marked as OK
             var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-            AST.Address flagged_cell;
+            //AST.Address flagged_cell;
             if (filtered_scores.Count() != 0)
             {
                 // get TreeNode corresponding to most unusual score
@@ -522,7 +519,7 @@ namespace DataDebug
                     // run the simulation
                     app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
                     UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString(), false);
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString());
                     sim.ToCSV(sfd.FileName);
                 }
             }

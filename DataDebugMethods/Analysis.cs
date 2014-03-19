@@ -591,6 +591,9 @@ namespace DataDebugMethods
             var low_value = boots_exc[low_index].GetValue();
             var high_value = boots_exc[high_index].GetValue();
 
+            var lowest_value = boots_exc[0].GetValue();
+            var highest_value = boots_exc[boots_exc.Length - 1].GetValue();
+
             var original_output_d = System.Convert.ToDouble(original_output);
 
             // truncate the values to deal with floating point imprecision
@@ -598,29 +601,56 @@ namespace DataDebugMethods
             var high_value_tr = Math.Truncate(high_value * 10000) / 10000;
             var original_tr = Math.Truncate(original_output_d * 10000) / 10000;
             
+            var lowest_value_tr = Math.Truncate(lowest_value * 10000) / 10000;
+            var highest_value_tr = Math.Truncate(highest_value * 10000) / 10000;
+
             // reject or fail to reject H_0
-            if (high_value_tr != low_value_tr)
+            if (original_tr > high_value_tr)
             {
-                if (original_tr < low_value_tr)
+                if (highest_value_tr != high_value_tr)
                 {
-                    return Math.Abs((original_tr - low_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
+                    return Math.Abs((original_tr - high_value_tr) / Math.Abs(high_value_tr - highest_value_tr)); //normalize by the highest 2.5%
                 }
-                else if (original_tr > high_value_tr)
+                else //can't normalize
                 {
-                    return Math.Abs((original_tr - high_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
+                    return Math.Abs(original_tr - high_value_tr);
                 }
             }
-            else if (high_value_tr != original_tr || low_value_tr != original_tr)
+            else if (original_tr < low_value_tr)
             {
-                if (original_tr < low_value_tr)
+                if (lowest_value_tr != low_value_tr)
                 {
-                    return Math.Abs(original_tr - low_value_tr) * 100.0;
+                    return Math.Abs((original_tr - low_value_tr) / Math.Abs(low_value_tr - lowest_value_tr));  //normalize by the lowest 2.5%
                 }
-                else if (original_tr > high_value_tr)
+                else //can't normalize
                 {
-                    return Math.Abs(original_tr - high_value_tr) * 100.0;
+                    return Math.Abs(original_tr - low_value_tr);
                 }
             }
+
+            // reject or fail to reject H_0
+            //if (high_value_tr != low_value_tr)
+            //{
+            //    if (original_tr < low_value_tr)
+            //    {
+            //     //   return Math.Abs((original_tr - low_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
+            //    }
+            //    else if (original_tr > high_value_tr)
+            //    {
+            //     //   return Math.Abs((original_tr - high_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;                    
+            //    }
+            //}
+            //else if (high_value_tr != original_tr || low_value_tr != original_tr)
+            //{
+            //    if (original_tr < low_value_tr)
+            //    {
+            //        return Math.Abs(original_tr - low_value_tr) * 100.0
+            //    }
+            //    else if (original_tr > high_value_tr)
+            //    {
+            //        return Math.Abs(original_tr - high_value_tr) * 100.0;
+            //    }
+            //}
             return 0.0;
         }
 
