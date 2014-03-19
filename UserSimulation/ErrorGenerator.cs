@@ -283,17 +283,20 @@ namespace UserSimulation
                                                        && kvp.Key >= -i
                                                        && i == guar ? kvp.Key != 0 : true)
                                          .ToDictionary(pair => pair.Key, pair => pair.Value);
-                var counts = Enumerable.Range(-i, input.Length - i)
+                var counts = Enumerable.Range(-i, input.Length)
                                        .Select(z => dist.ContainsKey(z) ? dist[z] : 0);
                 var total = counts.Sum();
-                var prs = counts.Select(z => (double)z / total).ToArray();
-                // sample (in this case, bins always start at zero and are in order,
-                // so j == # of transpositions to right)
-                var j = MultinomialSample(prs);
-                // swap chars
-                OptChar ith = output[i];
-                output[i] = output[j];
-                output[j] = ith;
+                if (total != 0)
+                {
+                    var prs = counts.Select(z => (double)z / total).ToArray();
+                    // sample (in this case, bins always start at zero and are in order,
+                    // so j == # of transpositions to right)
+                    var j = MultinomialSample(prs);
+                    // swap chars
+                    OptChar ith = output[i];
+                    output[i] = output[j];
+                    output[j] = ith;
+                }
             }
 
             return output;
@@ -333,10 +336,17 @@ namespace UserSimulation
                 
                 var total = dist.Select(kvp => kvp.Value).Sum();
                 var prs = dist.Select(kvp => (double)kvp.Value / total).ToArray();
-                // sample
-                var j = MultinomialSample(prs);
-                // j corresponds to what typo string?
-                output += dist[j].Key.Item2;
+                if (prs.Length == 0)
+                {
+                    output += OptCharToString(input[i]);
+                }
+                else
+                {
+                    // sample
+                    var j = MultinomialSample(prs);
+                    // j corresponds to what typo string?
+                    output += dist[j].Key.Item2;
+                }
             }
 
             return output;
@@ -380,11 +390,21 @@ namespace UserSimulation
             double[] PrsCharNotTypo = inputchars.Select(oc =>
             {
                 var key = new Tuple<OptChar, string>(oc, OptCharToString(oc));
-                int count = td[key];
+                int count;
+                if (!td.TryGetValue(key, out count)) {
+                    count = 0;
+                }
                 // funny case to handle the fact that FSharpOption.None == null
                 var cond_dist = td.Where(kvp => kvp.Key.Item1 == null ? oc == null : kvp.Key.Item1.Equals(oc));
                 int total = cond_dist.Aggregate(0, (acc, kvp) => acc + kvp.Value);
-                return (double)count / total;
+                if (total == 0)
+                {
+                    return 1.0;
+                }
+                else
+                {
+                    return (double)count / total;
+                }
             }).ToArray();
 
             // calculate the probability of making at least one error
@@ -398,9 +418,19 @@ namespace UserSimulation
             // transposition should be exactly 1. 
             double[] PrsPosNotTrans = ochars.Length > 1 ? ochars.ToArray().Select((oc, idx) =>
             {
-                int count = trd[0];
+                int count;
+                if (!trd.TryGetValue(0, out count)) {
+                    count = 0;
+                }
                 int total = trd.Where(kvp => kvp.Key < input.Length - idx && kvp.Key >= -idx).Select(kvp => kvp.Value).Sum();
-                return (double)count / total;
+                if (total == 0)
+                {
+                    return 1.0;
+                }
+                else
+                {
+                    return (double)count / total;
+                }
             }).ToArray() : new [] { 1.0 };
 
             // calculate the probability of having at least one transposition
@@ -409,7 +439,8 @@ namespace UserSimulation
             // calculate the relative probability of making a typo vs a transposition
             double RelPrTypo = PrTypo / (PrTypo + PrTrans);
 
-            string output = "";
+            // init with original input in case typos/transpositions prove to be impossible
+            string output = input;
 
             // the while loop ensures that we do not return an unmodified string.
             // for most strings, returning an unmodified string is very unlikely
@@ -420,6 +451,11 @@ namespace UserSimulation
                 {   // is a typo
                     // determine the index of the guaranteed typo
                     double[] PrsMistype = PrsCharNotTypo.Select(pr => 1.0 - pr).ToArray();
+                    // if there are no possible typos then we just can't produce one
+                    if (PrsMistype.Sum() == 0)
+                    {
+                        break;
+                    }
                     var i = MultinomialSample(PrsMistype);
                     // run transposition algorithm & add leading/trailing empty chars
                     // we set the guaranteed transposition index to -1 to ensure that no
@@ -432,6 +468,11 @@ namespace UserSimulation
                 {   // is a transposition
                     // determine the index of the guaranteed transposition
                     double[] PrsMistype = PrsPosNotTrans.Select(pr => 1.0 - pr).ToArray();
+                    // if there are no possible transpositions then we just can't produce one
+                    if (PrsMistype.Sum() == 0)
+                    {
+                        break;
+                    }
                     var i = MultinomialSample(PrsMistype);
                     // run transposition algorithm & add leading/trailing empty chars
                     OptChar[] input_t = AddLeadingTrailingSpace(Transposize(ochars, trd, i));
