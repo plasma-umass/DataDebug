@@ -25,7 +25,8 @@ namespace DataDebug
         double tool_significance = 0.95;
         HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
         HashSet<AST.Address> known_good = new HashSet<AST.Address>();
-        IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
+        //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
+        List<KeyValuePair<TreeNode, int>> analysis_results = null;
         AST.Address flagged_cell = null;
         System.Drawing.Color GREEN = System.Drawing.Color.Green;
         string classification_file;
@@ -150,7 +151,8 @@ namespace DataDebug
             return FSharpOption<double>.Some(significance);
         }
 
-        private IEnumerable<Tuple<double,TreeNode>> Analyze()
+        //private IEnumerable<Tuple<double,TreeNode>> Analyze()
+        private List<KeyValuePair<TreeNode, int>> Analyze()
         {
             using (var pb = new ProgBar(0, 100))
             {
@@ -175,7 +177,8 @@ namespace DataDebug
                 {
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                     app.ScreenUpdating = true;
-                    return new List<Tuple<double, TreeNode>>();
+                    //return new List<Tuple<double, TreeNode>>();
+                    return new List<KeyValuePair<TreeNode, int>>();
                 }
 
                 // Get bootstraps
@@ -194,31 +197,30 @@ namespace DataDebug
                 // TODO: don't forget that we never want to flag a cell that failed
                 // zero hypothesis tests.
 
-                //Code for doing normal outlier analysis on the scores:
-                //find mean:
-                double sum = 0.0;
-                foreach (double d in scores.Values)
-                {
-                    sum += d;
-                }
-                double mean = sum / scores.Values.Count;
-                //find variance
-                double distance_sum_sq = 0.0;
-                foreach (double d in scores.Values)
-                {
-                    distance_sum_sq += Math.Pow(mean - d, 2);
-                }
-                double variance = distance_sum_sq / scores.Values.Count;
+                ////Code for doing normal outlier analysis on the scores:
+                ////find mean:
+                //double sum = 0.0;
+                //foreach (double d in scores.Values)
+                //{
+                //    sum += d;
+                //}
+                //double mean = sum / scores.Values.Count;
+                ////find variance
+                //double distance_sum_sq = 0.0;
+                //foreach (double d in scores.Values)
+                //{
+                //    distance_sum_sq += Math.Pow(mean - d, 2);
+                //}
+                //double variance = distance_sum_sq / scores.Values.Count;
 
-                //find std. deviation
-                double std_deviation = Math.Sqrt(variance);
+                ////find std. deviation
+                //double std_deviation = Math.Sqrt(variance);
 
-                //scores_list = scores_list.Where
+//                var weird_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
 
                 int start_ptr = 0;
                 int end_ptr = 0;
 
-                var weird_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
                 List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
 
                 while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
@@ -248,6 +250,7 @@ namespace DataDebug
 
                 // filter out cells marked as OK
                 var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+                
                 //AST.Address flagged_cell;
                 if (filtered_scores.Count() != 0)
                 {
@@ -265,7 +268,6 @@ namespace DataDebug
                 //            );
 
                 // Color top outlier, zoom to worksheet, and save in ribbon state
-                //TODO color in yellow the outputs that depend on the outlier being flagged
                 //            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
                 if (flagged_cell == null)
                 {
@@ -297,7 +299,7 @@ namespace DataDebug
 
                 // Enable screen updating when we're done
                 app.ScreenUpdating = true;
-                return null;
+                return filtered_scores;
                 //return quantiles;
             }
         }
@@ -562,7 +564,7 @@ namespace DataDebug
                     // run the simulation
                     app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
                     UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString(), false);
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString(), false, new ProgBar(0, 100));
                     sim.ToCSV(sfd.FileName);
                 }
             }

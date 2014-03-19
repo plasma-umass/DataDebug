@@ -308,14 +308,19 @@ namespace DataDebugMethods
             return input_exclusion_scores;
         }
 
-        public static AST.Address GetTopOutlier(IEnumerable<Tuple<double, TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance)
+        //public static AST.Address GetTopOutlier(IEnumerable<Tuple<double, TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance)
+        public static AST.Address GetTopOutlier(List<KeyValuePair<TreeNode, int>> high_scores, HashSet<AST.Address> known_good, double significance)
         {
             //TODO This needs to be fixed since we're not using quantiles
-            if (quantiles.Count() == 0)
+            if (high_scores.Count() == 0)
             {
                 return null;
             }
-
+            else
+            {
+                return high_scores[0].Key.GetAddress();
+            }
+            /*
             //only flag quantiles that begin past the significance cutoff
             //identify the quantile which straddles the significance cutoff
             double last_excluded_quantile = 1.0;
@@ -346,11 +351,13 @@ namespace DataDebugMethods
             {
                 return null;
             }
+             */
         }
 
-        public static AST.Address FlagTopOutlier(IEnumerable<Tuple<double,TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance, Excel.Application app)
+        //public static AST.Address FlagTopOutlier(IEnumerable<Tuple<double,TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance, Excel.Application app)
+        public static AST.Address FlagTopOutlier(List<KeyValuePair<TreeNode, int>> high_scores, HashSet<AST.Address> known_good, double significance, Excel.Application app)
         {
-            var flagged_cell = GetTopOutlier(quantiles, known_good, significance);
+            var flagged_cell = GetTopOutlier(high_scores, known_good, significance);
 
             if (flagged_cell != null)
             {

@@ -199,7 +199,8 @@ namespace UserSimulation
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         string analysisType,         // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool all_outputs            // if !all_outputs, we only consider terminal outputs
+                        bool all_outputs,            // if !all_outputs, we only consider terminal outputs
+                        ProgBar pb
                        )
         {
             // set wbname
@@ -219,7 +220,7 @@ namespace UserSimulation
                 _wb_path = wb.Path;
 
                 // build dependency graph
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+                var data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
                 // get terminal input and terminal formula nodes once
                 var terminal_input_nodes = data.TerminalInputNodes();
                 var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
@@ -578,7 +579,7 @@ namespace UserSimulation
                 {
                     // Get bootstraps
                     TreeScore scores = Analysis.Bootstrap(nboots, data, app, true, false);
-
+                    /*
                     // Compute quantiles based on user-supplied sensitivity
                     var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
                         pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
@@ -586,6 +587,52 @@ namespace UserSimulation
 
                     // Get top outlier
                     flagged_cell = Analysis.GetTopOutlier(quantiles, known_good, significance);
+                     */
+                    var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
+
+                    int start_ptr = 0;
+                    int end_ptr = 0;
+
+                    List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
+
+                    while ((double)start_ptr / scores_list.Count < 1.0 - significance) //the start of this score region is before the cutoff
+                    {
+                        //while the scores at the start and end pointers are the same, bump the end pointer
+                        while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
+                        {
+                            end_ptr++;
+                        }
+                        //Now the end_pointer points to the first index with a lower score
+                        //If the end pointer is still above the significance cutoff, add all values of this score to the high_scores list
+                        if ((double)end_ptr / scores_list.Count < 1.0 - significance)
+                        {
+                            //add all values of the current score to high_scores list
+                            for (; start_ptr < end_ptr; start_ptr++)
+                            {
+                                high_scores.Add(scores_list[start_ptr]);
+                            }
+                            //Increment the start pointer to the start of the next score region
+                            start_ptr++;
+                        }
+                        else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
+                        {
+                            break;
+                        }
+                    }
+
+                    // filter out cells marked as OK
+                    var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+
+                    //AST.Address flagged_cell;
+                    if (filtered_scores.Count() != 0)
+                    {
+                        // get TreeNode corresponding to most unusual score
+                        flagged_cell = filtered_scores[0].Key.GetAddress();
+                    }
+                    else
+                    {
+                        flagged_cell = null;
+                    }
                 }
                 else if (analysis_type.Equals("normal"))
                 {
