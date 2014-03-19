@@ -59,7 +59,7 @@ namespace CheckCellTests
             classification.SetTranspositionDict(transpositions_dict);
             classification.SetTypoDict(typo_dict);
             string s = eg.GenerateErrorString("abcd", classification);
-            Assert.AreEqual("abcd", s);
+            Assert.AreEqual("dbca", s);
             
             //NOTE: Need a new ErrorGenerator for each test because the distribution tables are associated with it
             var eg2 = new ErrorGenerator();
@@ -71,7 +71,7 @@ namespace CheckCellTests
             classification2.SetTranspositionDict(transpositions_dict2);
             classification2.SetTypoDict(typo_dict);
             string s2 = eg2.GenerateErrorString("abcd", classification2);
-            Assert.AreEqual("abcd", s2);
+            Assert.AreEqual("bcda", s2);
             
             var eg3 = new ErrorGenerator();
             //Set the transpositions dictionary to explicit one
