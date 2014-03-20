@@ -194,9 +194,6 @@ namespace DataDebug
                 //     1,1,1,1000,1     =SUM(A1:A5)
                 //-Dimitar
 
-                // TODO: don't forget that we never want to flag a cell that failed
-                // zero hypothesis tests.
-
                 ////Code for doing normal outlier analysis on the scores:
                 ////find mean:
                 //double sum = 0.0;
@@ -259,7 +256,6 @@ namespace DataDebug
                 // Enable screen updating when we're done
                 app.ScreenUpdating = true;
                 return filtered_high_scores;
-                //return quantiles;
             }
         }
 
@@ -297,13 +293,6 @@ namespace DataDebug
                 flagged_cell = null;
             }
 
-            // Compute quantiles based on user-supplied sensitivity
-            //            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-            //                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-            //            );
-
-            // Color top outlier, zoom to worksheet, and save in ribbon state
-            //            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
             if (flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
@@ -461,10 +450,6 @@ namespace DataDebug
                     return;
                 }
 
-                //foreach (var node in data.TerminalFormulaNodes())
-                //{
-                //    node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
-                //}
                 var tin = data.TerminalInputNodes();
 
                 foreach (var input_range in data.TerminalInputNodes())
@@ -491,33 +476,7 @@ namespace DataDebug
                         normal_dist.getError(error_index).Interior.Color = System.Drawing.Color.Violet;
                     }
                 }
-                /**
-                // Get bootstraps
-                var scores = Analysis.Bootstrap(NBOOTS, data, app, true);
-
-                // Compute quantiles based on user-supplied sensitivity
-                var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-                    pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-                );
-
-                // Color top outlier, zoom to worksheet, and save in ribbon state
-                flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
-                if (flagged_cell == null)
-                {
-                    System.Windows.Forms.MessageBox.Show("No bugs remain.");
-                    ResetTool();
-                }
-                else
-                {
-                    tool_highlights.Add(flagged_cell);
-
-                    // go to highlighted cell
-                    ActivateAndCenterOn(flagged_cell, app);
-
-                    // enable auditing buttons
-                    ActivateTool();
-                }
-                **/
+                
                 // Enable screen updating when we're done
                 app.ScreenUpdating = true;
             }

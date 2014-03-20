@@ -298,30 +298,6 @@ namespace UserSimulation
                     }
                 }
 
-                //foreach (var input in data.cell_nodes)
-                //{
-                //    TreeNode input_node = input.Value;
-                //    bool perturbable = false;
-                //    foreach (TreeNode output in input_node.getOutputs())
-                //    {
-                //        //if (terminal_input_nodes.Contains(output))
-                //        //if (output.isRange())
-                //        //if (output.GetDontPerturb())
-                //        if (!output._is_a_cell && !output.GetDontPerturb()) // if the output is a range and it is perturbable
-                //        {
-                //            perturbable = true;
-                //        }
-                //    }
-                //    if (perturbable == false)
-                //    {
-                //        _cells_in_scope++;
-                //    }
-                //}
-                //_max_effort = 0;
-                //foreach (TreeNode input_range in terminal_input_nodes)
-                //{
-                //    _max_effort += input_range.getInputs().Count;
-                //}
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _expended_effort = (double)_effort / (double)_max_effort;
 
