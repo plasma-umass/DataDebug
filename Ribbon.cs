@@ -231,8 +231,13 @@ namespace DataDebug
                         end_ptr++;
                     }
                     //Now the end_pointer points to the first index with a lower score
-                    //If the end pointer is still above the significance cutoff, add all values of this score to the high_scores list
-                    if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance)
+                    //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
+                    //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
+                    //  To do this, we add (1 / total number of entries) to the cutoff
+                    //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
+                    //for more than 5% of the total.
+                    //      Note: tool_significance is along the lines of 0.95 (not 0.05).
+                    if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance + (double)1.0/scores_list.Count)
                     {
                         //add all values of the current score to high_scores list
                         for (; start_ptr < end_ptr; start_ptr++)
