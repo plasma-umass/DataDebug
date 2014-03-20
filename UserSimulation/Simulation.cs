@@ -27,7 +27,18 @@ namespace UserSimulation
         Exception
     }
 
-    public class SimulationNotRunException : Exception {} 
+    [Serializable]
+    public enum AnalysisType
+    {
+        CheckCell,
+        NormalPerRange,
+        NormalAllOutputs
+    }
+
+    public class SimulationNotRunException : Exception
+    {
+        public SimulationNotRunException(string message) : base(message) { }
+    } 
 
     [Serializable]
     public class Simulation
@@ -47,7 +58,7 @@ namespace UserSimulation
         private double _initial_total_relative_error = 0;
         private Dictionary<AST.Address, string> _errors = new Dictionary<AST.Address, string>();
         private double _average_precision = 0;
-        private string _analysis_type;
+        private AnalysisType _analysis_type;
 
         public ErrorCondition GetExitState()
         {
@@ -198,7 +209,7 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        string analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
                         bool all_outputs,            // if !all_outputs, we only consider terminal outputs
                         AnalysisData data,
                         Excel.Workbook wb
@@ -255,18 +266,20 @@ namespace UserSimulation
                 CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                if (analysisType.Equals("CheckCell"))
-                {
-                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell", false);
-                }
-                else if (analysisType.Equals("Normal (per range)"))    //Normal (per range)
-                {
-                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal", false);
-                }
-                else //normal on all inputs
-                {
-                    _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2", false);
-                }
+                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, false);
+
+                //switch (analysisType)
+                //{
+                //    case AnalysisType.CheckCell:
+                //        _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell", false);
+                //        break;
+                //    case AnalysisType.NormalPerRange:
+                //        _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal", false);
+                //        break;
+                //    case AnalysisType.NormalAllOutputs:
+                //        _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2", false);
+                //        break;
+                //}
 
                 // save partially-corrected outputs
                 var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
@@ -322,7 +335,7 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        string analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        AnalysisType analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
                         bool all_outputs            // if !all_outputs, we only consider terminal outputs
                        )
         {
@@ -436,7 +449,7 @@ namespace UserSimulation
             }
             else
             {
-                throw new SimulationNotRunException();
+                throw new SimulationNotRunException(_exception_message);
             }
         }
 
@@ -583,7 +596,7 @@ namespace UserSimulation
                                                CellDict correct_outputs,
                                                Excel.Workbook wb,
                                                Excel.Application app,
-                                               string analysis_type,
+                                               AnalysisType analysis_type,
                                                bool all_outputs
                                             )
         {
@@ -613,7 +626,7 @@ namespace UserSimulation
 
                 AST.Address flagged_cell = null;
 
-                if (analysis_type.Equals("checkcell"))
+                if (analysis_type == AnalysisType.CheckCell)
                 {
                     // Get bootstraps
                     TreeScore scores = Analysis.Bootstrap(nboots, data, app, true, false);
@@ -672,7 +685,7 @@ namespace UserSimulation
                         flagged_cell = null;
                     }
                 }
-                else if (analysis_type.Equals("normal"))
+                else if (analysis_type == AnalysisType.NormalPerRange)
                 {
                     //Generate normal distributions for every input range
                     foreach (var range in data.input_ranges.Values)
@@ -698,7 +711,7 @@ namespace UserSimulation
                         }
                     }
                 }
-                else if (analysis_type.Equals("normal2"))
+                else if (analysis_type == AnalysisType.NormalAllOutputs)
                 {
                     //Generate normal distributions for every worksheet
                     foreach (Excel.Worksheet ws in wb.Worksheets)
