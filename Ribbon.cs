@@ -24,6 +24,7 @@ namespace DataDebug
         Excel.Workbook current_workbook;
         double tool_significance = 0.95;
         HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
+        HashSet<AST.Address> output_highlights = new HashSet<AST.Address>();
         HashSet<AST.Address> known_good = new HashSet<AST.Address>();
         //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
         List<KeyValuePair<TreeNode, int>> flaggable_list = null;
@@ -346,6 +347,16 @@ namespace DataDebug
             }
         }
 
+        //This clears the outputs highlighted in yellow
+        private void RestoreOutputColors()
+        {
+            if (current_workbook != null)
+            {
+                RibbonHelper.RestoreColors2(color_dict[current_workbook], output_highlights);
+            }
+            output_highlights.Clear();
+        }
+
         private void ResetTool()
         {
             if (current_workbook != null)
@@ -369,6 +380,7 @@ namespace DataDebug
             known_good.Add(flagged_cell);
             var cell = flagged_cell.GetCOMObject(app);
             cell.Interior.Color = GREEN;
+            RestoreOutputColors();
             Flag();
         }
 
@@ -391,6 +403,7 @@ namespace DataDebug
             };
             var fixform = new CellFixForm(comcell, GREEN, callback);
             fixform.Show();
+            RestoreOutputColors();
         }
 
         //Recursive method for highlighting the outputs reachable from a certain TreeNode
@@ -406,6 +419,7 @@ namespace DataDebug
             else
             {
                 node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
+                output_highlights.Add(node.GetAddress());
             }
         }
 
