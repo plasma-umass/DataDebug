@@ -291,7 +291,7 @@ namespace UserSimulation
                 {
                     foreach (TreeNode input_to_range in input_range.getInputs())
                     {
-                        if (input_to_range._is_a_cell && !input_to_range.isFormula()) //if this input is a cell and is not a formula, then it is perturbable, so it's in our scope
+                        if (input_to_range.isCell() && !input_to_range.isFormula()) //if this input is a cell and is not a formula, then it is perturbable, so it's in our scope
                         {
                             _cells_in_scope++;
                         }

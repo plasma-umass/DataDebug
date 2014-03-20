@@ -31,7 +31,7 @@ namespace DataDebugMethods
         private int _height = 1;
         private int _width = 1;
         private AST.Address _addr;
-        public bool _is_a_cell = false;
+        bool _is_a_cell = false;
         public TreeNode(Excel.Range com, Excel.Worksheet ws, Excel.Workbook wb)
         {
             _inputs = new HashSet<TreeNode>();
@@ -215,6 +215,11 @@ namespace DataDebugMethods
                 return true;
             else
                 return false;
+        }
+
+        public bool isCell()
+        {
+            return _is_a_cell;
         }
 
         public bool isChart()
