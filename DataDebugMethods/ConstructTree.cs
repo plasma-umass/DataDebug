@@ -81,6 +81,7 @@ namespace DataDebugMethods
                         {
                             Excel.Range cell = input_addr.GetCOMObject(app);
                             tn = new TreeNode(cell, cell.Worksheet, (Excel.Workbook)cell.Worksheet.Parent);
+                            data.cell_nodes.Add(input_addr, tn);
                             tn.addOutput(formula_node);
                             formula_node.addInput(tn);
                         }

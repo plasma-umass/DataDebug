@@ -41,6 +41,7 @@ namespace UserSimulation
         private ErrorDict _error;
         private double _total_relative_error = 0;
         private int _max_effort = 1;
+        private int _cells_in_scope = 0;
         private int _effort = 0;
         private double _expended_effort = 0;
         private double _initial_total_relative_error = 0;
@@ -283,11 +284,44 @@ namespace UserSimulation
                 _initial_total_relative_error = TotalRelativeError(starting_error);
 
                 // effort
-                _max_effort = 0;
+                _max_effort = data.cell_nodes.Count;
+                _cells_in_scope = 0;
+
                 foreach (TreeNode input_range in terminal_input_nodes)
                 {
-                    _max_effort += input_range.getInputs().Count;
+                    foreach (TreeNode input_to_range in input_range.getInputs())
+                    {
+                        if (input_to_range._is_a_cell && !input_to_range.isFormula()) //if this input is a cell and is not a formula, then it is perturbable, so it's in our scope
+                        {
+                            _cells_in_scope++;
+                        }
+                    }
                 }
+
+                //foreach (var input in data.cell_nodes)
+                //{
+                //    TreeNode input_node = input.Value;
+                //    bool perturbable = false;
+                //    foreach (TreeNode output in input_node.getOutputs())
+                //    {
+                //        //if (terminal_input_nodes.Contains(output))
+                //        //if (output.isRange())
+                //        //if (output.GetDontPerturb())
+                //        if (!output._is_a_cell && !output.GetDontPerturb()) // if the output is a range and it is perturbable
+                //        {
+                //            perturbable = true;
+                //        }
+                //    }
+                //    if (perturbable == false)
+                //    {
+                //        _cells_in_scope++;
+                //    }
+                //}
+                //_max_effort = 0;
+                //foreach (TreeNode input_range in terminal_input_nodes)
+                //{
+                //    _max_effort += input_range.getInputs().Count;
+                //}
                 _effort = (_user.true_positives.Count + _user.false_positives.Count);
                 _expended_effort = (double)_effort / (double)_max_effort;
 
@@ -315,13 +349,15 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}",
                                  "workbook_name",
                                  "initial_total_relative_error",
                                  "total_relative_error",
                                  "remaining_error",
                                  "effort",
                                  "max_effort",
+                                 "cells_in_scope",
+                                 "ratio_scope_out_of_total",
                                  "expended_effort",
                                  "number_of_errors",
                                  "true_positives",
@@ -339,6 +375,8 @@ namespace UserSimulation
                     RemainingError() + "," +                // remaining error
                     _effort.ToString() + "," +              // effort
                     _max_effort + "," +                     // max effort
+                    _cells_in_scope + "," +                   // perturbable cells (these are in our scope)
+                    (double)_cells_in_scope/(double)_max_effort + "," +                     // proportion of cells that are in scopes of our tool
                     _expended_effort + "," +                // expended effort
                     _errors.Count + "," +                   // number of errors
                     _user.true_positives.Count + "," +      // number of true positives
