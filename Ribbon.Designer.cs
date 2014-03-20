@@ -139,7 +139,7 @@ namespace DataDebug
             // 
             ribbonDropDownItemImpl1.Label = "CheckCell";
             ribbonDropDownItemImpl2.Label = "Normal (per range)";
-            ribbonDropDownItemImpl3.Label = "Normal (per worksheet)";
+            ribbonDropDownItemImpl3.Label = "Normal (all inputs)";
             this.analysisType.Items.Add(ribbonDropDownItemImpl1);
             this.analysisType.Items.Add(ribbonDropDownItemImpl2);
             this.analysisType.Items.Add(ribbonDropDownItemImpl3);

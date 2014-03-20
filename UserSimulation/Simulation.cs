@@ -267,7 +267,7 @@ namespace UserSimulation
                 {
                     _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal", false);
                 }
-                else
+                else //normal on all inputs
                 {
                     _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2", false);
                 }
@@ -359,7 +359,7 @@ namespace UserSimulation
                     _user.false_positives.Count + "," +     // number of false positives
                     _user.false_negatives.Count + "," +     // number of false negatives
                     _average_precision + "," +              // average precision
-                    _analysis_type;                         // anaysis type (CheckCell, Normal per range, normal per worksheet
+                    _analysis_type;                         // anaysis type (CheckCell, normal per range, normal on all inputs)
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
@@ -678,7 +678,8 @@ namespace UserSimulation
                     //Generate normal distributions for every worksheet
                     foreach (Excel.Worksheet ws in wb.Worksheets)
                     {
-                        var normal_dist = new DataDebugMethods.NormalDistribution(ws.UsedRange);
+                     //   var normal_dist = new DataDebugMethods.NormalDistribution(ws.UsedRange);
+                        var normal_dist = new DataDebugMethods.NormalDistribution(data.cell_nodes, app);
 
                         // Get top outlier
                         if (normal_dist.errorsCount() > 0)

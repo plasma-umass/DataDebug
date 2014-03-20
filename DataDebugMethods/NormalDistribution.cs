@@ -105,9 +105,26 @@ namespace DataDebugMethods
 
         public NormalDistribution(Excel.Range r)
         {
-            //TODO add a loop here over all cells in the range to remove the ones that are empty or strings
             _cells = r;
             _size = r.Count;
+            _mean = __mean();
+            _variance = __variance();
+            _standard_deviation = __standard_deviation();
+            _error = __error();
+            _ranked_errors = __rank_errors();
+        }
+
+        public NormalDistribution(Dictionary<AST.Address, TreeNode> cell_nodes, Excel.Application app)
+        {
+            //turn the dictionary into an Excel.Range
+            Excel.Range r1 = cell_nodes.First().Key.GetCOMObject(app);
+            foreach (var node in cell_nodes)
+            {
+                Excel.Range r = node.Key.GetCOMObject(app);
+                r1 = app.Union(r1, r); 
+            }
+            _cells = r1;
+            _size = r1.Count;
             _mean = __mean();
             _variance = __variance();
             _standard_deviation = __standard_deviation();
