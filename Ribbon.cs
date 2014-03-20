@@ -26,7 +26,7 @@ namespace DataDebug
         HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
         HashSet<AST.Address> known_good = new HashSet<AST.Address>();
         //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
-        List<KeyValuePair<TreeNode, int>> analysis_results = null;
+        List<KeyValuePair<TreeNode, int>> flaggable_list = null;
         AST.Address flagged_cell = null;
         System.Drawing.Color GREEN = System.Drawing.Color.Green;
         string classification_file;
@@ -249,57 +249,11 @@ namespace DataDebug
                 }
 
                 // filter out cells marked as OK
-                var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+                var filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
                 
-                //AST.Address flagged_cell;
-                if (filtered_scores.Count() != 0)
-                {
-                    // get TreeNode corresponding to most unusual score
-                    flagged_cell = filtered_scores[0].Key.GetAddress();
-                }
-                else
-                {
-                    flagged_cell = null;
-                }
-
-                // Compute quantiles based on user-supplied sensitivity
-                //            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-                //                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-                //            );
-
-                // Color top outlier, zoom to worksheet, and save in ribbon state
-                //            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
-                if (flagged_cell == null)
-                {
-                    System.Windows.Forms.MessageBox.Show("No bugs remain.");
-                    ResetTool();
-                }
-                else
-                {
-                    TreeNode flagged_node;
-                    data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
-
-                    if (flagged_node.hasOutputs())
-                    {
-                        foreach (var output in flagged_node.getOutputs())
-                        {
-                            exploreNode(output);
-                        }
-                    }
-
-                    tool_highlights.Add(flagged_cell);
-
-                    // go to highlighted cell
-                    ActivateAndCenterOn(flagged_cell, app);
-                    //WHY IS STUFF NOT GETTING FLAGGED IN RED???
-
-                    // enable auditing buttons
-                    ActivateTool();
-                }
-
                 // Enable screen updating when we're done
                 app.ScreenUpdating = true;
-                return filtered_scores;
+                return filtered_high_scores;
                 //return quantiles;
             }
         }
@@ -324,6 +278,56 @@ namespace DataDebug
 
         }
 
+        private void Flag()
+        {
+            //filter known_good
+            flaggable_list = flaggable_list.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            if (flaggable_list.Count() != 0)
+            {
+                // get TreeNode corresponding to most unusual score
+                flagged_cell = flaggable_list[0].Key.GetAddress();
+            }
+            else
+            {
+                flagged_cell = null;
+            }
+
+            // Compute quantiles based on user-supplied sensitivity
+            //            var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
+            //                pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
+            //            );
+
+            // Color top outlier, zoom to worksheet, and save in ribbon state
+            //            flagged_cell = Analysis.FlagTopOutlier(quantiles, known_good, tool_significance, app);
+            if (flagged_cell == null)
+            {
+                System.Windows.Forms.MessageBox.Show("No bugs remain.");
+                ResetTool();
+            }
+            else
+            {
+                TreeNode flagged_node;
+                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
+
+                if (flagged_node.hasOutputs())
+                {
+                    foreach (var output in flagged_node.getOutputs())
+                    {
+                        exploreNode(output);
+                    }
+                }
+
+                flagged_cell.GetCOMObject(app).Interior.Color = System.Drawing.Color.Red;
+                tool_highlights.Add(flagged_cell);
+
+                // go to highlighted cell
+                ActivateAndCenterOn(flagged_cell, app);
+
+                // enable auditing buttons
+                ActivateTool();
+            }
+        }
+
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
             var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
@@ -336,7 +340,8 @@ namespace DataDebug
                 tool_significance = sig.Value;
                 try
                 {
-                    analysis_results = Analyze();
+                    flaggable_list = Analyze();
+                    Flag();
                 }
                 catch (ExcelParserUtility.ParseException ex)
                 {
@@ -370,30 +375,7 @@ namespace DataDebug
             known_good.Add(flagged_cell);
             var cell = flagged_cell.GetCOMObject(app);
             cell.Interior.Color = GREEN;
-            flagged_cell = Analysis.FlagTopOutlier(analysis_results, known_good, tool_significance, app);
-            if (flagged_cell == null)
-            {
-                System.Windows.Forms.MessageBox.Show("No bugs remain.");
-                ResetTool();
-            }
-            else
-            {
-                TreeNode flagged_node;
-                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
-
-                if (flagged_node.hasOutputs())
-                {
-                    foreach (var output in flagged_node.getOutputs())
-                    {
-                        exploreNode(output);
-                    }
-                }
-
-                tool_highlights.Add(flagged_cell);
-
-                // go to highlighted cell
-                ActivateAndCenterOn(flagged_cell, app);
-            }
+            Flag();
         }
 
         private void FixError_Click(object sender, RibbonControlEventArgs e)
@@ -403,7 +385,8 @@ namespace DataDebug
                 flagged_cell = null;
                 try
                 {
-                    analysis_results = Analyze();
+                    flaggable_list = Analyze();
+                    Flag();
                 }
                 catch (ExcelParserUtility.ParseException ex)
                 {

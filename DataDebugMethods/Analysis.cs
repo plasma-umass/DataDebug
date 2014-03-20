@@ -357,7 +357,17 @@ namespace DataDebugMethods
         //public static AST.Address FlagTopOutlier(IEnumerable<Tuple<double,TreeNode>> quantiles, HashSet<AST.Address> known_good, double significance, Excel.Application app)
         public static AST.Address FlagTopOutlier(List<KeyValuePair<TreeNode, int>> high_scores, HashSet<AST.Address> known_good, double significance, Excel.Application app)
         {
-            var flagged_cell = GetTopOutlier(high_scores, known_good, significance);
+            var filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            AST.Address flagged_cell;// = GetTopOutlier(high_scores, known_good, significance);
+            if (filtered_high_scores.Count() != 0)
+            {
+                // get TreeNode corresponding to most unusual score
+                flagged_cell = filtered_high_scores[0].Key.GetAddress();
+            }
+            else
+            {
+                flagged_cell = null;
+            }
 
             if (flagged_cell != null)
             {
