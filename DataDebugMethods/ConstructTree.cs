@@ -55,8 +55,8 @@ namespace DataDebugMethods
                 // us to consider functions with single-cell inputs as outputs.
                 foreach (AST.Address input_addr in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
                 {
-                    // Find the input cell's TreeNode; if there isn't one, move on.
-                    // We don't care about scalar inputs that are not functions
+                    // Find the input cell's TreeNode;
+                    // Find out if it is a formula
                     TreeNode tn;
                     if (data.formula_nodes.TryGetValue(input_addr, out tn))
                     {
@@ -64,6 +64,23 @@ namespace DataDebugMethods
                         if (tn.isFormula())
                         {
                             // link input to output formula node
+                            tn.addOutput(formula_node);
+                            formula_node.addInput(tn);
+                        }
+                    }
+                    else   //If it's not a formula, then it is a scalar value; we create a TreeNode for it and put it in data.cell_nodes
+                    {  
+                        // if we have already created a TreeNode for this, add a connection to the formula that referenced it
+                        if (data.cell_nodes.TryGetValue(input_addr, out tn))
+                        {
+                            tn.addOutput(formula_node);
+                            formula_node.addInput(tn);
+                        }
+                        //otherwise create a new TreeNode and connect it up to the formula
+                        else
+                        {
+                            Excel.Range cell = input_addr.GetCOMObject(app);
+                            tn = new TreeNode(cell, cell.Worksheet, (Excel.Workbook)cell.Worksheet.Parent);
                             tn.addOutput(formula_node);
                             formula_node.addInput(tn);
                         }
