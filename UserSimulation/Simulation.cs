@@ -191,7 +191,6 @@ namespace UserSimulation
             return top_errors;
         }
 
-        // create and run a CheckCell simulation
         public void Run(int nboots,                 // number of bootstraps
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
@@ -200,7 +199,9 @@ namespace UserSimulation
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         string analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool all_outputs            // if !all_outputs, we only consider terminal outputs
+                        bool all_outputs,            // if !all_outputs, we only consider terminal outputs
+                        AnalysisData data,
+                        Excel.Workbook wb
                        )
         {
             // set wbname
@@ -210,17 +211,12 @@ namespace UserSimulation
 
             // create ErrorGenerator object
             var egen = new ErrorGenerator();
-
+            
             try
             {
-                // open workbook
-                Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
-
                 // set path
                 _wb_path = wb.Path;
 
-                // build dependency graph
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
                 // get terminal input and terminal formula nodes once
                 var terminal_input_nodes = data.TerminalInputNodes();
                 var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
@@ -310,6 +306,35 @@ namespace UserSimulation
 
                 // flag that we're done; safe to print output results
                 _simulation_run = true;
+            }
+            catch (Exception e)
+            {
+                _exit_state = ErrorCondition.Exception;
+                _exception_message = e.Message;
+            }
+        }
+
+        // create and run a CheckCell simulation
+        public void Run(int nboots,                 // number of bootstraps
+                        string xlfile,              // name of the workbook
+                        double significance,        // significance threshold for test
+                        Excel.Application app,      // reference to Excel app
+                        double threshold,           // percentage of erroneous cells
+                        Classification c,           // data from which to generate errors
+                        Random r,                   // a random number generator
+                        string analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        bool all_outputs            // if !all_outputs, we only consider terminal outputs
+                       )
+        {
+            try
+            {
+                // open workbook
+                Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
+
+                // build dependency graph
+                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+
+                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, all_outputs, data, wb);
             }
             catch (Exception e)
             {
