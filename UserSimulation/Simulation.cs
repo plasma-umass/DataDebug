@@ -268,19 +268,6 @@ namespace UserSimulation
                 // remove errors until none remain; MODIFIES WORKBOOK
                 _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, false);
 
-                //switch (analysisType)
-                //{
-                //    case AnalysisType.CheckCell:
-                //        _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "checkcell", false);
-                //        break;
-                //    case AnalysisType.NormalPerRange:
-                //        _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal", false);
-                //        break;
-                //    case AnalysisType.NormalAllOutputs:
-                //        _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, "normal2", false);
-                //        break;
-                //}
-
                 // save partially-corrected outputs
                 var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
