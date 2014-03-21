@@ -300,9 +300,8 @@ namespace UserSimulation
                 // compute average precision
                 _average_precision = _user.precision_at_step_k.Sum() / (double)_effort;
 
-                // close workbook without saving
-                wb.Close(false, "", false);
-                Marshal.ReleaseComObject(wb);
+                // restore original values
+                InjectValues(app, wb, original_inputs);
 
                 // flag that we're done; safe to print output results
                 _simulation_run = true;
