@@ -66,14 +66,14 @@ namespace DataDebug
             //}
             //else if (i == 1)
             //{
-            //    //Normal shown; others hidden
+            //    //Normal per range shown; others hidden
             //    ccgroup.Visible = false;
             //    group1.Visible = true;
             //    group2.Visible = false;
             //}
             //else
             //{
-            //    //Grubb's shown; others hidden
+            //    //Normal on all inputs shown; others hidden
             //    ccgroup.Visible = false;
             //    group1.Visible = false;
             //    group2.Visible = true;
@@ -185,6 +185,36 @@ namespace DataDebug
                 // Get bootstraps
                 var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
+                
+                //Should we be using an outlier test for 
+                //highlighting scores that fall outside of two standard deviations from the others?
+                //(The one-sided 5% cutoff for the normal distribution is 1.6448.)
+                //Or do we always want to be highlighting the top 5% of the scores?
+                //Currently, if we have something like this, we don't flag anything 
+                //because the 1 value that is weird is an entire 20% of the total:
+                //     1,1,1,1000,1     =SUM(A1:A5)
+                //-Dimitar
+
+                ////Code for doing normal outlier analysis on the scores:
+                ////find mean:
+                //double sum = 0.0;
+                //foreach (double d in scores.Values)
+                //{
+                //    sum += d;
+                //}
+                //double mean = sum / scores.Values.Count;
+                ////find variance
+                //double distance_sum_sq = 0.0;
+                //foreach (double d in scores.Values)
+                //{
+                //    distance_sum_sq += Math.Pow(mean - d, 2);
+                //}
+                //double variance = distance_sum_sq / scores.Values.Count;
+
+                ////find std. deviation
+                //double std_deviation = Math.Sqrt(variance);
+
+                //var filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
 
                 int start_ptr = 0;
                 int end_ptr = 0;
