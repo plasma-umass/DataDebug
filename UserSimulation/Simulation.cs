@@ -627,7 +627,6 @@ namespace UserSimulation
             bool correction_made = true;
             while (errors_remain)
             {
-                cells_inspected += 1;
                 Console.Write(".");
 
                 AST.Address flagged_cell = null;
@@ -762,6 +761,10 @@ namespace UserSimulation
                 }
                 else    // a cell was flagged
                 {
+                    //cells_inspected should only be incremented when a cell is actually flagged. If nothing is flagged, 
+                    // cells_inspected doesn't increase.
+                    cells_inspected += 1;
+
                     // check to see if the flagged value is actually an error
                     if (errord.ContainsKey(flagged_cell))
                     {

@@ -73,7 +73,7 @@ namespace UserSimulation
             // number of cells to typo
             int n = (int)Math.Ceiling(original_inputs.Count * proportion);
 
-            var output = new CellDict();
+            var introduced_errors = new CellDict();
             var oi = original_inputs.ToArray();
 
             int i = 0;
@@ -81,7 +81,7 @@ namespace UserSimulation
             {
                 int idx = r.Next(oi.Length);
                 KeyValuePair<AST.Address,String> cell = oi[idx];
-                if (output.ContainsKey(cell.Key))
+                if (introduced_errors.ContainsKey(cell.Key))
                 {   // if we've already typo'ed this value, move on
                     continue;
                 }
@@ -108,12 +108,12 @@ namespace UserSimulation
                     //        errors_dict.Add(error, 1);
                     //    }
                     //}
-                    output.Add(cell.Key, GenerateErrorString(cell.Value, c));
+                    introduced_errors.Add(cell.Key, GenerateErrorString(cell.Value, c));
                 }
                 i++;
             }
 
-            return output;
+            return introduced_errors;
         }
 
         //Generates the distribution of strings for a particular character given a classification
