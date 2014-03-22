@@ -216,7 +216,11 @@ namespace UserSimulation
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff,         // indicates if we should use normal cutoff or top 5% for errors
                         AnalysisData data,
-                        Excel.Workbook wb
+                        Excel.Workbook wb,
+                        TreeNode[] terminal_formula_nodes,
+                        TreeNode[] terminal_input_nodes,
+                        CellDict original_inputs,
+                        CellDict correct_outputs
                        )
         {
             // set wbname
@@ -224,42 +228,10 @@ namespace UserSimulation
 
             _analysis_type = analysisType;
 
-            // create ErrorGenerator object
-            var egen = new ErrorGenerator();
-            
             try
             {
                 // set path
                 _wb_path = wb.Path;
-
-                // get terminal input and terminal formula nodes once
-                var terminal_input_nodes = data.TerminalInputNodes();
-                var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
-
-                if (terminal_input_nodes.Length == 0)
-                {
-                    _exit_state = ErrorCondition.ContainsNoInputs;
-                    return;
-                }
-
-                // save original spreadsheet state
-                CellDict original_inputs = SaveInputs(terminal_input_nodes, wb);
-                if (original_inputs.Count() == 0)
-                {
-                    _exit_state = ErrorCondition.ContainsNoInputs;
-                    return;
-                }
-
-                // force a recalculation before saving outputs, otherwise we may
-                // erroneously conclude that the procedure did the wrong thing
-                // based solely on Excel floating-point oddities
-                InjectValues(app, wb, original_inputs);
-
-                // save function outputs
-                CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
-
-                // generate errors
-                _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
                 //Now we want to inject the errors from top_errors
                 InjectValues(app, wb, _errors);
@@ -351,7 +323,40 @@ namespace UserSimulation
                 // build dependency graph
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
 
-                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb);
+
+                // create ErrorGenerator object
+                var egen = new ErrorGenerator();
+
+                // get terminal input and terminal formula nodes once
+                var terminal_input_nodes = data.TerminalInputNodes();
+                var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
+
+                if (terminal_input_nodes.Length == 0)
+                {
+                    _exit_state = ErrorCondition.ContainsNoInputs;
+                    return;
+                }
+
+                // save original spreadsheet state
+                CellDict original_inputs = SaveInputs(terminal_input_nodes, wb);
+                if (original_inputs.Count() == 0)
+                {
+                    _exit_state = ErrorCondition.ContainsNoInputs;
+                    return;
+                }
+
+                // force a recalculation before saving outputs, otherwise we may
+                // erroneously conclude that the procedure did the wrong thing
+                // based solely on Excel floating-point oddities
+                InjectValues(app, wb, original_inputs);
+
+                // save function outputs
+                CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
+
+                // generate errors
+                _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
+
+                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
             }
             catch (Exception e)
             {
