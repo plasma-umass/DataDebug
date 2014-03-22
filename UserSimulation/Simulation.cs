@@ -762,7 +762,7 @@ namespace UserSimulation
                 else    // a cell was flagged
                 {
                     //cells_inspected should only be incremented when a cell is actually flagged. If nothing is flagged, 
-                    // cells_inspected doesn't increase.
+                    //then nothing is inspected, so cells_inspected doesn't increase.
                     cells_inspected += 1;
 
                     // check to see if the flagged value is actually an error
@@ -787,7 +787,7 @@ namespace UserSimulation
                     {
                         correction_made = false;
                         // numerator is 0 here because rel(k) = 0 when no error was found
-                        o.PrecRel_at_k.Add(0);
+                        o.PrecRel_at_k.Add(0.0);
                         o.false_positives.Add(flagged_cell);
                     }
 

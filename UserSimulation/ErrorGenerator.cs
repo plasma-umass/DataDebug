@@ -81,8 +81,8 @@ namespace UserSimulation
             {
                 int idx = r.Next(oi.Length);
                 KeyValuePair<AST.Address,String> cell = oi[idx];
-                if (introduced_errors.ContainsKey(cell.Key))
-                {   // if we've already typo'ed this value, move on
+                if (introduced_errors.ContainsKey(cell.Key) || cell.Value == null)
+                {   // if we've already typo'ed this value, or if the value of the cell is null move on
                     continue;
                 }
                 else
