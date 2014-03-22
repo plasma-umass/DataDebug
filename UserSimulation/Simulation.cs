@@ -212,7 +212,7 @@ namespace UserSimulation
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool weighted,              // should we weight things?
+                        bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         AnalysisData data,
                         Excel.Workbook wb
