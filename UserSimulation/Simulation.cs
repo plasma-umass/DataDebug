@@ -643,7 +643,18 @@ namespace UserSimulation
                     //find std. deviation
                     double std_deviation = Math.Sqrt(variance);
 
-                    filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
+                    if (significance == 0.95)
+                    {
+                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
+                    }
+                    else if (significance == 0.9)   //10% cutoff 1.2815
+                    {
+                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.2815).ToList();
+                    }
+                    else if (significance == 0.975) //2.5% cutoff 1.9599
+                    {
+                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.9599).ToList();
+                    }
                 }
                 else
                 {

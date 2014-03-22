@@ -528,13 +528,13 @@ namespace DataDebug
                     switch (analysisType.SelectedItemIndex)
                     {
                         case 0:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false);
                             break;
                         case 1:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false);
                             break;
                         case 2:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllOutputs, true, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllOutputs, true, false, false);
                             break;
                         default:
                             System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");
