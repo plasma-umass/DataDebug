@@ -212,7 +212,7 @@ namespace UserSimulation
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool weighted,              // should we weight things?
+                        bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         AnalysisData data,
                         Excel.Workbook wb
@@ -273,7 +273,7 @@ namespace UserSimulation
                 sw.Start();
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, true, false);
+                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, false);
 
                 sw.Stop();
                 TimeSpan elapsed = sw.Elapsed;
