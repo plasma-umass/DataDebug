@@ -525,7 +525,21 @@ namespace DataDebug
                     // run the simulation
                     app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
                     UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, analysisType.SelectedItem.ToString(), false);
+                    switch (analysisType.SelectedItemIndex)
+                    {
+                        case 0:
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, false);
+                            break;
+                        case 1:
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, false);
+                            break;
+                        case 2:
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllOutputs, false);
+                            break;
+                        default:
+                            System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");
+                            break;
+                    }
                     sim.ToCSV(sfd.FileName);
                 }
             }
