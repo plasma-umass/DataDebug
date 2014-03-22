@@ -273,7 +273,7 @@ namespace UserSimulation
                 sw.Start();
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, true, false);
+                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, false);
 
                 sw.Stop();
                 TimeSpan elapsed = sw.Elapsed;
