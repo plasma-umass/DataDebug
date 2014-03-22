@@ -655,6 +655,10 @@ namespace UserSimulation
                     {
                         filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.9599).ToList();
                     }
+                    else if (significance == 0.925) //7.5% cutoff 1.4395
+                    {
+                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.4395).ToList();
+                    }
                 }
                 else
                 {
