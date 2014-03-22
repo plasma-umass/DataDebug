@@ -16,6 +16,7 @@ namespace DataDebugMethods
         public TreeDict formula_nodes;
         public TreeDict cell_nodes;
         public Excel.Sheets charts;
+        public double tree_construct_time;
         private ProgBar pb;
 
         private int _pb_max;

@@ -24,6 +24,10 @@ namespace DataDebugMethods
         // This method constructs the dependency graph from the workbook.
         public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, ProgBar pb)
         {
+            //Start timing tree construction
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             // Make a new analysisData object
             AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, pb);
 
@@ -88,6 +92,13 @@ namespace DataDebugMethods
                     }
                 }
             }
+
+            //Stop timing the tree construction
+            sw.Stop();
+            //Store elapsed time
+            TimeSpan elapsed = sw.Elapsed;
+            data.tree_construct_time = elapsed.TotalSeconds;
+
             return data;
         }
 

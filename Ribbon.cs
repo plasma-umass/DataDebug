@@ -184,7 +184,7 @@ namespace DataDebug
 
                 // Get bootstraps
                 var scores = Analysis.Bootstrap(NBOOTS, data, app, true, false);
-                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
+                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
                 //Should we be using an outlier test for 
                 //highlighting scores that fall outside of two standard deviations from the others?

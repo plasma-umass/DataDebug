@@ -59,6 +59,8 @@ namespace UserSimulation
         private Dictionary<AST.Address, string> _errors = new Dictionary<AST.Address, string>();
         private double _average_precision = 0;
         private AnalysisType _analysis_type;
+        private double _tree_construct_time = 0.0;
+        private double _analysis_time = 0.0;
 
         public ErrorCondition GetExitState()
         {
@@ -265,8 +267,16 @@ namespace UserSimulation
                 // save function outputs
                 CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
 
+                //Time the removal of errors
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+
                 // remove errors until none remain; MODIFIES WORKBOOK
                 _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, false);
+
+                sw.Stop();
+                TimeSpan elapsed = sw.Elapsed;
+                _analysis_time = elapsed.TotalSeconds;
 
                 // save partially-corrected outputs
                 var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
@@ -298,11 +308,15 @@ namespace UserSimulation
                 _expended_effort = (double)_effort / (double)_max_effort;
 
                 // compute average precision
+                //TODO I don't think this is being calculated correctly  What is
+                //   average precision supposed to be anyway? Precision is 
+                //   true positives / all positives      -Dimitar
                 _average_precision = _user.precision_at_step_k.Sum() / (double)_effort;
 
                 // restore original values
                 InjectValues(app, wb, original_inputs);
 
+                _tree_construct_time = data.tree_construct_time;
                 // flag that we're done; safe to print output results
                 _simulation_run = true;
             }
@@ -349,7 +363,7 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}",
                                  "workbook_name",
                                  "initial_total_relative_error",
                                  "total_relative_error",
@@ -364,6 +378,8 @@ namespace UserSimulation
                                  "false_positives",
                                  "false_negatives",
                                  "average_precision",
+                                 "tree_construct_time_seconds",
+                                 "bootstrap_or_normal_time_seconds",
                                  "analysis_type");
         }
 
@@ -376,13 +392,15 @@ namespace UserSimulation
                     _effort.ToString() + "," +              // effort
                     _max_effort + "," +                     // max effort
                     _cells_in_scope + "," +                   // perturbable cells (these are in our scope)
-                    (double)_cells_in_scope/(double)_max_effort + "," +                     // proportion of cells that are in scopes of our tool
+                    (double)_cells_in_scope/(double)_max_effort + "," +     // proportion of cells that are in scopes of our tool
                     _expended_effort + "," +                // expended effort
                     _errors.Count + "," +                   // number of errors
                     _user.true_positives.Count + "," +      // number of true positives
                     _user.false_positives.Count + "," +     // number of false positives
                     _user.false_negatives.Count + "," +     // number of false negatives
                     _average_precision + "," +              // average precision
+                    _tree_construct_time + "," +            // tree construction time in seconds
+                    _analysis_time + "," +                  // bootstrap or normal analysis time in seconds
                     _analysis_type;                         // anaysis type (CheckCell, normal per range, normal on all inputs)
         }
 
@@ -603,8 +621,10 @@ namespace UserSimulation
             var number_of_true_errors = errord.Count;
             UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
 
-            // remove errors
+            // remove errors loop
             var cells_inspected = 0;
+            List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
+            bool correction_made = true;
             while (errors_remain)
             {
                 cells_inspected += 1;
@@ -615,56 +635,65 @@ namespace UserSimulation
                 if (analysis_type == AnalysisType.CheckCell)
                 {
                     // Get bootstraps
-                    TreeScore scores = Analysis.Bootstrap(nboots, data, app, true, false);
-                    /*
-                    // Compute quantiles based on user-supplied sensitivity
-                    var quantiles = Analysis.ComputeQuantile<int, TreeNode>(scores.Select(
-                        pair => new Tuple<int, TreeNode>(pair.Value, pair.Key))
-                    );
-
-                    // Get top outlier
-                    flagged_cell = Analysis.GetTopOutlier(quantiles, known_good, significance);
-                     */
-                    var scores_list = scores.OrderByDescending(pair => pair.Value).ToList(); //pair => pair.Key, pair => pair.Value);
-
-                    int start_ptr = 0;
-                    int end_ptr = 0;
-
-                    List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
-
-                    while ((double)start_ptr / scores_list.Count < 1.0 - significance) //the start of this score region is before the cutoff
+                    // The bootstrap should only re-run if there is a correction made, 
+                    //      not when something is marked as OK (isn't one of the introduced errors)
+                    // The list of suspected cells doesn't change when we mark something as OK,
+                    //      we just move on to the next thing in the list
+                    if (correction_made)
                     {
-                        //while the scores at the start and end pointers are the same, bump the end pointer
-                        while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
+                        TreeScore scores = Analysis.Bootstrap(nboots, data, app, true, false);
+
+
+                        var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
+
+                        int start_ptr = 0;
+                        int end_ptr = 0;
+
+                        List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
+
+                        while ((double)start_ptr / scores_list.Count < 1.0 - significance) //the start of this score region is before the cutoff
                         {
-                            end_ptr++;
-                        }
-                        //Now the end_pointer points to the first index with a lower score
-                        //If the end pointer is still above the significance cutoff, add all values of this score to the high_scores list
-                        if ((double)end_ptr / scores_list.Count < 1.0 - significance)
-                        {
-                            //add all values of the current score to high_scores list
-                            for (; start_ptr < end_ptr; start_ptr++)
+                            //while the scores at the start and end pointers are the same, bump the end pointer
+                            while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
                             {
-                                high_scores.Add(scores_list[start_ptr]);
+                                end_ptr++;
                             }
-                            //Increment the start pointer to the start of the next score region
-                            start_ptr++;
+                            //Now the end_pointer points to the first index with a lower score
+                            //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
+                            //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
+                            //  To do this, we add (1 / total number of entries) to the cutoff
+                            //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
+                            //for more than 5% of the total.
+                            //      Note: tool_significance is along the lines of 0.95 (not 0.05).
+                            if ((double)end_ptr / scores_list.Count < 1.0 - significance + (double)1.0 / scores_list.Count)
+                            {
+                                //add all values of the current score to high_scores list
+                                for (; start_ptr < end_ptr; start_ptr++)
+                                {
+                                    high_scores.Add(scores_list[start_ptr]);
+                                }
+                                //Increment the start pointer to the start of the next score region
+                                start_ptr++;
+                            }
+                            else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
+                            {
+                                break;
+                            }
                         }
-                        else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                        {
-                            break;
-                        }
+                        // filter out cells marked as OK
+                        filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+                    }
+                    else  //if no corrections were made (a cell was marked as OK, not corrected)
+                    {
+                        // re-filter out cells marked as OK
+                        filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
                     }
 
-                    // filter out cells marked as OK
-                    var filtered_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-
                     //AST.Address flagged_cell;
-                    if (filtered_scores.Count() != 0)
+                    if (filtered_high_scores.Count() != 0)
                     {
                         // get TreeNode corresponding to most unusual score
-                        flagged_cell = filtered_scores[0].Key.GetAddress();
+                        flagged_cell = filtered_high_scores[0].Key.GetAddress();
                     }
                     else
                     {
@@ -673,12 +702,13 @@ namespace UserSimulation
                 }
                 else if (analysis_type == AnalysisType.NormalPerRange)
                 {
-                    //Generate normal distributions for every input range
+                    //Generate normal distributions for every input range until an error is found
+                    //Then break out of the loop and report it.
                     foreach (var range in data.input_ranges.Values)
                     {
                         var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
 
-                        // Get top outlier
+                        // Get top outlier which has not been inspected already
                         if (normal_dist.errorsCount() > 0)
                         {
                             for (int i = 0; i < normal_dist.errorsCount(); i++)
@@ -695,31 +725,32 @@ namespace UserSimulation
                                 }
                             }
                         }
+                        //If a cell is flagged, do not move on to the next range (if you do, you'll overwrite the flagged_cell
+                        if (flagged_cell != null)
+                        {
+                            break;
+                        }
                     }
                 }
                 else if (analysis_type == AnalysisType.NormalAllOutputs)
                 {
-                    //Generate normal distributions for every worksheet
-                    foreach (Excel.Worksheet ws in wb.Worksheets)
-                    {
-                     //   var normal_dist = new DataDebugMethods.NormalDistribution(ws.UsedRange);
-                        var normal_dist = new DataDebugMethods.NormalDistribution(data.cell_nodes, app);
+                    //Generate a normal distribution for the entire set of inputs
+                    var normal_dist = new DataDebugMethods.NormalDistribution(data.cell_nodes, app);
 
-                        // Get top outlier
-                        if (normal_dist.errorsCount() > 0)
+                    // Get top outlier
+                    if (normal_dist.errorsCount() > 0)
+                    {
+                        for (int i = 0; i < normal_dist.errorsCount(); i++)
                         {
-                            for (int i = 0; i < normal_dist.errorsCount(); i++)
+                            var flagged_com = normal_dist.getError(i);
+                            flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                            if (known_good.Contains(flagged_cell))
                             {
-                                var flagged_com = normal_dist.getError(i);
-                                flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
-                                if (known_good.Contains(flagged_cell))
-                                {
-                                    flagged_cell = null;
-                                }
-                                else
-                                {
-                                    break;
-                                }
+                                flagged_cell = null;
+                            }
+                            else
+                            {
+                                break;
                             }
                         }
                     }
@@ -729,7 +760,7 @@ namespace UserSimulation
                 {
                     errors_remain = false;
                 }
-                else
+                else    // a cell was flagged
                 {
                     // check to see if the flagged value is actually an error
                     if (errord.ContainsKey(flagged_cell))
@@ -740,6 +771,7 @@ namespace UserSimulation
 
                         // correct flagged cell -- only need to do this if the flagged cell was an error
                         flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
+                        correction_made = true;
                         var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs), wb);
                         UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
                         
@@ -749,12 +781,14 @@ namespace UserSimulation
                     }
                     else
                     {
+                        correction_made = false;
                         o.precision_at_step_k.Add(0);
                         o.false_positives.Add(flagged_cell);
                     }
 
                     // mark it as known good -- at this point the cell has been 
                     //      'inspected' regardless of whether it was an error
+                    //      It was either corrected or marked as OK
                     known_good.Add(flagged_cell);
 
                     // write CSV line
