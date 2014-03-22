@@ -308,10 +308,10 @@ namespace UserSimulation
                 _expended_effort = (double)_effort / (double)_max_effort;
 
                 // compute average precision
-                //TODO I don't think this is being calculated correctly  What is
-                //   average precision supposed to be anyway? Precision is 
-                //   true positives / all positives      -Dimitar
-                _average_precision = _user.precision_at_step_k.Sum() / (double)_effort;
+                // AveP = (\sum_{k=1}^n (P(k) * rel(k))) / |total positives|
+                // where P(k) is the precision at threshold k,
+                // rel(k) = \{ 1 if item at k is a true positive, 0 otherwise
+                _average_precision = _user.PrecRel_at_k.Sum() / (double)_errors.Count;
 
                 // restore original values
                 InjectValues(app, wb, original_inputs);
@@ -527,7 +527,7 @@ namespace UserSimulation
             public HashSet<AST.Address> false_negatives;
             public ErrorDict max_errors; //Keeps track of the largest errors we observe during the simulation for each output
             public List<double> current_total_error;
-            public List<double> precision_at_step_k;
+            public List<double> PrecRel_at_k;
         }
 
         //Computes total relative error
@@ -610,7 +610,7 @@ namespace UserSimulation
             o.false_positives = new List<AST.Address>();
             o.true_positives = new List<AST.Address>();
             o.current_total_error = new List<double>();
-            o.precision_at_step_k = new List<double>();
+            o.PrecRel_at_k = new List<double>();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
 
             // initialize procedure
@@ -766,7 +766,8 @@ namespace UserSimulation
                     if (errord.ContainsKey(flagged_cell))
                     {
                         errors_found += 1;
-                        o.precision_at_step_k.Add(errors_found / (double)cells_inspected);
+                        // P(k) * rel(k)
+                        o.PrecRel_at_k.Add(errors_found / (double)cells_inspected);
                         o.true_positives.Add(flagged_cell);
 
                         // correct flagged cell -- only need to do this if the flagged cell was an error
@@ -782,7 +783,8 @@ namespace UserSimulation
                     else
                     {
                         correction_made = false;
-                        o.precision_at_step_k.Add(0);
+                        // numerator is 0 here because rel(k) = 0 when no error was found
+                        o.PrecRel_at_k.Add(0);
                         o.false_positives.Add(flagged_cell);
                     }
 
