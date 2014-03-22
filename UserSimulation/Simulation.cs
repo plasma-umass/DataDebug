@@ -30,9 +30,9 @@ namespace UserSimulation
     [Serializable]
     public enum AnalysisType
     {
-        CheckCell,
-        NormalPerRange,
-        NormalAllOutputs
+        CheckCell           = 0,
+        NormalPerRange      = 1,
+        NormalAllOutputs    = 2
     }
 
     public class SimulationNotRunException : Exception
@@ -212,7 +212,8 @@ namespace UserSimulation
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool all_outputs,            // if !all_outputs, we only consider terminal outputs
+                        bool weighted,              // should we weight things?
+                        bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         AnalysisData data,
                         Excel.Workbook wb
                        )
@@ -272,7 +273,7 @@ namespace UserSimulation
                 sw.Start();
 
                 // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, false);
+                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, true, false);
 
                 sw.Stop();
                 TimeSpan elapsed = sw.Elapsed;
@@ -335,7 +336,8 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        AnalysisType analysisType,        // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        bool weighted,              // should we weight things?
                         bool all_outputs            // if !all_outputs, we only consider terminal outputs
                        )
         {
@@ -347,7 +349,7 @@ namespace UserSimulation
                 // build dependency graph
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
 
-                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, all_outputs, data, wb);
+                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, data, wb);
             }
             catch (Exception e)
             {
@@ -520,14 +522,15 @@ namespace UserSimulation
         }
 
         [Serializable]
-        private struct UserResults
+        private class UserResults
         {
-            public List<AST.Address> true_positives;
-            public List<AST.Address> false_positives;
-            public HashSet<AST.Address> false_negatives;
-            public ErrorDict max_errors; //Keeps track of the largest errors we observe during the simulation for each output
-            public List<double> current_total_error;
-            public List<double> PrecRel_at_k;
+            public List<AST.Address> true_positives = new List<AST.Address>();
+            public List<AST.Address> false_positives = new List<AST.Address>();
+            public HashSet<AST.Address> false_negatives = new HashSet<AST.Address>();
+            //Keeps track of the largest errors we observe during the simulation for each output
+            public ErrorDict max_errors = new ErrorDict();
+            public List<double> current_total_error = new List<double>();
+            public List<double> PrecRel_at_k = new List<double>();
         }
 
         //Computes total relative error
@@ -591,6 +594,152 @@ namespace UserSimulation
             }
         }
 
+        private static AST.Address CheckCell_Step(UserResults o,
+                                           double significance,
+                                           int nboots,
+                                           AnalysisData data,
+                                           Excel.Application app,
+                                           bool weighted,
+                                           bool all_outputs,
+                                           bool run_bootstrap,
+                                           HashSet<AST.Address> known_good,
+                                           List<KeyValuePair<TreeNode, int>> filtered_high_scores)
+        {
+            // Get bootstraps
+            // The bootstrap should only re-run if there is a correction made, 
+            //      not when something is marked as OK (isn't one of the introduced errors)
+            // The list of suspected cells doesn't change when we mark something as OK,
+            //      we just move on to the next thing in the list
+            if (run_bootstrap)
+            {
+                TreeScore scores = Analysis.Bootstrap(nboots, data, app, weighted, all_outputs);
+                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
+
+                int start_ptr = 0;
+                int end_ptr = 0;
+
+                List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
+
+                while ((double)start_ptr / scores_list.Count < 1.0 - significance) //the start of this score region is before the cutoff
+                {
+                    //while the scores at the start and end pointers are the same, bump the end pointer
+                    while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
+                    {
+                        end_ptr++;
+                    }
+                    //Now the end_pointer points to the first index with a lower score
+                    //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
+                    //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
+                    //  To do this, we add (1 / total number of entries) to the cutoff
+                    //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
+                    //for more than 5% of the total.
+                    //      Note: tool_significance is along the lines of 0.95 (not 0.05).
+                    if ((double)end_ptr / scores_list.Count < 1.0 - significance + (double)1.0 / scores_list.Count)
+                    {
+                        //add all values of the current score to high_scores list
+                        for (; start_ptr < end_ptr; start_ptr++)
+                        {
+                            high_scores.Add(scores_list[start_ptr]);
+                        }
+                        //Increment the start pointer to the start of the next score region
+                        start_ptr++;
+                    }
+                    else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
+                    {
+                        break;
+                    }
+                }
+                // filter out cells marked as OK
+                filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            }
+            else  //if no corrections were made (a cell was marked as OK, not corrected)
+            {
+                // re-filter out cells marked as OK
+                filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            }
+
+            //AST.Address flagged_cell;
+            if (filtered_high_scores.Count() != 0)
+            {
+                // get TreeNode corresponding to most unusual score
+                return filtered_high_scores[0].Key.GetAddress();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static AST.Address NormaPerRange_Step(AnalysisData data,
+                                                      Excel.Workbook wb,
+                                                      HashSet<AST.Address> known_good)
+        {
+            AST.Address flagged_cell = null;
+
+            //Generate normal distributions for every input range until an error is found
+            //Then break out of the loop and report it.
+            foreach (var range in data.input_ranges.Values)
+            {
+                var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
+
+                // Get top outlier which has not been inspected already
+                if (normal_dist.errorsCount() > 0)
+                {
+                    for (int i = 0; i < normal_dist.errorsCount(); i++)
+                    {
+                        var flagged_com = normal_dist.getError(i);
+                        flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                        if (known_good.Contains(flagged_cell))
+                        {
+                            flagged_cell = null;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                //If a cell is flagged, do not move on to the next range (if you do, you'll overwrite the flagged_cell
+                if (flagged_cell != null)
+                {
+                    break;
+                }
+            }
+
+            return flagged_cell;
+        }
+
+        private static AST.Address NormalAllOutputs_Step(AnalysisData data,
+                                                         Excel.Application app,
+                                                         Excel.Workbook wb,
+                                                         HashSet<AST.Address> known_good)
+        {
+            AST.Address flagged_cell = null;
+
+            //Generate a normal distribution for the entire set of inputs
+            var normal_dist = new DataDebugMethods.NormalDistribution(data.cell_nodes, app);
+
+            // Get top outlier
+            if (normal_dist.errorsCount() > 0)
+            {
+                for (int i = 0; i < normal_dist.errorsCount(); i++)
+                {
+                    var flagged_com = normal_dist.getError(i);
+                    flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                    if (known_good.Contains(flagged_cell))
+                    {
+                        flagged_cell = null;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return flagged_cell;
+        }
+
         // remove errors until none remain
         private static UserResults SimulateUser(int nboots,
                                                double significance,
@@ -601,16 +750,12 @@ namespace UserSimulation
                                                Excel.Workbook wb,
                                                Excel.Application app,
                                                AnalysisType analysis_type,
+                                               bool weighted,
                                                bool all_outputs
                                             )
         {
             // init user results data structure
             var o = new UserResults();
-            o.false_negatives = new HashSet<AST.Address>();
-            o.false_positives = new List<AST.Address>();
-            o.true_positives = new List<AST.Address>();
-            o.current_total_error = new List<double>();
-            o.PrecRel_at_k = new List<double>();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
 
             // initialize procedure
@@ -631,128 +776,27 @@ namespace UserSimulation
 
                 AST.Address flagged_cell = null;
 
+                // choose the appropriate test
+                // TODO: the test type really should be a lambda
                 if (analysis_type == AnalysisType.CheckCell)
                 {
-                    // Get bootstraps
-                    // The bootstrap should only re-run if there is a correction made, 
-                    //      not when something is marked as OK (isn't one of the introduced errors)
-                    // The list of suspected cells doesn't change when we mark something as OK,
-                    //      we just move on to the next thing in the list
-                    if (correction_made)
-                    {
-                        TreeScore scores = Analysis.Bootstrap(nboots, data, app, true, false);
-
-
-                        var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
-
-                        int start_ptr = 0;
-                        int end_ptr = 0;
-
-                        List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
-
-                        while ((double)start_ptr / scores_list.Count < 1.0 - significance) //the start of this score region is before the cutoff
-                        {
-                            //while the scores at the start and end pointers are the same, bump the end pointer
-                            while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
-                            {
-                                end_ptr++;
-                            }
-                            //Now the end_pointer points to the first index with a lower score
-                            //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
-                            //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
-                            //  To do this, we add (1 / total number of entries) to the cutoff
-                            //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
-                            //for more than 5% of the total.
-                            //      Note: tool_significance is along the lines of 0.95 (not 0.05).
-                            if ((double)end_ptr / scores_list.Count < 1.0 - significance + (double)1.0 / scores_list.Count)
-                            {
-                                //add all values of the current score to high_scores list
-                                for (; start_ptr < end_ptr; start_ptr++)
-                                {
-                                    high_scores.Add(scores_list[start_ptr]);
-                                }
-                                //Increment the start pointer to the start of the next score region
-                                start_ptr++;
-                            }
-                            else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                            {
-                                break;
-                            }
-                        }
-                        // filter out cells marked as OK
-                        filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-                    }
-                    else  //if no corrections were made (a cell was marked as OK, not corrected)
-                    {
-                        // re-filter out cells marked as OK
-                        filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-                    }
-
-                    //AST.Address flagged_cell;
-                    if (filtered_high_scores.Count() != 0)
-                    {
-                        // get TreeNode corresponding to most unusual score
-                        flagged_cell = filtered_high_scores[0].Key.GetAddress();
-                    }
-                    else
-                    {
-                        flagged_cell = null;
-                    }
-                }
-                else if (analysis_type == AnalysisType.NormalPerRange)
+                    flagged_cell = CheckCell_Step(o,
+                                                  significance,
+                                                  nboots,
+                                                  data,
+                                                  app,
+                                                  weighted,
+                                                  all_outputs,
+                                                  correction_made,
+                                                  known_good,
+                                                  filtered_high_scores);
+                } else if (analysis_type == AnalysisType.NormalPerRange)
                 {
-                    //Generate normal distributions for every input range until an error is found
-                    //Then break out of the loop and report it.
-                    foreach (var range in data.input_ranges.Values)
-                    {
-                        var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
-
-                        // Get top outlier which has not been inspected already
-                        if (normal_dist.errorsCount() > 0)
-                        {
-                            for (int i = 0; i < normal_dist.errorsCount(); i++)
-                            {
-                                var flagged_com = normal_dist.getError(i);
-                                flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
-                                if (known_good.Contains(flagged_cell))
-                                {
-                                    flagged_cell = null;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                        //If a cell is flagged, do not move on to the next range (if you do, you'll overwrite the flagged_cell
-                        if (flagged_cell != null)
-                        {
-                            break;
-                        }
-                    }
+                    flagged_cell = NormaPerRange_Step(data, wb, known_good);
                 }
                 else if (analysis_type == AnalysisType.NormalAllOutputs)
                 {
-                    //Generate a normal distribution for the entire set of inputs
-                    var normal_dist = new DataDebugMethods.NormalDistribution(data.cell_nodes, app);
-
-                    // Get top outlier
-                    if (normal_dist.errorsCount() > 0)
-                    {
-                        for (int i = 0; i < normal_dist.errorsCount(); i++)
-                        {
-                            var flagged_com = normal_dist.getError(i);
-                            flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
-                            if (known_good.Contains(flagged_cell))
-                            {
-                                flagged_cell = null;
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-                    }
+                    flagged_cell = NormalAllOutputs_Step(data, app, wb, known_good);
                 }
 
                 if (flagged_cell == null)
@@ -768,14 +812,14 @@ namespace UserSimulation
                     // check to see if the flagged value is actually an error
                     if (errord.ContainsKey(flagged_cell))
                     {
+                        correction_made = true;
                         errors_found += 1;
                         // P(k) * rel(k)
                         o.PrecRel_at_k.Add(errors_found / (double)cells_inspected);
                         o.true_positives.Add(flagged_cell);
 
-                        // correct flagged cell -- only need to do this if the flagged cell was an error
+                        // correct flagged cell
                         flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
-                        correction_made = true;
                         var partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs), wb);
                         UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
                         
@@ -795,9 +839,6 @@ namespace UserSimulation
                     //      'inspected' regardless of whether it was an error
                     //      It was either corrected or marked as OK
                     known_good.Add(flagged_cell);
-
-                    // write CSV line
-                    //ToTimeseriesCSV(wb, current_total_error, cells_inspected);
                 }
             }
 
