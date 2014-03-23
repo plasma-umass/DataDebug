@@ -61,6 +61,10 @@ namespace UserSimulation
         private AnalysisType _analysis_type;
         private double _tree_construct_time = 0.0;
         private double _analysis_time = 0.0;
+        private bool _normal_cutoff;
+        private double _significance;
+        private bool _all_outputs;
+        private bool _weighted;
 
         public ErrorCondition GetExitState()
         {
@@ -227,6 +231,10 @@ namespace UserSimulation
             _wb_name = xlfile;
 
             _analysis_type = analysisType;
+            _normal_cutoff = normal_cutoff;
+            _significance = significance;
+            _all_outputs = all_outputs;
+            _weighted = weighted;
 
             try
             {
@@ -418,24 +426,28 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}",
-                                 "workbook_name",
-                                 "initial_total_relative_error",
-                                 "total_relative_error",
-                                 "remaining_error",
-                                 "effort",
-                                 "max_effort",
-                                 "cells_in_scope",
-                                 "ratio_scope_out_of_total",
-                                 "expended_effort",
-                                 "number_of_errors",
-                                 "true_positives",
-                                 "false_positives",
-                                 "false_negatives",
-                                 "average_precision",
-                                 "tree_construct_time_seconds",
-                                 "bootstrap_or_normal_time_seconds",
-                                 "analysis_type");
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20}",
+                                 "workbook_name",                               //0
+                                 "initial_total_relative_error",                //1
+                                 "total_relative_error",                        //2
+                                 "remaining_error",                             //3
+                                 "effort",                                      //4
+                                 "max_effort",                                  //5
+                                 "cells_in_scope",                              //6
+                                 "ratio_scope_out_of_total",                    //7
+                                 "expended_effort",                             //8
+                                 "number_of_errors",                            //9
+                                 "true_positives",                              //10
+                                 "false_positives",                             //11
+                                 "false_negatives",                             //12
+                                 "average_precision",                           //13
+                                 "tree_construct_time_seconds",                 //14
+                                 "bootstrap_or_normal_time_seconds",            //15
+                                 "analysis_type",                               //16
+                                 "normal_cutoff",                               //17
+                                 "significance",                                //18
+                                 "all_outputs",                                 //19
+                                 "weighted");                                   //20
         }
 
         public String FormatResultsAsCSV()
@@ -447,7 +459,7 @@ namespace UserSimulation
                     _effort.ToString() + "," +              // effort
                     _max_effort + "," +                     // max effort
                     _cells_in_scope + "," +                   // perturbable cells (these are in our scope)
-                    (double)_cells_in_scope/(double)_max_effort + "," +     // proportion of cells that are in scopes of our tool
+                    (double)_cells_in_scope / (double)_max_effort + "," +     // proportion of cells that are in scopes of our tool
                     _expended_effort + "," +                // expended effort
                     _errors.Count + "," +                   // number of errors
                     _user.true_positives.Count + "," +      // number of true positives
@@ -456,7 +468,11 @@ namespace UserSimulation
                     _average_precision + "," +              // average precision
                     _tree_construct_time + "," +            // tree construction time in seconds
                     _analysis_time + "," +                  // bootstrap or normal analysis time in seconds
-                    _analysis_type;                         // anaysis type (CheckCell, normal per range, normal on all inputs)
+                    _analysis_type + "," +                  // anaysis type (CheckCell, normal per range, normal on all inputs)
+                    _normal_cutoff + "," +
+                    _significance + "," +
+                    _all_outputs + "," +
+                    _weighted;
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
