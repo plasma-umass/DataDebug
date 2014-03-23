@@ -298,10 +298,10 @@ namespace DataDebugMethods
             return s;
         }
 
-        public bool LoopCheck(HashSet<AST.Address> visited)
+        public bool LoopCheck(Dictionary<TreeNode,TreeNode> visited, TreeNode from_tn)
         {
             // base case 1: loop check
-            if (visited.Contains(this.GetAddress()))
+            if (visited.ContainsKey(this))
             {
                 return false;
             }
@@ -314,10 +314,12 @@ namespace DataDebugMethods
             bool OK = true;
             foreach (TreeNode t in this.getInputs())
             {
+                // new dict to mark visit
+                var visited2 = new Dictionary<TreeNode, TreeNode>(visited);
                 // mark visit
-                visited.Add(this.GetAddress());
+                visited2.Add(this, from_tn);
                 // recurse
-                OK = OK && t.LoopCheck(visited);
+                OK = OK && t.LoopCheck(visited2, this);
             }
             return OK;
         }
