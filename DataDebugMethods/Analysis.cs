@@ -15,7 +15,7 @@ using ExtensionMethods;
 
 namespace DataDebugMethods
 {
-    public class SelfLoopException : Exception { }
+    public class ContainsLoopException : Exception { }
 
     public class Analysis
     {
@@ -712,7 +712,7 @@ namespace DataDebugMethods
         {
             if (data.ContainsLoop())
             {
-                throw new SelfLoopException();
+                throw new ContainsLoopException();
             }
 
             // starting set of functions; roots in the forest
