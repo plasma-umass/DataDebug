@@ -15,6 +15,8 @@ using ExtensionMethods;
 
 namespace DataDebugMethods
 {
+    public class SelfLoopException : Exception { }
+
     public class Analysis
     {
         private static Dictionary<TreeNode, InputSample> StoreInputs(TreeNode[] inputs)
@@ -708,6 +710,11 @@ namespace DataDebugMethods
         // Propagate weights
         private static void PropagateWeights(AnalysisData data)
         {
+            if (data.ContainsLoop())
+            {
+                throw new SelfLoopException();
+            }
+
             // starting set of functions; roots in the forest
             var functions = data.TerminalFormulaNodes(false);
 

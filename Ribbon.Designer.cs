@@ -46,9 +46,11 @@ namespace DataDebug
             this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
             this.RunSimulation = this.Factory.CreateRibbonButton();
-            this.TestStuff = this.Factory.CreateRibbonButton();
             this.ErrorBtn = this.Factory.CreateRibbonButton();
+            this.TestStuff = this.Factory.CreateRibbonButton();
             this.analysisType = this.Factory.CreateRibbonDropDown();
+            this.ToDOT = this.Factory.CreateRibbonButton();
+            this.LoopCheck = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -68,6 +70,8 @@ namespace DataDebug
             this.ccgroup.Items.Add(this.ErrorBtn);
             this.ccgroup.Items.Add(this.TestStuff);
             this.ccgroup.Items.Add(this.analysisType);
+            this.ccgroup.Items.Add(this.ToDOT);
+            this.ccgroup.Items.Add(this.LoopCheck);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
             // 
@@ -124,17 +128,18 @@ namespace DataDebug
             this.RunSimulation.Name = "RunSimulation";
             this.RunSimulation.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunSimulation_Click);
             // 
+            // ErrorBtn
+            // 
+            this.ErrorBtn.Label = "Make Error";
+            this.ErrorBtn.Name = "ErrorBtn";
+            this.ErrorBtn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ErrorBtn_Click);
+            // 
             // TestStuff
             // 
             this.TestStuff.Label = "Test";
             this.TestStuff.Name = "TestStuff";
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
-            // ErrorBtn
-            // 
-            this.ErrorBtn.Label = "Make Error";
-            this.ErrorBtn.Name = "ErrorBtn";
-            this.ErrorBtn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ErrorBtn_Click);
             // analysisType
             // 
             ribbonDropDownItemImpl1.Label = "CheckCell";
@@ -145,6 +150,18 @@ namespace DataDebug
             this.analysisType.Items.Add(ribbonDropDownItemImpl3);
             this.analysisType.Label = "Analysis Type";
             this.analysisType.Name = "analysisType";
+            // 
+            // ToDOT
+            // 
+            this.ToDOT.Label = "ToDOT";
+            this.ToDOT.Name = "ToDOT";
+            this.ToDOT.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToDOT_Click);
+            // 
+            // LoopCheck
+            // 
+            this.LoopCheck.Label = "LoopCheck";
+            this.LoopCheck.Name = "LoopCheck";
+            this.LoopCheck.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.LoopCheck_Click);
             // 
             // Ribbon
             // 
@@ -175,6 +192,8 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton RunSimulation;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton ErrorBtn;
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown analysisType;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton ToDOT;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton LoopCheck;
     }
 
     partial class ThisRibbonCollection

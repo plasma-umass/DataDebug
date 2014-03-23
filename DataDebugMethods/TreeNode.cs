@@ -271,43 +271,94 @@ namespace DataDebugMethods
             return _is_formula;
         }
 
+        public string ToDOT(HashSet<AST.Address> visited)
+        {
+            // base case 1: loop protection
+            if (visited.Contains(this.GetAddress()))
+            {
+                return "";
+            }
+
+            // base case 2: an input
+            if (!_is_formula && _is_a_cell)
+            {
+                return "";
+            }
+            // recursive case: we're a node with an input
+            String s = "";
+            foreach (TreeNode t in this.getInputs())
+            {
+                // print
+                s += t.GetAddress().A1Local() + " -> " + this.GetAddress().A1Local() + ";\n";
+                // mark visit
+                visited.Add(this.GetAddress());
+                // recurse
+                s += t.ToDOT(visited);
+            }
+            return s;
+        }
+
+        public bool LoopCheck(HashSet<AST.Address> visited)
+        {
+            // base case 1: loop check
+            if (visited.Contains(this.GetAddress()))
+            {
+                return false;
+            }
+            // base case 2: an input
+            if (!_is_formula && _is_a_cell)
+            {
+                return true;
+            }
+            // recursive case
+            bool OK = true;
+            foreach (TreeNode t in this.getInputs())
+            {
+                // mark visit
+                visited.Add(this.GetAddress());
+                // recurse
+                OK = OK && t.LoopCheck(visited);
+            }
+            return OK;
+        }
+
         /**
          * This is a recursive method for propagating the weights down the nodes in the tree
          * All outputs have weight 1. Their n children have weight 1/n, and so forth. 
          * Modifies the weights set on the trees.
          * TODO: make this an instance method.
          */
-        public static void propagateWeight(TreeNode node, double passed_down_weight)
-        {
-            if (!node.hasInputs())
-            {
-                return;
-            }
-            else
-            {
-                int denominator = 0;  //keeps track of how many objects we are dividing the influence by
-                foreach (TreeNode parent in node.getInputs())
-                {
-                    if (parent.isRange() || parent.isChart())
-                        denominator = denominator + parent.getInputs().Count;
-                    else
-                        denominator = denominator + 1;
-                }
-                foreach (TreeNode parent in node.getInputs())
-                {
-                    if (parent.isRange() || parent.isChart())
-                    {
-                        parent.setWeight(parent.getWeight() + passed_down_weight * parent.getInputs().Count / denominator);
-                        propagateWeight(parent, passed_down_weight * parent.getInputs().Count / denominator);
-                    }
-                    else
-                    {
-                        parent.setWeight(parent.getWeight() + passed_down_weight / node.getInputs().Count);
-                        propagateWeight(parent, passed_down_weight / node.getInputs().Count);
-                    }
-                }
-            }
-        }
+        //public static void propagateWeight(TreeNode node, double passed_down_weight)
+        //{
+        //    if (!node.hasInputs())
+        //    {
+        //        return;
+        //    }
+        //    else
+        //    {
+        //        int denominator = 0;  //keeps track of how many objects we are dividing the influence by
+        //        foreach (TreeNode parent in node.getInputs())
+        //        {
+        //            if (parent.isRange() || parent.isChart())
+        //                denominator = denominator + parent.getInputs().Count;
+        //            else
+        //                denominator = denominator + 1;
+        //        }
+        //        foreach (TreeNode parent in node.getInputs())
+        //        {
+        //            if (parent.isRange() || parent.isChart())
+        //            {
+        //                parent.setWeight(parent.getWeight() + passed_down_weight * parent.getInputs().Count / denominator);
+        //                propagateWeight(parent, passed_down_weight * parent.getInputs().Count / denominator);
+        //            }
+        //            else
+        //            {
+        //                parent.setWeight(parent.getWeight() + passed_down_weight / node.getInputs().Count);
+        //                propagateWeight(parent, passed_down_weight / node.getInputs().Count);
+        //            }
+        //        }
+        //    }
+        //}
 
         internal void setFormula(string formula)
         {

@@ -100,5 +100,27 @@ namespace DataDebugMethods
                                        .Where(node => !node.isFormula() && node.isLeaf())
                                        .ToArray();
         }
+
+        public string ToDOT()
+        {
+            var visited = new HashSet<AST.Address>();
+            String s = "digraph spreadsheet {\n";
+            foreach (KeyValuePair<AST.Address,TreeNode> pair in formula_nodes)
+            {
+                s += pair.Value.ToDOT(visited);
+            }
+            return s + "\n}";
+        }
+
+        public bool ContainsLoop()
+        {
+            var visited = new HashSet<AST.Address>();
+            var OK = true;
+            foreach (KeyValuePair<AST.Address, TreeNode> pair in formula_nodes)
+            {
+                OK = OK && pair.Value.LoopCheck(visited);
+            }
+            return OK;
+        }
     }
 }

@@ -591,5 +591,20 @@ namespace DataDebug
                 cursor.Value2 = baddata;
             }
         }
+
+        private void ToDOT_Click(object sender, RibbonControlEventArgs e)
+        {
+            var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+            var graph = data.ToDOT();
+            System.Windows.Forms.Clipboard.SetText(graph);
+            System.Windows.Forms.MessageBox.Show("In clipboard");
+        }
+
+        private void LoopCheck_Click(object sender, RibbonControlEventArgs e)
+        {
+            var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+            var is_ok = data.ContainsLoop();
+            System.Windows.Forms.MessageBox.Show("No loops: " + is_ok);
+        }
     }
 }
