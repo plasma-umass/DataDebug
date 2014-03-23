@@ -185,7 +185,7 @@ namespace DataDebug
                 var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
-                List<KeyValuePair<TreeNode, int>> filtered_high_scores;
+                List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
 
                 //Using an outlier test for highlighting 
                 //scores that fall outside of two standard deviations from the others
@@ -549,7 +549,7 @@ namespace DataDebug
                             sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false);
                             break;
                         case 2:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllOutputs, true, false, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false);
                             break;
                         default:
                             System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");

@@ -31,8 +31,8 @@ namespace UserSimulation
     public enum AnalysisType
     {
         CheckCell           = 0,
-        NormalPerRange      = 1,
-        NormalAllOutputs    = 2
+        NormalPerRange      = 1,    //normal analysis of inputs on a per-range granularity
+        NormalAllInputs     = 2     //normal analysis on the entire set of inputs
     }
 
     public class SimulationNotRunException : Exception
@@ -310,8 +310,8 @@ namespace UserSimulation
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
-                        bool weighted,              // should we weight things?
-                        bool all_outputs,            // if !all_outputs, we only consider terminal outputs
+                        bool weighted,              // should we weigh things?
+                        bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff          // indicates if we should use a normal cutoff or top x%
                        )
         {
@@ -356,6 +356,52 @@ namespace UserSimulation
                 // generate errors
                 _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
+                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
+            }
+            catch (Exception e)
+            {
+                _exit_state = ErrorCondition.Exception;
+                _exception_message = e.Message;
+            }
+        }
+
+        // For running a simulation from the batch runner
+        public void RunFromBatch(int nboots,        // number of bootstraps
+                        string xlfile,              // name of the workbook
+                        double significance,        // significance threshold for test
+                        Excel.Application app,      // reference to Excel app
+                        double threshold,           // percentage of erroneous cells
+                        Classification c,           // data from which to generate errors
+                        Random r,                   // a random number generator
+                        AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        bool weighted,              // should we weigh things?
+                        bool all_outputs,           // if !all_outputs, we only consider terminal outputs
+                        bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
+                        AnalysisData data,          // the computation tree of the spreadsheet
+                        Excel.Workbook wb,          // the workbook being analyzed
+                        CellDict errors,            // the errors that will be introduced in the spreadsheet
+                        TreeNode[] terminal_input_nodes, // the inputs
+                        TreeNode[] terminal_formula_nodes, // the outputs
+                        CellDict original_inputs,          // original values of the inputs
+                        CellDict correct_outputs           // the correct outputs
+                       )
+        {
+            try
+            {
+                if (terminal_input_nodes.Length == 0)
+                {
+                    _exit_state = ErrorCondition.ContainsNoInputs;
+                    return;
+                }
+
+                if (original_inputs.Count() == 0)
+                {
+                    _exit_state = ErrorCondition.ContainsNoInputs;
+                    return;
+                }
+
+                _errors = errors;
+                
                 Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
             }
             catch (Exception e)
@@ -850,7 +896,7 @@ namespace UserSimulation
                 {
                     flagged_cell = NormaPerRange_Step(data, wb, known_good);
                 }
-                else if (analysis_type == AnalysisType.NormalAllOutputs)
+                else if (analysis_type == AnalysisType.NormalAllInputs)
                 {
                     flagged_cell = NormalAllOutputs_Step(data, app, wb, known_good);
                 }
@@ -937,7 +983,7 @@ namespace UserSimulation
         }
 
         // save spreadsheet inputs to a CellDict
-        private static CellDict SaveInputs(TreeNode[] input_ranges, Excel.Workbook wb)
+        public static CellDict SaveInputs(TreeNode[] input_ranges, Excel.Workbook wb)
         {
             try
             {
@@ -964,7 +1010,7 @@ namespace UserSimulation
         }
 
         // save spreadsheet outputs to a CellDict
-        private static CellDict SaveOutputs(TreeNode[] formula_nodes, Excel.Workbook wb)
+        public static CellDict SaveOutputs(TreeNode[] formula_nodes, Excel.Workbook wb)
         {
             var cd = new CellDict();
             foreach (TreeNode formula_cell in formula_nodes)
@@ -986,7 +1032,7 @@ namespace UserSimulation
         }
 
         // inject errors into a workbook
-        private static void InjectValues(Excel.Application app, Excel.Workbook wb, CellDict values)
+        public static void InjectValues(Excel.Application app, Excel.Workbook wb, CellDict values)
         {
             foreach (KeyValuePair<AST.Address,string> pair in values)
             {
