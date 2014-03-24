@@ -602,9 +602,17 @@ namespace DataDebug
 
         private void LoopCheck_Click(object sender, RibbonControlEventArgs e)
         {
-            var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-            var is_ok = data.ContainsLoop();
-            System.Windows.Forms.MessageBox.Show("No loops: " + is_ok);
+            try
+            {
+                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+                var is_ok = data.ContainsLoop();
+                System.Windows.Forms.MessageBox.Show("No loops: " + is_ok);
+            }
+            catch (ExcelParserUtility.ParseException ex)
+            {
+                System.Windows.Forms.Clipboard.SetText(ex.Message);
+                System.Windows.Forms.MessageBox.Show(String.Format("Parser exception for formula: {0}", ex.Message));
+            }
         }
     }
 }
