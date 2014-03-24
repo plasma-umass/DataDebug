@@ -120,8 +120,12 @@ namespace DataDebugMethods
             Excel.Range r1 = cell_nodes.First().Key.GetCOMObject(app);
             foreach (var node in cell_nodes)
             {
-                Excel.Range r = node.Key.GetCOMObject(app);
-                r1 = app.Union(r1, r); 
+                try
+                {
+                    Excel.Range r = node.Key.GetCOMObject(app);
+                    r1 = app.Union(r1, r);
+                }
+                catch { }
             }
             _cells = r1;
             _size = r1.Count;
