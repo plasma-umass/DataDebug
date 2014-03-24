@@ -19,6 +19,9 @@ using System.IO;
 
 namespace UserSimulation
 {
+    public class NoRangeInputs : Exception { }
+    public class NoFormulas : Exception { }
+
     [Serializable]
     public enum ErrorCondition
     {
@@ -331,16 +334,14 @@ namespace UserSimulation
 
             if (terminal_input_nodes.Length == 0)
             {
-                _exit_state = ErrorCondition.ContainsNoInputs;
-                return;
+                throw new NoRangeInputs();
             }
 
             // save original spreadsheet state
             CellDict original_inputs = SaveInputs(terminal_input_nodes, wb);
             if (original_inputs.Count() == 0)
             {
-                _exit_state = ErrorCondition.ContainsNoInputs;
-                return;
+                throw new NoFormulas();
             }
 
             // force a recalculation before saving outputs, otherwise we may
@@ -380,14 +381,12 @@ namespace UserSimulation
         {
             if (terminal_input_nodes.Length == 0)
             {
-                _exit_state = ErrorCondition.ContainsNoInputs;
-                return;
+                throw new NoRangeInputs();
             }
 
             if (original_inputs.Count() == 0)
             {
-                _exit_state = ErrorCondition.ContainsNoInputs;
-                return;
+                throw new NoFormulas();
             }
 
             _errors = errors;
