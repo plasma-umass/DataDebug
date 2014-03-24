@@ -119,9 +119,9 @@ namespace DataDebugMethods
             {
                 // a loop is when we see the same node twice while recursing
                 var visited_from = new Dictionary<TreeNode,TreeNode>();
-                OK = OK && pair.Value.LoopCheck(visited_from, null);
+                OK = OK && !pair.Value.ContainsLoop(visited_from, null);
             }
-            return OK;
+            return !OK;
         }
     }
 }

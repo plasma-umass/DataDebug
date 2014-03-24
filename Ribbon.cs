@@ -605,8 +605,8 @@ namespace DataDebug
             try
             {
                 var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-                var is_ok = data.ContainsLoop();
-                System.Windows.Forms.MessageBox.Show("No loops: " + is_ok);
+                var contains_loop = data.ContainsLoop();
+                System.Windows.Forms.MessageBox.Show("Contains loops: " + contains_loop);
             }
             catch (ExcelParserUtility.ParseException ex)
             {

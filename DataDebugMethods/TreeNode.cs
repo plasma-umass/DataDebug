@@ -298,30 +298,33 @@ namespace DataDebugMethods
             return s;
         }
 
-        public bool LoopCheck(Dictionary<TreeNode,TreeNode> visited, TreeNode from_tn)
+        public bool ContainsLoop(Dictionary<TreeNode,TreeNode> visited, TreeNode from_tn)
         {
             // base case 1: loop check
             if (visited.ContainsKey(this))
             {
-                return false;
+                return true;
             }
             // base case 2: an input
             if (!_is_formula && _is_a_cell)
             {
-                return true;
+                return false;
             }
             // recursive case
             bool OK = true;
             foreach (TreeNode t in this.getInputs())
             {
-                // new dict to mark visit
-                var visited2 = new Dictionary<TreeNode, TreeNode>(visited);
-                // mark visit
-                visited2.Add(this, from_tn);
-                // recurse
-                OK = OK && t.LoopCheck(visited2, this);
+                if (OK)
+                {
+                    // new dict to mark visit
+                    var visited2 = new Dictionary<TreeNode, TreeNode>(visited);
+                    // mark visit
+                    visited2.Add(this, from_tn);
+                    // recurse
+                    OK = OK && !t.ContainsLoop(visited2, this);
+                }
             }
-            return OK;
+            return !OK;
         }
 
         /**
