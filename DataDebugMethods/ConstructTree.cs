@@ -104,6 +104,8 @@ namespace DataDebugMethods
 
         public static ArrayList GetFormulaRanges(Excel.Sheets ws, Excel.Application app)
         {
+            var fn_filter = new Regex("^=", RegexOptions.Compiled);
+
             // This keeps track of the range to be analyzed in every worksheet of the workbook
             // We have to use ArrayList because COM interop does not work with generics.
             var analysisRanges = new ArrayList(); 
@@ -117,7 +119,9 @@ namespace DataDebugMethods
                 foreach (Excel.Range cell in w.UsedRange)
                 {
                     // the cell thinks it has a formula
-                    if (cell.HasFormula)
+                    if (cell.HasFormula
+                        && !String.IsNullOrWhiteSpace(System.Convert.ToString(cell.Formula))
+                        && fn_filter.IsMatch(System.Convert.ToString(cell.Formula)))
                     {
                         // this is our first time around; formula_cells is not yet set,
                         // so set it

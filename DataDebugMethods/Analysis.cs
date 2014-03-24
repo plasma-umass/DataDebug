@@ -41,7 +41,95 @@ namespace DataDebugMethods
             return d;
         }
 
-        private static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
+        private static Dictionary<TreeNode, string> FastStoreOutputs(TreeNode[] outputs)
+        {
+            // hash TreeNodes by their addresses
+            var fn_map = new Dictionary<AST.Address, TreeNode>();
+            foreach (TreeNode fn in outputs)
+            {
+                fn_map.Add(fn.GetAddress(), fn);
+            }
+
+            // output dict
+            var d = new Dictionary<TreeNode, string>();
+
+            // partition all of the TreeNodes by their worksheet
+            var tree_groups = outputs.GroupBy(tn => tn.GetAddress().WorksheetName);
+
+            // for each worksheet, do an array read of the formulas
+            foreach (IEnumerable<TreeNode> ws_fns in tree_groups)
+            {
+                // get formulas in this worksheet
+                var rng = ws_fns.First().getWorksheetObject().UsedRange;
+
+                // get dimensions
+                var left = rng.Column;
+                var right = rng.Columns.Count + left - 1;
+                var top = rng.Row;
+                var bottom = rng.Rows.Count + top - 1;
+
+                // get names
+                var fstaddr = ws_fns.First().GetAddress();
+                var wsname = fstaddr.WorksheetName;
+                var wbname = fstaddr.WorkbookName;
+                var path = fstaddr.Path;
+
+                // sometimes the used range is a range
+                if (left != right || top != bottom)
+                {
+                    // y is the first index
+                    // x is the second index
+                    object[,] data = rng.Value2;    // fast array read
+
+                    var x_del = left - 1;
+                    var y_del = top - 1;
+
+                    foreach (TreeNode tn in ws_fns)
+                    {
+                        // construct address in formulas array
+                        var addr = tn.GetAddress();
+                        var x = addr.X - x_del;
+                        var y = addr.Y - y_del;
+
+                        // get string
+                        String s = System.Convert.ToString(data[y, x]);
+                        if (String.IsNullOrWhiteSpace(s))
+                        {
+                            d.Add(tn, "");
+                        }
+                        else
+                        {
+                            d.Add(tn, s);
+                        }
+                    }
+                }
+                // and other times it is a single cell
+                else
+                {
+                    // construct the appropriate AST.Address
+                    AST.Address addr = AST.Address.NewFromR1C1(top, left, wsname, wbname, path);
+
+                    // check that the address belongs to one of our TreeNodes
+                    TreeNode tn;
+                    if (fn_map.TryGetValue(addr, out tn))
+                    {
+                        String s = System.Convert.ToString(rng.Value2);
+                        if (String.IsNullOrWhiteSpace(s))
+                        {
+                            d.Add(tn, "");
+                        }
+                        else
+                        {
+                            d.Add(tn, s);
+                        }
+                    }
+                }
+            }
+
+            return d;
+        }
+
+        private static Dictionary<TreeNode, string> SlowStoreOutputs(TreeNode[] outputs)
         {
             var d = new Dictionary<TreeNode, string>();
             foreach (TreeNode output_fn in outputs)
@@ -52,6 +140,11 @@ namespace DataDebugMethods
                 d.Add(output_fn, output_fn.getCOMValueAsString());
             }
             return d;
+        }
+
+        private static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
+        {
+            return FastStoreOutputs(outputs);
         }
 
         public static InputSample[] Resample(int num_bootstraps, InputSample orig_vals, Random rng)
@@ -139,7 +232,9 @@ namespace DataDebugMethods
             }
 
             // do appropriate hypothesis test, and add weighted test scores, and return result dict
-            return ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted);
+            var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted);
+
+            return s;
         }
 
         public static TreeScore ScoreInputs(TreeNode[] input_rngs, TreeNode[] output_fns, Dictionary<TreeNode,string> initial_outputs, FunctionOutput<string>[][][] boots, bool weighted)
@@ -147,34 +242,40 @@ namespace DataDebugMethods
             // dict of exclusion scores for each input CELL TreeNode
             var iexc_scores = new TreeScore();
 
+            // compute the cross product of input, output pairs so that
+            // we can efficiently parallelize the computation
+            var xprod = from first in Enumerable.Range(0, input_rngs.Length)
+                        from second in Enumerable.Range(0, output_fns.Length)
+                        select new[] { first, second };
+
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
             // i is the index of the range in the input array; an ARRAY of CELLS
-            for (int i = 0; i < input_rngs.Length; i++)
+            System.Threading.Tasks.Parallel.ForEach(xprod, pair =>
             {
-                // f is the index of the function in the output array; a SINGLE CELL
-                for (int f = 0; f < output_fns.Length; f++)
+                int i = pair[0];
+                int f = pair[1];
+
+                // this function output treenode
+                TreeNode functionNode = output_fns[f];
+
+                // this function's input range treenode
+                TreeNode rangeNode = input_rngs[i];
+
+                // do the hypothesis test and then merge
+                // the scores from previous tests
+                TreeScore s;
+                if (FunctionOutputsAreNumeric(boots[f][i]))
                 {
-                    // this function output treenode
-                    TreeNode functionNode = output_fns[f];
-
-                    // this function's input range treenode
-                    TreeNode rangeNode = input_rngs[i];
-
-                    // do the hypothesis test and then merge
-                    // the scores from previous tests
-                    TreeScore s;
-                    if (FunctionOutputsAreNumeric(boots[f][i]))
-                    {
-                        s = NumericHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
-                    }
-                    else
-                    {
-                        s = StringHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
-                    }
-                    iexc_scores = DictAdd(iexc_scores, s);
+                    s = NumericHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
                 }
-            }
+                else
+                {
+                    s = StringHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
+                }
+                iexc_scores = DictAdd(iexc_scores, s);
+            });
+
             return iexc_scores;
         }
 
@@ -504,13 +605,14 @@ namespace DataDebugMethods
         // are all of the values numeric?
         public static bool FunctionOutputsAreNumeric(FunctionOutput<string>[] boots)
         {
-            for (int b = 0; b < boots.Length; b++)
+            for (int i = 0; i < boots.Length; i++)
             {
-                if (!ExcelParser.isNumeric(boots[b].GetValue()))
+                double d;
+                if (!Double.TryParse(boots[i].GetValue(), out d))
                 {
                     return false;
                 }
-            }
+            };
             return true;
         }
 

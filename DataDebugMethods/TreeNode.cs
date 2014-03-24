@@ -145,6 +145,7 @@ namespace DataDebugMethods
         {
             return _workbook;
         }
+
         //Returns the weight of this node
         public double getWeight()
         {
