@@ -649,7 +649,7 @@ namespace UserSimulation
                                            bool run_bootstrap,
                                            bool normal_cutoff,
                                            HashSet<AST.Address> known_good,
-                                           List<KeyValuePair<TreeNode, int>> filtered_high_scores)
+                                           ref List<KeyValuePair<TreeNode, int>> filtered_high_scores)
         {
             // Get bootstraps
             // The bootstrap should only re-run if there is a correction made, 
@@ -701,6 +701,10 @@ namespace UserSimulation
                     else if (significance == 0.925) //7.5% cutoff 1.4395
                     {
                         filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.4395).ToList();
+                    }
+                    else
+                    {
+                        throw new Exception("Uhhh.... What's my cutoff?");
                     }
                 }
                 else
@@ -883,7 +887,7 @@ namespace UserSimulation
                                                   correction_made,
                                                   normal_cutoff,
                                                   known_good,
-                                                  filtered_high_scores);
+                                                  ref filtered_high_scores);
                 } else if (analysis_type == AnalysisType.NormalPerRange)
                 {
                     flagged_cell = NormaPerRange_Step(data, wb, known_good);
