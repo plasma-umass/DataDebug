@@ -236,77 +236,69 @@ namespace UserSimulation
             _all_outputs = all_outputs;
             _weighted = weighted;
 
-            try
+            // set path
+            _wb_path = wb.Path;
+
+            //Now we want to inject the errors from top_errors
+            InjectValues(app, wb, _errors);
+
+            // TODO: save a copy of the workbook for later inspection
+
+            // save function outputs
+            CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
+
+            //Time the removal of errors
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            // remove errors until none remain; MODIFIES WORKBOOK
+            _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff);
+
+            sw.Stop();
+            TimeSpan elapsed = sw.Elapsed;
+            _analysis_time = elapsed.TotalSeconds;
+
+            // save partially-corrected outputs
+            var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
+
+            // compute total relative error
+            _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
+            _total_relative_error = TotalRelativeError(_error);
+
+            // compute starting total relative error (normalized by max_errors)
+            ErrorDict starting_error = CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
+            _initial_total_relative_error = TotalRelativeError(starting_error);
+
+            // effort
+            _max_effort = data.cell_nodes.Count;
+            _cells_in_scope = 0;
+
+            foreach (TreeNode input_range in terminal_input_nodes)
             {
-                // set path
-                _wb_path = wb.Path;
-
-                //Now we want to inject the errors from top_errors
-                InjectValues(app, wb, _errors);
-
-                // TODO: save a copy of the workbook for later inspection
-
-                // save function outputs
-                CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes, wb);
-
-                //Time the removal of errors
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-
-                // remove errors until none remain; MODIFIES WORKBOOK
-                _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, false, normal_cutoff);
-
-                sw.Stop();
-                TimeSpan elapsed = sw.Elapsed;
-                _analysis_time = elapsed.TotalSeconds;
-
-                // save partially-corrected outputs
-                var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes, wb);
-
-                // compute total relative error
-                _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
-                _total_relative_error = TotalRelativeError(_error);
-
-                // compute starting total relative error (normalized by max_errors)
-                ErrorDict starting_error = CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
-                _initial_total_relative_error = TotalRelativeError(starting_error);
-
-                // effort
-                _max_effort = data.cell_nodes.Count;
-                _cells_in_scope = 0;
-
-                foreach (TreeNode input_range in terminal_input_nodes)
+                foreach (TreeNode input_to_range in input_range.getInputs())
                 {
-                    foreach (TreeNode input_to_range in input_range.getInputs())
+                    if (input_to_range.isCell() && !input_to_range.isFormula()) //if this input is a cell and is not a formula, then it is perturbable, so it's in our scope
                     {
-                        if (input_to_range.isCell() && !input_to_range.isFormula()) //if this input is a cell and is not a formula, then it is perturbable, so it's in our scope
-                        {
-                            _cells_in_scope++;
-                        }
+                        _cells_in_scope++;
                     }
                 }
-
-                _effort = (_user.true_positives.Count + _user.false_positives.Count);
-                _expended_effort = (double)_effort / (double)_max_effort;
-
-                // compute average precision
-                // AveP = (\sum_{k=1}^n (P(k) * rel(k))) / |total positives|
-                // where P(k) is the precision at threshold k,
-                // rel(k) = \{ 1 if item at k is a true positive, 0 otherwise
-                _average_precision = _user.PrecRel_at_k.Sum() / (double)_errors.Count;
-
-                // restore original values
-                InjectValues(app, wb, original_inputs);
-
-                _tree_construct_time = data.tree_construct_time;
-                // flag that we're done; safe to print output results
-                _simulation_run = true;
             }
-            catch (Exception e)
-            {
-                _exit_state = ErrorCondition.Exception;
-                _exception_message = e.Message;
-            }
+
+            _effort = (_user.true_positives.Count + _user.false_positives.Count);
+            _expended_effort = (double)_effort / (double)_max_effort;
+
+            // compute average precision
+            // AveP = (\sum_{k=1}^n (P(k) * rel(k))) / |total positives|
+            // where P(k) is the precision at threshold k,
+            // rel(k) = \{ 1 if item at k is a true positive, 0 otherwise
+            _average_precision = _user.PrecRel_at_k.Sum() / (double)_errors.Count;
+
+            // restore original values
+            InjectValues(app, wb, original_inputs);
+
+            _tree_construct_time = data.tree_construct_time;
+            // flag that we're done; safe to print output results
+            _simulation_run = true;
         }
 
         // create and run a CheckCell simulation
@@ -323,54 +315,46 @@ namespace UserSimulation
                         bool normal_cutoff          // indicates if we should use a normal cutoff or top x%
                        )
         {
-            try
+            // open workbook
+            Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
+
+            // build dependency graph
+            var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+
+
+            // create ErrorGenerator object
+            var egen = new ErrorGenerator();
+
+            // get terminal input and terminal formula nodes once
+            var terminal_input_nodes = data.TerminalInputNodes();
+            var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
+
+            if (terminal_input_nodes.Length == 0)
             {
-                // open workbook
-                Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
-
-                // build dependency graph
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-
-
-                // create ErrorGenerator object
-                var egen = new ErrorGenerator();
-
-                // get terminal input and terminal formula nodes once
-                var terminal_input_nodes = data.TerminalInputNodes();
-                var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
-
-                if (terminal_input_nodes.Length == 0)
-                {
-                    _exit_state = ErrorCondition.ContainsNoInputs;
-                    return;
-                }
-
-                // save original spreadsheet state
-                CellDict original_inputs = SaveInputs(terminal_input_nodes, wb);
-                if (original_inputs.Count() == 0)
-                {
-                    _exit_state = ErrorCondition.ContainsNoInputs;
-                    return;
-                }
-
-                // force a recalculation before saving outputs, otherwise we may
-                // erroneously conclude that the procedure did the wrong thing
-                // based solely on Excel floating-point oddities
-                InjectValues(app, wb, original_inputs);
-
-                // save function outputs
-                CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
-
-                // generate errors
-                _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
-
-                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
+                _exit_state = ErrorCondition.ContainsNoInputs;
+                return;
             }
-            catch (Exception e)
+
+            // save original spreadsheet state
+            CellDict original_inputs = SaveInputs(terminal_input_nodes, wb);
+            if (original_inputs.Count() == 0)
             {
-                _exit_state = ErrorCondition.Exception;
-                _exception_message = e.Message;
+                _exit_state = ErrorCondition.ContainsNoInputs;
+                return;
             }
+
+            // force a recalculation before saving outputs, otherwise we may
+            // erroneously conclude that the procedure did the wrong thing
+            // based solely on Excel floating-point oddities
+            InjectValues(app, wb, original_inputs);
+
+            // save function outputs
+            CellDict correct_outputs = SaveOutputs(terminal_formula_nodes, wb);
+
+            // generate errors
+            _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
+
+            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
         }
 
         // For running a simulation from the batch runner
@@ -394,29 +378,21 @@ namespace UserSimulation
                         CellDict correct_outputs           // the correct outputs
                        )
         {
-            try
+            if (terminal_input_nodes.Length == 0)
             {
-                if (terminal_input_nodes.Length == 0)
-                {
-                    _exit_state = ErrorCondition.ContainsNoInputs;
-                    return;
-                }
+                _exit_state = ErrorCondition.ContainsNoInputs;
+                return;
+            }
 
-                if (original_inputs.Count() == 0)
-                {
-                    _exit_state = ErrorCondition.ContainsNoInputs;
-                    return;
-                }
+            if (original_inputs.Count() == 0)
+            {
+                _exit_state = ErrorCondition.ContainsNoInputs;
+                return;
+            }
 
-                _errors = errors;
+            _errors = errors;
                 
-                Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
-            }
-            catch (Exception e)
-            {
-                _exit_state = ErrorCondition.Exception;
-                _exception_message = e.Message;
-            }
+            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
         }
 
         public double RemainingError()
