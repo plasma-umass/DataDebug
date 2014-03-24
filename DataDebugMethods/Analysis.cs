@@ -472,11 +472,6 @@ namespace DataDebugMethods
             // init bootstrap memo
             var bootsaver = new BootMemo[input_arr.Length];
 
-            // DEBUG
-            var hits = 0;
-            var sw = new Stopwatch();
-            sw.Start();
-
             // compute function outputs for each bootstrap
             // inputs[i] is the ith input range
             for (var i = 0; i < input_arr.Length; i++)
@@ -491,7 +486,7 @@ namespace DataDebugMethods
                 for (var b = 0; b < num_bootstraps; b++)
                 {
                     // use memo DB
-                    FunctionOutput<string>[] fos = bootsaver[i].FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, ref hits, false);
+                    FunctionOutput<string>[] fos = bootsaver[i].FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, false);
                     for (var f = 0; f < output_arr.Length; f++)
                     {
                         bootstraps[f][i][b] = fos[f];
@@ -502,8 +497,6 @@ namespace DataDebugMethods
                 // restore the COM value; faster to do once, at the end (this saves n-1 replacements)
                 BootMemo.ReplaceExcelRange(com, initial_inputs[t]);
             }
-
-            sw.Stop();
 
             return bootstraps;
         }

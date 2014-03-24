@@ -17,7 +17,7 @@ namespace DataDebugMethods
             _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
         }
         
-        public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, ref int hits, bool replace_original)
+        public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, bool replace_original)
         {
             FunctionOutput<string>[] fo_arr;
             if (!_d.TryGetValue(sample, out fo_arr))
@@ -43,10 +43,6 @@ namespace DataDebugMethods
                 {
                     ReplaceExcelRange(com, original);
                 }
-            }
-            else
-            {
-                hits += 1;
             }
             return fo_arr;
         }

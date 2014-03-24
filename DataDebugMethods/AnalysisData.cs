@@ -84,7 +84,8 @@ namespace DataDebugMethods
             //    and also contains a formula which consumes input from
             //    another range).
             // 2. the range is actually a formula cell
-            return input_ranges.Where(pair => !pair.Value.GetDontPerturb())
+            return input_ranges.Where(pair => !pair.Value.GetDontPerturb()
+                                              && !pair.Value.isFormula())
                                .Select(pair => pair.Value).ToArray();
         }
 

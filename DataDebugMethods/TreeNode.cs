@@ -327,44 +327,6 @@ namespace DataDebugMethods
             return !OK;
         }
 
-        /**
-         * This is a recursive method for propagating the weights down the nodes in the tree
-         * All outputs have weight 1. Their n children have weight 1/n, and so forth. 
-         * Modifies the weights set on the trees.
-         * TODO: make this an instance method.
-         */
-        //public static void propagateWeight(TreeNode node, double passed_down_weight)
-        //{
-        //    if (!node.hasInputs())
-        //    {
-        //        return;
-        //    }
-        //    else
-        //    {
-        //        int denominator = 0;  //keeps track of how many objects we are dividing the influence by
-        //        foreach (TreeNode parent in node.getInputs())
-        //        {
-        //            if (parent.isRange() || parent.isChart())
-        //                denominator = denominator + parent.getInputs().Count;
-        //            else
-        //                denominator = denominator + 1;
-        //        }
-        //        foreach (TreeNode parent in node.getInputs())
-        //        {
-        //            if (parent.isRange() || parent.isChart())
-        //            {
-        //                parent.setWeight(parent.getWeight() + passed_down_weight * parent.getInputs().Count / denominator);
-        //                propagateWeight(parent, passed_down_weight * parent.getInputs().Count / denominator);
-        //            }
-        //            else
-        //            {
-        //                parent.setWeight(parent.getWeight() + passed_down_weight / node.getInputs().Count);
-        //                propagateWeight(parent, passed_down_weight / node.getInputs().Count);
-        //            }
-        //        }
-        //    }
-        //}
-
         internal void setFormula(string formula)
         {
             _formula = formula;
@@ -382,7 +344,14 @@ namespace DataDebugMethods
 
         public string getCOMValueAsString()
         {
-            return System.Convert.ToString(this.getCOMObject().Value2);
+            // null values become the empty string
+            var s = System.Convert.ToString(this.getCOMObject().Value2);
+            if (s == null)
+            {
+                return "";
+            } else {
+                return s;
+            }
         }
 
         public bool isLeaf()
