@@ -186,7 +186,7 @@ namespace DataDebug
                 }
 
                 // Get bootstraps
-                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true, max_duration_in_ms, sw);
+                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true, max_duration_in_ms, sw, tool_significance);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
                 List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
@@ -544,25 +544,33 @@ namespace DataDebug
 
                 if (sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    // run the simulation
-                    app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
-                    UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                    switch (analysisType.SelectedItemIndex)
-                    {
-                        case 0:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false, MAX_DURATION_IN_MS);
-                            break;
-                        case 1:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false, MAX_DURATION_IN_MS);
-                            break;
-                        case 2:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false, MAX_DURATION_IN_MS);
-                            break;
-                        default:
-                            System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");
-                            break;
+                    // ask the user where the log file should go
+                    var lfd = new System.Windows.Forms.OpenFileDialog();
+                    lfd.FileName = "output.log";
+                    if (lfd.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
+                        // create a log streamwriter
+                        var log_stream = new StreamWriter(lfd.FileName);
+
+                        // run the simulation
+                        app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
+                        UserSimulation.Simulation sim = new UserSimulation.Simulation();
+                        switch (analysisType.SelectedItemIndex)
+                        {
+                            case 0:
+                                sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false, MAX_DURATION_IN_MS, log_stream);
+                                break;
+                            case 1:
+                                sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false, MAX_DURATION_IN_MS, log_stream);
+                                break;
+                            case 2:
+                                sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false, MAX_DURATION_IN_MS, log_stream);
+                                break;
+                            default:
+                                System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");
+                                break;
+                        }
+                        sim.ToCSV(sfd.FileName);
                     }
-                    sim.ToCSV(sfd.FileName);
                 }
             }
         }
