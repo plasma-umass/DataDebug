@@ -88,14 +88,12 @@ namespace DataDebugMethods
                 }
             } 
             return distance_sum_sq / numeric_count;
-            //return distance_sum_sq / _size;
         }
 
         // PUBLIC METHODS
         public int Length()
         {
             return numeric_count;
-            //return _size;
         }
 
         public Double Mean()
@@ -172,7 +170,6 @@ namespace DataDebugMethods
 
                 removals.AddRange(new_removals);
             }
-
             // add removals to removalsDict for coloring-undo
             Dictionary<Excel.Range, System.Drawing.Color> removalsDict = new Dictionary<Excel.Range, System.Drawing.Color>();
             foreach (Excel.Range c in removals)
@@ -193,7 +190,6 @@ namespace DataDebugMethods
         public static Double R(int num_outliers, int data_sz)
         {
             // returns R value or -1 if undefined
-
             double[,] values = new double[,] {  {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
                                                 {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
                                                 {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
