@@ -42,8 +42,7 @@ namespace UserSimulation
                         double output_error_magnitude,
                         double input_error_magnitude,
                         bool was_flagged,
-                        bool was_error,
-                        StreamWriter sw)
+                        bool was_error)
         {
             _procedure = procedure;
             _filename = filename;
@@ -54,7 +53,15 @@ namespace UserSimulation
             _input_error_magnitude = input_error_magnitude;
             _was_flagged = was_flagged;
             _was_error = was_error;
+        }
 
+        public static void Headers(StreamWriter sw) {
+            sw.WriteLine("filename, procedure, address, original_value, erroneous_value," +
+                         "total_relative_error, typo_magnitude, was_flagged, was_error");
+        }
+
+        public void WriteLog(StreamWriter sw)
+        {
             // write
             sw.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
                          _filename,
@@ -68,11 +75,6 @@ namespace UserSimulation
                          _was_error);
 
             sw.Flush();
-        }
-
-        public static void Headers(StreamWriter sw) {
-            sw.WriteLine("filename, procedure, address, original_value, erroneous_value," +
-                         "total_relative_error, typo_magnitude, was_flagged, was_error");
         }
     }
 
@@ -1090,7 +1092,7 @@ namespace UserSimulation
                     var input_error_magnitude = InputErrorMagnitude(errord[flagged_cell], original_inputs[flagged_cell]);
 
                     // write error log
-                    _error_log.Add(new LogEntry(analysis_type,
+                    var logentry = new LogEntry(analysis_type,
                                                 wb.Name,
                                                 flagged_cell,
                                                 original_inputs[flagged_cell],
@@ -1098,8 +1100,9 @@ namespace UserSimulation
                                                 output_error_magnitude,
                                                 input_error_magnitude,
                                                 true,
-                                                correction_made,
-                                                log_stream));
+                                                correction_made);
+                    logentry.WriteLog(log_stream);
+                    _error_log.Add(logentry);
                 }
             }
 
@@ -1121,8 +1124,7 @@ namespace UserSimulation
                                             last_out_err_mag,
                                             InputErrorMagnitude(errord[fn], original_inputs[fn]),
                                             false,
-                                            true,
-                                            log_stream));
+                                            true));
             }
             return o;
         }
