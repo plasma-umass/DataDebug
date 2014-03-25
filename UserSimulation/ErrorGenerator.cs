@@ -63,9 +63,12 @@ namespace UserSimulation
 
         public string[] GenerateErrorStrings(string orig, Classification c, int k)
         {
-            var e = Enumerable.Range(0, k);
-            var strs = e.AsParallel().Select( i => GenerateErrorString(orig, c) );
-            return strs.ToArray();
+            var strs = new string[k];
+            for (int i = 0; i < k; i++)
+            {
+                strs[i] = GenerateErrorString(orig, c);
+            }
+            return strs;
         }
 
         public CellDict RandomlyGenerateErrors(CellDict original_inputs, Classification c, double proportion)

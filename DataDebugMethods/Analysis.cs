@@ -41,7 +41,7 @@ namespace DataDebugMethods
             return d;
         }
 
-        private static Dictionary<TreeNode, string> FastStoreOutputs(TreeNode[] outputs)
+        public static Dictionary<TreeNode, string> FastStoreOutputs(TreeNode[] outputs)
         {
             // hash TreeNodes by their addresses
             var fn_map = new Dictionary<AST.Address, TreeNode>();
