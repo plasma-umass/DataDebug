@@ -18,6 +18,7 @@ namespace DataDebug
     {
         // e * 1000
         public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+        public readonly static long MAX_DURATION_IN_MS = 5L * 60L * 1000L;  // 5 minutes
 
         Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
         Excel.Application app;
@@ -152,8 +153,11 @@ namespace DataDebug
             return FSharpOption<double>.Some(significance);
         }
 
-        private List<KeyValuePair<TreeNode, int>> Analyze(bool normal_cutoff)
+        private List<KeyValuePair<TreeNode, int>> Analyze(bool normal_cutoff, long max_duration_in_ms)
         {
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             using (var pb = new ProgBar(0, 100))
             {
                 current_workbook = app.ActiveWorkbook;
@@ -182,7 +186,7 @@ namespace DataDebug
                 }
 
                 // Get bootstraps
-                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true);
+                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true, max_duration_in_ms, sw);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
                 List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
@@ -271,6 +275,9 @@ namespace DataDebug
                 }
                 // Enable screen updating when we're done
                 app.ScreenUpdating = true;
+
+                sw.Stop();
+
                 return filtered_high_scores;
             }
         }
@@ -350,7 +357,7 @@ namespace DataDebug
                 tool_significance = sig.Value;
                 try
                 {
-                    flaggable_list = Analyze(false);
+                    flaggable_list = Analyze(false, MAX_DURATION_IN_MS);
                     Flag();
                 }
                 catch (ExcelParserUtility.ParseException ex)
@@ -406,7 +413,7 @@ namespace DataDebug
                 flagged_cell = null;
                 try
                 {
-                    flaggable_list = Analyze(false);
+                    flaggable_list = Analyze(false, MAX_DURATION_IN_MS);
                     Flag();
                 }
                 catch (ExcelParserUtility.ParseException ex)
@@ -543,13 +550,13 @@ namespace DataDebug
                     switch (analysisType.SelectedItemIndex)
                     {
                         case 0:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false, MAX_DURATION_IN_MS);
                             break;
                         case 1:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false, MAX_DURATION_IN_MS);
                             break;
                         case 2:
-                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false);
+                            sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false, MAX_DURATION_IN_MS);
                             break;
                         default:
                             System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");
