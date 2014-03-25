@@ -32,7 +32,10 @@ namespace DataDebugMethods
 
         public void SetProgress(int progress)
         {
-            System.Diagnostics.Debug.Assert(progress >= Minimum && progress <= Maximum);
+            if (progress < Minimum || progress > Maximum)
+            {
+                throw new Exception("Progress bar error.");
+            }
             progressBar1.Value = progress;
         }
 

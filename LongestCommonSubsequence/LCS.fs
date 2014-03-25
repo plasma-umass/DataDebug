@@ -184,7 +184,7 @@
                     // insert the character in the appropriate location,
                     // ensuring that the sting is lengthened if the location
                     // occurs after the end of the string
-                    System.Diagnostics.Debug.Assert(insertpos <= entered.Length)
+                    failwith "insertpos <= entered.Length"
                     let entered' = if insertpos = entered.Length then
                                        entered + ochar.ToString()
                                    else

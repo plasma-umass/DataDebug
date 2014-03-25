@@ -1011,7 +1011,10 @@ namespace UserSimulation
             foreach (TreeNode formula_cell in formula_nodes)
             {
                 // throw an exception in debug mode, because this should never happen
-                Debug.Assert((bool)formula_cell.getCOMObject().HasFormula);
+                if (!(bool)formula_cell.getCOMObject().HasFormula)
+                {
+                    throw new Exception("Formula TreeNode has no formula.");
+                }
 
                 var addr = formula_cell.GetAddress();
                 // save value

@@ -230,7 +230,10 @@ namespace UserSimulation
             var k = 1.0 / probabilities.Sum();
             var probs = probabilities.Select(pr => k * pr);
 
-            System.Diagnostics.Debug.Assert(probs.Sum() > 1 - EPSILON && probs.Sum() < 1 + EPSILON);
+            if (probs.Sum() < 1 - EPSILON || probs.Sum() > 1 + EPSILON)
+            {
+                throw new Exception("Probabilities do not sum to 1.");
+            }
 
             // draw intervals
             double[] intervals = probs.Select((pr_1, i) => probs.Where((pr_2, j) => j < i).Sum() + pr_1).ToArray();

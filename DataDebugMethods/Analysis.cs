@@ -166,7 +166,10 @@ namespace DataDebugMethods
                     // randomly select a value from the original values
                     int input_idx = rng.Next(0, orig_vals.Length());
                     inc_count[input_idx] += 1;
-                    Debug.Assert(input_idx < orig_vals.Length());
+                    if (input_idx >= orig_vals.Length())
+                    {
+                        throw new Exception("input_idx >= orig_vals.Length()");
+                    }
                     string value = orig_vals.GetInput(input_idx);
                     s.Add(value);
                 }
