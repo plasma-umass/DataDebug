@@ -227,7 +227,8 @@ namespace UserSimulation
                         TreeNode[] terminal_formula_nodes,
                         TreeNode[] terminal_input_nodes,
                         CellDict original_inputs,
-                        CellDict correct_outputs
+                        CellDict correct_outputs,
+                        long max_duration_in_ms
                        )
         {
             // set wbname
@@ -255,7 +256,7 @@ namespace UserSimulation
             sw.Start();
 
             // remove errors until none remain; MODIFIES WORKBOOK
-            _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff);
+            _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff, max_duration_in_ms, sw);
 
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
@@ -315,7 +316,8 @@ namespace UserSimulation
                         AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
-                        bool normal_cutoff          // indicates if we should use a normal cutoff or top x%
+                        bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
+                        long max_duration_in_ms     // maximum duration before throwing a timeout exception
                        )
         {
             // open workbook
@@ -323,7 +325,6 @@ namespace UserSimulation
 
             // build dependency graph
             var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-
 
             // create ErrorGenerator object
             var egen = new ErrorGenerator();
@@ -355,7 +356,7 @@ namespace UserSimulation
             // generate errors
             _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
-            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
+            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms);
         }
 
         // For running a simulation from the batch runner
@@ -376,7 +377,8 @@ namespace UserSimulation
                         TreeNode[] terminal_input_nodes, // the inputs
                         TreeNode[] terminal_formula_nodes, // the outputs
                         CellDict original_inputs,          // original values of the inputs
-                        CellDict correct_outputs           // the correct outputs
+                        CellDict correct_outputs,           // the correct outputs
+                        long max_duration_in_ms
                        )
         {
             if (terminal_input_nodes.Length == 0)
@@ -391,7 +393,7 @@ namespace UserSimulation
 
             _errors = errors;
                 
-            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs);
+            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms);
         }
 
         public double RemainingError()
@@ -648,7 +650,9 @@ namespace UserSimulation
                                            bool run_bootstrap,
                                            bool normal_cutoff,
                                            HashSet<AST.Address> known_good,
-                                           ref List<KeyValuePair<TreeNode, int>> filtered_high_scores)
+                                           ref List<KeyValuePair<TreeNode, int>> filtered_high_scores,
+                                           long max_duration_in_ms,
+                                           Stopwatch sw)
         {
             // Get bootstraps
             // The bootstrap should only re-run if there is a correction made, 
@@ -657,7 +661,7 @@ namespace UserSimulation
             //      we just move on to the next thing in the list
             if (run_bootstrap)
             {
-                TreeScore scores = Analysis.Bootstrap(nboots, data, app, weighted, all_outputs);
+                TreeScore scores = Analysis.Bootstrap(nboots, data, app, weighted, all_outputs, max_duration_in_ms, sw);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
                 //Using an outlier test for highlighting 
@@ -765,9 +769,11 @@ namespace UserSimulation
             }
         }
 
-        private static AST.Address NormaPerRange_Step(AnalysisData data,
+        private static AST.Address NormalPerRange_Step(AnalysisData data,
                                                       Excel.Workbook wb,
-                                                      HashSet<AST.Address> known_good)
+                                                      HashSet<AST.Address> known_good,
+                                                      long max_duration_in_ms,
+                                                      Stopwatch sw)
         {
             AST.Address flagged_cell = null;
 
@@ -782,6 +788,12 @@ namespace UserSimulation
                 {
                     for (int i = 0; i < normal_dist.errorsCount(); i++)
                     {
+                        // check for timeout
+                        if (sw.ElapsedMilliseconds > max_duration_in_ms)
+                        {
+                            throw new TimeoutException("Timeout exception in NormalPerRange_Step.");
+                        }
+
                         var flagged_com = normal_dist.getError(i);
                         flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
                         if (known_good.Contains(flagged_cell))
@@ -807,7 +819,9 @@ namespace UserSimulation
         private static AST.Address NormalAllOutputs_Step(AnalysisData data,
                                                          Excel.Application app,
                                                          Excel.Workbook wb,
-                                                         HashSet<AST.Address> known_good)
+                                                         HashSet<AST.Address> known_good,
+                                                         long max_duration_in_ms,
+                                                         Stopwatch sw)
         {
             AST.Address flagged_cell = null;
 
@@ -819,6 +833,12 @@ namespace UserSimulation
             {
                 for (int i = 0; i < normal_dist.errorsCount(); i++)
                 {
+                    // check for timeout
+                    if (sw.ElapsedMilliseconds > max_duration_in_ms)
+                    {
+                        throw new TimeoutException("Timeout exception in NormalAllOutputs_Step.");
+                    }
+
                     var flagged_com = normal_dist.getError(i);
                     flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
                     if (known_good.Contains(flagged_cell))
@@ -847,7 +867,9 @@ namespace UserSimulation
                                                AnalysisType analysis_type,
                                                bool weighted,
                                                bool all_outputs,
-                                               bool normal_cutoff
+                                               bool normal_cutoff,
+                                               long max_duration_in_ms,
+                                               Stopwatch sw
                                             )
         {
             // init user results data structure
@@ -886,14 +908,16 @@ namespace UserSimulation
                                                   correction_made,
                                                   normal_cutoff,
                                                   known_good,
-                                                  ref filtered_high_scores);
+                                                  ref filtered_high_scores,
+                                                  max_duration_in_ms,
+                                                  sw);
                 } else if (analysis_type == AnalysisType.NormalPerRange)
                 {
-                    flagged_cell = NormaPerRange_Step(data, wb, known_good);
+                    flagged_cell = NormalPerRange_Step(data, wb, known_good, max_duration_in_ms, sw);
                 }
                 else if (analysis_type == AnalysisType.NormalAllInputs)
                 {
-                    flagged_cell = NormalAllOutputs_Step(data, app, wb, known_good);
+                    flagged_cell = NormalAllOutputs_Step(data, app, wb, known_good, max_duration_in_ms, sw);
                 }
 
                 if (flagged_cell == null)

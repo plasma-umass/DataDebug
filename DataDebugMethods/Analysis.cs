@@ -187,7 +187,13 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        public static TreeScore Bootstrap(int num_bootstraps, AnalysisData data, Excel.Application app, bool weighted, bool all_outputs)
+        public static TreeScore Bootstrap(int num_bootstraps,
+                                          AnalysisData data,
+                                          Excel.Application app,
+                                          bool weighted,
+                                          bool all_outputs,
+                                          long max_duration_in_ms,
+                                          Stopwatch sw)
         {
             // this modifies the weights of each node
             PropagateWeights(data);
@@ -222,7 +228,7 @@ namespace DataDebugMethods
             // first idx: the fth function output
             // second idx: the ith input
             // third idx: the bth bootstrap
-            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data);
+            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data, max_duration_in_ms, sw);
 
             // restore formulas
             foreach (TreeDictPair pair in data.formula_nodes)
@@ -235,12 +241,18 @@ namespace DataDebugMethods
             }
 
             // do appropriate hypothesis test, and add weighted test scores, and return result dict
-            var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted);
+            var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted, max_duration_in_ms, sw);
 
             return s;
         }
 
-        public static TreeScore ScoreInputs(TreeNode[] input_rngs, TreeNode[] output_fns, Dictionary<TreeNode,string> initial_outputs, FunctionOutput<string>[][][] boots, bool weighted)
+        public static TreeScore ScoreInputs(TreeNode[] input_rngs,
+                                            TreeNode[] output_fns,
+                                            Dictionary<TreeNode,string> initial_outputs,
+                                            FunctionOutput<string>[][][] boots,
+                                            bool weighted,
+                                            long max_duration_in_ms,
+                                            Stopwatch sw)
         {
             // dict of exclusion scores for each input CELL TreeNode
             var iexc_scores = new TreeScore();
@@ -254,8 +266,14 @@ namespace DataDebugMethods
             // convert bootstraps to numeric, if possible, sort in ascending order
             // then compute quantiles and test whether an input is an outlier
             // i is the index of the range in the input array; an ARRAY of CELLS
-            System.Threading.Tasks.Parallel.ForEach(xprod, pair =>
+            System.Threading.Tasks.Parallel.ForEach(xprod, (pair, loopstate) =>
             {
+                // check for timeout
+                if (sw.ElapsedMilliseconds > max_duration_in_ms)
+                {
+                    loopstate.Stop();
+                }
+                
                 int i = pair[0];
                 int f = pair[1];
 
@@ -278,6 +296,13 @@ namespace DataDebugMethods
                 }
                 iexc_scores = DictAdd(iexc_scores, s);
             });
+
+            // the timeout above just exits the loop; make sure that
+            // we actually throw a timeout exception
+            if (sw.ElapsedMilliseconds > max_duration_in_ms)
+            {
+                throw new TimeoutException("Timeout exception in ScoreInputs.");
+            }
 
             return iexc_scores;
         }
@@ -562,7 +587,7 @@ namespace DataDebugMethods
         }
 
         private static FunctionOutput<string>[][][] ComputeBootstraps(int num_bootstraps, Dictionary<TreeNode, InputSample> initial_inputs, InputSample[][] resamples,
-                                                                      TreeNode[] input_arr, TreeNode[] output_arr, AnalysisData data)
+                                                                      TreeNode[] input_arr, TreeNode[] output_arr, AnalysisData data, long max_duration_in_ms, Stopwatch sw)
         {
             // first idx: the fth function output
             // second idx: the ith input
@@ -578,6 +603,9 @@ namespace DataDebugMethods
 
             // compute function outputs for each bootstrap
             // inputs[i] is the ith input range
+            // NOTE: these operations must be performed
+            //       sequentially as they produce worksheet
+            //       side-effects!
             for (var i = 0; i < input_arr.Length; i++)
             {
                 var t = input_arr[i];
@@ -589,6 +617,12 @@ namespace DataDebugMethods
                 // restore the original input
                 for (var b = 0; b < num_bootstraps; b++)
                 {
+                    // check for timeout
+                    if (sw.ElapsedMilliseconds > max_duration_in_ms)
+                    {
+                        throw new TimeoutException("Timeout in ComputeBootstraps (iteration: " + (i * b) + " of " + (input_arr.Length * num_bootstraps) + ")");
+                    }
+
                     // use memo DB
                     FunctionOutput<string>[] fos = bootsaver[i].FastReplace(com, initial_inputs[t], resamples[i][b], output_arr, false);
                     for (var f = 0; f < output_arr.Length; f++)
