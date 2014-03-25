@@ -193,7 +193,8 @@ namespace DataDebugMethods
                                           bool weighted,
                                           bool all_outputs,
                                           long max_duration_in_ms,
-                                          Stopwatch sw)
+                                          Stopwatch sw,
+                                          double significance)
         {
             // this modifies the weights of each node
             PropagateWeights(data);
@@ -241,7 +242,7 @@ namespace DataDebugMethods
             }
 
             // do appropriate hypothesis test, and add weighted test scores, and return result dict
-            var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted, max_duration_in_ms, sw);
+            var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted, max_duration_in_ms, sw, significance);
 
             return s;
         }
@@ -252,7 +253,8 @@ namespace DataDebugMethods
                                             FunctionOutput<string>[][][] boots,
                                             bool weighted,
                                             long max_duration_in_ms,
-                                            Stopwatch sw)
+                                            Stopwatch sw,
+                                            double significance)
         {
             // dict of exclusion scores for each input CELL TreeNode
             var iexc_scores = new TreeScore();
@@ -288,11 +290,11 @@ namespace DataDebugMethods
                 TreeScore s;
                 if (FunctionOutputsAreNumeric(boots[f][i]))
                 {
-                    s = NumericHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
+                    s = NumericHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted, significance);
                 }
                 else
                 {
-                    s = StringHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted);
+                    s = StringHypothesisTest(rangeNode, functionNode, boots[f][i], initial_outputs[functionNode], weighted, significance);
                 }
                 iexc_scores = DictAdd(iexc_scores, s);
             });
@@ -336,7 +338,7 @@ namespace DataDebugMethods
             return d3;
         }
 
-        public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted)
+        public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
             var input_cells = rangeNode.getInputs().ToArray();
@@ -358,7 +360,7 @@ namespace DataDebugMethods
                     weight = (int)functionNode.getWeight();
                 }
 
-                if (RejectNullHypothesis(boots, initial_output, i))
+                if (RejectNullHypothesis(boots, initial_output, i, significance))
                 {
 
                     if (iexc_scores.ContainsKey(xtree))
@@ -383,7 +385,7 @@ namespace DataDebugMethods
             return iexc_scores;
         }
 
-        public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted)
+        public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
             var input_cells = rangeNode.getInputs().ToArray();
@@ -413,7 +415,7 @@ namespace DataDebugMethods
 //                    weight = (int)functionNode.getWeight();
 //                }
 
-                double outlieriness = RejectNullHypothesis(sorted_num_boots, initial_output, i);
+                double outlieriness = RejectNullHypothesis(sorted_num_boots, initial_output, i, significance);
 
                 if (outlieriness != 0.0)
                 {
@@ -703,7 +705,7 @@ namespace DataDebugMethods
         }
 
         // Exclude specified input index, compute multinomial probabilty vector, and return true if probability is below threshold
-        public static bool RejectNullHypothesis(FunctionOutput<string>[] boots, string original_output, int exclude_index)
+        public static bool RejectNullHypothesis(FunctionOutput<string>[] boots, string original_output, int exclude_index, double significance)
         {
             // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
@@ -719,12 +721,18 @@ namespace DataDebugMethods
             }
 
             // test H_0
-            return p_val < 0.05;
+            return p_val < 1.0 - significance;
         }
 
         // Exclude a specified input index, compute quantiles, and check position of original input
-        public static double RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index)
+        public static double RejectNullHypothesis(FunctionOutput<double>[] boots, string original_output, int exclude_index, double significance)
         {
+            // low
+            double low_thresh = (1.0 - significance) / 2.0;
+
+            // high
+            double hi_thresh = significance + low_thresh;
+
             // filter bootstraps which include exclude_index
             var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
             //return neutral (0.5) if we are having a sparsity problem
@@ -733,9 +741,9 @@ namespace DataDebugMethods
                 return 0.5;
             }
             // index for value greater than 2.5% of the lowest values; we want to round down here
-            var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * .025));
+            var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * low_thresh));
             // index for value greater than 97.5% of the lowest values; we want to round up here
-            var high_index = System.Convert.ToInt32(Math.Ceiling((float)(boots_exc.Length - 1) * 0.975));
+            var high_index = System.Convert.ToInt32(Math.Ceiling((float)(boots_exc.Length - 1) * hi_thresh));
 
             var low_value = boots_exc[low_index].GetValue();
             var high_value = boots_exc[high_index].GetValue();
@@ -777,29 +785,6 @@ namespace DataDebugMethods
                 }
             }
 
-            // reject or fail to reject H_0
-            //if (high_value_tr != low_value_tr)
-            //{
-            //    if (original_tr < low_value_tr)
-            //    {
-            //     //   return Math.Abs((original_tr - low_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;
-            //    }
-            //    else if (original_tr > high_value_tr)
-            //    {
-            //     //   return Math.Abs((original_tr - high_value_tr) / Math.Abs(high_value_tr - low_value_tr)) * 100.0;                    
-            //    }
-            //}
-            //else if (high_value_tr != original_tr || low_value_tr != original_tr)
-            //{
-            //    if (original_tr < low_value_tr)
-            //    {
-            //        return Math.Abs(original_tr - low_value_tr) * 100.0
-            //    }
-            //    else if (original_tr > high_value_tr)
-            //    {
-            //        return Math.Abs(original_tr - high_value_tr) * 100.0;
-            //    }
-            //}
             return 0.0;
         }
 
