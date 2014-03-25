@@ -751,7 +751,8 @@ namespace DataDebugMethods
             var lowest_value = boots_exc[0].GetValue();
             var highest_value = boots_exc[boots_exc.Length - 1].GetValue();
 
-            var original_output_d = System.Convert.ToDouble(original_output);
+            double original_output_d;
+            Double.TryParse(original_output, out original_output_d);
 
             // truncate the values to deal with floating point imprecision
             var low_value_tr = Math.Truncate(low_value * 10000) / 10000;
