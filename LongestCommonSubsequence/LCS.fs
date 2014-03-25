@@ -184,7 +184,8 @@
                     // insert the character in the appropriate location,
                     // ensuring that the sting is lengthened if the location
                     // occurs after the end of the string
-                    failwith "insertpos <= entered.Length"
+                    if insertpos > entered.Length then
+                        failwith "insertpos > entered.Length"
                     let entered' = if insertpos = entered.Length then
                                        entered + ochar.ToString()
                                    else
