@@ -192,9 +192,6 @@ namespace DataDebug
                 List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
 
                 //Using an outlier test for highlighting 
-                //scores that fall outside of two standard deviations from the others
-                //The one-sided 5% cutoff for the normal distribution is 1.6448.
-
                 if (normal_cutoff)
                 {
                     //Code for doing normal outlier analysis on the scores:
