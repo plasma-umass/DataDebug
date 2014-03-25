@@ -58,9 +58,9 @@ namespace DataDebugMethods
         {
             // we assign a numbering scheme from
             // topleft to bottom right, starting at 0
-            if (num <= _input_array.Length)
+            if (num >= _input_array.Length)
             {
-                throw new Exception("num <= _input_array.Length");
+                throw new Exception("num >= _input_array.Length");
             }
             var pair = OneDToTwoD(num);
             var col_idx = pair.Item1;
