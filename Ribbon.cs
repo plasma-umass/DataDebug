@@ -194,7 +194,6 @@ namespace DataDebug
                 //Using an outlier test for highlighting 
                 if (normal_cutoff)
                 {
-                    //Code for doing normal outlier analysis on the scores:
                     //find mean:
                     double sum = 0.0;
                     foreach (double d in scores.Values)
@@ -209,7 +208,6 @@ namespace DataDebug
                         distance_sum_sq += Math.Pow(mean - d, 2);
                     }
                     double variance = distance_sum_sq / scores.Values.Count;
-
                     //find std. deviation
                     double std_deviation = Math.Sqrt(variance);
 
@@ -234,7 +232,6 @@ namespace DataDebug
                 {
                     int start_ptr = 0;
                     int end_ptr = 0;
-
                     List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
 
                     while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff

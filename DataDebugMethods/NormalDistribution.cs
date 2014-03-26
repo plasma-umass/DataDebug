@@ -88,14 +88,12 @@ namespace DataDebugMethods
                 }
             } 
             return distance_sum_sq / numeric_count;
-            //return distance_sum_sq / _size;
         }
 
         // PUBLIC METHODS
         public int Length()
         {
             return numeric_count;
-            //return _size;
         }
 
         public Double Mean()
@@ -114,16 +112,17 @@ namespace DataDebugMethods
             _ranked_errors = __rank_errors();
         }
 
-        public NormalDistribution(Dictionary<AST.Address, TreeNode> cell_nodes, Excel.Application app)
+        public NormalDistribution(TreeNode[] range_nodes, Excel.Application app)
         {
             //turn the dictionary into an Excel.Range
-            Excel.Range r1 = cell_nodes.First().Key.GetCOMObject(app);
-            foreach (var node in cell_nodes)
+
+            Excel.Range r1 = range_nodes.First().getCOMObject(); 
+            
+            foreach (TreeNode range_node in range_nodes)
             {
                 try
                 {
-                    Excel.Range r = node.Key.GetCOMObject(app);
-                    r1 = app.Union(r1, r);
+                    r1 = app.Union(r1, range_node.getCOMObject());
                 }
                 catch { }
             }
@@ -172,7 +171,6 @@ namespace DataDebugMethods
 
                 removals.AddRange(new_removals);
             }
-
             // add removals to removalsDict for coloring-undo
             Dictionary<Excel.Range, System.Drawing.Color> removalsDict = new Dictionary<Excel.Range, System.Drawing.Color>();
             foreach (Excel.Range c in removals)
@@ -193,7 +191,6 @@ namespace DataDebugMethods
         public static Double R(int num_outliers, int data_sz)
         {
             // returns R value or -1 if undefined
-
             double[,] values = new double[,] {  {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
                                                 {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
                                                 {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
