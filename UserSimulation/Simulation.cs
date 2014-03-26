@@ -34,6 +34,8 @@ namespace UserSimulation
         readonly double _input_error_magnitude;
         readonly bool _was_flagged;
         readonly bool _was_error;
+        readonly double _significance;
+        readonly double _threshold;
         public LogEntry(AnalysisType procedure,
                         string filename,
                         AST.Address address,
@@ -42,7 +44,9 @@ namespace UserSimulation
                         double output_error_magnitude,
                         double input_error_magnitude,
                         bool was_flagged,
-                        bool was_error)
+                        bool was_error,
+                        double significance,
+                        double threshold)
         {
             _procedure = procedure;
             _filename = filename;
@@ -53,19 +57,23 @@ namespace UserSimulation
             _input_error_magnitude = input_error_magnitude;
             _was_flagged = was_flagged;
             _was_error = was_error;
+            _significance = significance;
+            _threshold = threshold;
         }
 
         public static String Headers() {
-            return "filename, procedure, address, original_value, erroneous_value," +
+            return "filename, procedure, significance, address, original_value, erroneous_value," +
                    "total_relative_error, typo_magnitude, was_flagged, was_error\n";
         }
 
         public void WriteLog(String logfile)
         {
             System.IO.File.AppendAllText(logfile,
-                                         String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n",
+                                         String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n",
                                                         _filename,
                                                         _procedure,
+                                                        _significance,
+                                                        _threshold,
                                                         _address,
                                                         _original_value,
                                                         _erroneous_value,
@@ -1106,7 +1114,9 @@ namespace UserSimulation
                                                 output_error_magnitude,
                                                 input_error_magnitude,
                                                 true,
-                                                correction_made);
+                                                correction_made,
+                                                significance,
+                                                threshold);
                     logentry.WriteLog(logfile);
                     _error_log.Add(logentry);
                 }
@@ -1130,7 +1140,9 @@ namespace UserSimulation
                                             last_out_err_mag,
                                             InputErrorMagnitude(errord[fn], original_inputs[fn]),
                                             false,
-                                            true));
+                                            true,
+                                            significance,
+                                            threshold));
             }
             return o;
         }
