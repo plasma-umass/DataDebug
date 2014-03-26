@@ -888,7 +888,7 @@ namespace UserSimulation
             AST.Address flagged_cell = null;
 
             //Generate a normal distribution for the entire set of inputs
-            var normal_dist = new DataDebugMethods.NormalDistribution(data.cell_nodes, app);
+            var normal_dist = new DataDebugMethods.NormalDistribution(data.TerminalInputNodes(), app);
 
             // Get top outlier
             if (normal_dist.errorsCount() > 0)
