@@ -57,13 +57,13 @@ namespace UserSimulation
 
         public static String Headers() {
             return "filename, procedure, address, original_value, erroneous_value," +
-                   "total_relative_error, typo_magnitude, was_flagged, was_error";
+                   "total_relative_error, typo_magnitude, was_flagged, was_error\n";
         }
 
         public void WriteLog(String logfile)
         {
             System.IO.File.AppendAllText(logfile,
-                                         String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                                         String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n",
                                                         _filename,
                                                         _procedure,
                                                         _address,
@@ -482,7 +482,7 @@ namespace UserSimulation
                                  "normal_cutoff",                               //17
                                  "significance",                                //18
                                  "all_outputs",                                 //19
-                                 "weighted");                                   //20
+                                 "weighted\n");                                   //20
         }
 
         public String FormatResultsAsCSV()
@@ -507,7 +507,7 @@ namespace UserSimulation
                     _normal_cutoff + "," +
                     _significance + "," +
                     _all_outputs + "," +
-                    _weighted;
+                    _weighted + "\n";
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
