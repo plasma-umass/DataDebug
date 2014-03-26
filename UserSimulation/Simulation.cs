@@ -55,29 +55,24 @@ namespace UserSimulation
             _was_error = was_error;
         }
 
-        public static void Headers(StreamWriter sw) {
-            sw.WriteLine("filename, procedure, address, original_value, erroneous_value," +
-                         "total_relative_error, typo_magnitude, was_flagged, was_error");
+        public static String Headers() {
+            return "filename, procedure, address, original_value, erroneous_value," +
+                   "total_relative_error, typo_magnitude, was_flagged, was_error";
         }
 
         public void WriteLog(String logfile)
         {
-            using (StreamWriter sw = new StreamWriter(logfile))
-            {
-                sw.AutoFlush = true;
-
-                // write
-                sw.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
-                             _filename,
-                             _procedure,
-                             _address,
-                             _original_value,
-                             _erroneous_value,
-                             _output_error_magnitude,
-                             _input_error_magnitude,
-                             _was_flagged,
-                             _was_error);
-            }
+            System.IO.File.AppendAllText(logfile,
+                                         String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                                                        _filename,
+                                                        _procedure,
+                                                        _address,
+                                                        _original_value,
+                                                        _erroneous_value,
+                                                        _output_error_magnitude,
+                                                        _input_error_magnitude,
+                                                        _was_flagged,
+                                                        _was_error));
         }
     }
 
