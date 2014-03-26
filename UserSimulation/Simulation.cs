@@ -60,21 +60,24 @@ namespace UserSimulation
                          "total_relative_error, typo_magnitude, was_flagged, was_error");
         }
 
-        public void WriteLog(StreamWriter sw)
+        public void WriteLog(String logfile)
         {
-            // write
-            sw.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
-                         _filename,
-                         _procedure,
-                         _address,
-                         _original_value,
-                         _erroneous_value,
-                         _output_error_magnitude,
-                         _input_error_magnitude,
-                         _was_flagged,
-                         _was_error);
+            using (StreamWriter sw = new StreamWriter(logfile))
+            {
+                sw.AutoFlush = true;
 
-            sw.Flush();
+                // write
+                sw.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                             _filename,
+                             _procedure,
+                             _address,
+                             _original_value,
+                             _erroneous_value,
+                             _output_error_magnitude,
+                             _input_error_magnitude,
+                             _was_flagged,
+                             _was_error);
+            }
         }
     }
 
@@ -286,7 +289,7 @@ namespace UserSimulation
                         CellDict original_inputs,
                         CellDict correct_outputs,
                         long max_duration_in_ms,
-                        StreamWriter log_stream
+                        String logfile
                        )
         {
             // set wbname
@@ -314,7 +317,7 @@ namespace UserSimulation
             sw.Start();
 
             // remove errors until none remain; MODIFIES WORKBOOK
-            _user = SimulateUser(nboots, significance, threshold, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff, max_duration_in_ms, sw, log_stream);
+            _user = SimulateUser(nboots, significance, threshold, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff, max_duration_in_ms, sw, logfile);
 
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
@@ -376,7 +379,7 @@ namespace UserSimulation
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
                         long max_duration_in_ms,    // maximum duration before throwing a timeout exception
-                        StreamWriter log_stream
+                        String logfile
                        )
         {
             // open workbook
@@ -415,7 +418,7 @@ namespace UserSimulation
             // generate errors
             _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
-            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, log_stream);
+            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         // For running a simulation from the batch runner
@@ -438,7 +441,7 @@ namespace UserSimulation
                         CellDict original_inputs,          // original values of the inputs
                         CellDict correct_outputs,           // the correct outputs
                         long max_duration_in_ms,
-                        StreamWriter log_stream
+                        String logfile
                        )
         {
             if (terminal_input_nodes.Length == 0)
@@ -453,7 +456,7 @@ namespace UserSimulation
 
             _errors = errors;
                 
-            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, log_stream);
+            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         public double RemainingError()
@@ -987,7 +990,7 @@ namespace UserSimulation
                                          bool normal_cutoff,
                                          long max_duration_in_ms,
                                          Stopwatch sw,
-                                         StreamWriter log_stream
+                                         String logfile
                                         )
         {
             // init user results data structure
@@ -1089,19 +1092,27 @@ namespace UserSimulation
                     // compute output error magnitudes
                     var output_error_magnitude = MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
                     // compute input error magnitude
-                    var input_error_magnitude = InputErrorMagnitude(errord[flagged_cell], original_inputs[flagged_cell]);
+                    double input_error_magnitude;
+                    if (errord.ContainsKey(flagged_cell))
+                    {
+                        input_error_magnitude = InputErrorMagnitude(errord[flagged_cell], original_inputs[flagged_cell]);
+                    }
+                    else
+                    {
+                        input_error_magnitude = 1.0;
+                    }
 
                     // write error log
                     var logentry = new LogEntry(analysis_type,
                                                 wb.Name,
                                                 flagged_cell,
                                                 original_inputs[flagged_cell],
-                                                errord[flagged_cell],
+                                                errord.ContainsKey(flagged_cell) ? errord[flagged_cell] : original_inputs[flagged_cell],
                                                 output_error_magnitude,
                                                 input_error_magnitude,
                                                 true,
                                                 correction_made);
-                    logentry.WriteLog(log_stream);
+                    logentry.WriteLog(logfile);
                     _error_log.Add(logentry);
                 }
             }
