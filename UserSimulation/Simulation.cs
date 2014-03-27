@@ -68,8 +68,7 @@ namespace UserSimulation
 
         public void WriteLog(String logfile)
         {
-            System.IO.File.AppendAllText(logfile,
-                                         String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n",
+            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n",
                                                         _filename,
                                                         _procedure,
                                                         _significance,
@@ -281,7 +280,7 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff,         // indicates if we should use normal cutoff or top 5% for errors
@@ -377,7 +376,7 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
@@ -432,7 +431,7 @@ namespace UserSimulation
                         double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
-                        AnalysisType analysisType,  // the type of analysis to run -- "CheckCell", "Normal", or "Normal2"
+                        AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
