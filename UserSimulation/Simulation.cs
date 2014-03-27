@@ -438,10 +438,10 @@ namespace UserSimulation
                         AnalysisData data,          // the computation tree of the spreadsheet
                         Excel.Workbook wb,          // the workbook being analyzed
                         CellDict errors,            // the errors that will be introduced in the spreadsheet
-                        TreeNode[] terminal_input_nodes, // the inputs
+                        TreeNode[] terminal_input_nodes,   // the inputs
                         TreeNode[] terminal_formula_nodes, // the outputs
                         CellDict original_inputs,          // original values of the inputs
-                        CellDict correct_outputs,           // the correct outputs
+                        CellDict correct_outputs,          // the correct outputs
                         long max_duration_in_ms,
                         String logfile
                        )
@@ -489,7 +489,7 @@ namespace UserSimulation
                                  "normal_cutoff",                               //17
                                  "significance",                                //18
                                  "all_outputs",                                 //19
-                                 "weighted\n");                                   //20
+                                 "weighted\n");                                 //20
         }
 
         public String FormatResultsAsCSV()
@@ -500,7 +500,7 @@ namespace UserSimulation
                     RemainingError() + "," +                // remaining error
                     _effort.ToString() + "," +              // effort
                     _max_effort + "," +                     // max effort
-                    _cells_in_scope + "," +                   // perturbable cells (these are in our scope)
+                    _cells_in_scope + "," +                 // perturbable cells (these are in our scope)
                     (double)_cells_in_scope / (double)_max_effort + "," +     // proportion of cells that are in scopes of our tool
                     _expended_effort + "," +                // expended effort
                     _errors.Count + "," +                   // number of errors
@@ -800,7 +800,6 @@ namespace UserSimulation
                         //  To do this, we add (1 / total number of entries) to the cutoff
                         //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
                         //for more than 5% of the total.
-                        //      Note: tool_significance is along the lines of 0.95 (not 0.05).
                         if ((double)end_ptr / scores_list.Count < threshold + (double)1.0 / scores_list.Count)
                         {
                             //add all values of the current score to high_scores list
@@ -822,11 +821,9 @@ namespace UserSimulation
             }
             else  //if no corrections were made (a cell was marked as OK, not corrected)
             {
-                // re-filter out cells marked as OK
+                //re-filter out cells marked as OK
                 filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
             }
-
-            //AST.Address flagged_cell;
             if (filtered_high_scores.Count() != 0)
             {
                 // get TreeNode corresponding to most unusual score

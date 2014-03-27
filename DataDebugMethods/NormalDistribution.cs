@@ -147,7 +147,10 @@ namespace DataDebugMethods
             {
                 List<Excel.Range> new_removals = new List<Excel.Range>();
                 double r = R(doubtful_n, Length());
-                if (r == -1) break;  // TODO: analytic derivation of R; in case R is undefined
+                if (r == -1)
+                {
+                    break;  // TODO: analytic derivation of R; in case R is undefined
+                }
                 double max_deviation = StandardDeviation() * r;
 
                 // find as many cells with error > max_deviation as possible
