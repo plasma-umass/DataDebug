@@ -19,10 +19,10 @@ namespace DataDebugMethods
         private Dictionary<Excel.Range, Double> _error;
         public List<Excel.Range> _ranked_errors;
         private int numeric_count = 0;
-        // PRIVATE METHODS
+
         private Dictionary<Excel.Range, Double> __error()
         {
-            Dictionary<Excel.Range, Double> d = new Dictionary<Excel.Range, Double>();
+            Dictionary<Excel.Range, Double> error_dict = new Dictionary<Excel.Range, Double>();
             foreach (Excel.Range cell in _cells)
             {
                 if (cell.Value2 != null)
@@ -32,13 +32,13 @@ namespace DataDebugMethods
                         var val = System.Convert.ToDouble(cell.Value2);
                         if (Math.Abs(_mean - val) / _standard_deviation > 2.0)
                         {
-                            d.Add(cell, (double)Math.Abs(_mean - val) / _standard_deviation);
+                            error_dict.Add(cell, (double)Math.Abs(_mean - val) / _standard_deviation);
                         }
                     }
                     catch { }
                 }
             }
-            return d;
+            return error_dict;
         }
 
         private Double __mean()
@@ -57,7 +57,6 @@ namespace DataDebugMethods
                 }
             }
             return sum / numeric_count;
-            //return sum / _size;
         }
 
         private List<Excel.Range> __rank_errors()
@@ -109,16 +108,13 @@ namespace DataDebugMethods
         public NormalDistribution(TreeNode[] range_nodes, Excel.Application app)
         {
             //turn the dictionary into an Excel.Range
-
             Excel.Range r1 = range_nodes.First().getCOMObject(); 
-            
             foreach (TreeNode range_node in range_nodes)
             {
-                try
+                try  // in a try-catch because Union malfunctioned in one case
                 {
                     r1 = app.Union(r1, range_node.getCOMObject());
-                }
-                catch { }
+                } catch { }
             }
             _cells = r1;
             _size = r1.Count;
@@ -129,17 +125,17 @@ namespace DataDebugMethods
             _ranked_errors = __rank_errors();
         }
 
-        public Double StandardDeviation()
+        public Double getStandardDeviation()
         {
             return _standard_deviation;
         }
 
-        public Double Variance()
+        public Double getVariance()
         {
             return _variance;
         }
 
-        public Excel.Range WorstError()
+        public Excel.Range getWorstError()
         {
             return _ranked_errors.First();
         }
@@ -204,12 +200,12 @@ namespace DataDebugMethods
             return _ranked_errors;
         }
 
-        public Excel.Range getError(int rank)
+        public Excel.Range getErrorAtPosition(int rank)
         {
             return _ranked_errors[rank];
         }
 
-        public int errorsCount()
+        public int getErrorsCount()
         {
             return _ranked_errors.Count;
         }
