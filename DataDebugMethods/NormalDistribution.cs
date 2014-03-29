@@ -90,12 +90,6 @@ namespace DataDebugMethods
             return distance_sum_sq / numeric_count;
         }
 
-        // PUBLIC METHODS
-        public int Length()
-        {
-            return numeric_count;
-        }
-
         public Double Mean()
         {
             return _mean;
