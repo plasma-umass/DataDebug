@@ -10,7 +10,6 @@ namespace DataDebugMethods
 {
     public class NormalDistribution
     {
-        //TODO Add checks for non-numeric data in all methods of this class
         private readonly Excel.Range _cells;
         private readonly int _size;
         private readonly Double _mean;
