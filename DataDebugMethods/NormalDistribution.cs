@@ -110,7 +110,7 @@ namespace DataDebugMethods
             Excel.Range r1 = range_nodes.First().getCOMObject(); 
             foreach (TreeNode range_node in range_nodes)
             {
-                try  // in a try-catch because Union malfunctioned in one case
+                try  //in a try-catch because Union malfunctioned in one observed case
                 {
                     r1 = app.Union(r1, range_node.getCOMObject());
                 } catch { }

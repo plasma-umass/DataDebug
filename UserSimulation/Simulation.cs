@@ -191,7 +191,6 @@ namespace UserSimulation
 
             using (Stream stream = new FileStream(file_name, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                // deserialize
                 IFormatter formatter = new BinaryFormatter();
                 sim = (Simulation)formatter.Deserialize(stream);
             }
@@ -291,20 +290,17 @@ namespace UserSimulation
                         CellDict original_inputs,
                         CellDict correct_outputs,
                         long max_duration_in_ms,
-                        String logfile
+                        String logfile              //filename for the output log
                        )
         {
-            // set wbname
+            //set wbname and path
             _wb_name = xlfile;
-
+            _wb_path = wb.Path; 
             _analysis_type = analysisType;
             _normal_cutoff = normal_cutoff;
             _significance = significance;
             _all_outputs = all_outputs;
             _weighted = weighted;
-
-            // set path
-            _wb_path = wb.Path;
 
             //Now we want to inject the errors from top_errors
             InjectValues(app, wb, _errors);
@@ -381,7 +377,7 @@ namespace UserSimulation
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
                         bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
                         long max_duration_in_ms,    // maximum duration before throwing a timeout exception
-                        String logfile
+                        String logfile              //filename for the output log
                        )
         {
             // open workbook
@@ -443,7 +439,7 @@ namespace UserSimulation
                         CellDict original_inputs,          // original values of the inputs
                         CellDict correct_outputs,          // the correct outputs
                         long max_duration_in_ms,
-                        String logfile
+                        String logfile              //filename for the output log
                        )
         {
             if (terminal_input_nodes.Length == 0)
