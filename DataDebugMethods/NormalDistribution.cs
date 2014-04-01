@@ -93,6 +93,8 @@ namespace DataDebugMethods
             return _mean;
         }
 
+        //Constructor that takes an Excel range as an argument
+        //The data is stored in the cells of the range
         public NormalDistribution(Excel.Range r)
         {
             _cells = r;
@@ -104,6 +106,7 @@ namespace DataDebugMethods
             _ranked_errors = __rank_errors();
         }
 
+        //Constructor that takes an array of TreeNodes as an argument
         public NormalDistribution(TreeNode[] range_nodes, Excel.Application app)
         {
             //turn the dictionary into an Excel.Range
@@ -168,7 +171,10 @@ namespace DataDebugMethods
             return (1.0 - erf(x));
         }
 
-        //Computes the phi function given a z-score. (This is the CDF for the normal distribution.)
+        //Computes the phi function given a z-score. 
+        //This is the CDF for the normal distribution, 
+        //or area under the curve to the left of the given z-score.
+        //The normal distribution function Phi(z) gives the probability that a standard normal variate assumes a value in the interval [0,z].
         public static double __phi(double x)
         {
             // constants
