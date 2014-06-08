@@ -846,9 +846,9 @@ namespace UserSimulation
                 var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
 
                 // Get top outlier which has not been inspected already
-                if (normal_dist.errorsCount() > 0)
+                if (normal_dist.getErrorsCount() > 0)
                 {
-                    for (int i = 0; i < normal_dist.errorsCount(); i++)
+                    for (int i = 0; i < normal_dist.getErrorsCount(); i++)
                     {
                         // check for timeout
                         if (sw.ElapsedMilliseconds > max_duration_in_ms)
@@ -856,7 +856,7 @@ namespace UserSimulation
                             throw new TimeoutException("Timeout exception in NormalPerRange_Step.");
                         }
 
-                        var flagged_com = normal_dist.getError(i);
+                        var flagged_com = normal_dist.getErrorAtPosition(i);
                         flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
                         if (known_good.Contains(flagged_cell))
                         {
@@ -891,9 +891,9 @@ namespace UserSimulation
             var normal_dist = new DataDebugMethods.NormalDistribution(data.TerminalInputNodes(), app);
 
             // Get top outlier
-            if (normal_dist.errorsCount() > 0)
+            if (normal_dist.getErrorsCount() > 0)
             {
-                for (int i = 0; i < normal_dist.errorsCount(); i++)
+                for (int i = 0; i < normal_dist.getErrorsCount(); i++)
                 {
                     // check for timeout
                     if (sw.ElapsedMilliseconds > max_duration_in_ms)
@@ -901,7 +901,7 @@ namespace UserSimulation
                         throw new TimeoutException("Timeout exception in NormalAllOutputs_Step.");
                     }
 
-                    var flagged_com = normal_dist.getError(i);
+                    var flagged_com = normal_dist.getErrorAtPosition(i);
                     flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
                     if (known_good.Contains(flagged_cell))
                     {

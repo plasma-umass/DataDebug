@@ -501,9 +501,9 @@ namespace DataDebug
                 {
                     var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
 
-                    for (int error_index = 0; error_index < normal_dist.errorsCount(); error_index++)
+                    for (int error_index = 0; error_index < normal_dist.getErrorsCount(); error_index++)
                     {
-                        normal_dist.getError(error_index).Interior.Color = System.Drawing.Color.Violet;
+                        normal_dist.getErrorAtPosition(error_index).Interior.Color = System.Drawing.Color.Violet;
                     }
                 }
                 
@@ -520,53 +520,86 @@ namespace DataDebug
             // the default output filename
             var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
             var default_output_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + "_sim_results.csv";
+            var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".log";
 
             // init a RNG
             var rng = new Random();
 
+            // classification data
+            UserSimulation.Classification c;
+
             // ask the user for the classification data
             var ofd = new System.Windows.Forms.OpenFileDialog();
             ofd.FileName = "ClassificationData-2013-11-14.bin";
-            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            ofd.Title = "Please select a classification data input file.";
+            if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
             {
-                // deserialize classification
-                var c = UserSimulation.Classification.Deserialize(ofd.FileName);
-
-                // ask the user where the output data should go
-                var sfd = new System.Windows.Forms.SaveFileDialog();
-                sfd.FileName = default_output_file;
-
-                if (sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    // ask the user where the log file should go
-                    var lfd = new System.Windows.Forms.OpenFileDialog();
-                    lfd.FileName = "output.log";
-                    if (lfd.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
-                        // create a log streamwriter
-                        var log_stream = new StreamWriter(lfd.FileName);
-
-                        // run the simulation
-                        app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
-                        UserSimulation.Simulation sim = new UserSimulation.Simulation();
-                        switch (analysisType.SelectedItemIndex)
-                        {
-                            case 0:
-                                sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false, MAX_DURATION_IN_MS, log_stream);
-                                break;
-                            case 1:
-                                sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false, MAX_DURATION_IN_MS, log_stream);
-                                break;
-                            case 2:
-                                sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false, MAX_DURATION_IN_MS, log_stream);
-                                break;
-                            default:
-                                System.Windows.Forms.MessageBox.Show("There was a problem with the selection of analysis type.");
-                                break;
-                        }
-                        sim.ToCSV(sfd.FileName);
-                    }
-                }
+                return;
             }
+
+            // deserialize classification
+            c = UserSimulation.Classification.Deserialize(ofd.FileName);
+
+            // ask the user where the output data should go
+            var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            cdd.Description = "Please choose an output folder.";
+            if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            {
+                return;
+            }
+
+            // save file location
+            var savefile = System.IO.Path.Combine(cdd.SelectedPath, default_output_file);
+
+            // log file location
+            var logfile = System.IO.Path.Combine(cdd.SelectedPath, default_log_file);
+
+            // disable screen updating
+            app.ScreenUpdating = false;
+
+            // run the appropriate simulation
+            app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
+            UserSimulation.Simulation sim = new UserSimulation.Simulation();
+
+            // show progress bar
+            var pb = new ProgBar(0, 100);
+            pb.Show();
+
+            String atype;
+
+            switch (analysisType.SelectedItemIndex)
+            {
+                case 0:
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false, MAX_DURATION_IN_MS, logfile);
+                    atype = UserSimulation.AnalysisType.CheckCell.ToString();
+                    break;
+                case 1:
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false, MAX_DURATION_IN_MS, logfile);
+                    atype = UserSimulation.AnalysisType.NormalPerRange.ToString();
+                    break;
+                case 2:
+                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false, MAX_DURATION_IN_MS, logfile);
+                    atype = UserSimulation.AnalysisType.NormalAllInputs.ToString();
+                    break;
+                default:
+                    System.Windows.Forms.MessageBox.Show("Invalid analysis type.");
+                    return;
+            }
+
+            // update progress bar
+            pb.SetProgress(100);
+
+            // enable screen updating
+            app.ScreenUpdating = true;
+
+            // close progbar
+            pb.Close();
+
+            // save results to file
+            sim.ToCSV(savefile);
+
+            // inform user
+            System.Windows.Forms.MessageBox.Show(String.Format("{0} analysis complete.  Results are in {1}.", atype, savefile));
         }
 
         private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)
