@@ -34,6 +34,10 @@ namespace DataDebug
         string classification_file;
         AnalysisData data;
 
+        // simulation files
+        String simulation_output_dir;
+        String simulation_classification_file;
+
         private void ActivateTool()
         {
             this.MarkAsOK.Enabled = true;
@@ -519,7 +523,7 @@ namespace DataDebug
 
             // the default output filename
             var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
-            var default_output_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + "_sim_results.csv";
+            var default_output_file = "simulation_results.csv";
             var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".log";
 
             // init a RNG
@@ -529,30 +533,39 @@ namespace DataDebug
             UserSimulation.Classification c;
 
             // ask the user for the classification data
-            var ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.FileName = "ClassificationData-2013-11-14.bin";
-            ofd.Title = "Please select a classification data input file.";
-            if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            if (simulation_classification_file == null)
             {
-                return;
+                var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.FileName = "ClassificationData-2013-11-14.bin";
+                ofd.Title = "Please select a classification data input file.";
+                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+
+                simulation_classification_file = ofd.FileName;
             }
 
             // deserialize classification
-            c = UserSimulation.Classification.Deserialize(ofd.FileName);
+            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
 
             // ask the user where the output data should go
-            var cdd = new System.Windows.Forms.FolderBrowserDialog();
-            cdd.Description = "Please choose an output folder.";
-            if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            if (simulation_output_dir == null)
             {
-                return;
+                var cdd = new System.Windows.Forms.FolderBrowserDialog();
+                cdd.Description = "Please choose an output folder.";
+                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+                simulation_output_dir = cdd.SelectedPath;
             }
 
-            // save file location
-            var savefile = System.IO.Path.Combine(cdd.SelectedPath, default_output_file);
+            // save file location (will append for additional runs)
+            var savefile = System.IO.Path.Combine(simulation_output_dir, default_output_file);
 
-            // log file location
-            var logfile = System.IO.Path.Combine(cdd.SelectedPath, default_log_file);
+            // log file location (new file for each new workbook)
+            var logfile = System.IO.Path.Combine(simulation_output_dir, default_log_file);
 
             // disable screen updating
             app.ScreenUpdating = false;

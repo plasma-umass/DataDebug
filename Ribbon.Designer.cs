@@ -45,6 +45,7 @@ namespace DataDebug
             this.FixError = this.Factory.CreateRibbonButton();
             this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
+            this.separator1 = this.Factory.CreateRibbonSeparator();
             this.RunSimulation = this.Factory.CreateRibbonButton();
             this.ErrorBtn = this.Factory.CreateRibbonButton();
             this.TestStuff = this.Factory.CreateRibbonButton();
@@ -66,10 +67,11 @@ namespace DataDebug
             // 
             this.ccgroup.Items.Add(this.buttonGroup1);
             this.ccgroup.Items.Add(this.SensitivityTextBox);
+            this.ccgroup.Items.Add(this.analysisType);
+            this.ccgroup.Items.Add(this.separator1);
             this.ccgroup.Items.Add(this.RunSimulation);
             this.ccgroup.Items.Add(this.ErrorBtn);
             this.ccgroup.Items.Add(this.TestStuff);
-            this.ccgroup.Items.Add(this.analysisType);
             this.ccgroup.Items.Add(this.ToDOT);
             this.ccgroup.Items.Add(this.LoopCheck);
             this.ccgroup.Label = "CheckCell";
@@ -122,6 +124,10 @@ namespace DataDebug
             this.SensitivityTextBox.Name = "SensitivityTextBox";
             this.SensitivityTextBox.Text = "5.0";
             // 
+            // separator1
+            // 
+            this.separator1.Name = "separator1";
+            // 
             // RunSimulation
             // 
             this.RunSimulation.Label = "Run Simulation";
@@ -132,12 +138,14 @@ namespace DataDebug
             // 
             this.ErrorBtn.Label = "Make Error";
             this.ErrorBtn.Name = "ErrorBtn";
+            this.ErrorBtn.Visible = false;
             this.ErrorBtn.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ErrorBtn_Click);
             // 
             // TestStuff
             // 
             this.TestStuff.Label = "Test";
             this.TestStuff.Name = "TestStuff";
+            this.TestStuff.Visible = false;
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
             // 
             // analysisType
@@ -155,12 +163,14 @@ namespace DataDebug
             // 
             this.ToDOT.Label = "ToDOT";
             this.ToDOT.Name = "ToDOT";
+            this.ToDOT.Visible = false;
             this.ToDOT.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToDOT_Click);
             // 
             // LoopCheck
             // 
             this.LoopCheck.Label = "LoopCheck";
             this.LoopCheck.Name = "LoopCheck";
+            this.LoopCheck.Visible = false;
             this.LoopCheck.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.LoopCheck_Click);
             // 
             // Ribbon
@@ -194,6 +204,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonDropDown analysisType;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton ToDOT;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton LoopCheck;
+        internal Microsoft.Office.Tools.Ribbon.RibbonSeparator separator1;
     }
 
     partial class ThisRibbonCollection
