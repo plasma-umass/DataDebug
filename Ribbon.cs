@@ -35,6 +35,7 @@ namespace DataDebug
         AnalysisData data;
 
         // simulation files
+        String benchmark_dir;
         String simulation_output_dir;
         String simulation_classification_file;
 
@@ -449,90 +450,96 @@ namespace DataDebug
 
         private void TestStuff_Click(object sender, RibbonControlEventArgs e)
         {
-            using (var pb = new ProgBar(0,100)) {
-                System.Windows.Forms.MessageBox.Show("" + analysisType.SelectedItem);
+            // init a RNG
+            var rng = new Random();
 
-                //RunSimulation_Click(sender, e);
-                var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
-                if (sig == FSharpOption<double>.None)
+            // classification data
+            UserSimulation.Classification c;
+
+            // ask the user for the classification data
+            if (simulation_classification_file == null)
+            {
+                var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.FileName = "ClassificationData-2013-11-14.bin";
+                ofd.Title = "Please select a classification data input file.";
+                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                 {
                     return;
                 }
-                else
+
+                simulation_classification_file = ofd.FileName;
+            }
+
+            // deserialize classification
+            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            // ask the user where to find the input data
+            if (benchmark_dir == null)
+            {
+                var cdd = new System.Windows.Forms.FolderBrowserDialog();
+                cdd.Description = "Please choose the folder containing the benchmark data.";
+                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                 {
-                    tool_significance = sig.Value;
+                    return;
                 }
+                benchmark_dir = cdd.SelectedPath;
+            }
 
-                current_workbook = app.ActiveWorkbook;
+            // enumerate files in benchmark_dir
+            var benchmark_filenames = Directory.EnumerateFiles(benchmark_dir, "*.xls", SearchOption.AllDirectories);
 
-                // Disable screen updating during analysis to speed things up
-                app.ScreenUpdating = false;
+            // ask the user where the output data should go
+            if (simulation_output_dir == null)
+            {
+                var cdd = new System.Windows.Forms.FolderBrowserDialog();
+                cdd.Description = "Please choose an output folder.";
+                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+                simulation_output_dir = cdd.SelectedPath;
+            }
 
-                // Build dependency graph (modifies data)
-                AnalysisData data;
+            // get sig values
+            var thresh = 0.05;
+            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            // calculate progress bar bounds
+            var pb_min = 0;
+            var pb_max = 100 * benchmark_filenames.Count();
+
+            // show progress bar
+            var pb = new ProgBar(pb_min, pb_max);
+            pb.Show();
+
+            foreach (string benchmark in benchmark_filenames)
+            {
                 try
                 {
-                    data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
+                    // open workbook
+                    Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
+
+                    // run simulation
+                    RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
+
+                    // close workbook
+                    wb.Close();
                 }
-                catch (ExcelParserUtility.ParseException ex)
+                catch (Exception)
                 {
-                    // cleanup UI and rethrow
-                    app.ScreenUpdating = true;
-                    throw ex;
+                    // do nothing
                 }
-
-                if (data.TerminalInputNodes().Length == 0)
-                {
-                    System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
-                    app.ScreenUpdating = true;
-                    return;
-                }
-
-                var tin = data.TerminalInputNodes();
-
-                foreach (var input_range in data.TerminalInputNodes())
-                {
-                    foreach (var input_node in input_range.getInputs())
-                    {
-                        //find the ultimate outputs for this input
-                        if (input_node.hasOutputs())
-                        {
-                            foreach (var output in input_node.getOutputs())
-                            {
-                                exploreNode(output);
-                            }
-                        }
-                    }
-                }
-
-                foreach (var range in data.input_ranges.Values)
-                {
-                    var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
-
-                    for (int error_index = 0; error_index < normal_dist.getErrorsCount(); error_index++)
-                    {
-                        normal_dist.getErrorAtPosition(error_index).Interior.Color = System.Drawing.Color.Violet;
-                    }
-                }
-                
-                // Enable screen updating when we're done
-                app.ScreenUpdating = true;
             }
+
+            // close progbar
+            pb.Close();
+
+            // inform user
+            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
         }
 
         private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
         {
-            // number of bootstraps
-            var NBOOTS = 2700;
-
-            // the full path of this workbook
-            var filename = app.ActiveWorkbook.FullName;
-
-            // the default output filename
-            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
-            var default_output_file = "simulation_results.csv";
-            var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".log";
-
             // init a RNG
             var rng = new Random();
 
@@ -568,18 +575,6 @@ namespace DataDebug
                 simulation_output_dir = cdd.SelectedPath;
             }
 
-            // save file location (will append for additional runs)
-            var savefile = System.IO.Path.Combine(simulation_output_dir, default_output_file);
-
-            // log file location (new file for each new workbook)
-            var logfile = System.IO.Path.Combine(simulation_output_dir, default_log_file);
-
-            // disable screen updating
-            app.ScreenUpdating = false;
-
-            // run the appropriate simulation
-            //app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
-
             // get sig values
             var thresh = 0.05;
             Double.TryParse(this.SensitivityTextBox.Text, out thresh);
@@ -588,24 +583,43 @@ namespace DataDebug
             var pb = new ProgBar(0, 100);
             pb.Show();
 
-            // build graph
-            var graph = DataDebugMethods.ConstructTree.constructTree(current_workbook, app);
-            if (graph.ContainsLoop()) {
-                throw new DataDebugMethods.ContainsLoopException();
-            }
-            pb.SetProgress(16);
-
-            // run simulations
-            UserSimulation.Simulation.RunSimulation(app, current_workbook, graph, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
-
-            // enable screen updating
-            app.ScreenUpdating = true;
+            // run simulation
+            RunSimulations(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
 
             // close progbar
             pb.Close();
 
             // inform user
-            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}.", savefile));
+            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+        private static void RunSimulations(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
+        {
+            // number of bootstraps
+            var NBOOTS = 2700;
+
+            // the full path of this workbook
+            var filename = app.ActiveWorkbook.FullName;
+
+            // the default output filename
+            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
+            var default_output_file = "simulation_results.csv";
+            var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".iterlog.csv";
+
+            // save file location (will append for additional runs)
+            var savefile = System.IO.Path.Combine(output_dir, default_output_file);
+
+            // log file location (new file for each new workbook)
+            var logfile = System.IO.Path.Combine(output_dir, default_log_file);
+
+            // disable screen updating
+            app.ScreenUpdating = false;
+
+            // run simulations
+            UserSimulation.Simulation.RunSimulation(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+
+            // enable screen updating
+            app.ScreenUpdating = true;
         }
 
         private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)

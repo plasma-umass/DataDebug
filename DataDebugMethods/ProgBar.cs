@@ -16,12 +16,16 @@ namespace DataDebugMethods
     {
         int Maximum;
         int Minimum;
+        int state;
 
         public ProgBar(int low, int high)
         {
             Minimum = low;
             Maximum = high;
+            state = Minimum;
             InitializeComponent();
+            progressBar1.Minimum = Minimum;
+            progressBar1.Maximum = Maximum;
             this.Visible = true;
         }
 
@@ -37,6 +41,23 @@ namespace DataDebugMethods
                 throw new Exception("Progress bar error.");
             }
             progressBar1.Value = progress;
+        }
+
+        public void IncrementProgress(int delta)
+        {
+            if (state + delta < Minimum)
+            {
+                state = Minimum;
+            }
+            else if (state + delta > Maximum)
+            {
+                state = Maximum;
+            }
+            else
+            {
+                state += delta;
+            }
+            progressBar1.Value = state;
         }
 
         public int maxProgress()

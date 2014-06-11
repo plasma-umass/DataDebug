@@ -62,8 +62,18 @@ namespace UserSimulation
         }
 
         public static String Headers() {
-            return "filename, procedure, significance, address, original_value, erroneous_value," +
-                   "total_relative_error, typo_magnitude, was_flagged, was_error" + Environment.NewLine;
+            return "filename, " +               // 0
+                   "procedure, " +              // 1
+                   "significance, " +           // 2
+                   "threshold, " +              // 3
+                   "address, " +                // 4
+                   "original_value, " +         // 5
+                   "erroneous_value," +         // 6
+                   "total_relative_error, " +   // 7
+                   "typo_magnitude, " +         // 8
+                   "was_flagged, " +            // 9
+                   "was_error" +                // 10
+                   Environment.NewLine;         // 11
         }
 
         public void WriteLog(String logfile)
@@ -73,18 +83,19 @@ namespace UserSimulation
                 System.IO.File.AppendAllText(logfile, Headers());
             }
             System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}{11}",
-                                                        _filename,
-                                                        _procedure,
-                                                        _significance,
-                                                        _threshold,
-                                                        _address,
-                                                        _original_value,
-                                                        _erroneous_value,
-                                                        _output_error_magnitude,
-                                                        _input_error_magnitude,
-                                                        _was_flagged,
-                                                        _was_error,
-                                                        Environment.NewLine));
+                                                        _filename,              // 0
+                                                        _procedure,             // 1
+                                                        _significance,          // 2
+                                                        _threshold,             // 3
+                                                        _address.A1Local(),     // 4
+                                                        _original_value,        // 5
+                                                        _erroneous_value,       // 6
+                                                        _output_error_magnitude,// 7
+                                                        _input_error_magnitude, // 8
+                                                        _was_flagged,           // 9
+                                                        _was_error,             // 10
+                                                        Environment.NewLine     // 11
+                                                        ));
         }
     }
 
@@ -469,7 +480,7 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20}{21}",
                                  "workbook_name",                               //0
                                  "initial_total_relative_error",                //1
                                  "total_relative_error",                        //2
@@ -484,13 +495,15 @@ namespace UserSimulation
                                  "false_positives",                             //11
                                  "false_negatives",                             //12
                                  "average_precision",                           //13
-                                 "tree_construct_time_seconds",                 //14
-                                 "bootstrap_or_normal_time_seconds",            //15
+                                 "graph_construct_seconds",                     //14
+                                 "analysis_seconds",                            //15
                                  "analysis_type",                               //16
                                  "normal_cutoff",                               //17
                                  "significance",                                //18
                                  "all_outputs",                                 //19
-                                 "weighted\n");                                 //20
+                                 "weighted",                                    //20
+                                 Environment.NewLine                            //21
+                                 );                                 
         }
 
         public String FormatResultsAsCSV()
@@ -515,7 +528,7 @@ namespace UserSimulation
                     _normal_cutoff + "," +
                     _significance + "," +
                     _all_outputs + "," +
-                    _weighted + "\n";
+                    _weighted + Environment.NewLine;
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
@@ -1332,8 +1345,16 @@ namespace UserSimulation
             return s;
         }
 
-        public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, DataDebugMethods.AnalysisData graph, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
         {
+            // build graph
+            var graph = DataDebugMethods.ConstructTree.constructTree(wbh, app);
+            if (graph.ContainsLoop())
+            {
+                throw new DataDebugMethods.ContainsLoopException();
+            }
+            pb.IncrementProgress(16);
+
             // get terminal input and terminal formula nodes once
             var terminal_input_nodes = graph.TerminalInputNodes();
             var terminal_formula_nodes = graph.TerminalFormulaNodes(true);  ///the boolean indicates whether to use all outputs or not
@@ -1368,7 +1389,7 @@ namespace UserSimulation
                                                                            app,
                                                                            wbh,
                                                                            c);
-            pb.SetProgress(32);
+            pb.IncrementProgress(16);
 
             // write header if needed
             if (!System.IO.File.Exists(outfile))
@@ -1379,7 +1400,7 @@ namespace UserSimulation
             // CheckCell weighted, all outputs, quantile
             var s_1 = new UserSimulation.Simulation();
             s_1.RunFromBatch(nboots,                                   // number of bootstraps
-                                wbh.Path,                              // Excel filename
+                                wbh.FullName,                              // Excel filename
                                 significance,                          // statistical significance threshold for hypothesis test
                                 app,                                   // Excel.Application
                                 threshold,                             // max % of extreme values to flag
@@ -1399,12 +1420,12 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_1.FormatResultsAsCSV());
-            pb.SetProgress(48);
+            pb.IncrementProgress(16);
 
             // CheckCell weighted, all outputs, quantile
             var s_4 = new UserSimulation.Simulation();
             s_4.RunFromBatch(nboots,                                   // number of bootstraps
-                                wbh.Path,                              // Excel filename
+                                wbh.FullName,                              // Excel filename
                                 significance,                          // statistical significance of threshold
                                 app,                                   // Excel.Application
                                 0.1,                                   // % of extreme values to flag
@@ -1424,12 +1445,12 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_4.FormatResultsAsCSV());
-            pb.SetProgress(64);
+            pb.IncrementProgress(16);
 
             // Normal, all inputs
             var s_2 = new UserSimulation.Simulation();
             s_2.RunFromBatch(nboots,                                   // irrelevant
-                                wbh.Path,                              // Excel filename
+                                wbh.FullName,                              // Excel filename
                                 significance,                          // normal cutoff?
                                 app,                                   // Excel.Application
                                 threshold,                             // ??
@@ -1449,12 +1470,12 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_2.FormatResultsAsCSV());
-            pb.SetProgress(80);
+            pb.IncrementProgress(16);
 
             // Normal, range inputs
             var s_3 = new UserSimulation.Simulation();
             s_3.RunFromBatch(nboots,                                   // irrelevant
-                                wbh.Path,                              // Excel filename
+                                wbh.FullName,                              // Excel filename
                                 significance,                          // normal cutoff?
                                 app,                                   // Excel.Application
                                 threshold,                             // ??
@@ -1474,7 +1495,7 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_3.FormatResultsAsCSV());
-            pb.SetProgress(100);
+            pb.IncrementProgress(20);
         }
     }
 }
