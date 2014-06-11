@@ -62,16 +62,18 @@ namespace UserSimulation
         }
 
         public static String Headers() {
-            return "filename, " +               // 0
-                   "procedure, " +              // 1
-                   "significance, " +           // 2
-                   "threshold, " +              // 3
-                   "address, " +                // 4
-                   "original_value, " +         // 5
-                   "erroneous_value," +         // 6
-                   "was_flagged, " +            // 7
-                   "was_error" +                // 8
-                   Environment.NewLine;         // 9
+            return "filename, " + // 0
+                   "procedure, " + // 1
+                   "significance, " + // 2
+                   "threshold, " + // 3
+                   "address, " + // 4
+                   "original_value, " + // 5
+                   "erroneous_value," + // 6
+                   "total_relative_error, " + // 7
+                   "typo_magnitude, " + // 8
+                   "was_flagged, " + // 9
+                   "was_error" + // 10
+                   Environment.NewLine; // 11
         }
 
         public void WriteLog(String logfile)
@@ -80,17 +82,19 @@ namespace UserSimulation
             {
                 System.IO.File.AppendAllText(logfile, Headers());
             }
-            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}{9}",
-                                                        _filename,              // 0
-                                                        _procedure,             // 1
-                                                        _significance,          // 2
-                                                        _threshold,             // 3
-                                                        _address.A1Local(),     // 4
-                                                        _original_value,        // 5
-                                                        _erroneous_value,       // 6
-                                                        _was_flagged,           // 7
-                                                        _was_error,             // 8
-                                                        Environment.NewLine     // 9
+            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}{11}",
+                                                        _filename, // 0
+                                                        _procedure, // 1
+                                                        _significance, // 2
+                                                        _threshold, // 3
+                                                        _address.A1Local(), // 4
+                                                        _original_value, // 5
+                                                        _erroneous_value, // 6
+                                                        _output_error_magnitude,// 7
+                                                        _input_error_magnitude, // 8
+                                                        _was_flagged, // 9
+                                                        _was_error, // 10
+                                                        Environment.NewLine // 11
                                                         ));
         }
     }
