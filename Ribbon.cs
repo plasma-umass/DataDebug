@@ -321,16 +321,20 @@ namespace DataDebug
             }
             else
             {
-                TreeNode flagged_node;
-                data.cell_nodes.TryGetValue(flagged_cell, out flagged_node);
-
-                if (flagged_node.hasOutputs())
-                {
-                    foreach (var output in flagged_node.getOutputs())
-                    {
-                        exploreNode(output);
-                    }
-                }
+                
+                // TODO: test after AEC; problematic when highlighted value is not data
+                //TreeNode flagged_node;
+                //if (data.cell_nodes.TryGetValue(flagged_cell, out flagged_node))
+                //{
+                //    // only do the following if the cell is a data cell
+                //    if (flagged_node.hasOutputs())
+                //    {
+                //        foreach (var output in flagged_node.getOutputs())
+                //        {
+                //            exploreNode(output);
+                //        }
+                //    }
+                //}
 
                 flagged_cell.GetCOMObject(app).Interior.Color = System.Drawing.Color.Red;
                 tool_highlights.Add(flagged_cell);
@@ -518,6 +522,9 @@ namespace DataDebug
 
         private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
         {
+            // number of bootstraps
+            var NBOOTS = 2700;
+
             // the full path of this workbook
             var filename = app.ActiveWorkbook.FullName;
 
@@ -571,36 +578,25 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run the appropriate simulation
-            app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
-            UserSimulation.Simulation sim = new UserSimulation.Simulation();
+            //app.ActiveWorkbook.Close(false, Type.Missing, Type.Missing);    // why?
+
+            // get sig values
+            var thresh = 0.05;
+            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
 
             // show progress bar
             var pb = new ProgBar(0, 100);
             pb.Show();
 
-            String atype;
-
-            switch (analysisType.SelectedItemIndex)
-            {
-                case 0:
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.CheckCell, true, false, false, MAX_DURATION_IN_MS, logfile);
-                    atype = UserSimulation.AnalysisType.CheckCell.ToString();
-                    break;
-                case 1:
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalPerRange, true, false, false, MAX_DURATION_IN_MS, logfile);
-                    atype = UserSimulation.AnalysisType.NormalPerRange.ToString();
-                    break;
-                case 2:
-                    sim.Run(2700, filename, 0.95, app, 0.05, c, rng, UserSimulation.AnalysisType.NormalAllInputs, true, false, false, MAX_DURATION_IN_MS, logfile);
-                    atype = UserSimulation.AnalysisType.NormalAllInputs.ToString();
-                    break;
-                default:
-                    System.Windows.Forms.MessageBox.Show("Invalid analysis type.");
-                    return;
+            // build graph
+            var graph = DataDebugMethods.ConstructTree.constructTree(current_workbook, app);
+            if (graph.ContainsLoop()) {
+                throw new DataDebugMethods.ContainsLoopException();
             }
+            pb.SetProgress(16);
 
-            // update progress bar
-            pb.SetProgress(100);
+            // run simulations
+            UserSimulation.Simulation.RunSimulation(app, current_workbook, graph, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
 
             // enable screen updating
             app.ScreenUpdating = true;
@@ -608,11 +604,8 @@ namespace DataDebug
             // close progbar
             pb.Close();
 
-            // save results to file
-            sim.ToCSV(savefile);
-
             // inform user
-            System.Windows.Forms.MessageBox.Show(String.Format("{0} analysis complete.  Results are in {1}.", atype, savefile));
+            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}.", savefile));
         }
 
         private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)

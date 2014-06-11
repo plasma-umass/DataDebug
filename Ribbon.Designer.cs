@@ -45,11 +45,11 @@ namespace DataDebug
             this.FixError = this.Factory.CreateRibbonButton();
             this.clearColoringButton = this.Factory.CreateRibbonButton();
             this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
+            this.analysisType = this.Factory.CreateRibbonDropDown();
             this.separator1 = this.Factory.CreateRibbonSeparator();
             this.RunSimulation = this.Factory.CreateRibbonButton();
             this.ErrorBtn = this.Factory.CreateRibbonButton();
             this.TestStuff = this.Factory.CreateRibbonButton();
-            this.analysisType = this.Factory.CreateRibbonDropDown();
             this.ToDOT = this.Factory.CreateRibbonButton();
             this.LoopCheck = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
@@ -124,6 +124,18 @@ namespace DataDebug
             this.SensitivityTextBox.Name = "SensitivityTextBox";
             this.SensitivityTextBox.Text = "5.0";
             // 
+            // analysisType
+            // 
+            ribbonDropDownItemImpl1.Label = "CheckCell";
+            ribbonDropDownItemImpl2.Label = "Normal (per range)";
+            ribbonDropDownItemImpl3.Label = "Normal (all inputs)";
+            this.analysisType.Items.Add(ribbonDropDownItemImpl1);
+            this.analysisType.Items.Add(ribbonDropDownItemImpl2);
+            this.analysisType.Items.Add(ribbonDropDownItemImpl3);
+            this.analysisType.Label = "Analysis Type";
+            this.analysisType.Name = "analysisType";
+            this.analysisType.Visible = false;
+            // 
             // separator1
             // 
             this.separator1.Name = "separator1";
@@ -147,17 +159,6 @@ namespace DataDebug
             this.TestStuff.Name = "TestStuff";
             this.TestStuff.Visible = false;
             this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
-            // 
-            // analysisType
-            // 
-            ribbonDropDownItemImpl1.Label = "CheckCell";
-            ribbonDropDownItemImpl2.Label = "Normal (per range)";
-            ribbonDropDownItemImpl3.Label = "Normal (all inputs)";
-            this.analysisType.Items.Add(ribbonDropDownItemImpl1);
-            this.analysisType.Items.Add(ribbonDropDownItemImpl2);
-            this.analysisType.Items.Add(ribbonDropDownItemImpl3);
-            this.analysisType.Label = "Analysis Type";
-            this.analysisType.Name = "analysisType";
             // 
             // ToDOT
             // 

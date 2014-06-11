@@ -11,7 +11,7 @@ namespace DataDebugMethods
 {
     public class AnalysisData
     {
-        public List<TreeNode> nodelist;     // holds all the TreeNodes in the Excel fileTreeNode
+        public List<TreeNode> nodelist;     // holds all the TreeNodes in the Excel file
         public RangeDict input_ranges;
         public TreeDict formula_nodes;
         public TreeDict cell_nodes;
