@@ -69,11 +69,9 @@ namespace UserSimulation
                    "address, " +                // 4
                    "original_value, " +         // 5
                    "erroneous_value," +         // 6
-                   "total_relative_error, " +   // 7
-                   "typo_magnitude, " +         // 8
-                   "was_flagged, " +            // 9
-                   "was_error" +                // 10
-                   Environment.NewLine;         // 11
+                   "was_flagged, " +            // 7
+                   "was_error" +                // 8
+                   Environment.NewLine;         // 9
         }
 
         public void WriteLog(String logfile)
@@ -82,7 +80,7 @@ namespace UserSimulation
             {
                 System.IO.File.AppendAllText(logfile, Headers());
             }
-            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}{11}",
+            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}{9}",
                                                         _filename,              // 0
                                                         _procedure,             // 1
                                                         _significance,          // 2
@@ -90,11 +88,9 @@ namespace UserSimulation
                                                         _address.A1Local(),     // 4
                                                         _original_value,        // 5
                                                         _erroneous_value,       // 6
-                                                        _output_error_magnitude,// 7
-                                                        _input_error_magnitude, // 8
-                                                        _was_flagged,           // 9
-                                                        _was_error,             // 10
-                                                        Environment.NewLine     // 11
+                                                        _was_flagged,           // 7
+                                                        _was_error,             // 8
+                                                        Environment.NewLine     // 9
                                                         ));
         }
     }
@@ -110,9 +106,10 @@ namespace UserSimulation
     [Serializable]
     public enum AnalysisType
     {
-        CheckCell           = 0,
-        NormalPerRange      = 1,    //normal analysis of inputs on a per-range granularity
-        NormalAllInputs     = 2     //normal analysis on the entire set of inputs
+        CheckCell5          = 0,    // 0.05
+        CheckCell10         = 1,    // 0.10
+        NormalPerRange      = 2,    //normal analysis of inputs on a per-range granularity
+        NormalAllInputs     = 3     //normal analysis on the entire set of inputs
     }
 
     public class SimulationNotRunException : Exception
@@ -292,7 +289,6 @@ namespace UserSimulation
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
                         Excel.Application app,      // reference to Excel app
-                        double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run
@@ -331,7 +327,7 @@ namespace UserSimulation
             sw.Start();
 
             // remove errors until none remain; MODIFIES WORKBOOK
-            _user = SimulateUser(nboots, significance, threshold, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff, max_duration_in_ms, sw, logfile);
+            _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff, max_duration_in_ms, sw, logfile);
 
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
@@ -385,7 +381,6 @@ namespace UserSimulation
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
                         Excel.Application app,      // reference to Excel app
-                        double threshold,           // percentage of erroneous cells
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run
@@ -429,10 +424,12 @@ namespace UserSimulation
             // save function outputs
             CellDict correct_outputs = SaveOutputs(terminal_formula_nodes);
 
+            var threshold = analysisType == AnalysisType.CheckCell5 ? 0.05 : 0.10;
+
             // generate errors
             _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
 
-            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
+            Run(nboots, xlfile, significance, app, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         // For running a simulation from the batch runner
@@ -470,7 +467,7 @@ namespace UserSimulation
 
             _errors = errors;
                 
-            Run(nboots, xlfile, significance, app, threshold, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
+            Run(nboots, xlfile, significance, app, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         public double RemainingError()
@@ -996,7 +993,6 @@ namespace UserSimulation
         // remove errors until none remain
         private UserResults SimulateUser(int nboots,
                                          double significance,
-                                         double threshold,
                                          AnalysisData data,
                                          CellDict original_inputs,
                                          CellDict errord,
@@ -1012,6 +1008,8 @@ namespace UserSimulation
                                          String logfile
                                         )
         {
+            double threshold = analysis_type == AnalysisType.CheckCell5 ? 0.05 : 0.10;
+
             // init user results data structure
             var o = new UserResults();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
@@ -1039,7 +1037,10 @@ namespace UserSimulation
 
                 // choose the appropriate test
                 // TODO: the test type really should be a lambda
-                if (analysis_type == AnalysisType.CheckCell)
+                if (analysis_type == AnalysisType.CheckCell5 ||
+                    analysis_type == AnalysisType.CheckCell10
+                    )
+
                 {
                     flagged_cell = CheckCell_Step(o,
                                                   significance,
@@ -1400,13 +1401,13 @@ namespace UserSimulation
             // CheckCell weighted, all outputs, quantile
             var s_1 = new UserSimulation.Simulation();
             s_1.RunFromBatch(nboots,                                   // number of bootstraps
-                                wbh.FullName,                              // Excel filename
+                                wbh.FullName,                          // Excel filename
                                 significance,                          // statistical significance threshold for hypothesis test
                                 app,                                   // Excel.Application
-                                threshold,                             // max % of extreme values to flag
+                                0.05,                                  // max % of extreme values to flag
                                 c,                                     // classification data
                                 r,                                     // random number generator
-                                UserSimulation.AnalysisType.CheckCell, // analysis type
+                                UserSimulation.AnalysisType.CheckCell5,// analysis type
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
                                 false,                                 // use quantile test (false) or normal test (true)
@@ -1425,13 +1426,13 @@ namespace UserSimulation
             // CheckCell weighted, all outputs, quantile
             var s_4 = new UserSimulation.Simulation();
             s_4.RunFromBatch(nboots,                                   // number of bootstraps
-                                wbh.FullName,                              // Excel filename
+                                wbh.FullName,                          // Excel filename
                                 significance,                          // statistical significance of threshold
                                 app,                                   // Excel.Application
-                                0.1,                                   // % of extreme values to flag
+                                0.10,                                  // % of extreme values to flag
                                 c,                                     // classification data
                                 r,                                     // random number generator
-                                UserSimulation.AnalysisType.CheckCell, // analysis type
+                                UserSimulation.AnalysisType.CheckCell10,// analysis type
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
                                 false,                                 // use quantile test (false) or normal test (true)

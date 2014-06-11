@@ -460,6 +460,7 @@ namespace DataDebug
             if (simulation_classification_file == null)
             {
                 var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.ShowHelp = true;
                 ofd.FileName = "ClassificationData-2013-11-14.bin";
                 ofd.Title = "Please select a classification data input file.";
                 if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
@@ -550,6 +551,7 @@ namespace DataDebug
             if (simulation_classification_file == null)
             {
                 var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.ShowHelp = true;
                 ofd.FileName = "ClassificationData-2013-11-14.bin";
                 ofd.Title = "Please select a classification data input file.";
                 if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
@@ -628,6 +630,7 @@ namespace DataDebug
             if (classification_file == null)
             {
                 var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.ShowHelp = true;
                 if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     classification_file = ofd.FileName;
