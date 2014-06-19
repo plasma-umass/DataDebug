@@ -1269,6 +1269,14 @@ namespace UserSimulation
         }
 
         // Get dictionary of inputs and the error they produce
+        public static CellDict GenSubtleErrors()
+        {
+
+
+            throw new NotImplementedException();
+        }
+
+        // Get dictionary of inputs and the error they produce
         public static CellDict GenImportantErrors(TreeNode[] output_nodes,
                                                   CellDict inputs,
                                                   int k,         // number of alternatives to consider
