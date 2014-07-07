@@ -597,6 +597,8 @@ namespace DataDebug
 
         private static void RunSimulations(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
         {
+            System.Windows.Forms.MessageBox.Show("Yep.");
+
             // number of bootstraps
             var NBOOTS = 2700;
 
@@ -618,7 +620,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run simulations
-            UserSimulation.Simulation.RunSimulation(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+            UserSimulation.Simulation.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
 
             // enable screen updating
             app.ScreenUpdating = true;

@@ -263,31 +263,31 @@ namespace UserSimulation
             return max_error_produced_dictionary;
         }
 
-        public CellDict GetTopErrors(Dictionary<AST.Address, Tuple<string, double>> max_error_produced_dictionary, double threshold)
-        {
-            int inputs_count = max_error_produced_dictionary.Count;
-            CellDict top_errors = new CellDict();
-            while ((top_errors.Count / (double)inputs_count) < threshold)
-            {
-                double max = 0.0;
-                AST.Address max_addr = null;
-                string max_node_string = "";
-                //Find the max_node
-                foreach (var kvp in max_error_produced_dictionary)
-                {
-                    if (kvp.Value.Item2 >= max)
-                    {
-                        max = kvp.Value.Item2;
-                        max_addr = kvp.Key;
-                        max_node_string = kvp.Value.Item1;
-                    }
-                }
-                max_error_produced_dictionary.Remove(max_addr);
-                top_errors.Add(max_addr, max_node_string);
-            }
+        //public CellDict GetTopErrors(Dictionary<AST.Address, Tuple<string, double>> max_error_produced_dictionary, double threshold)
+        //{
+        //    int inputs_count = max_error_produced_dictionary.Count;
+        //    CellDict top_errors = new CellDict();
+        //    while ((top_errors.Count / (double)inputs_count) < threshold)
+        //    {
+        //        double max = 0.0;
+        //        AST.Address max_addr = null;
+        //        string max_node_string = "";
+        //        //Find the max_node
+        //        foreach (var kvp in max_error_produced_dictionary)
+        //        {
+        //            if (kvp.Value.Item2 >= max)
+        //            {
+        //                max = kvp.Value.Item2;
+        //                max_addr = kvp.Key;
+        //                max_node_string = kvp.Value.Item1;
+        //            }
+        //        }
+        //        max_error_produced_dictionary.Remove(max_addr);
+        //        top_errors.Add(max_addr, max_node_string);
+        //    }
 
-            return top_errors;
-        }
+        //    return top_errors;
+        //}
 
         public void Run(int nboots,                 // number of bootstraps
                         string xlfile,              // name of the workbook
@@ -378,62 +378,6 @@ namespace UserSimulation
             _tree_construct_time = data.tree_construct_time;
             // flag that we're done; safe to print output results
             _simulation_run = true;
-        }
-
-        // create and run a CheckCell simulation
-        public void Run(int nboots,                 // number of bootstraps
-                        string xlfile,              // name of the workbook
-                        double significance,        // significance threshold for test
-                        Excel.Application app,      // reference to Excel app
-                        Classification c,           // data from which to generate errors
-                        Random r,                   // a random number generator
-                        AnalysisType analysisType,  // the type of analysis to run
-                        bool weighted,              // should we weigh things?
-                        bool all_outputs,           // if !all_outputs, we only consider terminal outputs
-                        bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
-                        long max_duration_in_ms,    // maximum duration before throwing a timeout exception
-                        String logfile              //filename for the output log
-                       )
-        {
-            // open workbook
-            Excel.Workbook wb = Utility.OpenWorkbook(xlfile, app);
-
-            // build dependency graph
-            var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-
-            // create ErrorGenerator object
-            var egen = new ErrorGenerator();
-
-            // get terminal input and terminal formula nodes once
-            var terminal_input_nodes = data.TerminalInputNodes();
-            var terminal_formula_nodes = data.TerminalFormulaNodes(all_outputs);
-
-            if (terminal_input_nodes.Length == 0)
-            {
-                throw new NoRangeInputs();
-            }
-
-            // save original spreadsheet state
-            CellDict original_inputs = SaveInputs(terminal_input_nodes);
-            if (original_inputs.Count() == 0)
-            {
-                throw new NoFormulas();
-            }
-
-            // force a recalculation before saving outputs, otherwise we may
-            // erroneously conclude that the procedure did the wrong thing
-            // based solely on Excel floating-point oddities
-            InjectValues(app, wb, original_inputs);
-
-            // save function outputs
-            CellDict correct_outputs = SaveOutputs(terminal_formula_nodes);
-
-            var threshold = analysisType == AnalysisType.CheckCell5 ? 0.05 : 0.10;
-
-            // generate errors
-            _errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
-
-            Run(nboots, xlfile, significance, app, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         // For running a simulation from the batch runner
@@ -1269,14 +1213,6 @@ namespace UserSimulation
         }
 
         // Get dictionary of inputs and the error they produce
-        public static CellDict GenSubtleErrors()
-        {
-
-
-            throw new NotImplementedException();
-        }
-
-        // Get dictionary of inputs and the error they produce
         public static CellDict GenImportantErrors(TreeNode[] output_nodes,
                                                   CellDict inputs,
                                                   int k,         // number of alternatives to consider
@@ -1426,6 +1362,20 @@ namespace UserSimulation
                                                                c);
             // run paper simulations
             RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
+        }
+
+        public static void RunSimpleCC5vsNormalAllSim(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        {
+            // record intitial state of spreadsheet
+            var prepdata = PrepSimulation(app, wbh, pb);
+
+            throw new NotImplementedException();
+
+            //// generate errors
+            //CellDict errors = ErrorGenerator.
+
+            //// run paper simulations
+            //RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
         }
 
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)
