@@ -52,6 +52,7 @@ namespace DataDebug
             this.TestStuff = this.Factory.CreateRibbonButton();
             this.ToDOT = this.Factory.CreateRibbonButton();
             this.LoopCheck = this.Factory.CreateRibbonButton();
+            this.RunReviewerExperiment = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.ccgroup.SuspendLayout();
             this.buttonGroup1.SuspendLayout();
@@ -74,6 +75,7 @@ namespace DataDebug
             this.ccgroup.Items.Add(this.TestStuff);
             this.ccgroup.Items.Add(this.ToDOT);
             this.ccgroup.Items.Add(this.LoopCheck);
+            this.ccgroup.Items.Add(this.RunReviewerExperiment);
             this.ccgroup.Label = "CheckCell";
             this.ccgroup.Name = "ccgroup";
             // 
@@ -173,6 +175,12 @@ namespace DataDebug
             this.LoopCheck.Visible = false;
             this.LoopCheck.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.LoopCheck_Click);
             // 
+            // RunReviewerExperiment
+            // 
+            this.RunReviewerExperiment.Label = "Run Rev. Simulation";
+            this.RunReviewerExperiment.Name = "RunReviewerExperiment";
+            this.RunReviewerExperiment.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunReviewerExperiment_Click);
+            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -205,6 +213,7 @@ namespace DataDebug
         internal Microsoft.Office.Tools.Ribbon.RibbonButton ToDOT;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton LoopCheck;
         internal Microsoft.Office.Tools.Ribbon.RibbonSeparator separator1;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton RunReviewerExperiment;
     }
 
     partial class ThisRibbonCollection

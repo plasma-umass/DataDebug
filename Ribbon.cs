@@ -597,8 +597,6 @@ namespace DataDebug
 
         private static void RunSimulations(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
         {
-            System.Windows.Forms.MessageBox.Show("Yep.");
-
             // number of bootstraps
             var NBOOTS = 2700;
 
@@ -621,6 +619,35 @@ namespace DataDebug
 
             // run simulations
             UserSimulation.Simulation.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+
+            // enable screen updating
+            app.ScreenUpdating = true;
+        }
+
+        private static void RunProportionExperiment(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
+        {
+            // number of bootstraps
+            var NBOOTS = 2700;
+
+            // the full path of this workbook
+            var filename = app.ActiveWorkbook.FullName;
+
+            // the default output filename
+            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
+            var default_output_file = "simulation_results.csv";
+            var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".iterlog.csv";
+
+            // save file location (will append for additional runs)
+            var savefile = System.IO.Path.Combine(output_dir, default_output_file);
+
+            // log file location (new file for each new workbook)
+            var logfile = System.IO.Path.Combine(output_dir, default_log_file);
+
+            // disable screen updating
+            app.ScreenUpdating = false;
+
+            // run simulations
+            UserSimulation.Simulation.RunProportionExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
 
             // enable screen updating
             app.ScreenUpdating = true;
@@ -680,6 +707,62 @@ namespace DataDebug
                 System.Windows.Forms.Clipboard.SetText(ex.Message);
                 System.Windows.Forms.MessageBox.Show(String.Format("Parser exception for formula: {0}", ex.Message));
             }
+        }
+
+        private void RunReviewerExperiment_Click(object sender, RibbonControlEventArgs e)
+        {
+            // init a RNG
+            var rng = new Random();
+
+            // classification data
+            UserSimulation.Classification c;
+
+            // ask the user for the classification data
+            if (simulation_classification_file == null)
+            {
+                var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.ShowHelp = true;
+                ofd.FileName = "ClassificationData-2013-11-14.bin";
+                ofd.Title = "Please select a classification data input file.";
+                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+
+                simulation_classification_file = ofd.FileName;
+            }
+
+            // deserialize classification
+            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            // ask the user where the output data should go
+            if (simulation_output_dir == null)
+            {
+                var cdd = new System.Windows.Forms.FolderBrowserDialog();
+                cdd.Description = "Please choose an output folder.";
+                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+                simulation_output_dir = cdd.SelectedPath;
+            }
+
+            // get sig values
+            var thresh = 0.05;
+            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            // show progress bar
+            var pb = new ProgBar(0, 100);
+            pb.Show();
+
+            // run simulation
+            RunProportionExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
+
+            // close progbar
+            pb.Close();
+
+            // inform user
+            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
         }
     }
 }

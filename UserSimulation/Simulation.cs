@@ -1364,18 +1364,33 @@ namespace UserSimulation
             RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
         }
 
-        public static void RunSimpleCC5vsNormalAllSim(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static void RunProportionExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
         {
             // record intitial state of spreadsheet
             var prepdata = PrepSimulation(app, wbh, pb);
 
-            throw new NotImplementedException();
+            // init error generator
+            var eg = new ErrorGenerator();
 
-            //// generate errors
-            //CellDict errors = ErrorGenerator.
+            for (int i = 0; i < 100; i++)
+            {
+                // ranomly choose an input (data only)
+                TreeNode rand_input = prepdata.graph.TerminalInputCells()[r.Next(prepdata.graph.TerminalInputCells().Count())];
 
-            //// run paper simulations
-            //RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
+                // get the value
+                String input_value = prepdata.original_inputs[rand_input.GetAddress()];
+
+                // perturb it
+                String erroneous_input = eg.GenerateErrorString(input_value, c);
+
+                // create an error dictionary with this one perturbed value
+                var errors = new CellDict();
+
+                errors.Add(rand_input.GetAddress(), erroneous_input);
+
+                // run paper simulations
+                RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
+            }
         }
 
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)

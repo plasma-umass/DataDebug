@@ -97,6 +97,9 @@ namespace DataDebugMethods
         /// <returns></returns>
         public TreeNode[] TerminalInputCells()
         {
+            // this has to be done via recursive descent; a simple LINQ expression
+            // will not suffice.
+            throw new NotImplementedException();
             return TerminalInputNodes().SelectMany(pair => pair.getInputs())
                                        .Where(node => !node.isFormula() && node.isLeaf())
                                        .ToArray();
