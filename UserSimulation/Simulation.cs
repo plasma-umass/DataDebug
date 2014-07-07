@@ -1358,7 +1358,16 @@ namespace UserSimulation
             return s;
         }
 
-        public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public struct PrepData
+        {
+            public AnalysisData graph;
+            public CellDict original_inputs;
+            public CellDict correct_outputs;
+            public TreeNode[] terminal_input_nodes;
+            public TreeNode[] terminal_formula_nodes;
+        }
+
+        public static PrepData PrepSimulation(Excel.Application app, Excel.Workbook wbh, ProgBar pb)
         {
             // build graph
             var graph = DataDebugMethods.ConstructTree.constructTree(wbh, app);
@@ -1371,7 +1380,7 @@ namespace UserSimulation
             // get terminal input and terminal formula nodes once
             var terminal_input_nodes = graph.TerminalInputNodes();
             var terminal_formula_nodes = graph.TerminalFormulaNodes(true);  ///the boolean indicates whether to use all outputs or not
-            
+
             if (terminal_input_nodes.Length == 0)
             {
                 throw new NoRangeInputs();
@@ -1393,15 +1402,34 @@ namespace UserSimulation
             // save function outputs
             CellDict correct_outputs = UserSimulation.Simulation.SaveOutputs(terminal_formula_nodes);
 
+            return new PrepData() {
+                graph = graph,
+                original_inputs = original_inputs,
+                correct_outputs = correct_outputs,
+                terminal_input_nodes = terminal_input_nodes,
+                terminal_formula_nodes = terminal_formula_nodes
+            };
+        }
+
+        public static void RunSimulationPaperMain(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        {
+            // record intitial state of spreadsheet
+            var prepdata = PrepSimulation(app, wbh, pb);
+
             // generate errors
-            //CellDict errors = egen.RandomlyGenerateErrors(original_inputs, c, threshold);
-            CellDict errors = UserSimulation.Simulation.GenImportantErrors(terminal_formula_nodes,
-                                                                           original_inputs,
-                                                                           5,
-                                                                           correct_outputs,
-                                                                           app,
-                                                                           wbh,
-                                                                           c);
+            CellDict errors = UserSimulation.Simulation.GenImportantErrors(prepdata.terminal_formula_nodes,
+                                                               prepdata.original_inputs,
+                                                               5,
+                                                               prepdata.correct_outputs,
+                                                               app,
+                                                               wbh,
+                                                               c);
+            // run paper simulations
+            RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
+        }
+
+        public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)
+        {
             pb.IncrementProgress(16);
 
             // write header if needed
@@ -1423,13 +1451,13 @@ namespace UserSimulation
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
                                 false,                                 // use quantile test (false) or normal test (true)
-                                graph,                                 // AnalysisData
+                                prepdata.graph,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
-                                terminal_input_nodes,                  // input range nodes
-                                terminal_formula_nodes,                // output nodes
-                                original_inputs,                       // original input values
-                                correct_outputs,                       // original output values
+                                prepdata.terminal_input_nodes,                  // input range nodes
+                                prepdata.terminal_formula_nodes,                // output nodes
+                                prepdata.original_inputs,                       // original input values
+                                prepdata.correct_outputs,                       // original output values
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_1.FormatResultsAsCSV());
@@ -1448,13 +1476,13 @@ namespace UserSimulation
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
                                 false,                                 // use quantile test (false) or normal test (true)
-                                graph,                                 // AnalysisData
+                                prepdata.graph,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
-                                terminal_input_nodes,                  // input range nodes
-                                terminal_formula_nodes,                // output nodes
-                                original_inputs,                       // original input values
-                                correct_outputs,                       // original output values
+                                prepdata.terminal_input_nodes,                  // input range nodes
+                                prepdata.terminal_formula_nodes,                // output nodes
+                                prepdata.original_inputs,                       // original input values
+                                prepdata.correct_outputs,                       // original output values
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_4.FormatResultsAsCSV());
@@ -1473,13 +1501,13 @@ namespace UserSimulation
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
-                                graph,                                 // AnalysisData
+                                prepdata.graph,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
-                                terminal_input_nodes,                  // input range nodes
-                                terminal_formula_nodes,                // output nodes
-                                original_inputs,                       // original input values
-                                correct_outputs,                       // original output values
+                                prepdata.terminal_input_nodes,                  // input range nodes
+                                prepdata.terminal_formula_nodes,                // output nodes
+                                prepdata.original_inputs,                       // original input values
+                                prepdata.correct_outputs,                       // original output values
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_2.FormatResultsAsCSV());
@@ -1498,13 +1526,13 @@ namespace UserSimulation
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
-                                graph,                                 // AnalysisData
+                                prepdata.graph,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
-                                terminal_input_nodes,                  // input range nodes
-                                terminal_formula_nodes,                // output nodes
-                                original_inputs,                       // original input values
-                                correct_outputs,                       // original output values
+                                prepdata.terminal_input_nodes,                  // input range nodes
+                                prepdata.terminal_formula_nodes,                // output nodes
+                                prepdata.original_inputs,                       // original input values
+                                prepdata.correct_outputs,                       // original output values
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_3.FormatResultsAsCSV());

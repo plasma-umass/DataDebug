@@ -71,11 +71,8 @@ namespace UserSimulation
             return strs;
         }
 
-        public CellDict RandomlyGenerateErrors(CellDict original_inputs, Classification c, double proportion)
+        public CellDict RandomlyGenerateNErrors(CellDict original_inputs, Classification c, int n)
         {
-            // number of cells to typo
-            int n = (int)Math.Ceiling(original_inputs.Count * proportion);
-
             var introduced_errors = new CellDict();
             var oi = original_inputs.ToArray();
 
@@ -83,7 +80,7 @@ namespace UserSimulation
             while (i < n)
             {
                 int idx = r.Next(oi.Length);
-                KeyValuePair<AST.Address,String> cell = oi[idx];
+                KeyValuePair<AST.Address, String> cell = oi[idx];
                 if (introduced_errors.ContainsKey(cell.Key) || cell.Value == null)
                 {   // if we've already typo'ed this value, or if the value of the cell is null move on
                     continue;
@@ -96,6 +93,14 @@ namespace UserSimulation
             }
 
             return introduced_errors;
+        }
+
+        public CellDict RandomlyGenerateErrors(CellDict original_inputs, Classification c, double proportion)
+        {
+            // number of cells to typo
+            int n = (int)Math.Ceiling(original_inputs.Count * proportion);
+
+            return RandomlyGenerateNErrors(original_inputs, c, n);
         }
 
         //Generates the distribution of strings for a particular character given a classification
