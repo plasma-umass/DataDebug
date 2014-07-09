@@ -97,12 +97,25 @@ namespace DataDebugMethods
         /// <returns></returns>
         public TreeNode[] TerminalInputCells()
         {
-            // this has to be done via recursive descent; a simple LINQ expression
-            // will not suffice.
-            throw new NotImplementedException();
-            return TerminalInputNodes().SelectMany(pair => pair.getInputs())
-                                       .Where(node => !node.isFormula() && node.isLeaf())
-                                       .ToArray();
+            var iecells = TerminalInputNodes().Aggregate(
+                            Enumerable.Empty<TreeNode>(),
+                            (acc, node) => acc.Union<TreeNode>(getChildCells(node))
+                          );
+            return iecells.ToArray<TreeNode>();
+        }
+
+        private IEnumerable<TreeNode> getChildCells(TreeNode node)
+        {
+            if (node.isCell() && node.getInputs().Count() == 0) {
+                return new List<TreeNode>{node};
+            } else {
+                var children = node.getInputs();
+                var groups = children.GroupBy(n => n.isCell()).ToDictionary(grp => grp.Key, grp => grp.ToList());
+                var grandchildren = groups.ContainsKey(false) ? 
+                                        groups[false].SelectMany(n => getChildCells(n)) :
+                                        Enumerable.Empty<TreeNode>();
+                return groups[true].Union<TreeNode>(grandchildren);
+            }
         }
 
         public string ToDOT()
