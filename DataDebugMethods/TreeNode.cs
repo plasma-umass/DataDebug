@@ -62,7 +62,7 @@ namespace DataDebugMethods
             }
 
             // node is formula iff the COM object is both a single cell and a formula
-            if (_height == 1 && _width == 1 && com.HasFormula == true)
+            if (_is_a_cell && com.HasFormula == true)
             {
                 _is_formula = true;
                 _formula = com.Formula;

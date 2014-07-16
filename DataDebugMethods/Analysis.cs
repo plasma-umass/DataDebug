@@ -613,15 +613,6 @@ namespace DataDebugMethods
                 var t = input_arr[i];
                 var com = t.getCOMObject();
                 bootsaver[i] = new BootMemo();
-
-                // debug: are any of the inputs actually functions?
-                //foreach (TreeNode input in t.getInputs())
-                //{
-                //    if (input.isFormula())
-                //    {
-                //        throw new Exception("This should not happen.");
-                //    }
-                //}
                             
                 // replace the values of the COM object with the jth bootstrap,
                 // save all function outputs, and

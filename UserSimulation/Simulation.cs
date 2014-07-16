@@ -12,6 +12,7 @@ using System.Diagnostics;
 using DataDebugMethods;
 using Serialization = System.Runtime.Serialization;
 using OptChar = Microsoft.FSharp.Core.FSharpOption<char>;
+using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -318,7 +319,7 @@ namespace UserSimulation
             _all_outputs = all_outputs;
             _weighted = weighted;
 
-            //Now we want to inject the errors from top_errors
+            //Now we want to inject the errors from _errors
             InjectValues(app, wb, _errors);
 
             // TODO: save a copy of the workbook for later inspection
@@ -1141,24 +1142,16 @@ namespace UserSimulation
             return fnset;
         }
 
-        // save spreadsheet inputs to a CellDict
-        public static CellDict SaveInputs(TreeNode[] input_ranges)
+        // save all of the values of the spreadsheet that
+        // participate in any computation
+        public static CellDict SaveInputs(AnalysisData graph)
         {
             try
             {
                 var cd = new CellDict();
-                foreach (TreeNode input_range in input_ranges)
+                foreach (var node in graph.allComputationCells())
                 {
-                    foreach (TreeNode cell in input_range.getInputs())
-                    {
-                        // never save formula; there's no point since we don't perturb them
-                        var comcell = cell.getCOMObject();
-                        var addr = cell.GetAddress();
-                        if (!cd.ContainsKey(addr))
-                        {
-                            cd.Add(addr, cell.getCOMValueAsString());
-                        }
-                    }
+                    cd.Add(node.GetAddress(), node.getCOMValueAsString());
                 }
                 return cd;
             }
@@ -1329,7 +1322,7 @@ namespace UserSimulation
             }
 
             // save original spreadsheet state
-            CellDict original_inputs = UserSimulation.Simulation.SaveInputs(terminal_input_nodes);
+            CellDict original_inputs = UserSimulation.Simulation.SaveInputs(graph);
 
             // force a recalculation before saving outputs, otherwise we may
             // erroneously conclude that the procedure did the wrong thing
@@ -1373,23 +1366,35 @@ namespace UserSimulation
             // init error generator
             var eg = new ErrorGenerator();
 
+            // get inputs as an array of addresses to facilitate random selection
+            // DATA INPUTS ONLY
+            var inputs = prepdata.graph.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+
+            // sanity check: all of the inputs should also be in prepdata.original_inputs
+            foreach (AST.Address addr in inputs)
+            {
+                if (!prepdata.original_inputs.ContainsKey(addr))
+                {
+                    throw new Exception("Missing address!");
+                }
+            }
+            
             for (int i = 0; i < 100; i++)
             {
-                // ranomly choose an input (data only)
-                TreeNode rand_input = prepdata.graph.TerminalInputCells()[r.Next(prepdata.graph.TerminalInputCells().Count())];
+                // randomly choose an input address
+                AST.Address rand_addr = inputs[r.Next(inputs.Length)];
 
                 // get the value
-                String input_value = prepdata.original_inputs[rand_input.GetAddress()];
+                String input_value = prepdata.original_inputs[rand_addr];
 
                 // perturb it
                 String erroneous_input = eg.GenerateErrorString(input_value, c);
 
                 // create an error dictionary with this one perturbed value
                 var errors = new CellDict();
+                errors.Add(rand_addr, erroneous_input);
 
-                errors.Add(rand_input.GetAddress(), erroneous_input);
-
-                // run paper simulations
+                // run simulations; simulation code does insertion of errors and restore of originals
                 RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
             }
         }

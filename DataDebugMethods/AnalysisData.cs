@@ -94,27 +94,52 @@ namespace DataDebugMethods
         /// 1. leaf nodes, and
         /// 2. strictly data-containing (no formulas).
         /// </summary>
-        /// <returns></returns>
+        /// <returns>TreeNode[]</returns>
         public TreeNode[] TerminalInputCells()
         {
-            var iecells = TerminalInputNodes().Aggregate(
+            // this folds all of the inputs for all of the
+            // outputs into a set of distinct data-containing cells
+            var iecells = TerminalFormulaNodes(true).Aggregate(
                             Enumerable.Empty<TreeNode>(),
                             (acc, node) => acc.Union<TreeNode>(getChildCells(node))
                           );
             return iecells.ToArray<TreeNode>();
         }
 
+        /// <summary>
+        ///  This method returns all TreeNodes cells that participate in a computation.  Note
+        ///  that these nodes may be formulas!
+        /// </summary>
+        /// <returnsTreeNode[]></returns>
+        public TreeNode[] allComputationCells()
+        {
+            // this folds all of the inputs for all of the
+            // outputs into a set of distinct data-containing cells
+            var iecells = TerminalFormulaNodes(true).Aggregate(
+                            Enumerable.Empty<TreeNode>(),
+                            (acc, node) => acc.Union<TreeNode>(getAllCells(node))
+                          );
+            return iecells.ToArray<TreeNode>();
+        }
+
+        private IEnumerable<TreeNode> getAllCells(TreeNode node)
+        {
+            var thiscell = node;
+            var children = node.getInputs().SelectMany(n => getAllCells(n));
+            List<TreeNode> results = new List<TreeNode>(children);
+            results.Add(thiscell);
+            return results;
+        }
+
         private IEnumerable<TreeNode> getChildCells(TreeNode node)
         {
-            if (node.isCell() && node.getInputs().Count() == 0) {
+            // base case: node is a cell (not a range), it has no children, and it's not a formula
+            if (node.isCell() && node.getInputs().Count() == 0 && !node.isFormula()) {
                 return new List<TreeNode>{node};
             } else {
-                var children = node.getInputs();
-                var groups = children.GroupBy(n => n.isCell()).ToDictionary(grp => grp.Key, grp => grp.ToList());
-                var grandchildren = groups.ContainsKey(false) ? 
-                                        groups[false].SelectMany(n => getChildCells(n)) :
-                                        Enumerable.Empty<TreeNode>();
-                return groups[true].Union<TreeNode>(grandchildren);
+            // recursive case: node *may* have children; if so, recurse
+                var children = node.getInputs().SelectMany(n => getChildCells(n));
+                return children;
             }
         }
 
