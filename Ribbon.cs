@@ -630,12 +630,12 @@ namespace DataDebug
             var NBOOTS = 2700;
 
             // the full path of this workbook
-            var filename = app.ActiveWorkbook.FullName;
+            var filename = app.ActiveWorkbook.Name;
 
             // the default output filename
             var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
             var default_output_file = "simulation_results.csv";
-            var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".iterlog.csv";
+            var default_log_file = r.Match(filename).Groups[1].Value + ".iterlog.csv";
 
             // save file location (will append for additional runs)
             var savefile = System.IO.Path.Combine(output_dir, default_output_file);
@@ -665,7 +665,6 @@ namespace DataDebug
                     classification_file = ofd.FileName;
                 }
             }
-
 
             if (classification_file != null)
             {
