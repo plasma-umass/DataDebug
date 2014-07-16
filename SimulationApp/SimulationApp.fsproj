@@ -38,13 +38,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c" />
-    <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="mscorlib" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.fs" />
@@ -64,11 +57,6 @@
     <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
       <Name>ExcelParser</Name>
       <Project>{6de2a2b9-c029-4bdb-8992-d16276471d9f}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\UserSimulation\UserSimulation.csproj">
-      <Name>UserSimulation</Name>
-      <Project>{cb1aade6-ad72-4ae5-aaa8-351cebc61236}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

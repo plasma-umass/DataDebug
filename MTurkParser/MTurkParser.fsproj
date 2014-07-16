@@ -33,16 +33,14 @@
     <DocumentationFile>bin\Release\MTurkParser.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Data.fs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c" />
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Data.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
