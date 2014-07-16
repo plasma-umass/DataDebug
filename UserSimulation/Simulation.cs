@@ -1177,6 +1177,7 @@ namespace UserSimulation
                 // throw an exception in debug mode, because this should never happen
                 if (!(bool)formula_cell.getCOMObject().HasFormula)
                 {
+                    String fstring = formula_cell.getCOMObject().Formula;
                     throw new Exception("Formula TreeNode has no formula.");
                 }
 

@@ -15,19 +15,20 @@ namespace DataDebug
     {
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            //var messageBox = MessageBox.Show("DataDebug add-in active!");
-            //var excel = this.Application;
-            //((Excel.AppEvents_Event)this.Application).NewWorkbook += WorkbookAdded;
-            //excel.WorkbookOpen += WorkbookAdded;
-            //excel.WorkbookActivate += WorkbookActivated;
-            //excel.WorkbookDeactivate += WorkbookDeactivated;
-        
+            /*
+             * NOTE: DO NOT ADD ANY UI CODE HERE. ANYTHING THAT REQUIRES
+             * USER INTERACTION WILL BREAK AUTOMATION CODE THAT USES
+             * THE PLUGIN!!!
+             */
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-            //var messageBox = MessageBox.Show("DataDebug add-in active! (closing)");
-            
+            /*
+             * NOTE: DO NOT ADD ANY UI CODE HERE. ANYTHING THAT REQUIRES
+             * USER INTERACTION WILL BREAK AUTOMATION CODE THAT USES
+             * THE PLUGIN!!!
+             */
         }
 
         #region VSTO generated code

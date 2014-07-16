@@ -68,16 +68,6 @@
     <Compile Include="Utility.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LongestCommonSubsequence\LongestCommonSubsequence.fsproj">
-      <Project>{e3b87cad-521f-41ea-b3e8-ecd0d7d5074b}</Project>
-      <Name>LongestCommonSubsequence</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
-      <Project>{6de2a2b9-c029-4bdb-8992-d16276471d9f}</Project>
-      <Name>ExcelParser</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="ProgBar.resx">
       <DependentUpon>ProgBar.cs</DependentUpon>
     </EmbeddedResource>
@@ -92,6 +82,16 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LongestCommonSubsequence\LongestCommonSubsequence.fsproj">
+      <Project>{e3b87cad-521f-41ea-b3e8-ecd0d7d5074b}</Project>
+      <Name>LongestCommonSubsequence</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
+      <Project>{6de2a2b9-c029-4bdb-8992-d16276471d9f}</Project>
+      <Name>ExcelParser</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
