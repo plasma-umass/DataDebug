@@ -521,7 +521,7 @@ namespace DataDebug
                     Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
 
                     // run simulation
-                    RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
+                    RunProportionExperiment(app, wb, rng, c, simulation_output_dir, thresh, pb);
 
                     // close workbook
                     wb.Close();
@@ -601,12 +601,12 @@ namespace DataDebug
             var NBOOTS = 2700;
 
             // the full path of this workbook
-            var filename = app.ActiveWorkbook.FullName;
+            var filename = app.ActiveWorkbook.Name;
 
             // the default output filename
             var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
             var default_output_file = "simulation_results.csv";
-            var default_log_file = r.Match(app.ActiveWorkbook.Name).Groups[1].Value + ".iterlog.csv";
+            var default_log_file = r.Match(filename).Groups[1].Value + ".iterlog.csv";
 
             // save file location (will append for additional runs)
             var savefile = System.IO.Path.Combine(output_dir, default_output_file);
@@ -756,6 +756,97 @@ namespace DataDebug
 
             // run simulation
             RunProportionExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
+
+            // close progbar
+            pb.Close();
+
+            // inform user
+            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+        private void RunAllRevSim_Click(object sender, RibbonControlEventArgs e)
+        {
+            // init a RNG
+            var rng = new Random();
+
+            // classification data
+            UserSimulation.Classification c;
+
+            // ask the user for the classification data
+            if (simulation_classification_file == null)
+            {
+                var ofd = new System.Windows.Forms.OpenFileDialog();
+                ofd.ShowHelp = true;
+                ofd.FileName = "ClassificationData-2013-11-14.bin";
+                ofd.Title = "Please select a classification data input file.";
+                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+
+                simulation_classification_file = ofd.FileName;
+            }
+
+            // deserialize classification
+            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            // ask the user where to find the input data
+            if (benchmark_dir == null)
+            {
+                var cdd = new System.Windows.Forms.FolderBrowserDialog();
+                cdd.Description = "Please choose the folder containing the benchmark data.";
+                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+                benchmark_dir = cdd.SelectedPath;
+            }
+
+            // enumerate files in benchmark_dir
+            var benchmark_filenames = Directory.EnumerateFiles(benchmark_dir, "*.xls", SearchOption.AllDirectories);
+
+            // ask the user where the output data should go
+            if (simulation_output_dir == null)
+            {
+                var cdd = new System.Windows.Forms.FolderBrowserDialog();
+                cdd.Description = "Please choose an output folder.";
+                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+                simulation_output_dir = cdd.SelectedPath;
+            }
+
+            // get sig values
+            var thresh = 0.05;
+            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            // calculate progress bar bounds
+            var pb_min = 0;
+            var pb_max = 100 * benchmark_filenames.Count();
+
+            // show progress bar
+            var pb = new ProgBar(pb_min, pb_max);
+            pb.Show();
+
+            foreach (string benchmark in benchmark_filenames)
+            {
+                try
+                {
+                    // open workbook
+                    Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
+
+                    // run simulation
+                    RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
+
+                    // close workbook
+                    wb.Close();
+                }
+                catch (Exception)
+                {
+                    // do nothing
+                }
+            }
 
             // close progbar
             pb.Close();

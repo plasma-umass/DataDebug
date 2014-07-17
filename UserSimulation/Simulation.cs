@@ -515,9 +515,9 @@ namespace UserSimulation
                     _significance + "," +
                     _all_outputs + "," +
                     _weighted + "," +
-                    _num_max_err_diff_mag +
-                    _str_max_err_diff_mag +
-                    _num_max_output_diff_mag +
+                    _num_max_err_diff_mag + "," +
+                    _str_max_err_diff_mag + "," +
+                    _num_max_output_diff_mag + "," +
                     _str_max_output_diff_mag +
                     Environment.NewLine;
         }
@@ -1468,7 +1468,7 @@ namespace UserSimulation
                 }
             }
             
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1; i++)
             {
                 // randomly choose an input address
                 AST.Address rand_addr = inputs[r.Next(inputs.Length)];
