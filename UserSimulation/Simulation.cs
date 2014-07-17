@@ -430,27 +430,27 @@ namespace UserSimulation
             var num_errs = _errors.Where(pair => BothNumbers(pair.Value, original_inputs[pair.Key]));
             var str_errs = _errors.Where(pair => !BothNumbers(pair.Value, original_inputs[pair.Key]));
 
-            _num_max_err_diff_mag = num_errs.Select(
-                (KeyValuePair<AST.Address, string> pair) => 
+            _num_max_err_diff_mag = num_errs.Count() != 0 ? num_errs.Select(
+                (KeyValuePair<AST.Address, string> pair) =>
                     NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(original_inputs[pair.Key]))
-            ).Max();
-            _str_max_err_diff_mag = str_errs.Select(
+                    ).Max() : 0;
+            _str_max_err_diff_mag = str_errs.Count() != 0 ? str_errs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
                     StringMagnitudeChange(pair.Value, original_inputs[pair.Key])
-            ).Max();
+                    ).Max() : 0;
 
             // find the output with the largest magnitude
             var num_outs = correct_outputs.Where(pair => IsNumber(pair.Value));
             var str_outs = correct_outputs.Where(pair => !IsNumber(pair.Value));
 
-            _num_max_output_diff_mag = num_outs.Select(
+            _num_max_output_diff_mag = num_outs.Count() != 0 ? num_outs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
                     NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(correct_outputs[pair.Key]))
-            ).Max();
-            _str_max_output_diff_mag = str_outs.Select(
+                    ).Max() : 0;
+            _str_max_output_diff_mag = str_outs.Count() != 0 ? str_outs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
                     StringMagnitudeChange(pair.Value, correct_outputs[pair.Key])
-            ).Max();
+                    ).Max() : 0;
                 
             Run(nboots, xlfile, significance, app, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
