@@ -1468,7 +1468,7 @@ namespace UserSimulation
                 }
             }
             
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 100; i++)
             {
                 // randomly choose an input address
                 AST.Address rand_addr = inputs[r.Next(inputs.Length)];
