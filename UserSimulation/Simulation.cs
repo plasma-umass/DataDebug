@@ -32,7 +32,8 @@ namespace UserSimulation
         readonly string _original_value;
         readonly string _erroneous_value;
         readonly double _output_error_magnitude;
-        readonly double _input_error_magnitude;
+        readonly double _num_input_error_magnitude;
+        readonly double _str_input_error_magnitude;
         readonly bool _was_flagged;
         readonly bool _was_error;
         readonly double _significance;
@@ -43,19 +44,21 @@ namespace UserSimulation
                         string original_value,
                         string erroneous_value,
                         double output_error_magnitude,
-                        double input_error_magnitude,
+                        double num_input_error_magnitude,
+                        double str_input_error_magnitude,
                         bool was_flagged,
                         bool was_error,
                         double significance,
                         double threshold)
         {
-            _procedure = procedure;
             _filename = filename;
+            _procedure = procedure;
             _address = address;
             _original_value = original_value;
             _erroneous_value = erroneous_value;
             _output_error_magnitude = output_error_magnitude;
-            _input_error_magnitude = input_error_magnitude;
+            _num_input_error_magnitude = num_input_error_magnitude;
+            _str_input_error_magnitude = str_input_error_magnitude;
             _was_flagged = was_flagged;
             _was_error = was_error;
             _significance = significance;
@@ -71,10 +74,11 @@ namespace UserSimulation
                    "original_value, " + // 5
                    "erroneous_value," + // 6
                    "total_relative_error, " + // 7
-                   "typo_magnitude, " + // 8
-                   "was_flagged, " + // 9
-                   "was_error" + // 10
-                   Environment.NewLine; // 11
+                   "num_input_err_mag, " + // 8
+                   "str_input_err_mag, " + // 9
+                   "was_flagged, " + // 10
+                   "was_error" + // 11
+                   Environment.NewLine; // 12
         }
 
         public void WriteLog(String logfile)
@@ -83,7 +87,7 @@ namespace UserSimulation
             {
                 System.IO.File.AppendAllText(logfile, Headers());
             }
-            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}{11}",
+            System.IO.File.AppendAllText(logfile, String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}{12}",
                                                         _filename, // 0
                                                         _procedure, // 1
                                                         _significance, // 2
@@ -92,10 +96,11 @@ namespace UserSimulation
                                                         _original_value, // 5
                                                         _erroneous_value, // 6
                                                         _output_error_magnitude,// 7
-                                                        _input_error_magnitude, // 8
-                                                        _was_flagged, // 9
-                                                        _was_error, // 10
-                                                        Environment.NewLine // 11
+                                                        _num_input_error_magnitude, // 8
+                                                        _str_input_error_magnitude, // 9
+                                                        _was_flagged, // 10
+                                                        _was_error, // 11
+                                                        Environment.NewLine // 12
                                                         ));
         }
     }
@@ -147,6 +152,10 @@ namespace UserSimulation
         private double _significance;
         private bool _all_outputs;
         private bool _weighted;
+        private double _num_max_err_diff_mag;
+        private double _str_max_err_diff_mag;
+        private double _num_max_output_diff_mag;
+        private double _str_max_output_diff_mag;
         private List<LogEntry> _error_log = new List<LogEntry>();
 
         public ErrorCondition GetExitState()
@@ -415,6 +424,33 @@ namespace UserSimulation
             }
 
             _errors = errors;
+
+            // find the error with the largest magnitude
+            // this is mostly useful for the single-perturbation experiments
+            var num_errs = _errors.Where(pair => BothNumbers(pair.Value, original_inputs[pair.Key]));
+            var str_errs = _errors.Where(pair => !BothNumbers(pair.Value, original_inputs[pair.Key]));
+
+            _num_max_err_diff_mag = num_errs.Select(
+                (KeyValuePair<AST.Address, string> pair) => 
+                    NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(original_inputs[pair.Key]))
+            ).Max();
+            _str_max_err_diff_mag = str_errs.Select(
+                (KeyValuePair<AST.Address, string> pair) =>
+                    StringMagnitudeChange(pair.Value, original_inputs[pair.Key])
+            ).Max();
+
+            // find the output with the largest magnitude
+            var num_outs = correct_outputs.Where(pair => IsNumber(pair.Value));
+            var str_outs = correct_outputs.Where(pair => !IsNumber(pair.Value));
+
+            _num_max_output_diff_mag = num_outs.Select(
+                (KeyValuePair<AST.Address, string> pair) =>
+                    NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(correct_outputs[pair.Key]))
+            ).Max();
+            _str_max_output_diff_mag = str_outs.Select(
+                (KeyValuePair<AST.Address, string> pair) =>
+                    StringMagnitudeChange(pair.Value, correct_outputs[pair.Key])
+            ).Max();
                 
             Run(nboots, xlfile, significance, app, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
@@ -426,7 +462,7 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20}{21}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24}{25}",
                                  "workbook_name",                               //0
                                  "initial_total_relative_error",                //1
                                  "total_relative_error",                        //2
@@ -448,7 +484,11 @@ namespace UserSimulation
                                  "significance",                                //18
                                  "all_outputs",                                 //19
                                  "weighted",                                    //20
-                                 Environment.NewLine                            //21
+                                 "num_max_err_diff_mag",                        //21
+                                 "str_max_err_diff_mag",                        //22
+                                 "num_max_out_diff_mag",                        //23
+                                 "str_max_out_diff_mag",                        //24
+                                 Environment.NewLine                            //25
                                  );                                 
         }
 
@@ -474,7 +514,12 @@ namespace UserSimulation
                     _normal_cutoff + "," +
                     _significance + "," +
                     _all_outputs + "," +
-                    _weighted + Environment.NewLine;
+                    _weighted + "," +
+                    _num_max_err_diff_mag +
+                    _str_max_err_diff_mag +
+                    _num_max_output_diff_mag +
+                    _str_max_output_diff_mag +
+                    Environment.NewLine;
         }
 
         //This method creates a csv file that shows the error reduction after each fix is applied
@@ -887,18 +932,36 @@ namespace UserSimulation
             return flagged_cell;
         }
 
-        private double InputErrorMagnitude(string error, string correct)
+        private bool IsNumber(string value)
         {
-            double e, c;
-            if (Double.TryParse(error, out e) && Double.TryParse(correct, out c))
-            {
-                if (c != 0)
-                {
-                    return Math.Abs(e / c);
-                }
-            }
-            return 0;
+            double v;
+            return Double.TryParse(value, out v);
         }
+
+        private bool BothNumbers(string value1, string value2)
+        {
+            return IsNumber(value1) && IsNumber(value2);
+        }
+
+        // this represents the magnitude of the change; much more meaningful
+        private double NumericalMagnitudeChange(double error, double correct)
+        {
+            if (error - correct != 0)
+            {
+                // we add a tiny value to c to avoid divide-by-zero
+                return Math.Log10(Math.Abs(error - correct) / Math.Abs(correct + 0.000000000001));
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        private double StringMagnitudeChange(string error, string correct)
+        {
+            return error == correct ? 0 : 1;
+        }
+
 
         private double MeanErrorMagnitude(CellDict partially_corrected_outputs, CellDict original_outputs)
         {
@@ -1061,14 +1124,25 @@ namespace UserSimulation
                     // compute output error magnitudes
                     var output_error_magnitude = MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
                     // compute input error magnitude
-                    double input_error_magnitude;
+                    double num_input_error_magnitude;
+                    double str_input_error_magnitude;
                     if (errord.ContainsKey(flagged_cell))
                     {
-                        input_error_magnitude = InputErrorMagnitude(errord[flagged_cell], original_inputs[flagged_cell]);
+                        if (BothNumbers(errord[flagged_cell], original_inputs[flagged_cell]))
+                        {
+                            num_input_error_magnitude = NumericalMagnitudeChange(Double.Parse(errord[flagged_cell]), Double.Parse(original_inputs[flagged_cell]));
+                            str_input_error_magnitude = 0;
+                        }
+                        else
+                        {
+                            num_input_error_magnitude = 0;
+                            str_input_error_magnitude = StringMagnitudeChange(errord[flagged_cell], original_inputs[flagged_cell]);
+                        }
                     }
                     else
                     {
-                        input_error_magnitude = 1.0;
+                        num_input_error_magnitude = 0;
+                        str_input_error_magnitude = 0;
                     }
 
                     // write error log
@@ -1078,7 +1152,8 @@ namespace UserSimulation
                                                 original_inputs[flagged_cell],
                                                 errord.ContainsKey(flagged_cell) ? errord[flagged_cell] : original_inputs[flagged_cell],
                                                 output_error_magnitude,
-                                                input_error_magnitude,
+                                                num_input_error_magnitude,
+                                                str_input_error_magnitude,
                                                 true,
                                                 correction_made,
                                                 significance,
@@ -1097,6 +1172,19 @@ namespace UserSimulation
             // write out all false negative information
             foreach (AST.Address fn in o.false_negatives)
             {
+                double num_input_error_magnitude;
+                double str_input_error_magnitude;
+                if (BothNumbers(errord[fn], original_inputs[fn]))
+                {
+                    num_input_error_magnitude = NumericalMagnitudeChange(Double.Parse(errord[fn]), Double.Parse(original_inputs[fn]));
+                    str_input_error_magnitude = 0;
+                }
+                else
+                {
+                    num_input_error_magnitude = 0;
+                    str_input_error_magnitude = StringMagnitudeChange(errord[fn], original_inputs[fn]);
+                }
+
                 // write error log
                 _error_log.Add(new LogEntry(analysis_type,
                                             wb.Name,
@@ -1104,7 +1192,8 @@ namespace UserSimulation
                                             original_inputs[fn],
                                             errord[fn],
                                             last_out_err_mag,
-                                            InputErrorMagnitude(errord[fn], original_inputs[fn]),
+                                            num_input_error_magnitude,
+                                            str_input_error_magnitude,
                                             false,
                                             true,
                                             significance,
