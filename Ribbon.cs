@@ -521,7 +521,7 @@ namespace DataDebug
                     Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
 
                     // run simulation
-                    RunProportionExperiment(app, wb, rng, c, simulation_output_dir, thresh, pb);
+                    RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
 
                     // close workbook
                     wb.Close();
@@ -837,7 +837,7 @@ namespace DataDebug
                     Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
 
                     // run simulation
-                    RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
+                    RunProportionExperiment(app, wb, rng, c, simulation_output_dir, thresh, pb);
 
                     // close workbook
                     wb.Close();
