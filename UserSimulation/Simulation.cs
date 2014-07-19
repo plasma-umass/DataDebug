@@ -119,7 +119,8 @@ namespace UserSimulation
         CheckCell5          = 0,    // 0.05
         CheckCell10         = 1,    // 0.10
         NormalPerRange      = 2,    //normal analysis of inputs on a per-range granularity
-        NormalAllInputs     = 3     //normal analysis on the entire set of inputs
+        NormalAllInputs     = 3,    //normal analysis on the entire set of inputs
+        CheckCellN          = 4     // CheckCell, n steps
     }
 
     public class SimulationNotRunException : Exception
@@ -148,7 +149,6 @@ namespace UserSimulation
         private AnalysisType _analysis_type;
         private double _tree_construct_time = 0.0;
         private double _analysis_time = 0.0;
-        private bool _normal_cutoff;
         private double _significance;
         private bool _all_outputs;
         private bool _weighted;
@@ -258,7 +258,7 @@ namespace UserSimulation
                     cd.Add(addr, orig_value);
                     InjectValues(app, wb, cd);
 
-                    double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
+                    double total_error = Utility.CalculateTotalError(correct_outputs, incorrect_outputs);
 
                     //keep track of the largest observed max error
                     if (total_error > max_error_produced)
@@ -273,42 +273,16 @@ namespace UserSimulation
             return max_error_produced_dictionary;
         }
 
-        //public CellDict GetTopErrors(Dictionary<AST.Address, Tuple<string, double>> max_error_produced_dictionary, double threshold)
-        //{
-        //    int inputs_count = max_error_produced_dictionary.Count;
-        //    CellDict top_errors = new CellDict();
-        //    while ((top_errors.Count / (double)inputs_count) < threshold)
-        //    {
-        //        double max = 0.0;
-        //        AST.Address max_addr = null;
-        //        string max_node_string = "";
-        //        //Find the max_node
-        //        foreach (var kvp in max_error_produced_dictionary)
-        //        {
-        //            if (kvp.Value.Item2 >= max)
-        //            {
-        //                max = kvp.Value.Item2;
-        //                max_addr = kvp.Key;
-        //                max_node_string = kvp.Value.Item1;
-        //            }
-        //        }
-        //        max_error_produced_dictionary.Remove(max_addr);
-        //        top_errors.Add(max_addr, max_node_string);
-        //    }
-
-        //    return top_errors;
-        //}
-
         public void Run(int nboots,                 // number of bootstraps
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
+                        CutoffKind ck,              // kind of threshold function to use
                         Excel.Application app,      // reference to Excel app
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
-                        bool normal_cutoff,         // indicates if we should use normal cutoff or top 5% for errors
                         AnalysisData data,
                         Excel.Workbook wb,
                         TreeNode[] terminal_formula_nodes,
@@ -323,15 +297,12 @@ namespace UserSimulation
             _wb_name = xlfile;
             _wb_path = wb.Path; 
             _analysis_type = analysisType;
-            _normal_cutoff = normal_cutoff;
             _significance = significance;
             _all_outputs = all_outputs;
             _weighted = weighted;
 
             //Now we want to inject the errors from _errors
             InjectValues(app, wb, _errors);
-
-            // TODO: save a copy of the workbook for later inspection
 
             // save function outputs
             CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes);
@@ -341,7 +312,7 @@ namespace UserSimulation
             sw.Start();
 
             // remove errors until none remain; MODIFIES WORKBOOK
-            _user = SimulateUser(nboots, significance, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, normal_cutoff, max_duration_in_ms, sw, logfile);
+            _user = SimulateUser(nboots, significance, ck, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, max_duration_in_ms, sw, logfile);
 
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
@@ -351,12 +322,12 @@ namespace UserSimulation
             var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes);
 
             // compute total relative error
-            _error = CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
-            _total_relative_error = TotalRelativeError(_error);
+            _error = Utility.CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
+            _total_relative_error = Utility.TotalRelativeError(_error);
 
             // compute starting total relative error (normalized by max_errors)
-            ErrorDict starting_error = CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
-            _initial_total_relative_error = TotalRelativeError(starting_error);
+            ErrorDict starting_error = Utility.CalculateNormalizedError(correct_outputs, incorrect_outputs, _user.max_errors);
+            _initial_total_relative_error = Utility.TotalRelativeError(starting_error);
 
             // effort
             _max_effort = data.cell_nodes.Count;
@@ -395,13 +366,12 @@ namespace UserSimulation
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
                         Excel.Application app,      // reference to Excel app
-                        double threshold,           // percentage of erroneous cells
+                        CutoffKind ck,
                         Classification c,           // data from which to generate errors
                         Random r,                   // a random number generator
                         AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
-                        bool normal_cutoff,         // indicates if we should use a normal cutoff or top x%
                         AnalysisData data,          // the computation tree of the spreadsheet
                         Excel.Workbook wb,          // the workbook being analyzed
                         CellDict errors,            // the errors that will be introduced in the spreadsheet
@@ -427,32 +397,32 @@ namespace UserSimulation
 
             // find the error with the largest magnitude
             // this is mostly useful for the single-perturbation experiments
-            var num_errs = _errors.Where(pair => BothNumbers(pair.Value, original_inputs[pair.Key]));
-            var str_errs = _errors.Where(pair => !BothNumbers(pair.Value, original_inputs[pair.Key]));
+            var num_errs = _errors.Where(pair => Utility.BothNumbers(pair.Value, original_inputs[pair.Key]));
+            var str_errs = _errors.Where(pair => !Utility.BothNumbers(pair.Value, original_inputs[pair.Key]));
 
             _num_max_err_diff_mag = num_errs.Count() != 0 ? num_errs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
-                    NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(original_inputs[pair.Key]))
+                    Utility.NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(original_inputs[pair.Key]))
                     ).Max() : 0;
             _str_max_err_diff_mag = str_errs.Count() != 0 ? str_errs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
-                    StringMagnitudeChange(pair.Value, original_inputs[pair.Key])
+                    Utility.StringMagnitudeChange(pair.Value, original_inputs[pair.Key])
                     ).Max() : 0;
 
             // find the output with the largest magnitude
-            var num_outs = correct_outputs.Where(pair => IsNumber(pair.Value));
-            var str_outs = correct_outputs.Where(pair => !IsNumber(pair.Value));
+            var num_outs = correct_outputs.Where(pair => Utility.IsNumber(pair.Value));
+            var str_outs = correct_outputs.Where(pair => !Utility.IsNumber(pair.Value));
 
             _num_max_output_diff_mag = num_outs.Count() != 0 ? num_outs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
-                    NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(correct_outputs[pair.Key]))
+                    Utility.NumericalMagnitudeChange(Double.Parse(pair.Value), Double.Parse(correct_outputs[pair.Key]))
                     ).Max() : 0;
             _str_max_output_diff_mag = str_outs.Count() != 0 ? str_outs.Select(
                 (KeyValuePair<AST.Address, string> pair) =>
-                    StringMagnitudeChange(pair.Value, correct_outputs[pair.Key])
+                    Utility.StringMagnitudeChange(pair.Value, correct_outputs[pair.Key])
                     ).Max() : 0;
                 
-            Run(nboots, xlfile, significance, app, c, r, analysisType, weighted, all_outputs, normal_cutoff, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
+            Run(nboots, xlfile, significance, ck, app, c, r, analysisType, weighted, all_outputs, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         public double RemainingError()
@@ -462,7 +432,7 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24}{25}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23}{24}",
                                  "workbook_name",                               //0
                                  "initial_total_relative_error",                //1
                                  "total_relative_error",                        //2
@@ -480,15 +450,14 @@ namespace UserSimulation
                                  "graph_construct_seconds",                     //14
                                  "analysis_seconds",                            //15
                                  "analysis_type",                               //16
-                                 "normal_cutoff",                               //17
-                                 "significance",                                //18
-                                 "all_outputs",                                 //19
-                                 "weighted",                                    //20
-                                 "num_max_err_diff_mag",                        //21
-                                 "str_max_err_diff_mag",                        //22
-                                 "num_max_out_diff_mag",                        //23
-                                 "str_max_out_diff_mag",                        //24
-                                 Environment.NewLine                            //25
+                                 "significance",                                //17
+                                 "all_outputs",                                 //18
+                                 "weighted",                                    //19
+                                 "num_max_err_diff_mag",                        //20
+                                 "str_max_err_diff_mag",                        //21
+                                 "num_max_out_diff_mag",                        //22
+                                 "str_max_out_diff_mag",                        //23
+                                 Environment.NewLine                            //24
                                  );                                 
         }
 
@@ -511,7 +480,6 @@ namespace UserSimulation
                     _tree_construct_time + "," +            // tree construction time in seconds
                     _analysis_time + "," +                  // bootstrap or normal analysis time in seconds
                     _analysis_type + "," +                  // anaysis type (CheckCell, normal per range, normal on all inputs)
-                    _normal_cutoff + "," +
                     _significance + "," +
                     _all_outputs + "," +
                     _weighted + "," +
@@ -575,436 +543,22 @@ namespace UserSimulation
             }
         }
 
-        private static void UpdatePerFunctionMaxError(CellDict correct_outputs, CellDict incorrect_outputs, ErrorDict max_errors)
-        {
-            // for each output
-            foreach (var kvp in correct_outputs)
-            {
-                var addr = kvp.Key;
-                var correct_value = correct_outputs[addr];
-                var incorrect_value = incorrect_outputs[addr];
-                // numeric
-                if (ExcelParser.isNumeric(correct_value) && ExcelParser.isNumeric(incorrect_value))
-                {
-                    var error = Math.Abs(System.Convert.ToDouble(correct_value) - System.Convert.ToDouble(incorrect_value));
-                    if (max_errors.ContainsKey(addr))
-                    {
-                        if (max_errors[addr] < error)
-                        {
-                            max_errors[addr] = error;
-                        }
-                    }
-                    else
-                    {
-                        max_errors.Add(addr, error);
-                    }
-                }
-                // non-numeric
-                else
-                {
-                    var error = correct_value.Equals(incorrect_value) ? 0.0 : 1.0;
-                    if (max_errors.ContainsKey(addr))
-                    {
-                        if (error > 0)
-                        {
-                            max_errors[addr] = error;
-                        }
-                    }
-                    else
-                    {
-                        max_errors.Add(addr, error);
-                    }
-                }
-            }
-        }
-
-        //The total error is the sum of the absolute errors of all outputs
-        private static double CalculateTotalError(CellDict correct_outputs, CellDict incorrect_outputs)
-        {
-            //Iterate over all outputs and accumulate the total error
-            double total_error = 0.0;
-            foreach (var kvp in correct_outputs)
-            {
-                var addr = kvp.Key;
-                var correct_value = correct_outputs[addr];
-                var incorrect_value = incorrect_outputs[addr];
-                if (ExcelParser.isNumeric(correct_value) && ExcelParser.isNumeric(incorrect_value))
-                {
-                    total_error += Math.Abs(System.Convert.ToDouble(correct_value) - System.Convert.ToDouble(incorrect_value));
-                }
-                else
-                {
-                    total_error += correct_value.Equals(incorrect_value) ? 0.0 : 1.0;
-                }
-            }
-            return total_error;
-        }
-
-        [Serializable]
-        private class UserResults
-        {
-            public List<AST.Address> true_positives = new List<AST.Address>();
-            public List<AST.Address> false_positives = new List<AST.Address>();
-            public HashSet<AST.Address> false_negatives = new HashSet<AST.Address>();
-            //Keeps track of the largest errors we observe during the simulation for each output
-            public ErrorDict max_errors = new ErrorDict();
-            public List<double> current_total_error = new List<double>();
-            public List<double> PrecRel_at_k = new List<double>();
-        }
-
-        //Computes total relative error
-        //Each entry in the dictionary is normalized to its max value, so they are all <= 1.0.
-        //We sum them up and divide by the total number of entries to get the total relative error
-        private static double TotalRelativeError(ErrorDict error)
-        {
-            return error.Select(pair => pair.Value).Sum() / (double)error.Count();
-        }
-
-        private static ErrorDict CalculateNormalizedError(CellDict correct_outputs, CellDict partially_corrected_outputs, ErrorDict max_errors)
-        {
-            var ed = new ErrorDict();
-
-            foreach (KeyValuePair<AST.Address, string> orig in correct_outputs)
-            {
-                var addr = orig.Key;
-                string correct_value = orig.Value;
-                string partially_corrected_value = System.Convert.ToString(partially_corrected_outputs[addr]);
-                // if the function produces numeric outputs, calculate distance
-                if (ExcelParser.isNumeric(correct_value) &&
-                    ExcelParser.isNumeric(partially_corrected_value))
-                {
-                    ed.Add(addr, RelativeNumericError(System.Convert.ToDouble(correct_value),
-                                                      System.Convert.ToDouble(partially_corrected_value),
-                                                      max_errors[addr]));
-                }
-                // calculate indicator function
-                else
-                {
-                    ed.Add(addr, RelativeCategoricalError(correct_value, partially_corrected_value));
-                }
-            }
-
-            return ed;
-        }
-
-        // compares the corrected function output against the incorrected output
-        // 0 means that the error has been completely corrected; 1 means that
-        // the error totally remains
-        private static double RelativeNumericError(double correct_value, double partially_corrected_value, double max_error)
-        {
-            //|f(I'') - f(I)| / max f(I')
-            if (max_error != 0.0)
-            {
-                return Math.Abs(partially_corrected_value - correct_value) / max_error;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        private static double RelativeCategoricalError(string original_value, string partially_corrected_value)
-        {
-            if (String.Equals(original_value, partially_corrected_value))
-            {
-                return 0;
-            } else {
-                return 1;
-            }
-        }
-
-        private static AST.Address CheckCell_Step(UserResults o,
-                                           double significance,
-                                           double threshold,
-                                           int nboots,
-                                           AnalysisData data,
-                                           Excel.Application app,
-                                           bool weighted,
-                                           bool all_outputs,
-                                           bool run_bootstrap,
-                                           bool normal_cutoff,
-                                           HashSet<AST.Address> known_good,
-                                           ref List<KeyValuePair<TreeNode, int>> filtered_high_scores,
-                                           long max_duration_in_ms,
-                                           Stopwatch sw)
-        {
-            // Get bootstraps
-            // The bootstrap should only re-run if there is a correction made, 
-            //      not when something is marked as OK (isn't one of the introduced errors)
-            // The list of suspected cells doesn't change when we mark something as OK,
-            //      we just move on to the next thing in the list
-            if (run_bootstrap)
-            {
-                TreeScore scores = Analysis.Bootstrap(nboots, data, app, weighted, all_outputs, max_duration_in_ms, sw, significance);
-                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
-
-                //Using an outlier test for highlighting 
-                //scores that fall outside of two standard deviations from the others
-                //The one-sided 5% cutoff for the normal distribution is 1.6448.
-
-                if (normal_cutoff)
-                {
-                    //Code for doing normal outlier analysis on the scores:
-                    //find mean:
-                    double sum = 0.0;
-                    foreach (double d in scores.Values)
-                    {
-                        sum += d;
-                    }
-                    double mean = sum / scores.Values.Count;
-                    //find variance
-                    double distance_sum_sq = 0.0;
-                    foreach (double d in scores.Values)
-                    {
-                        distance_sum_sq += Math.Pow(mean - d, 2);
-                    }
-                    double variance = distance_sum_sq / scores.Values.Count;
-
-                    //find std. deviation
-                    double std_deviation = Math.Sqrt(variance);
-
-                    if (threshold == 0.05)
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
-                    }
-                    else if (threshold == 0.1)   //10% cutoff 1.2815
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.2815).ToList();
-                    }
-                    else if (threshold == 0.025) //2.5% cutoff 1.9599
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.9599).ToList();
-                    }
-                    else if (threshold == 0.075) //7.5% cutoff 1.4395
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.4395).ToList();
-                    }
-                    else
-                    {
-                        throw new Exception("Uhhh.... What's my cutoff?");
-                    }
-                }
-                else
-                {
-
-                    int start_ptr = 0;
-                    int end_ptr = 0;
-
-                    List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
-
-                    while ((double)start_ptr / scores_list.Count < threshold) //the start of this score region is before the cutoff
-                    {
-                        // make sure that we don't go off the end of the list
-                        if (start_ptr >= scores_list.Count)
-                        {
-                            break;
-                        }
-
-                        //while the scores at the start and end pointers are the same, bump the end pointer
-                        while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
-                        {
-                            end_ptr++;
-                        }
-                        //Now the end_pointer points to the first index with a lower score
-                        //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
-                        //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
-                        //  To do this, we add (1 / total number of entries) to the cutoff
-                        //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
-                        //for more than 5% of the total.
-                        if ((double)end_ptr / scores_list.Count < threshold + (double)1.0 / scores_list.Count)
-                        {
-                            //add all values of the current score to high_scores list
-                            for (; start_ptr < end_ptr; start_ptr++)
-                            {
-                                high_scores.Add(scores_list[start_ptr]);
-                            }
-                            //Increment the start pointer to the start of the next score region
-                            start_ptr++;
-                        }
-                        else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                        {
-                            break;
-                        }
-                    }
-                    // filter out cells marked as OK
-                    filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-                }
-            }
-            else  //if no corrections were made (a cell was marked as OK, not corrected)
-            {
-                //re-filter out cells marked as OK
-                filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-            }
-            if (filtered_high_scores.Count() != 0)
-            {
-                // get TreeNode corresponding to most unusual score
-                return filtered_high_scores[0].Key.GetAddress();
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private static AST.Address NormalPerRange_Step(AnalysisData data,
-                                                      Excel.Workbook wb,
-                                                      HashSet<AST.Address> known_good,
-                                                      long max_duration_in_ms,
-                                                      Stopwatch sw)
-        {
-            AST.Address flagged_cell = null;
-
-            //Generate normal distributions for every input range until an error is found
-            //Then break out of the loop and report it.
-            foreach (var range in data.input_ranges.Values)
-            {
-                var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
-
-                // Get top outlier which has not been inspected already
-                if (normal_dist.getErrorsCount() > 0)
-                {
-                    for (int i = 0; i < normal_dist.getErrorsCount(); i++)
-                    {
-                        // check for timeout
-                        if (sw.ElapsedMilliseconds > max_duration_in_ms)
-                        {
-                            throw new TimeoutException("Timeout exception in NormalPerRange_Step.");
-                        }
-
-                        var flagged_com = normal_dist.getErrorAtPosition(i);
-                        flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
-                        if (known_good.Contains(flagged_cell))
-                        {
-                            flagged_cell = null;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                }
-                //If a cell is flagged, do not move on to the next range (if you do, you'll overwrite the flagged_cell
-                if (flagged_cell != null)
-                {
-                    break;
-                }
-            }
-
-            return flagged_cell;
-        }
-
-        private static AST.Address NormalAllOutputs_Step(AnalysisData data,
-                                                         Excel.Application app,
-                                                         Excel.Workbook wb,
-                                                         HashSet<AST.Address> known_good,
-                                                         long max_duration_in_ms,
-                                                         Stopwatch sw)
-        {
-            AST.Address flagged_cell = null;
-
-            //Generate a normal distribution for the entire set of inputs
-            var normal_dist = new DataDebugMethods.NormalDistribution(data.TerminalInputNodes(), app);
-
-            // Get top outlier
-            if (normal_dist.getErrorsCount() > 0)
-            {
-                for (int i = 0; i < normal_dist.getErrorsCount(); i++)
-                {
-                    // check for timeout
-                    if (sw.ElapsedMilliseconds > max_duration_in_ms)
-                    {
-                        throw new TimeoutException("Timeout exception in NormalAllOutputs_Step.");
-                    }
-
-                    var flagged_com = normal_dist.getErrorAtPosition(i);
-                    flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
-                    if (known_good.Contains(flagged_cell))
-                    {
-                        flagged_cell = null;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-
-            return flagged_cell;
-        }
-
-        private bool IsNumber(string value)
-        {
-            double v;
-            return Double.TryParse(value, out v);
-        }
-
-        private bool BothNumbers(string value1, string value2)
-        {
-            return IsNumber(value1) && IsNumber(value2);
-        }
-
-        // this represents the magnitude of the change; much more meaningful
-        private double NumericalMagnitudeChange(double error, double correct)
-        {
-            if (error - correct != 0)
-            {
-                // we add a tiny value to c to avoid divide-by-zero
-                return Math.Log10(Math.Abs(error - correct) / Math.Abs(correct + 0.000000000001));
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        private double StringMagnitudeChange(string error, string correct)
-        {
-            return error == correct ? 0 : 1;
-        }
+       
 
 
-        private double MeanErrorMagnitude(CellDict partially_corrected_outputs, CellDict original_outputs)
-        {
-            int count = 0;
-            double magnitude = 0;
 
-            foreach (KeyValuePair<AST.Address, string> pair in partially_corrected_outputs)
-            {
-                var err = pair.Value;
-                var cor = original_outputs[pair.Key];
 
-                // if the denominator is a string, do nothing
-                double c;
-                double e;
-                if (Double.TryParse(cor, out c))
-                {
-                    //if the error is an empty string, convert it to a 0
-                    if (String.IsNullOrWhiteSpace(err))
-                    {
-                        e = 0.0;
-                    }
-                    //if the error is a number, get its value
-                    else if (Double.TryParse(err, out e)) { }
-                    //for all other strings, do nothing
-                    else 
-                    {
-                        continue;
-                    }
-                    count++;
-                    magnitude += Math.Abs(e - c) / Math.Abs(c);
-                }
-            }
 
-            if (count == 0)
-            {
-                return 0.0;
-            }
-            return magnitude / (double)count;
-        }
+ 
+
+        
+
+
 
         // remove errors until none remain
         private UserResults SimulateUser(int nboots,
                                          double significance,
+                                         CutoffKind ck,
                                          AnalysisData data,
                                          CellDict original_inputs,
                                          CellDict errord,
@@ -1014,14 +568,11 @@ namespace UserSimulation
                                          AnalysisType analysis_type,
                                          bool weighted,
                                          bool all_outputs,
-                                         bool normal_cutoff,
                                          long max_duration_in_ms,
                                          Stopwatch sw,
                                          String logfile
                                         )
         {
-            double threshold = analysis_type == AnalysisType.CheckCell5 ? 0.05 : 0.10;
-
             // init user results data structure
             var o = new UserResults();
             HashSet<AST.Address> known_good = new HashSet<AST.Address>();
@@ -1032,7 +583,7 @@ namespace UserSimulation
             var incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs));
             var errors_found = 0;
             var number_of_true_errors = errord.Count;
-            UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
+            Utility.UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
 
             // the corrected state of the spreadsheet
             CellDict partially_corrected_outputs = correct_outputs.ToDictionary(p => p.Key, p => p.Value);
@@ -1054,27 +605,26 @@ namespace UserSimulation
                     )
 
                 {
-                    flagged_cell = CheckCell_Step(o,
+                    flagged_cell = SimulationStep.CheckCell_Step(o,
                                                   significance,
-                                                  threshold,
+                                                  ck,
                                                   nboots,
                                                   data,
                                                   app,
                                                   weighted,
                                                   all_outputs,
                                                   correction_made,
-                                                  normal_cutoff,
                                                   known_good,
                                                   ref filtered_high_scores,
                                                   max_duration_in_ms,
                                                   sw);
                 } else if (analysis_type == AnalysisType.NormalPerRange)
                 {
-                    flagged_cell = NormalPerRange_Step(data, wb, known_good, max_duration_in_ms, sw);
+                    flagged_cell = SimulationStep.NormalPerRange_Step(data, wb, known_good, max_duration_in_ms, sw);
                 }
                 else if (analysis_type == AnalysisType.NormalAllInputs)
                 {
-                    flagged_cell = NormalAllOutputs_Step(data, app, wb, known_good, max_duration_in_ms, sw);
+                    flagged_cell = SimulationStep.NormalAllOutputs_Step(data, app, wb, known_good, max_duration_in_ms, sw);
                 }
 
                 if (flagged_cell == null)
@@ -1098,11 +648,11 @@ namespace UserSimulation
 
                         // correct flagged cell
                         flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
-                        
-                        UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
+
+                        Utility.UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
                         
                         // compute total error after applying this correction
-                        var current_total_error = CalculateTotalError(correct_outputs, partially_corrected_outputs);
+                        var current_total_error = Utility.CalculateTotalError(correct_outputs, partially_corrected_outputs);
                         o.current_total_error.Add(current_total_error);
 
                         // save outputs
@@ -1122,21 +672,21 @@ namespace UserSimulation
                     known_good.Add(flagged_cell);
 
                     // compute output error magnitudes
-                    var output_error_magnitude = MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
+                    var output_error_magnitude = Utility.MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
                     // compute input error magnitude
                     double num_input_error_magnitude;
                     double str_input_error_magnitude;
                     if (errord.ContainsKey(flagged_cell))
                     {
-                        if (BothNumbers(errord[flagged_cell], original_inputs[flagged_cell]))
+                        if (Utility.BothNumbers(errord[flagged_cell], original_inputs[flagged_cell]))
                         {
-                            num_input_error_magnitude = NumericalMagnitudeChange(Double.Parse(errord[flagged_cell]), Double.Parse(original_inputs[flagged_cell]));
+                            num_input_error_magnitude = Utility.NumericalMagnitudeChange(Double.Parse(errord[flagged_cell]), Double.Parse(original_inputs[flagged_cell]));
                             str_input_error_magnitude = 0;
                         }
                         else
                         {
                             num_input_error_magnitude = 0;
-                            str_input_error_magnitude = StringMagnitudeChange(errord[flagged_cell], original_inputs[flagged_cell]);
+                            str_input_error_magnitude = Utility.StringMagnitudeChange(errord[flagged_cell], original_inputs[flagged_cell]);
                         }
                     }
                     else
@@ -1157,7 +707,7 @@ namespace UserSimulation
                                                 true,
                                                 correction_made,
                                                 significance,
-                                                threshold);
+                                                ck.Threshold);
                     logentry.WriteLog(logfile);
                     _error_log.Add(logentry);
                 }
@@ -1167,22 +717,22 @@ namespace UserSimulation
             o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errord);
             o.max_errors = max_errors;
 
-            var last_out_err_mag = MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
+            var last_out_err_mag = Utility.MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
 
             // write out all false negative information
             foreach (AST.Address fn in o.false_negatives)
             {
                 double num_input_error_magnitude;
                 double str_input_error_magnitude;
-                if (BothNumbers(errord[fn], original_inputs[fn]))
+                if (Utility.BothNumbers(errord[fn], original_inputs[fn]))
                 {
-                    num_input_error_magnitude = NumericalMagnitudeChange(Double.Parse(errord[fn]), Double.Parse(original_inputs[fn]));
+                    num_input_error_magnitude = Utility.NumericalMagnitudeChange(Double.Parse(errord[fn]), Double.Parse(original_inputs[fn]));
                     str_input_error_magnitude = 0;
                 }
                 else
                 {
                     num_input_error_magnitude = 0;
-                    str_input_error_magnitude = StringMagnitudeChange(errord[fn], original_inputs[fn]);
+                    str_input_error_magnitude = Utility.StringMagnitudeChange(errord[fn], original_inputs[fn]);
                 }
 
                 // write error log
@@ -1197,20 +747,12 @@ namespace UserSimulation
                                             false,
                                             true,
                                             significance,
-                                            threshold));
+                                            ck.Threshold));
             }
             return o;
         }
 
-        private static CellDict ErrorDBToCellDict(ErrorDB errors)
-        {
-            var d = new CellDict();
-            foreach (Error e in errors.Errors)
-            {
-                d.Add(e.GetAddress(), e.value);
-            }
-            return d;
-        }
+        
 
         // return the set of false negatives
         private static HashSet<AST.Address> GetFalseNegatives(List<AST.Address> true_positives, List<AST.Address> false_positives, CellDict errors)
@@ -1334,7 +876,7 @@ namespace UserSimulation
                     cd.Add(addr, orig_value);
                     InjectValues(app, wb, cd);
 
-                    double total_error = CalculateTotalError(correct_outputs, incorrect_outputs);
+                    double total_error = Utility.CalculateTotalError(correct_outputs, incorrect_outputs);
 
                     //keep track of the largest observed max error
                     if (total_error > max_error_produced)
@@ -1504,13 +1046,12 @@ namespace UserSimulation
                                 wbh.FullName,                          // Excel filename
                                 significance,                          // statistical significance threshold for hypothesis test
                                 app,                                   // Excel.Application
-                                0.05,                                  // max % of extreme values to flag
+                                new QuantileCutoff(0.05),              // max % extreme values to flag
                                 c,                                     // classification data
                                 r,                                     // random number generator
                                 UserSimulation.AnalysisType.CheckCell5,// analysis type
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
-                                false,                                 // use quantile test (false) or normal test (true)
                                 prepdata.graph,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
@@ -1529,13 +1070,12 @@ namespace UserSimulation
                                 wbh.FullName,                          // Excel filename
                                 significance,                          // statistical significance of threshold
                                 app,                                   // Excel.Application
-                                0.10,                                  // % of extreme values to flag
+                                new QuantileCutoff(0.10),              // max % extreme values to flag
                                 c,                                     // classification data
                                 r,                                     // random number generator
                                 UserSimulation.AnalysisType.CheckCell10,// analysis type
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
-                                false,                                 // use quantile test (false) or normal test (true)
                                 prepdata.graph,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
@@ -1554,11 +1094,10 @@ namespace UserSimulation
                                 wbh.FullName,                              // Excel filename
                                 significance,                          // normal cutoff?
                                 app,                                   // Excel.Application
-                                threshold,                             // ??
+                                new NormalCutoff(threshold),           // ??
                                 c,                                     // classification data
                                 r,                                     // random number generator
                                 UserSimulation.AnalysisType.NormalAllInputs,   // analysis type
-                                true,                                  // irrelevant
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
                                 prepdata.graph,                                 // AnalysisData
@@ -1579,11 +1118,10 @@ namespace UserSimulation
                                 wbh.FullName,                              // Excel filename
                                 significance,                          // normal cutoff?
                                 app,                                   // Excel.Application
-                                threshold,                             // ??
+                                new NormalCutoff(threshold),           // ??
                                 c,                                     // classification data
                                 r,                                     // random number generator
                                 UserSimulation.AnalysisType.NormalPerRange,   // analysis type
-                                true,                                  // irrelevant
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
                                 prepdata.graph,                                 // AnalysisData

@@ -829,7 +829,11 @@ namespace DataDebug
             var pb = new ProgBar(pb_min, pb_max);
             pb.Show();
 
-            foreach (string benchmark in benchmark_filenames)
+            // filter to pick up where we left off
+            //var files = benchmark_filenames.Where(fn => String.Compare(System.IO.Path.GetFileName(fn), "month") >= 0);
+            var files = benchmark_filenames;
+
+            foreach (string benchmark in files)
             {
                 try
                 {
