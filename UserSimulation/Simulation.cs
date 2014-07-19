@@ -248,15 +248,15 @@ namespace UserSimulation
                     CellDict cd = new CellDict();
                     cd.Add(addr, errorstrings[i]);
                     //inject the typo
-                    InjectValues(app, wb, cd);
+                    Utility.InjectValues(app, wb, cd);
 
                     // save function outputs
-                    CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes);
+                    CellDict incorrect_outputs = Utility.SaveOutputs(terminal_formula_nodes);
 
                     //remove the typo that was introduced
                     cd.Clear();
                     cd.Add(addr, orig_value);
-                    InjectValues(app, wb, cd);
+                    Utility.InjectValues(app, wb, cd);
 
                     double total_error = Utility.CalculateTotalError(correct_outputs, incorrect_outputs);
 
@@ -302,10 +302,10 @@ namespace UserSimulation
             _weighted = weighted;
 
             //Now we want to inject the errors from _errors
-            InjectValues(app, wb, _errors);
+            Utility.InjectValues(app, wb, _errors);
 
             // save function outputs
-            CellDict incorrect_outputs = SaveOutputs(terminal_formula_nodes);
+            CellDict incorrect_outputs = Utility.SaveOutputs(terminal_formula_nodes);
 
             //Time the removal of errors
             Stopwatch sw = new Stopwatch();
@@ -319,7 +319,7 @@ namespace UserSimulation
             _analysis_time = elapsed.TotalSeconds;
 
             // save partially-corrected outputs
-            var partially_corrected_outputs = SaveOutputs(terminal_formula_nodes);
+            var partially_corrected_outputs = Utility.SaveOutputs(terminal_formula_nodes);
 
             // compute total relative error
             _error = Utility.CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
@@ -354,7 +354,7 @@ namespace UserSimulation
             _average_precision = _user.PrecRel_at_k.Sum() / (double)_errors.Count;
 
             // restore original values
-            InjectValues(app, wb, original_inputs);
+            Utility.InjectValues(app, wb, original_inputs);
 
             _tree_construct_time = data.tree_construct_time;
             // flag that we're done; safe to print output results
@@ -580,7 +580,7 @@ namespace UserSimulation
             // initialize procedure
             var errors_remain = true;
             var max_errors = new ErrorDict();
-            var incorrect_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs));
+            var incorrect_outputs = Utility.SaveOutputs(data.TerminalFormulaNodes(all_outputs));
             var errors_found = 0;
             var number_of_true_errors = errord.Count;
             Utility.UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
@@ -656,7 +656,7 @@ namespace UserSimulation
                         o.current_total_error.Add(current_total_error);
 
                         // save outputs
-                        partially_corrected_outputs = SaveOutputs(data.TerminalFormulaNodes(all_outputs));
+                        partially_corrected_outputs = Utility.SaveOutputs(data.TerminalFormulaNodes(all_outputs));
                     }
                     else
                     {
@@ -714,7 +714,7 @@ namespace UserSimulation
             }
 
             // find all of the false negatives
-            o.false_negatives = GetFalseNegatives(o.true_positives, o.false_positives, errord);
+            o.false_negatives = Utility.GetFalseNegatives(o.true_positives, o.false_positives, errord);
             o.max_errors = max_errors;
 
             var last_out_err_mag = Utility.MeanErrorMagnitude(partially_corrected_outputs, correct_outputs);
@@ -754,146 +754,7 @@ namespace UserSimulation
 
         
 
-        // return the set of false negatives
-        private static HashSet<AST.Address> GetFalseNegatives(List<AST.Address> true_positives, List<AST.Address> false_positives, CellDict errors)
-        {
-            var fnset = new HashSet<AST.Address>();
-            var tpset = new HashSet<AST.Address>(true_positives);
-            var fpset = new HashSet<AST.Address>(false_positives);
-
-            foreach(KeyValuePair<AST.Address, string> pair in errors)
-            {
-                var addr = pair.Key;
-                if (!tpset.Contains(addr) && !fpset.Contains(addr))
-                {
-                    fnset.Add(addr);
-                }
-            }
-
-            return fnset;
-        }
-
-        // save all of the values of the spreadsheet that
-        // participate in any computation
-        public static CellDict SaveInputs(AnalysisData graph)
-        {
-            try
-            {
-                var cd = new CellDict();
-                foreach (var node in graph.allComputationCells())
-                {
-                    cd.Add(node.GetAddress(), node.getCOMValueAsString());
-                }
-                return cd;
-            }
-            catch (Exception e)
-            {
-                throw new Exception(String.Format("Failed in SaveInputs: {0}", e.Message));
-            }
-        }
-
-        // save spreadsheet outputs to a CellDict
-        public static CellDict SaveOutputs(TreeNode[] formula_nodes)
-        {
-            var cd = new CellDict();
-            foreach (TreeNode formula_cell in formula_nodes)
-            {
-                // throw an exception in debug mode, because this should never happen
-                if (!(bool)formula_cell.getCOMObject().HasFormula)
-                {
-                    String fstring = formula_cell.getCOMObject().Formula;
-                    throw new Exception("Formula TreeNode has no formula.");
-                }
-
-                // get address
-                var addr = formula_cell.GetAddress();
-
-                // save value
-                if (cd.ContainsKey(addr))
-                {
-                    throw new Exception(String.Format("Failed in SaveOutputs."));
-                } else {
-                    cd.Add(addr, formula_cell.getCOMValueAsString());
-                }
-            }
-            return cd;
-        }
-
-        // inject errors into a workbook
-        public static void InjectValues(Excel.Application app, Excel.Workbook wb, CellDict values)
-        {
-            foreach (KeyValuePair<AST.Address,string> pair in values)
-            {
-                var addr = pair.Key;
-                var errorstr = pair.Value;
-                var comcell = addr.GetCOMObject(app);
-
-                // never perturb formulae
-                if (!comcell.HasFormula)
-                {
-                    // inject error
-                    comcell.Value2 = errorstr;
-                }
-            }
-        }
-
-        // Get dictionary of inputs and the error they produce
-        public static CellDict GenImportantErrors(TreeNode[] output_nodes,
-                                                  CellDict inputs,
-                                                  int k,         // number of alternatives to consider
-                                                  CellDict correct_outputs,
-                                                  Excel.Application app, 
-                                                  Excel.Workbook wb, 
-                                                  Classification c)
-        {
-            var eg = new ErrorGenerator();
-            var max_error_produced_dictionary = new Dictionary<AST.Address, Tuple<string, double>>();
-
-            foreach (KeyValuePair<AST.Address, string> pair in inputs)
-            {
-                AST.Address addr = pair.Key;
-                string orig_value = pair.Value;
-
-                //Load in the classification's dictionaries
-                double max_error_produced = 0.0;
-                string max_error_string = "";
-
-                // get k strings
-                string[] errorstrings = eg.GenerateErrorStrings(orig_value, c, k);
-
-                for (int i = 0; i < k; i++)
-                {
-                    CellDict cd = new CellDict();
-                    cd.Add(addr, errorstrings[i]);
-                    //inject the typo
-                    InjectValues(app, wb, cd);
-
-                    // save function outputs
-                    CellDict incorrect_outputs = SaveOutputs(output_nodes);
-
-                    //remove the typo that was introduced
-                    cd.Clear();
-                    cd.Add(addr, orig_value);
-                    InjectValues(app, wb, cd);
-
-                    double total_error = Utility.CalculateTotalError(correct_outputs, incorrect_outputs);
-
-                    //keep track of the largest observed max error
-                    if (total_error > max_error_produced)
-                    {
-                        max_error_produced = total_error;
-                        max_error_string = errorstrings[i];
-                    }
-                }
-                //Add entry for this TreeNode in our dictionary with its max_error_produced
-                max_error_produced_dictionary.Add(addr, new Tuple<string, double>(max_error_string, max_error_produced));
-            }
-
-            // sort by max_error_produced
-            var maxen = max_error_produced_dictionary.OrderByDescending(pair => pair.Value.Item2).Select(pair => new Tuple<AST.Address, string>(pair.Key, pair.Value.Item1)).ToList();
-
-            return maxen.Take((int)Math.Ceiling(0.05 * inputs.Count)).ToDictionary(tup => tup.Item1, tup => tup.Item2);
-        }
+        
 
         public byte[] Serialize()
         {
@@ -953,15 +814,15 @@ namespace UserSimulation
             }
 
             // save original spreadsheet state
-            CellDict original_inputs = UserSimulation.Simulation.SaveInputs(graph);
+            CellDict original_inputs = UserSimulation.Utility.SaveInputs(graph);
 
             // force a recalculation before saving outputs, otherwise we may
             // erroneously conclude that the procedure did the wrong thing
             // based solely on Excel floating-point oddities
-            UserSimulation.Simulation.InjectValues(app, wbh, original_inputs);
+            UserSimulation.Utility.InjectValues(app, wbh, original_inputs);
 
             // save function outputs
-            CellDict correct_outputs = UserSimulation.Simulation.SaveOutputs(terminal_formula_nodes);
+            CellDict correct_outputs = UserSimulation.Utility.SaveOutputs(terminal_formula_nodes);
 
             return new PrepData() {
                 graph = graph,
@@ -978,7 +839,7 @@ namespace UserSimulation
             var prepdata = PrepSimulation(app, wbh, pb);
 
             // generate errors
-            CellDict errors = UserSimulation.Simulation.GenImportantErrors(prepdata.terminal_formula_nodes,
+            CellDict errors = UserSimulation.Utility.GenImportantErrors(prepdata.terminal_formula_nodes,
                                                                prepdata.original_inputs,
                                                                5,
                                                                prepdata.correct_outputs,
