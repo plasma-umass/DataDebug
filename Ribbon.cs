@@ -618,7 +618,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run simulations
-            UserSimulation.Simulation.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+            UserSimulation.Config.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
 
             // enable screen updating
             app.ScreenUpdating = true;
@@ -647,7 +647,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run simulations
-            UserSimulation.Simulation.RunProportionExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+            UserSimulation.Config.RunProportionExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
 
             // enable screen updating
             app.ScreenUpdating = true;
