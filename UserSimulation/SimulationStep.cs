@@ -14,6 +14,8 @@ namespace UserSimulation
 {
     public static class SimulationStep
     {
+        // this function returns an address but also updates
+        // the filtered_high_scores list
         public static AST.Address CheckCell_Step(UserResults o,
                                            double significance,
                                            CutoffKind ck,

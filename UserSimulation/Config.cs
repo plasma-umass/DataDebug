@@ -67,8 +67,69 @@ namespace UserSimulation
                 errors.Add(rand_addr, erroneous_input);
 
                 // run simulations; simulation code does insertion of errors and restore of originals
-                RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
+                RunMagnitudeSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
             }
+        }
+
+        public static void RunMagnitudeSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)
+        {
+            // this simulation holds the number of cells inspected constant
+            pb.IncrementProgress(16);
+
+            // write header if needed
+            if (!System.IO.File.Exists(outfile))
+            {
+                System.IO.File.AppendAllText(outfile, Simulation.HeaderRowForCSV());
+            }
+
+            // Normal, all inputs
+            var s_1 = new UserSimulation.Simulation();
+            var num_inspected = s_1.RunFromBatch(
+                                nboots,                                   // irrelevant
+                                wbh.FullName,                              // Excel filename
+                                significance,                          // normal cutoff?
+                                app,                                   // Excel.Application
+                                new NormalCutoff(threshold),           // ??
+                                c,                                     // classification data
+                                r,                                     // random number generator
+                                UserSimulation.AnalysisType.NormalAllInputs,   // analysis type
+                                true,                                  // irrelevant
+                                true,                                  // irrelevant
+                                prepdata.graph,                                 // AnalysisData
+                                wbh,                                   // Excel.Workbook
+                                errors,                                // pre-generated errors
+                                prepdata.terminal_input_nodes,                  // input range nodes
+                                prepdata.terminal_formula_nodes,                // output nodes
+                                prepdata.original_inputs,                       // original input values
+                                prepdata.correct_outputs,                       // original output values
+                                max_duration_in_ms,                    // max duration of simulation 
+                                logfile);
+            System.IO.File.AppendAllText(outfile, s_1.FormatResultsAsCSV());
+            pb.IncrementProgress(32);
+
+            // CheckCell weighted, all outputs, quantile
+            var s_2 = new UserSimulation.Simulation();
+            s_2.RunFromBatch(nboots,                                   // number of bootstraps
+                                wbh.FullName,                          // Excel filename
+                                significance,                          // statistical significance of threshold
+                                app,                                   // Excel.Application
+                                new NumberCutoff(num_inspected),       // max % extreme values to flag
+                                c,                                     // classification data
+                                r,                                     // random number generator
+                                UserSimulation.AnalysisType.CheckCell10,// analysis type
+                                true,                                  // weighted analysis
+                                true,                                  // use all outputs for analysis
+                                prepdata.graph,                                 // AnalysisData
+                                wbh,                                   // Excel.Workbook
+                                errors,                                // pre-generated errors
+                                prepdata.terminal_input_nodes,                  // input range nodes
+                                prepdata.terminal_formula_nodes,                // output nodes
+                                prepdata.original_inputs,                       // original input values
+                                prepdata.correct_outputs,                       // original output values
+                                max_duration_in_ms,                    // max duration of simulation 
+                                logfile);
+            System.IO.File.AppendAllText(outfile, s_2.FormatResultsAsCSV());
+            pb.IncrementProgress(32);
         }
 
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)

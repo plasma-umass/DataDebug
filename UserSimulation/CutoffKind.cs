@@ -14,6 +14,10 @@ namespace UserSimulation
         {
             get;
         }
+        public virtual bool isCountBased
+        {
+            get { return false; }
+        }
     }
 
     public class NormalCutoff : CutoffKind
@@ -151,13 +155,18 @@ namespace UserSimulation
         {
             get { return _n; }
         }
+        override public bool isCountBased
+        {
+            get { return true; }
+        }
         override public List<KeyValuePair<TreeNode, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
         {
             // sort scores, biggest first
             var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
             // return the n largest (and force eager evaluation)
-            return scores_list.Take(_n).ToList();
+            // excluding cells marked as OK
+            return scores_list.Take(_n).Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
         }
     }
 }

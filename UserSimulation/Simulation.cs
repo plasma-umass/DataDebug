@@ -165,7 +165,8 @@ namespace UserSimulation
             return max_error_produced_dictionary;
         }
 
-        public void Run(int nboots,                 // number of bootstraps
+        // returns the number of cells inspected
+        public int Run(int nboots,                 // number of bootstraps
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
                         CutoffKind ck,              // kind of threshold function to use
@@ -251,10 +252,14 @@ namespace UserSimulation
             _tree_construct_time = data.tree_construct_time;
             // flag that we're done; safe to print output results
             _simulation_run = true;
+
+            // return the number of cells inspected
+            return _effort;
         }
 
         // For running a simulation from the batch runner
-        public void RunFromBatch(int nboots,        // number of bootstraps
+        // returns the number of cells inspected
+        public int RunFromBatch(int nboots,        // number of bootstraps
                         string xlfile,              // name of the workbook
                         double significance,        // significance threshold for test
                         Excel.Application app,      // reference to Excel app
@@ -314,7 +319,7 @@ namespace UserSimulation
                     Utility.StringMagnitudeChange(pair.Value, correct_outputs[pair.Key])
                     ).Max() : 0;
                 
-            Run(nboots, xlfile, significance, ck, app, c, r, analysisType, weighted, all_outputs, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
+            return Run(nboots, xlfile, significance, ck, app, c, r, analysisType, weighted, all_outputs, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
         }
 
         public double RemainingError()
@@ -479,7 +484,6 @@ namespace UserSimulation
                 AST.Address flagged_cell = null;
 
                 // choose the appropriate test
-                // TODO: the test type really should be a lambda
                 if (analysis_type == AnalysisType.CheckCell5 ||
                     analysis_type == AnalysisType.CheckCell10
                     )
@@ -507,7 +511,9 @@ namespace UserSimulation
                     flagged_cell = SimulationStep.NormalAllOutputs_Step(data, app, wb, known_good, max_duration_in_ms, sw);
                 }
 
-                if (flagged_cell == null)
+                // stop if the test no longer returns anything or if
+                // the test is simply done inspecting based on a fixed threshold
+                if (flagged_cell == null || (ck.isCountBased && ck.Threshold == cells_inspected))
                 {
                     errors_remain = false;
                 }
