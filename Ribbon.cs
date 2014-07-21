@@ -11,6 +11,7 @@ using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMet
 using Microsoft.FSharp.Core;
 using System.IO;
 using System.Linq;
+using OptTuple = Microsoft.FSharp.Core.FSharpOption<System.Tuple<UserSimulation.Classification, string>>;
 
 namespace DataDebug
 {
@@ -653,6 +654,38 @@ namespace DataDebug
             app.ScreenUpdating = true;
         }
 
+        private static void RunSubletyExperiment(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
+        {
+            // number of bootstraps
+            var NBOOTS = 2700;
+
+            // the full path of this workbook
+            var filename = app.ActiveWorkbook.Name;
+
+            // the default output filename
+            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
+            var default_output_file = "simulation_results.csv";
+            var default_log_file = r.Match(filename).Groups[1].Value + ".iterlog.csv";
+
+            // save file location (will append for additional runs)
+            var savefile = System.IO.Path.Combine(output_dir, default_output_file);
+
+            // log file location (new file for each new workbook)
+            var logfile = System.IO.Path.Combine(output_dir, default_log_file);
+
+            // disable screen updating
+            app.ScreenUpdating = false;
+
+            // run simulations
+            if (!UserSimulation.Config.RunSubletyExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb))
+            {
+                System.Windows.Forms.MessageBox.Show("This spreadsheet contains no numeric inputs.");
+            }
+
+            // enable screen updating
+            app.ScreenUpdating = true;
+        }
+
         private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)
         {
             // open classifier file
@@ -857,6 +890,36 @@ namespace DataDebug
 
             // inform user
             System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+        private void SubtleErrSim_Click(object sender, RibbonControlEventArgs e)
+        {
+            // init a RNG
+            var rng = new Random();
+
+            // get inputs
+            var optinput = RibbonHelper.getExperimentInputs();
+            if (OptTuple.get_IsSome(optinput)) {
+                var c = optinput.Value.Item1;
+                var simulation_output_dir = optinput.Value.Item2;
+
+                // get sig values
+                var thresh = 0.05;
+                Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+                // show progress bar
+                var pb = new ProgBar(0, 100);
+                pb.Show();
+
+                // run simulation
+                RunSubletyExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
+
+                // close progbar
+                pb.Close();
+
+                // inform user
+                System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+            }
         }
     }
 }

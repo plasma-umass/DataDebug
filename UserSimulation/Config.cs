@@ -71,6 +71,55 @@ namespace UserSimulation
             }
         }
 
+        public static bool RunSubletyExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        {
+            // record intitial state of spreadsheet
+            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+
+            // init error generator
+            var eg = new ErrorGenerator();
+
+            // get inputs as an array of addresses to facilitate random selection
+            // DATA INPUTS ONLY
+            var inputs = prepdata.graph.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+
+            for (int i = 0; i < 100; i++)
+            {
+                // randomly choose a *numeric* input
+                // TODO: use Fischer-Yates and take values until
+                // either we have a satisfactory input value or none
+                // remain
+                bool num_found = false;
+                String input_string;
+                double input_value;
+                AST.Address rand_addr;
+                do
+                {
+                    // randomly choose an address
+                    rand_addr = inputs[r.Next(inputs.Length)];
+
+                    // get the value
+                    input_string = prepdata.original_inputs[rand_addr];
+
+                    // try parsing it
+                    if (Double.TryParse(input_string, out input_value))
+                    {
+                        num_found = true;
+                    }
+                } while (!num_found);
+
+                // perturb it
+                String erroneous_input = eg.GenerateSubtleErrorString(input_value, c);
+
+                // create an error dictionary with this one perturbed value
+                var errors = new CellDict();
+                errors.Add(rand_addr, erroneous_input);
+
+                // run simulations; simulation code does insertion of errors and restore of originals
+                RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
+            }
+        }
+
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)
         {
             pb.IncrementProgress(16);

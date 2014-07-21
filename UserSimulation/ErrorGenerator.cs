@@ -330,6 +330,26 @@ namespace UserSimulation
             return leading.Concat(trailing).ToArray();
         }
 
+        // this method only works for functions with numerical inputs
+        public string GenerateSubtleErrorString(double input, Classification c)
+        {
+            string errstr;
+            double errmag = 100;
+            do
+            {
+                // generate an error
+                errstr = GenerateErrorString(Convert.ToString(input), c);
+                double errval;
+                if (Double.TryParse(errstr, out errval))
+                {
+                    // it's a numerical error
+                    // get the magnitude of the error
+                    errmag = Utility.NumericalMagnitudeChange(errval, input);
+                }
+            } while (errmag >= 0);
+            return errstr;
+        }
+
         public string GenerateErrorString(string input, Classification c)
         {
             // get typo dict
