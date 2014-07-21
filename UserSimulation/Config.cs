@@ -89,14 +89,19 @@ namespace UserSimulation
                 // TODO: use Fischer-Yates and take values until
                 // either we have a satisfactory input value or none
                 // remain
+                var rnd_addrs = inputs.Shuffle().ToList();
                 bool num_found = false;
                 String input_string;
                 double input_value;
                 AST.Address rand_addr;
                 do
                 {
-                    // randomly choose an address
-                    rand_addr = inputs[r.Next(inputs.Length)];
+                    // randomly choose an address; if there are none left, fail
+                    if (rnd_addrs.Count == 0) {
+                        return false;
+                    }
+                    rand_addr = rnd_addrs.First();
+                    rnd_addrs = rnd_addrs.Skip(1).ToList();
 
                     // get the value
                     input_string = prepdata.original_inputs[rand_addr];
@@ -118,6 +123,8 @@ namespace UserSimulation
                 // run simulations; simulation code does insertion of errors and restore of originals
                 RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
             }
+
+            return true;
         }
 
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)

@@ -52,6 +52,7 @@
     <Compile Include="AnalysisType.cs" />
     <Compile Include="Classification.cs" />
     <Compile Include="CutoffKind.cs" />
+    <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="ErrorCondition.cs" />
     <Compile Include="ErrorGenerator.cs" />
