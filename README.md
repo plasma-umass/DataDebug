@@ -1,9 +1,12 @@
+CheckCell
+=========
+
 Testing and static analysis can help root out bugs in programs, but not in data. We introduce _data debugging_, an approach that combines program analysis and statistical analysis to _automatically_ find potential data errors. Since it is impossible to know a priori whether data are erroneous, data debugging instead locates data that has a disproportionate impact on the computation. Such data is either very important or wrong. Data debugging is especially useful in the context of data-intensive programming environments that intertwine data with programs in the form of queries or formulas.
 
 CheckCell is an implementation of data debugging for Excel spreadsheets.  CheckCell highlights suspected errors in red, one cell at a time.  After inspecting a cell, the user can correct the data or marked the cell as 'OK'. CheckCell is efficient; its algorithms are asymptotically optimal, and the current prototype runs in seconds for most spreadsheets.
 
-Try CheckCell:
-==============
+Prerequisites
+--------------
 
 You will need Microsoft Excel 2010 or 2013 and Windows 7 or newer.
 
@@ -32,3 +35,8 @@ CheckCell's sensitivity level is adjustable. By default it is set to display the
 Uninstalling CheckCell
 ----------------------
 CheckCell can be uninstalled in the Windows Add/Remove Programs dialog.
+
+Read the Paper
+--------------
+
+"CheckCell: Data-Debugging for Spreadsheets" D. Barowy, D. Gochev, E. Berger.  To appear at OOPSLA 2014.  (ACM DL link will be posted here when it is available).
