@@ -12,7 +12,7 @@ You will need Microsoft Excel 2010 or 2013 and Windows 7 or newer.
 
 Installing CheckCell
 --------------------
-Download the CheckCell installer in the "Releases" section of the CheckCell GitHub page.  Double-click on the installer to install.  The installer should install all prerequisites for you.
+Download the CheckCell installer (sorry... coming soon!) in the "Releases" section of the CheckCell GitHub page.  Double-click on the installer to install.  The installer should install all prerequisites for you.
 
 You will find CheckCell installed in Excel, under the "Add-Ins" tab in the ribbon.
 
