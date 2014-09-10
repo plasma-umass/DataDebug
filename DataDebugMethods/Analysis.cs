@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Numerics;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
@@ -574,15 +575,18 @@ namespace DataDebugMethods
         }
 
         // initializes the first and second dimensions
-        private static FunctionOutput<string>[][][] InitJagged3DBootstrapArray(int fn_idx_sz, int o_idx_sz, int b_idx_sz)
+        private static FunctionOutput<string>[][][] InitJagged3DBootstrapArray(int o_idx_sz, int i_idx_sz, int b_idx_sz)
         {
-            var bs = new FunctionOutput<string>[fn_idx_sz][][];
-            for (int f = 0; f < fn_idx_sz; f++)
+            // first idx: the fth function output
+            // second idx: the ith input
+            // third idx: the bth bootstrap
+            var bs = new FunctionOutput<string>[o_idx_sz][][];
+            for (int f = 0; f < o_idx_sz; f++)
             {
-                bs[f] = new FunctionOutput<string>[o_idx_sz][];
-                for (int o = 0; o < o_idx_sz; o++)
+                bs[f] = new FunctionOutput<string>[i_idx_sz][];
+                for (int i = 0; i < i_idx_sz; i++)
                 {
-                    bs[f][o] = new FunctionOutput<string>[b_idx_sz];
+                    bs[f][i] = new FunctionOutput<string>[b_idx_sz];
                 }
             }
             return bs;
@@ -707,8 +711,11 @@ namespace DataDebugMethods
         // Exclude specified input index, compute multinomial probabilty vector, and return true if probability is below threshold
         public static bool RejectNullHypothesis(FunctionOutput<string>[] boots, string original_output, int exclude_index, double significance)
         {
+            // get bootstrap fingerprint for exclude_index
+            var xfp = BigInteger.One << exclude_index;
+
             // filter bootstraps which include exclude_index
-            var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
+            var boots_exc = boots.Where(b => (b.GetExcludes() & xfp) == xfp).ToArray();
 
             // get p_value vector
             var freq = BootstrapFrequency(boots_exc);
@@ -733,8 +740,11 @@ namespace DataDebugMethods
             // high
             double hi_thresh = significance + low_thresh;
 
+            // get bootstrap fingerprint for exclude_index
+            var xfp = BigInteger.One << exclude_index;
+
             // filter bootstraps which include exclude_index
-            var boots_exc = boots.Where(b => b.GetExcludes().Contains(exclude_index)).ToArray();
+            var boots_exc = boots.Where(b => (b.GetExcludes() & xfp) == xfp).ToArray();
             //return neutral (0.5) if we are having a sparsity problem
             if (boots_exc.Length == 0)
             {

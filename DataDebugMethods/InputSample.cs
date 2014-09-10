@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace DataDebugMethods
 {
@@ -10,8 +11,8 @@ namespace DataDebugMethods
     {
         private int _i = 0;             // internal length counter for Add
         private object[,] _input_array; // this is stored in Excel ONE-BASED format, DANGER!!!
-        private HashSet<int> _excludes; // list of inputs excluded in this sample
         private int[] _includes;        // a counter of values included by this sample
+        private BigInteger _excludes;   // a bitvector representing the excluded values
         private int _rows;
         private int _cols;
 
@@ -19,7 +20,6 @@ namespace DataDebugMethods
         {
             _rows = rows;
             _cols = cols;
-            _excludes = new HashSet<int>();
         }
 
         public void Add(string datum) {
@@ -83,7 +83,7 @@ namespace DataDebugMethods
             return _cols; 
         }
         
-        public HashSet<int> GetExcludes()
+        public BigInteger GetExcludes()
         {
             return _excludes;
         }
@@ -101,7 +101,8 @@ namespace DataDebugMethods
             {
                 if (includes[i] == 0)
                 {
-                    _excludes.Add(i);
+                    var e = BigInteger.One << i;  // left shift by i
+                    _excludes = _excludes | e;    // bitwise OR with exclude bitvector
                 }
             }
         }
