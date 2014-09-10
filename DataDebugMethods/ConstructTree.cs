@@ -57,7 +57,17 @@ namespace DataDebugMethods
                 // For each single-cell input found in the formula by the parser,
                 // link to output TreeNode if the input cell is a formula. This allows
                 // us to consider functions with single-cell inputs as outputs.
-                foreach (AST.Address input_addr in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
+                IEnumerable<AST.Address> input_addrs;
+                try
+                {
+                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject());
+                }
+                catch (ExcelParserUtility.ParseException)
+                {
+                    // on parse exception, return an empty sequence
+                    input_addrs = new List<AST.Address>();
+                }
+                foreach (AST.Address input_addr in input_addrs)
                 {
                     // Find the input cell's TreeNode;
                     // Find out if it is a formula
