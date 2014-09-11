@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Numerics;
+using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
@@ -39,6 +40,7 @@ namespace DataDebugMethods
                 // exactly the same way that it will for our bootstraps
                 BootMemo.ReplaceExcelRange(com, s);
             }
+
             return d;
         }
 
@@ -194,7 +196,7 @@ namespace DataDebugMethods
             // RNG for sampling
             var rng = new Random();
 
-            // we save initial inputs here
+            // we save initial inputs and outputs here
             var initial_inputs = StoreInputs(input_rngs);
             var initial_outputs = StoreOutputs(output_fns);
 
@@ -213,14 +215,14 @@ namespace DataDebugMethods
 
             #endregion RESAMPLE
 
-            #region BOOTSTRAP
+            #region COMPUTE_OUTPUTS
 
             // first idx: the fth function output
             // second idx: the ith input
             // third idx: the bth bootstrap
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data, max_duration_in_ms, sw);
 
-            #endregion BOOTSTRAP
+            #endregion COMPUTE_OUTPUTS
 
             // restore formulas
             foreach (TreeDictPair pair in data.formula_nodes)
@@ -240,6 +242,86 @@ namespace DataDebugMethods
             #endregion HYPOTHESIS_TESTING
 
             return s;
+        }
+
+        public class DataDebugWorker
+        {
+            private int _n_boots;
+            private Dictionary<TreeNode, InputSample> _initial_inputs;
+            private InputSample[][] _resamples;
+            private TreeNode[] _inputs;
+            private TreeNode[] _outputs;
+            private AnalysisData _data;
+            private long _max_ms;
+            private Stopwatch _sw;
+            private ManualResetEvent _mre;
+
+            public DataDebugWorker(int num_bootstraps, Dictionary<TreeNode, InputSample> initial_inputs, InputSample[][] resamples,
+                                   TreeNode[] input_arr, TreeNode[] output_arr, AnalysisData data, long max_duration_in_ms, Stopwatch sw, ManualResetEvent mre)
+            {
+                _n_boots = num_bootstraps;
+                _initial_inputs = initial_inputs;
+                _resamples = resamples;
+                _inputs = input_arr;
+                _outputs = output_arr;
+                _data = data;
+                _max_ms = max_duration_in_ms;
+                _sw = sw;
+                _mre = mre;
+            }
+
+
+            
+        }
+
+        public static TreeScore InterleavedDataDebug(
+            InputSample[][] resamples,
+            Dictionary<TreeNode, InputSample> initial_inputs,
+            Dictionary<TreeNode, string> initial_outputs,
+            int num_bootstraps)
+        {
+            // compute the cross product of input, output pairs so that
+            // we can efficiently parallelize the computation
+            var xprod = from first in Enumerable.Range(0, initial_inputs.Count)
+                        from second in Enumerable.Range(0, initial_outputs.Count)
+                        select new[] { first, second };
+
+            // init thread event notification
+            var mres = new ManualResetEvent[xprod.Count()];
+
+            // init bootstrap memo data structures
+            var boots = new BootMemo[initial_inputs.Count];
+
+            var scores = new TreeScore();
+
+            // while processors and memory are available, compute
+            // bootstrap and run hypothesis test
+            foreach (var pair in xprod)
+            {
+                var i = pair[0];
+                var f = pair[1];
+
+                // try allocating the memory needed to compute bootstrapped outputs
+                FunctionOutput<string>[] bs;
+                try
+                {
+                    // try to allocate and move on
+                    bs = new FunctionOutput<string>[num_bootstraps];
+
+                    // set up job and farm to thread pool
+
+
+                }
+                catch (System.OutOfMemoryException)
+                {
+                    // wait for a work item to finish
+                }
+            }
+
+
+            throw new NotImplementedException("Hey dude, I'm not done!");
+
+            return scores;
         }
 
         public static TreeScore ScoreInputs(TreeNode[] input_rngs,
@@ -602,7 +684,7 @@ namespace DataDebugMethods
             var bootsaver = new BootMemo[input_arr.Length];
 
             // compute function outputs for each bootstrap
-            // inputs[i] is the ith input range
+            // input_arr[i] is the ith input range TreeNode
             // NOTE: these operations must be performed
             //       sequentially as they produce worksheet
             //       side-effects!
