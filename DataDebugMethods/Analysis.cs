@@ -130,19 +130,6 @@ namespace DataDebugMethods
             return d;
         }
 
-        private static Dictionary<TreeNode, string> SlowStoreOutputs(TreeNode[] outputs)
-        {
-            var d = new Dictionary<TreeNode, string>();
-            foreach (TreeNode output_fn in outputs)
-            {
-                // we want to save the actual value of the function
-                // since we don't know whether the function is string or numeric
-                // until later, leave it as string for now
-                d.Add(output_fn, output_fn.getCOMValueAsString());
-            }
-            return d;
-        }
-
         private static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
         {
             return FastStoreOutputs(outputs);
@@ -216,6 +203,8 @@ namespace DataDebugMethods
             var initial_inputs = StoreInputs(input_rngs);
             var initial_outputs = StoreOutputs(output_fns);
 
+            #region RESAMPLE
+
             // populate bootstrap array
             // for each input range (a TreeNode)
             System.Threading.Tasks.Parallel.For(0, input_rngs.Length, i =>
@@ -227,10 +216,16 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
             });
 
+            #endregion RESAMPLE
+
+            #region BOOTSTRAP
+
             // first idx: the fth function output
             // second idx: the ith input
             // third idx: the bth bootstrap
             var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data, max_duration_in_ms, sw);
+
+            #endregion BOOTSTRAP
 
             // restore formulas
             foreach (TreeDictPair pair in data.formula_nodes)
@@ -242,8 +237,12 @@ namespace DataDebugMethods
                 }
             }
 
+            #region HYPOTHESIS_TESTING
+
             // do appropriate hypothesis test, and add weighted test scores, and return result dict
             var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted, max_duration_in_ms, sw, significance);
+
+            #endregion HYPOTHESIS_TESTING
 
             return s;
         }
