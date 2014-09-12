@@ -244,7 +244,7 @@ namespace DataDebugMethods
             return s;
         }
 
-        public class DataDebugWorker
+        public class DataDebugJob
         {
             private int _n_boots;
             private Dictionary<TreeNode, InputSample> _initial_inputs;
@@ -256,8 +256,8 @@ namespace DataDebugMethods
             private Stopwatch _sw;
             private ManualResetEvent _mre;
 
-            public DataDebugWorker(int num_bootstraps, Dictionary<TreeNode, InputSample> initial_inputs, InputSample[][] resamples,
-                                   TreeNode[] input_arr, TreeNode[] output_arr, AnalysisData data, long max_duration_in_ms, Stopwatch sw, ManualResetEvent mre)
+            public DataDebugJob(int num_bootstraps, Dictionary<TreeNode, InputSample> initial_inputs, InputSample[][] resamples,
+                                TreeNode[] input_arr, TreeNode[] output_arr, AnalysisData data, long max_duration_in_ms, Stopwatch sw, ManualResetEvent mre)
             {
                 _n_boots = num_bootstraps;
                 _initial_inputs = initial_inputs;
@@ -270,7 +270,16 @@ namespace DataDebugMethods
                 _mre = mre;
             }
 
+            public void threadPoolCallback(Object threadContext)
+            {
+                int threadIndex = (int)threadContext;
 
+                // compute outputs
+
+                // hypothesis test
+
+                _mre.Set();
+            }
             
         }
 
@@ -282,12 +291,15 @@ namespace DataDebugMethods
         {
             // compute the cross product of input, output pairs so that
             // we can efficiently parallelize the computation
-            var xprod = from first in Enumerable.Range(0, initial_inputs.Count)
-                        from second in Enumerable.Range(0, initial_outputs.Count)
-                        select new[] { first, second };
+            var xprod = (from first in Enumerable.Range(0, initial_inputs.Count)
+                         from second in Enumerable.Range(0, initial_outputs.Count)
+                         select new[] { first, second }).ToArray();
 
-            // init thread event notification
-            var mres = new ManualResetEvent[xprod.Count()];
+            // init thread event notification array
+            var mres = new ManualResetEvent[xprod.Length];
+
+            // init job storage
+            var ddjs = new DataDebugJob[xprod.Length];
 
             // init bootstrap memo data structures
             var boots = new BootMemo[initial_inputs.Count];
@@ -296,10 +308,11 @@ namespace DataDebugMethods
 
             // while processors and memory are available, compute
             // bootstrap and run hypothesis test
-            foreach (var pair in xprod)
+            for (int k = 0; k < xprod.Length; k++)
             {
-                var i = pair[0];
-                var f = pair[1];
+                // extract input array and function indices, respectively
+                var i = xprod[k][0];
+                var f = xprod[k][1];
 
                 // try allocating the memory needed to compute bootstrapped outputs
                 FunctionOutput<string>[] bs;
@@ -309,8 +322,7 @@ namespace DataDebugMethods
                     bs = new FunctionOutput<string>[num_bootstraps];
 
                     // set up job and farm to thread pool
-
-
+                    ddjs[k] = new DataDebugJob(/* TODO */);
                 }
                 catch (System.OutOfMemoryException)
                 {
