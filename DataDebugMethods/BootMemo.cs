@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -31,6 +32,7 @@ namespace DataDebugMethods
                 }
 
                 // Add function values to cache
+                // Don't care about return value
                 _d.Add(sample, fo_arr);
 
                 // restore the COM value
