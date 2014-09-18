@@ -275,6 +275,7 @@ namespace DataDebugMethods
                 _bs = bs;
                 _n_boots = num_bootstraps;
                 _initial_inputs = initial_inputs;
+                _initial_outputs = initial_outputs;
                 _resamples = resamples;
                 _input = input;
                 _outputs = output_arr;
