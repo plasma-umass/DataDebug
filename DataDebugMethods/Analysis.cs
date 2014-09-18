@@ -215,33 +215,18 @@ namespace DataDebugMethods
 
             #endregion RESAMPLE
 
-            #region COMPUTE_OUTPUTS
-
-            // first idx: the fth function output
-            // second idx: the ith input
-            // third idx: the bth bootstrap
-            var boots = ComputeBootstraps(num_bootstraps, initial_inputs, resamples, input_rngs, output_fns, data, max_duration_in_ms, sw);
-
-            #endregion COMPUTE_OUTPUTS
-
-            // restore formulas
-            foreach (TreeDictPair pair in data.formula_nodes)
-            {
-                TreeNode node = pair.Value;
-                if (node.isFormula())
-                {
-                    node.getCOMObject().Formula = node.getFormula();
-                }
-            }
-
-            #region HYPOTHESIS_TESTING
-
-            // do appropriate hypothesis test, and add weighted test scores, and return result dict
-            var s = ScoreInputs(input_rngs, output_fns, initial_outputs, boots, weighted, max_duration_in_ms, sw, significance);
-
-            #endregion HYPOTHESIS_TESTING
-
-            return s;
+            #region BOOTSTRAP
+            return InterleavedDataDebug(
+                num_bootstraps,
+                resamples,
+                initial_inputs,
+                initial_outputs,
+                input_rngs,
+                output_fns,
+                data,
+                weighted,
+                significance);
+            #endregion BOOTSTRAP
         }
 
         public class DataDebugJob
@@ -251,49 +236,54 @@ namespace DataDebugMethods
             private FunctionOutput<string>[][] _bs;
             private int _n_boots;
             private Dictionary<TreeNode, InputSample> _initial_inputs;
+            private Dictionary<TreeNode, string> _initial_outputs;
             private InputSample[] _resamples;
             private TreeNode _input;
             private TreeNode[] _outputs;
             private AnalysisData _data;
-            private long _max_ms;
-            private Stopwatch _sw;
+            private bool _weighted;
+            private double _significance;
             private ManualResetEvent _mre;
-            private TreeScore _output;
+            private TreeScore _score; // dict of exclusion scores for each input CELL TreeNode
 
             public DataDebugJob(
                 Object lock_token,
-                BootMemo memo,
                 FunctionOutput<String>[][] bs,
                 int num_bootstraps,
                 Dictionary<TreeNode, InputSample> initial_inputs,
+                Dictionary<TreeNode, string> initial_outputs,
                 InputSample[] resamples,
                 TreeNode input,
                 TreeNode[] output_arr,
                 AnalysisData data,
-                long max_duration_in_ms,
-                Stopwatch sw,
+                bool weighted,
+                double significance,
                 ManualResetEvent mre)
             {
+                _memo = new BootMemo();
                 _lock_token = lock_token;
+                _bs = bs;
                 _n_boots = num_bootstraps;
                 _initial_inputs = initial_inputs;
                 _resamples = resamples;
                 _input = input;
                 _outputs = output_arr;
                 _data = data;
-                _max_ms = max_duration_in_ms;
-                _sw = sw;
+                _weighted = weighted;
+                _significance = significance;
                 _mre = mre;
+                _score = new TreeScore();
             }
 
             public TreeScore Result
             {
-                get { return _output; }
+                get { return _score; }
             }
 
-            public void threadPoolCallback(Object threadContext)
+            private void computeOutputs()
             {
-                lock(_lock_token) {
+                lock (_lock_token)
+                {
                     var com = _input.getCOMObject();
 
                     // compute outputs
@@ -302,18 +292,13 @@ namespace DataDebugMethods
                     // restore the original input
                     for (var b = 0; b < _n_boots; b++)
                     {
-                        // check for timeout
-                        if (_sw.ElapsedMilliseconds > _max_ms)
-                        {
-                            throw new TimeoutException("Timeout in ComputeBootstraps");
-                        }
-
                         // use memo DB
                         FunctionOutput<string>[] fos = _memo.FastReplace(com, _initial_inputs[_input], _resamples[b], _outputs, false);
                         for (var f = 0; f < _outputs.Length; f++)
                         {
                             _bs[f][b] = fos[f];
                         }
+                        // update progress bar
                         _data.PokePB();
                     }
 
@@ -329,14 +314,53 @@ namespace DataDebugMethods
                             node.getCOMObject().Formula = node.getFormula();
                         }
                     }
+                } // unlock
+            }
 
-                    // hypothesis test
-                    // TODO
+            private void hypothesisTests()
+            {
+                // TODO: progress bar should take hypothesis tests into account
+                for (var f = 0; f < _outputs.Length; f++)
+                {
+                    TreeNode output = _outputs[f];
+
+                    // do the hypothesis test and then merge
+                    // the scores from previous tests
+                    TreeScore s;
+                    if (FunctionOutputsAreNumeric(_bs[f]))
+                    {
+                        s = NumericHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
+                    }
+                    else
+                    {
+                        s = StringHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
+                    }
+                    _score = DictAdd(_score, s);
                 }
+            }
 
+            public void threadPoolCallback(Object threadContext)
+            {
+                // step 1: compute outputs using resamples
+                computeOutputs();
+
+                // step 2: perform hypothesis tests
+                hypothesisTests();
+
+                // OK to dealloc fields; this object lives on because it is
+                // needed for job control
+                _memo = null;
+                _lock_token = null;
+                _bs = null;
+                _initial_inputs = null;
+                _resamples = null;
+                _input = null;
+                _outputs = null;
+                _data = null;
+
+                // notify
                 _mre.Set();
             }
-            
         }
 
         public static TreeScore InterleavedDataDebug(
@@ -347,8 +371,8 @@ namespace DataDebugMethods
             TreeNode[] input_arr,
             TreeNode[] output_arr,
             AnalysisData data,
-            long max_duration_in_ms,
-            Stopwatch sw)
+            bool weighted,
+            double significance)
         {
             // synchronization token
             object lock_token = new Object();
@@ -365,10 +389,7 @@ namespace DataDebugMethods
             // init job storage
             var ddjs = new DataDebugJob[xprod.Length];
 
-            // init bootstrap memo data structures
-            var memos = (from j in Enumerable.Range(0, initial_inputs.Count)
-                         select new BootMemo(lock_token)).ToArray();
-
+            // init score storage
             var scores = new TreeScore();
 
             // while processors and memory are available, compute
@@ -379,47 +400,61 @@ namespace DataDebugMethods
                 var i = xprod[k][0];
                 var f = xprod[k][1];
 
-                // try allocating the memory needed to compute bootstrapped outputs
-                FunctionOutput<string>[][] bs;
-                try
+                bool queued = false;
+                while (!queued)
                 {
-                    // try to allocate bootstrap output storage
-                    // (throws OOM exception on failure)
-                    bs = new FunctionOutput<string>[initial_outputs.Count][];
-                    for (int j = 0; j < initial_outputs.Count; j++)
+                    // online compute bootstrap for (i,f) if memory is available
+                    try
                     {
-                        bs[j] = new FunctionOutput<string>[num_bootstraps];
+                        // try to allocate bootstrap output storage
+                        // (throws OOM exception on failure)
+                        FunctionOutput<string>[][] bs = new FunctionOutput<string>[initial_outputs.Count][];
+                        for (int j = 0; j < initial_outputs.Count; j++)
+                        {
+                            bs[j] = new FunctionOutput<string>[num_bootstraps];
+                        }
+
+                        // cancellation token
+                        mres[k] = new ManualResetEvent(false);
+
+                        // set up job
+                        ddjs[k] = new DataDebugJob(
+                                    lock_token,
+                                    bs,
+                                    num_bootstraps,
+                                    initial_inputs,
+                                    initial_outputs,
+                                    resamples[i],
+                                    input_arr[i],
+                                    output_arr,
+                                    data,
+                                    weighted,
+                                    significance,
+                                    mres[k]
+                                  );
+
+                        // queue job for thread pool
+                        ThreadPool.QueueUserWorkItem(ddjs[k].threadPoolCallback, k);
+
+                        // exit loop
+                        queued = true;
                     }
-
-                    // cancellation token
-                    mres[k] = new ManualResetEvent(false);
-
-                    // set up job
-                    ddjs[k] = new DataDebugJob(
-                                memos[i],
-                                bs,
-                                num_bootstraps,
-                                initial_inputs,
-                                resamples[i],
-                                input_arr[i],
-                                output_arr,
-                                data,
-                                max_duration_in_ms,
-                                sw,
-                                mres[k]
-                              );
-
-                    // queue job for thread pool
-                    ThreadPool.QueueUserWorkItem(ddjs[k].threadPoolCallback, k);
-                }
-                catch (System.OutOfMemoryException)
-                {
-                    // wait for any work item to finish
-                    WaitHandle.WaitAny(mres);
+                    catch (System.OutOfMemoryException)
+                    {
+                        // wait for any work item to finish
+                        WaitHandle.WaitAny(mres);
+                    }
                 }
             }
 
-            throw new NotImplementedException("Hey dude, I'm not done!");
+            // do not proceed until all bootstrap computations are done
+            WaitHandle.WaitAll(mres);
+
+            // merge scores
+            for (int k = 0; k < xprod.Length; k++)
+            {
+                scores = DictAdd(scores, ddjs[k].Result);
+            }
 
             return scores;
         }
@@ -792,7 +827,7 @@ namespace DataDebugMethods
             {
                 var t = input_arr[i];
                 var com = t.getCOMObject();
-                bootsaver[i] = new BootMemo(new Object);
+                bootsaver[i] = new BootMemo();
                             
                 // replace the values of the COM object with the jth bootstrap,
                 // save all function outputs, and
