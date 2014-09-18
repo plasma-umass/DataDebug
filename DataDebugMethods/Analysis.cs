@@ -200,6 +200,13 @@ namespace DataDebugMethods
             var initial_inputs = StoreInputs(input_rngs);
             var initial_outputs = StoreOutputs(output_fns);
 
+            // Set progress bar max
+            // number of resamples + number of total bootstrap calculations + number of hypothesis tests
+            int maxcount = (input_rngs.Length)
+                + (num_bootstraps * input_rngs.Length * output_fns.Length)
+                + (input_rngs.Length * output_fns.Length);
+            data.SetPBMax(maxcount);
+
             #region RESAMPLE
 
             // populate bootstrap array
@@ -211,6 +218,9 @@ namespace DataDebugMethods
 
                 // resample
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
+
+                // update progress bar
+                data.PokePB();
             });
 
             #endregion RESAMPLE
@@ -336,6 +346,9 @@ namespace DataDebugMethods
                         s = StringHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
                     }
                     _score = DictAdd(_score, s);
+
+                    // update progress bar
+                    _data.PokePB();
                 }
             }
 
