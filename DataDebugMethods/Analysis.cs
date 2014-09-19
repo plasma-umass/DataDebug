@@ -462,7 +462,10 @@ namespace DataDebugMethods
             }
 
             // do not proceed until all bootstrap computations are done
-            WaitHandle.WaitAll(mres);
+            foreach (var mre in mres)
+            {
+                mre.WaitOne();
+            }
 
             // merge scores
             for (int k = 0; k < xprod.Length; k++)
