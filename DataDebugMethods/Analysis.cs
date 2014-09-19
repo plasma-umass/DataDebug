@@ -504,19 +504,21 @@ namespace DataDebugMethods
         public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
-            var input_cells = rangeNode.getInputs().ToArray();
+            var input_cells = rangeNode.getInputs();
 
             // scores
             var iexc_scores = new TreeScore();
 
+            var inputs_sz = input_cells.Count();
+
             // exclude each index, in turn
-            for (int i = 0; i < input_cells.Length; i++)
+            for (int i = 0; i < inputs_sz; i++)
             {
                 // default weight
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells[i];
+                TreeNode xtree = input_cells.ElementAt(i);
                 if (weighted)
                 {
                     // the weight of the function value of interest
@@ -551,7 +553,9 @@ namespace DataDebugMethods
         public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
-            var input_cells = rangeNode.getInputs().ToArray();
+            var input_cells = rangeNode.getInputs();
+
+            var inputs_sz = input_cells.Count();
 
             // scores
             var input_exclusion_scores = new TreeScore();
@@ -564,13 +568,13 @@ namespace DataDebugMethods
 
             // for each excluded index, test whether the original input
             // falls outside our bootstrap confidence bounds
-            for (int i = 0; i < input_cells.Length; i++)
+            for (int i = 0; i < inputs_sz; i++)
             {
                 // default weight
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells[i];
+                TreeNode xtree = input_cells.ElementAt(i);
 //  Decided not to use weighted scoring
 //                if (weighted)
 //                {
@@ -639,7 +643,7 @@ namespace DataDebugMethods
         }
 
         // Count instances of unique string output values and return multinomial probability vector
-        public static Dictionary<string, double> BootstrapFrequency(FunctionOutput<string>[] boots)
+        public static Dictionary<string, double> BootstrapFrequency(IEnumerable<FunctionOutput<string>> boots)
         {
             var counts = new Dictionary<string, int>();
 
@@ -659,9 +663,10 @@ namespace DataDebugMethods
 
             var p_values = new Dictionary<string,double>();
 
+            var bootcount = (double)boots.Count();
             foreach (KeyValuePair<string,int> pair in counts)
             {
-                p_values.Add(pair.Key, (double)pair.Value / (double)boots.Length);
+                p_values.Add(pair.Key, (double)pair.Value / bootcount);
             }
 
             return p_values;
@@ -674,7 +679,7 @@ namespace DataDebugMethods
             var xfp = BigInteger.One << exclude_index;
 
             // filter bootstraps which include exclude_index
-            var boots_exc = boots.Where(b => (b.GetExcludes() & xfp) == xfp).ToArray();
+            var boots_exc = boots.Where(b => (b.GetExcludes() & xfp) == xfp);
 
             // get p_value vector
             var freq = BootstrapFrequency(boots_exc);
@@ -702,23 +707,26 @@ namespace DataDebugMethods
             // get bootstrap fingerprint for exclude_index
             var xfp = BigInteger.One << exclude_index;
 
-            // filter bootstraps which include exclude_index
-            var boots_exc = boots.Where(b => (b.GetExcludes() & xfp) == xfp).ToArray();
-            //return neutral (0.5) if we are having a sparsity problem
-            if (boots_exc.Length == 0)
+            // filter bootstraps that include exclude_index
+            var boots_exc = boots.Where(b => (b.GetExcludes() & xfp) == xfp);
+
+            var exc_count = boots_exc.Count();
+
+            // return neutral (0.5) if we are having a sparsity problem
+            if (exc_count == 0)
             {
                 return 0.5;
             }
             // index for value greater than 2.5% of the lowest values; we want to round down here
-            var low_index = System.Convert.ToInt32(Math.Floor((float)(boots_exc.Length - 1) * low_thresh));
+            var low_index = System.Convert.ToInt32(Math.Floor((float)(exc_count - 1) * low_thresh));
             // index for value greater than 97.5% of the lowest values; we want to round up here
-            var high_index = System.Convert.ToInt32(Math.Ceiling((float)(boots_exc.Length - 1) * hi_thresh));
+            var high_index = System.Convert.ToInt32(Math.Ceiling((float)(exc_count - 1) * hi_thresh));
 
-            var low_value = boots_exc[low_index].GetValue();
-            var high_value = boots_exc[high_index].GetValue();
+            var low_value = boots_exc.ElementAt(low_index).GetValue();
+            var high_value = boots_exc.ElementAt(high_index).GetValue();
 
-            var lowest_value = boots_exc[0].GetValue();
-            var highest_value = boots_exc[boots_exc.Length - 1].GetValue();
+            var lowest_value = boots_exc.ElementAt(0).GetValue();
+            var highest_value = boots_exc.ElementAt(exc_count - 1).GetValue();
 
             double original_output_d;
             Double.TryParse(original_output, out original_output_d);
