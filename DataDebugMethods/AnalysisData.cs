@@ -48,13 +48,10 @@ namespace DataDebugMethods
 
         public void PokePB()
         {
-            lock (this)
+            if (pb != null)
             {
-                if (pb != null)
-                {
-                    _pb_count += 1;
-                    this.SetProgress(_pb_count * 100 / _pb_max);
-                }
+                _pb_count += 1;
+                this.SetProgress(_pb_count * 100 / _pb_max);
             }
         }
 

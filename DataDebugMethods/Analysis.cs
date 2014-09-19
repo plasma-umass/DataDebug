@@ -209,7 +209,7 @@ namespace DataDebugMethods
 
             // populate bootstrap array
             // for each input range (a TreeNode)
-            System.Threading.Tasks.Parallel.For(0, input_rngs.Length, i =>
+            for (int i = 0; i < input_rngs.Length; i++)
             {
                 // this TreeNode
                 var t = input_rngs[i];
@@ -219,21 +219,21 @@ namespace DataDebugMethods
 
                 // update progress bar
                 data.PokePB();
-            });
+            }
 
             #endregion RESAMPLE
 
-            #region BOOTSTRAP
-            return InterleavedDataDebug(
-                num_bootstraps,
-                resamples,
-                initial_inputs,
-                initial_outputs,
-                input_rngs,
-                output_fns,
-                data,
-                weighted,
-                significance);
+                #region BOOTSTRAP
+                return InterleavedDataDebug(
+                    num_bootstraps,
+                    resamples,
+                    initial_inputs,
+                    initial_outputs,
+                    input_rngs,
+                    output_fns,
+                    data,
+                    weighted,
+                    significance);
             #endregion BOOTSTRAP
         }
 
