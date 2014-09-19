@@ -34,13 +34,27 @@ namespace DataDebugMethods
 
         }
 
+        delegate void SetProgressCallback(int progress);
+
         public void SetProgress(int progress)
         {
-            if (progress < Minimum || progress > Maximum)
+            // InvokeRequired ensures that the thread accessing
+            // the progressbar value is the same as the one
+            // that created it.  Forms requires this to ensure
+            // thread-safety.
+            if (this.progressBar1.InvokeRequired)
             {
-                throw new Exception("Progress bar error.");
+                var spc = new SetProgressCallback(SetProgress);
+                this.Invoke(spc, new object[] { progress });
             }
-            progressBar1.Value = progress;
+            else
+            {
+                if (progress < Minimum || progress > Maximum)
+                {
+                    throw new Exception("Progress bar error.");
+                }
+                progressBar1.Value = progress;
+            }
         }
 
         public void IncrementProgress(int delta)
