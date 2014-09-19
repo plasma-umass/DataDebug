@@ -201,10 +201,8 @@ namespace DataDebugMethods
             var initial_outputs = StoreOutputs(output_fns);
 
             // Set progress bar max
-            // number of resamples + number of total bootstrap calculations + number of hypothesis tests
-            int maxcount = (input_rngs.Length)
-                + (num_bootstraps * input_rngs.Length * output_fns.Length)
-                + (input_rngs.Length * output_fns.Length);
+            // number of resamples + number of total bootstrap calculation jobs
+            int maxcount = (input_rngs.Length) + (input_rngs.Length * output_fns.Length);
             data.SetPBMax(maxcount);
 
             #region RESAMPLE
@@ -309,8 +307,6 @@ namespace DataDebugMethods
                         {
                             _bs[f][b] = fos[f];
                         }
-                        // update progress bar
-                        _data.PokePB();
                     }
 
                     // restore the COM value; faster to do once, at the end (this saves n-1 replacements)
@@ -347,9 +343,6 @@ namespace DataDebugMethods
                         s = StringHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
                     }
                     _score = DictAdd(_score, s);
-
-                    // update progress bar
-                    _data.PokePB();
                 }
             }
 
@@ -449,6 +442,9 @@ namespace DataDebugMethods
 
                         // queue job for thread pool
                         ThreadPool.QueueUserWorkItem(ddjs[k].threadPoolCallback, k);
+                        
+                        // update progress bar
+                        data.PokePB();
 
                         // exit loop
                         queued = true;
