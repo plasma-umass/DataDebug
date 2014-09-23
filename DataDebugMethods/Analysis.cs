@@ -201,9 +201,7 @@ namespace DataDebugMethods
             var initial_outputs = StoreOutputs(output_fns);
 
             // Set progress bar max
-            // number of resamples + number of total bootstrap calculation jobs
-            int maxcount = (input_rngs.Length) + (input_rngs.Length * output_fns.Length);
-            data.SetPBMax(maxcount);
+            data.SetPBMax(input_rngs.Length * 2);
 
             #region RESAMPLE
 
@@ -223,61 +221,44 @@ namespace DataDebugMethods
 
             #endregion RESAMPLE
 
-                #region BOOTSTRAP
-                return InterleavedDataDebug(
-                    num_bootstraps,
-                    resamples,
-                    initial_inputs,
-                    initial_outputs,
-                    input_rngs,
-                    output_fns,
-                    data,
-                    weighted,
-                    significance);
-            #endregion BOOTSTRAP
+            #region INFERENCE
+            return DataDebug(
+                num_bootstraps,
+                resamples,
+                initial_inputs,
+                initial_outputs,
+                input_rngs,
+                output_fns,
+                data,
+                weighted,
+                significance);
+            #endregion INFERENCE
         }
 
         public class DataDebugJob
         {
-            private Object _lock_token;
-            private BootMemo _memo;
             private FunctionOutput<string>[][] _bs;
-            private int _n_boots;
-            private Dictionary<TreeNode, InputSample> _initial_inputs;
             private Dictionary<TreeNode, string> _initial_outputs;
-            private InputSample[] _resamples;
             private TreeNode _input;
             private TreeNode[] _outputs;
-            private AnalysisData _data;
             private bool _weighted;
             private double _significance;
             private ManualResetEvent _mre;
             private TreeScore _score; // dict of exclusion scores for each input CELL TreeNode
 
             public DataDebugJob(
-                Object lock_token,
                 FunctionOutput<String>[][] bs,
-                int num_bootstraps,
-                Dictionary<TreeNode, InputSample> initial_inputs,
                 Dictionary<TreeNode, string> initial_outputs,
-                InputSample[] resamples,
                 TreeNode input,
                 TreeNode[] output_arr,
-                AnalysisData data,
                 bool weighted,
                 double significance,
                 ManualResetEvent mre)
             {
-                _memo = new BootMemo();
-                _lock_token = lock_token;
                 _bs = bs;
-                _n_boots = num_bootstraps;
-                _initial_inputs = initial_inputs;
                 _initial_outputs = initial_outputs;
-                _resamples = resamples;
                 _input = input;
                 _outputs = output_arr;
-                _data = data;
                 _weighted = weighted;
                 _significance = significance;
                 _mre = mre;
@@ -289,44 +270,8 @@ namespace DataDebugMethods
                 get { return _score; }
             }
 
-            private void computeOutputs()
-            {
-                lock (_lock_token)
-                {
-                    var com = _input.getCOMObject();
-
-                    // compute outputs
-                    // replace the values of the COM object with the jth bootstrap,
-                    // save all function outputs, and
-                    // restore the original input
-                    for (var b = 0; b < _n_boots; b++)
-                    {
-                        // use memo DB
-                        FunctionOutput<string>[] fos = _memo.FastReplace(com, _initial_inputs[_input], _resamples[b], _outputs, false);
-                        for (var f = 0; f < _outputs.Length; f++)
-                        {
-                            _bs[f][b] = fos[f];
-                        }
-                    }
-
-                    // restore the COM value; faster to do once, at the end (this saves n-1 replacements)
-                    BootMemo.ReplaceExcelRange(com, _initial_inputs[_input]);
-
-                    // restore formulas
-                    foreach (TreeDictPair pair in _data.formula_nodes)
-                    {
-                        TreeNode node = pair.Value;
-                        if (node.isFormula())
-                        {
-                            node.getCOMObject().Formula = node.getFormula();
-                        }
-                    }
-                } // unlock
-            }
-
             private void hypothesisTests()
             {
-                // TODO: progress bar should take hypothesis tests into account
                 for (var f = 0; f < _outputs.Length; f++)
                 {
                     TreeNode output = _outputs[f];
@@ -348,29 +293,22 @@ namespace DataDebugMethods
 
             public void threadPoolCallback(Object threadContext)
             {
-                // step 1: compute outputs using resamples
-                computeOutputs();
-
-                // step 2: perform hypothesis tests
+                // perform hypothesis tests
                 hypothesisTests();
 
                 // OK to dealloc fields; this object lives on because it is
                 // needed for job control
-                _memo = null;
-                _lock_token = null;
                 _bs = null;
-                _initial_inputs = null;
-                _resamples = null;
+                _initial_outputs = null;
                 _input = null;
                 _outputs = null;
-                _data = null;
 
                 // notify
                 _mre.Set();
             }
         }
 
-        public static TreeScore InterleavedDataDebug(
+        public static TreeScore DataDebug(
             int num_bootstraps,
             InputSample[][] resamples,
             Dictionary<TreeNode, InputSample> initial_inputs,
@@ -384,89 +322,97 @@ namespace DataDebugMethods
             // synchronization token
             object lock_token = new Object();
 
-            // compute the cross product of input, output pairs so that
-            // we can efficiently parallelize the computation
-            var xprod = (from first in Enumerable.Range(0, initial_inputs.Count)
-                         from second in Enumerable.Range(0, initial_outputs.Count)
-                         select new[] { first, second }).ToArray();
-
             // init thread event notification array
-            var mres = new ManualResetEvent[xprod.Length];
+            var mres = new ManualResetEvent[input_arr.Length];
 
             // init job storage
-            var ddjs = new DataDebugJob[xprod.Length];
+            var ddjs = new DataDebugJob[input_arr.Length];
 
             // init score storage
             var scores = new TreeScore();
 
-            // while processors and memory are available, compute
-            // bootstrap and run hypothesis test
-            for (int k = 0; k < xprod.Length; k++)
+            for (int i = 0; i < input_arr.Length; i++)
             {
-                // extract input array and function indices, respectively
-                var i = xprod[k][0];
-                var f = xprod[k][1];
+                #region BOOTSTRAP
+                // bootstrapping is done in the parent STA thread because
+                // the .NET threading model prohibits thread pools (which
+                // are MTA) from accessing STA COM objects directly.
 
-                bool queued = false;
-                while (!queued)
+                // alloc bootstrap storage for each output (f), for each resample (b)
+                FunctionOutput<string>[][] bs = new FunctionOutput<string>[initial_outputs.Count][];
+                for (int f = 0; f < initial_outputs.Count; f++)
                 {
-                    // online compute bootstrap for (i,f) if memory is available
-                    try
+                    bs[f] = new FunctionOutput<string>[num_bootstraps];
+                }
+
+                // init memoization table for input vector i
+                var memo = new BootMemo();
+
+                // fetch the input range TreeNode
+                var input = input_arr[i];
+
+                // fetch the input range COM object
+                var com = input.getCOMObject();
+
+                // compute outputs
+                // replace the values of the COM object with the jth bootstrap,
+                // save all function outputs, and
+                // restore the original input
+                for (var b = 0; b < num_bootstraps; b++)
+                {
+                    // lookup outputs from memo table; otherwise do replacement, compute outputs, store them in table, and return them
+                    FunctionOutput<string>[] fos = memo.FastReplace(com, initial_inputs[input], resamples[i][b], output_arr, false);
+                    for (var f = 0; f < output_arr.Length; f++)
                     {
-                        // try to allocate bootstrap output storage
-                        // (throws OOM exception on failure)
-                        FunctionOutput<string>[][] bs = new FunctionOutput<string>[initial_outputs.Count][];
-                        for (int j = 0; j < initial_outputs.Count; j++)
-                        {
-                            bs[j] = new FunctionOutput<string>[num_bootstraps];
-                        }
-
-                        // cancellation token
-                        mres[k] = new ManualResetEvent(false);
-
-                        // set up job
-                        ddjs[k] = new DataDebugJob(
-                                    lock_token,
-                                    bs,
-                                    num_bootstraps,
-                                    initial_inputs,
-                                    initial_outputs,
-                                    resamples[i],
-                                    input_arr[i],
-                                    output_arr,
-                                    data,
-                                    weighted,
-                                    significance,
-                                    mres[k]
-                                  );
-
-                        // queue job for thread pool
-                        ThreadPool.QueueUserWorkItem(ddjs[k].threadPoolCallback, k);
-                        
-                        // update progress bar
-                        data.PokePB();
-
-                        // exit loop
-                        queued = true;
-                    }
-                    catch (System.OutOfMemoryException)
-                    {
-                        // wait for any work item to finish
-                        WaitHandle.WaitAny(mres);
+                        bs[f][b] = fos[f];
                     }
                 }
+
+                // restore the original inputs; faster to do once, after bootstrapping is done
+                BootMemo.ReplaceExcelRange(com, initial_inputs[input]);
+
+                // restore formulas
+                foreach (TreeDictPair pair in data.formula_nodes)
+                {
+                    TreeNode node = pair.Value;
+                    if (node.isFormula())
+                    {
+                        node.getCOMObject().Formula = node.getFormula();
+                    }
+                }
+                #endregion BOOTSTRAP
+
+                #region HYPOTHESIS_TEST
+                // cancellation token
+                mres[i] = new ManualResetEvent(false);
+
+                // set up job
+                ddjs[i] = new DataDebugJob(
+                            bs,
+                            initial_outputs,
+                            input_arr[i],
+                            output_arr,
+                            weighted,
+                            significance,
+                            mres[i]
+                            );
+
+                // hand job to thread pool
+                ThreadPool.QueueUserWorkItem(ddjs[i].threadPoolCallback, i);
+                #endregion HYPOTHESIS_TEST
+
+                // update progress bar
+                data.PokePB();
             }
 
-            // do not proceed until all bootstrap computations are done
-            foreach (var mre in mres)
+            // Do not proceed until all hypothesis tests are done.
+            // WaitHandle.WaitAll cannot be called on an STA thread which
+            // is why we call WaitOne in a loop.
+            // Merge scores as data becomes available.
+            for (int i = 0; i < input_arr.Length; i++)
             {
-                mre.WaitOne();
-            }
-
-            // merge scores
-            for (int k = 0; k < xprod.Length; k++)
-            {
-                scores = DictAdd(scores, ddjs[k].Result);
+                mres[i].WaitOne();
+                scores = DictAdd(scores, ddjs[i].Result);
             }
 
             return scores;

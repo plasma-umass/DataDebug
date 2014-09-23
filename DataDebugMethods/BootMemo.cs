@@ -46,7 +46,19 @@ namespace DataDebugMethods
 
         public static void ReplaceExcelRange(Range com, InputSample input)
         {
-            com.Value2 = input.GetInputArray();
+            bool done = false;
+            while (!done)
+            {
+                try
+                {
+                    com.Value2 = input.GetInputArray();
+                    done = true;
+                }
+                catch (Exception)
+                {
+
+                }
+            }
         }
     }
 }
