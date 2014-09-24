@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -10,12 +11,7 @@ namespace DataDebugMethods
 {
     public class BootMemo
     {
-        private Dictionary<InputSample, FunctionOutput<string>[]> _d;
-        
-        public BootMemo()
-        {
-            _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
-        }
+        private Dictionary<InputSample, FunctionOutput<string>[]> _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
         
         public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, bool replace_original)
         {
@@ -36,6 +32,7 @@ namespace DataDebugMethods
                 }
 
                 // Add function values to cache
+                // Don't care about return value
                 _d.Add(sample, fo_arr);
 
                 // restore the COM value
@@ -49,7 +46,19 @@ namespace DataDebugMethods
 
         public static void ReplaceExcelRange(Range com, InputSample input)
         {
-            com.Value2 = input.GetInputArray();
+            bool done = false;
+            while (!done)
+            {
+                try
+                {
+                    com.Value2 = input.GetInputArray();
+                    done = true;
+                }
+                catch (Exception)
+                {
+
+                }
+            }
         }
     }
 }
