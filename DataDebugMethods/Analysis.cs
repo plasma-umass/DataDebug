@@ -333,76 +333,85 @@ namespace DataDebugMethods
 
             for (int i = 0; i < input_arr.Length; i++)
             {
-                #region BOOTSTRAP
-                // bootstrapping is done in the parent STA thread because
-                // the .NET threading model prohibits thread pools (which
-                // are MTA) from accessing STA COM objects directly.
-
-                // alloc bootstrap storage for each output (f), for each resample (b)
-                FunctionOutput<string>[][] bs = new FunctionOutput<string>[initial_outputs.Count][];
-                for (int f = 0; f < initial_outputs.Count; f++)
+                try
                 {
-                    bs[f] = new FunctionOutput<string>[num_bootstraps];
-                }
+                    #region BOOTSTRAP
+                    // bootstrapping is done in the parent STA thread because
+                    // the .NET threading model prohibits thread pools (which
+                    // are MTA) from accessing STA COM objects directly.
 
-                // init memoization table for input vector i
-                var memo = new BootMemo();
-
-                // fetch the input range TreeNode
-                var input = input_arr[i];
-
-                // fetch the input range COM object
-                var com = input.getCOMObject();
-
-                // compute outputs
-                // replace the values of the COM object with the jth bootstrap,
-                // save all function outputs, and
-                // restore the original input
-                for (var b = 0; b < num_bootstraps; b++)
-                {
-                    // lookup outputs from memo table; otherwise do replacement, compute outputs, store them in table, and return them
-                    FunctionOutput<string>[] fos = memo.FastReplace(com, initial_inputs[input], resamples[i][b], output_arr, false);
-                    for (var f = 0; f < output_arr.Length; f++)
+                    // alloc bootstrap storage for each output (f), for each resample (b)
+                    FunctionOutput<string>[][] bs = new FunctionOutput<string>[initial_outputs.Count][];
+                    for (int f = 0; f < initial_outputs.Count; f++)
                     {
-                        bs[f][b] = fos[f];
+                        bs[f] = new FunctionOutput<string>[num_bootstraps];
                     }
-                }
 
-                // restore the original inputs; faster to do once, after bootstrapping is done
-                BootMemo.ReplaceExcelRange(com, initial_inputs[input]);
+                    // init memoization table for input vector i
+                    var memo = new BootMemo();
 
-                // restore formulas
-                foreach (TreeDictPair pair in data.formula_nodes)
-                {
-                    TreeNode node = pair.Value;
-                    if (node.isFormula())
+                    // fetch the input range TreeNode
+                    var input = input_arr[i];
+
+                    // fetch the input range COM object
+                    var com = input.getCOMObject();
+
+                    // compute outputs
+                    // replace the values of the COM object with the jth bootstrap,
+                    // save all function outputs, and
+                    // restore the original input
+                    for (var b = 0; b < num_bootstraps; b++)
                     {
-                        node.getCOMObject().Formula = node.getFormula();
+                        // lookup outputs from memo table; otherwise do replacement, compute outputs, store them in table, and return them
+                        FunctionOutput<string>[] fos = memo.FastReplace(com, initial_inputs[input], resamples[i][b], output_arr, false);
+                        for (var f = 0; f < output_arr.Length; f++)
+                        {
+                            bs[f][b] = fos[f];
+                        }
                     }
+
+                    // restore the original inputs; faster to do once, after bootstrapping is done
+                    BootMemo.ReplaceExcelRange(com, initial_inputs[input]);
+
+                    // restore formulas
+                    foreach (TreeDictPair pair in data.formula_nodes)
+                    {
+                        TreeNode node = pair.Value;
+                        if (node.isFormula())
+                        {
+                            node.getCOMObject().Formula = node.getFormula();
+                        }
+                    }
+                    #endregion BOOTSTRAP
+
+                    #region HYPOTHESIS_TEST
+                    // cancellation token
+                    mres[i] = new ManualResetEvent(false);
+
+                    // set up job
+                    ddjs[i] = new DataDebugJob(
+                                bs,
+                                initial_outputs,
+                                input_arr[i],
+                                output_arr,
+                                weighted,
+                                significance,
+                                mres[i]
+                                );
+
+                    // hand job to thread pool
+                    ThreadPool.QueueUserWorkItem(ddjs[i].threadPoolCallback, i);
+                    #endregion HYPOTHESIS_TEST
+
+                    // update progress bar
+                    data.PokePB();
                 }
-                #endregion BOOTSTRAP
-
-                #region HYPOTHESIS_TEST
-                // cancellation token
-                mres[i] = new ManualResetEvent(false);
-
-                // set up job
-                ddjs[i] = new DataDebugJob(
-                            bs,
-                            initial_outputs,
-                            input_arr[i],
-                            output_arr,
-                            weighted,
-                            significance,
-                            mres[i]
-                            );
-
-                // hand job to thread pool
-                ThreadPool.QueueUserWorkItem(ddjs[i].threadPoolCallback, i);
-                #endregion HYPOTHESIS_TEST
-
-                // update progress bar
-                data.PokePB();
+                catch (System.OutOfMemoryException)
+                {
+                    // wait for any of the 0..i-1 work items
+                    // to complete and try again
+                    WaitHandle.WaitAny(mres.Take(i).ToArray());
+                }
             }
 
             // Do not proceed until all hypothesis tests are done.
