@@ -15,148 +15,36 @@ using OptTuple = Microsoft.FSharp.Core.FSharpOption<System.Tuple<UserSimulation.
 
 namespace DataDebug
 {
-    public partial class Ribbon
+    public class WorkbookState
     {
+        #region CONSTANTS
         // e * 1000
         public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
         public readonly static long MAX_DURATION_IN_MS = 5L * 60L * 1000L;  // 5 minutes
+        public readonly System.Drawing.Color GREEN = System.Drawing.Color.Green;
+        #endregion CONSTANTS
 
-        Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
-        Excel.Application app;
-        Excel.Workbook current_workbook;
-        double tool_significance = 0.95;
-        HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
-        HashSet<AST.Address> output_highlights = new HashSet<AST.Address>();
-        HashSet<AST.Address> known_good = new HashSet<AST.Address>();
-        //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
-        List<KeyValuePair<TreeNode, int>> flaggable_list = null;
-        AST.Address flagged_cell = null;
-        System.Drawing.Color GREEN = System.Drawing.Color.Green;
-        string classification_file;
-        AnalysisData data;
+        private Excel.Application _app;
+        private Excel.Workbook _workbook;
+        private double _tool_significance = 0.95;
+        private Dictionary<Excel.Workbook, List<RibbonHelper.CellColor>> _color_dict;
+        private HashSet<AST.Address> _tool_highlights = new HashSet<AST.Address>();
+        private HashSet<AST.Address> _output_highlights = new HashSet<AST.Address>();
+        private HashSet<AST.Address> _known_good = new HashSet<AST.Address>();
+        private List<KeyValuePair<TreeNode, int>> flaggable_list = null;
+        private AST.Address flagged_cell = null;
+        private AnalysisData data;
 
-        // simulation files
-        String benchmark_dir;
-        String simulation_output_dir;
-        String simulation_classification_file;
-
-        private void ActivateTool()
+        public WorkbookState(Excel.Application app, Excel.Workbook workbook)
         {
-            this.MarkAsOK.Enabled = true;
-            this.FixError.Enabled = true;
-            this.clearColoringButton.Enabled = true;
-            this.TestNewProcedure.Enabled = false;
+            _app = app;
+            _workbook = workbook;
         }
 
-        private void DeactivateTool()
+        public double ToolSignificance
         {
-            this.TestNewProcedure.Enabled = true;
-            this.MarkAsOK.Enabled = false;
-            this.FixError.Enabled = false;
-            this.clearColoringButton.Enabled = false;
-        }
-
-        private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
-        {
-            ////Randomly select the version of the tool that should be shown;
-            //int tool_versions = 3;
-            //Random rand = new Random();
-            //int i = rand.Next(tool_versions);
-            //i = 0;
-
-            //if (i == 0)
-            //{
-            //    //CheckCell shown; others hidden
-            //    ccgroup.Visible = true;
-            //    group1.Visible = false;
-            //    group2.Visible = false;
-            //}
-            //else if (i == 1)
-            //{
-            //    //Normal per range shown; others hidden
-            //    ccgroup.Visible = false;
-            //    group1.Visible = true;
-            //    group2.Visible = false;
-            //}
-            //else
-            //{
-            //    //Normal on all inputs shown; others hidden
-            //    ccgroup.Visible = false;
-            //    group1.Visible = false;
-            //    group2.Visible = true;
-            //}
-
-            // start tool in deactivated state
-            DeactivateTool();
-
-            // init color storage
-            color_dict = new Dictionary<Excel.Workbook, List<RibbonHelper.CellColor>>();
-
-            // Get current app
-            app = Globals.ThisAddIn.Application;
-
-            // Get current workbook
-            current_workbook = app.ActiveWorkbook;
-
-            // save colors
-            if (current_workbook != null)
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
-
-            // register event handlers
-            app.WorkbookOpen += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookOpenEventHandler(app_WorkbookOpen);
-            app.WorkbookBeforeClose += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookBeforeCloseEventHandler(app_WorkbookBeforeClose);
-            app.WorkbookActivate += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookActivateEventHandler(app_WorkbookActivate);
-        }
-
-        private void app_WorkbookOpen(Excel.Workbook wb)
-        {
-            current_workbook = wb;
-            if (!color_dict.ContainsKey(current_workbook))
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
-        }
-
-        void app_WorkbookBeforeClose(Excel.Workbook wb, ref bool cancel)
-        {
-            color_dict.Remove(wb);
-            if (current_workbook == wb)
-            {
-                current_workbook = null;
-            }
-        }
-
-        void app_WorkbookActivate(Excel.Workbook wb)
-        {
-            current_workbook = wb;
-            if (!color_dict.ContainsKey(current_workbook))
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
-        }
-
-        private FSharpOption<double> GetSignificance(string input, string label)
-        {
-            var errormsg = label + " must be a value between 0 and 100";
-            var significance = 0.95;
-
-            try
-            {
-                significance = (100.0 - Double.Parse(input)) / 100.0;
-            }
-            catch
-            {
-                System.Windows.Forms.MessageBox.Show(errormsg);
-            }
-
-            if (significance < 0 || significance > 100)
-            {
-                System.Windows.Forms.MessageBox.Show(errormsg);
-            }
-
-            return FSharpOption<double>.Some(significance);
+            get { return _tool_significance; }
+            set { _tool_significance = value; }
         }
 
         private List<KeyValuePair<TreeNode, int>> Analyze(bool normal_cutoff, long max_duration_in_ms)
@@ -166,33 +54,31 @@ namespace DataDebug
 
             using (var pb = new ProgBar(0, 100))
             {
-                current_workbook = app.ActiveWorkbook;
-
                 // Disable screen updating during analysis to speed things up
-                app.ScreenUpdating = false;
+                _app.ScreenUpdating = false;
 
                 // Build dependency graph (modifies data)
                 try
                 {
-                    data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
+                    data = ConstructTree.constructTree(_app.ActiveWorkbook, _app, pb);
                 }
                 catch (ExcelParserUtility.ParseException e)
                 {
                     // cleanup UI and then rethrow
-                    app.ScreenUpdating = true;
+                    _app.ScreenUpdating = true;
                     throw e;
                 }
 
                 if (data.TerminalInputNodes().Length == 0)
                 {
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
-                    app.ScreenUpdating = true;
+                    _app.ScreenUpdating = true;
                     //return new List<Tuple<double, TreeNode>>();
                     return new List<KeyValuePair<TreeNode, int>>();
                 }
 
                 // Get bootstraps
-                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true, max_duration_in_ms, sw, tool_significance);
+                var scores = Analysis.Bootstrap(NBOOTS, data, _app, true, true, max_duration_in_ms, sw, _tool_significance);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
                 List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
@@ -217,19 +103,19 @@ namespace DataDebug
                     //find std. deviation
                     double std_deviation = Math.Sqrt(variance);
 
-                    if (tool_significance == 0.95)
+                    if (_tool_significance == 0.95)
                     {
                         filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
                     }
-                    else if (tool_significance == 0.9)   //10% cutoff 1.2815
+                    else if (_tool_significance == 0.9)   //10% cutoff 1.2815
                     {
                         filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.2815).ToList();
                     }
-                    else if (tool_significance == 0.975) //2.5% cutoff 1.9599
+                    else if (_tool_significance == 0.975) //2.5% cutoff 1.9599
                     {
                         filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.9599).ToList();
                     }
-                    else if (tool_significance == 0.925) //7.5% cutoff 1.4395
+                    else if (_tool_significance == 0.925) //7.5% cutoff 1.4395
                     {
                         filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.4395).ToList();
                     }
@@ -240,7 +126,7 @@ namespace DataDebug
                     int end_ptr = 0;
                     List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
 
-                    while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
+                    while ((double)start_ptr / scores_list.Count < 1.0 - _tool_significance) //the start of this score region is before the cutoff
                     {
                         //while the scores at the start and end pointers are the same, bump the end pointer
                         while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
@@ -254,7 +140,7 @@ namespace DataDebug
                         //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
                         //for more than 5% of the total.
                         //      Note: tool_significance is along the lines of 0.95 (not 0.05).
-                        if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance + (double)1.0 / scores_list.Count)
+                        if ((double)end_ptr / scores_list.Count < 1.0 - _tool_significance + (double)1.0 / scores_list.Count)
                         {
                             //add all values of the current score to high_scores list
                             for (; start_ptr < end_ptr; start_ptr++)
@@ -271,10 +157,10 @@ namespace DataDebug
                     }
 
                     // filter out cells marked as OK
-                    filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+                    filtered_high_scores = high_scores.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();
                 }
                 // Enable screen updating when we're done
-                app.ScreenUpdating = true;
+                _app.ScreenUpdating = true;
 
                 sw.Stop();
 
@@ -285,7 +171,7 @@ namespace DataDebug
         private void ActivateAndCenterOn(AST.Address cell, Excel.Application app)
         {
             // go to worksheet
-            RibbonHelper.GetWorksheetByName(cell.A1Worksheet(), current_workbook.Worksheets).Activate();
+            RibbonHelper.GetWorksheetByName(cell.A1Worksheet(), _workbook.Worksheets).Activate();
 
             // COM object
             var comobj = cell.GetCOMObject(app);
@@ -305,7 +191,7 @@ namespace DataDebug
         private void Flag()
         {
             //filter known_good
-            flaggable_list = flaggable_list.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            flaggable_list = flaggable_list.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();
             if (flaggable_list.Count() != 0)
             {
                 // get TreeNode corresponding to most unusual score
@@ -323,7 +209,7 @@ namespace DataDebug
             }
             else
             {
-                
+
                 // TODO: test after AEC; problematic when highlighted value is not data
                 //TreeNode flagged_node;
                 //if (data.cell_nodes.TryGetValue(flagged_cell, out flagged_node))
@@ -338,16 +224,158 @@ namespace DataDebug
                 //    }
                 //}
 
-                flagged_cell.GetCOMObject(app).Interior.Color = System.Drawing.Color.Red;
-                tool_highlights.Add(flagged_cell);
+                flagged_cell.GetCOMObject(_app).Interior.Color = System.Drawing.Color.Red;
+                _tool_highlights.Add(flagged_cell);
 
                 // go to highlighted cell
-                ActivateAndCenterOn(flagged_cell, app);
+                ActivateAndCenterOn(flagged_cell, _app);
 
                 // enable auditing buttons
                 ActivateTool();
             }
         }
+
+        private void RestoreOutputColors()
+        {
+            if (_workbook != null)
+            {
+                RibbonHelper.RestoreColors2(_color_dict[_workbook], _output_highlights);
+            }
+            _output_highlights.Clear();
+        }
+
+        private void ResetTool()
+        {
+            if (_workbook != null)
+            {
+                RibbonHelper.RestoreColors2(_color_dict[_workbook], _tool_highlights);
+            }
+
+            _known_good.Clear();
+            _tool_highlights.Clear();
+            DeactivateTool();
+        }
+    }
+
+    public partial class Ribbon
+    {
+        #region OLDCODE
+        //Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
+        //Excel.Application app;
+        //Excel.Workbook current_workbook;
+        //double tool_significance = 0.95;
+        //HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
+        //HashSet<AST.Address> output_highlights = new HashSet<AST.Address>();
+        //HashSet<AST.Address> known_good = new HashSet<AST.Address>();
+        //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
+        //List<KeyValuePair<TreeNode, int>> flaggable_list = null;
+        //AST.Address flagged_cell = null;
+        //AnalysisData data;
+        #endregion OLDCODE
+
+        // workbook state data
+        List<WorkbookState> wbstates = new List<WorkbookState>();
+
+        // simulation files
+        string classification_file;
+        String benchmark_dir;
+        String simulation_output_dir;
+        String simulation_classification_file;
+
+        private void ActivateTool()
+        {
+            this.MarkAsOK.Enabled = true;
+            this.FixError.Enabled = true;
+            this.clearColoringButton.Enabled = true;
+            this.TestNewProcedure.Enabled = false;
+        }
+
+        private void DeactivateTool()
+        {
+            this.TestNewProcedure.Enabled = true;
+            this.MarkAsOK.Enabled = false;
+            this.FixError.Enabled = false;
+            this.clearColoringButton.Enabled = false;
+        }
+
+        private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
+        {
+            // start tool in deactivated state
+            DeactivateTool();
+
+
+
+            //// init color storage
+            //color_dict = new Dictionary<Excel.Workbook, List<RibbonHelper.CellColor>>();
+
+            //// Get current app
+            //app = Globals.ThisAddIn.Application;
+
+            //// Get current workbook
+            //current_workbook = app.ActiveWorkbook;
+
+            //// save colors
+            //if (current_workbook != null)
+            //{
+            //    color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+            //}
+
+            //// register event handlers
+            //app.WorkbookOpen += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookOpenEventHandler(app_WorkbookOpen);
+            //app.WorkbookBeforeClose += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookBeforeCloseEventHandler(app_WorkbookBeforeClose);
+            //app.WorkbookActivate += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookActivateEventHandler(app_WorkbookActivate);
+        }
+
+        //private void app_WorkbookOpen(Excel.Workbook wb)
+        //{
+        //    current_workbook = wb;
+        //    if (!color_dict.ContainsKey(current_workbook))
+        //    {
+        //        color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+        //    }
+        //}
+
+        //void app_WorkbookBeforeClose(Excel.Workbook wb, ref bool cancel)
+        //{
+        //    color_dict.Remove(wb);
+        //    if (current_workbook == wb)
+        //    {
+        //        current_workbook = null;
+        //    }
+        //}
+
+        //void app_WorkbookActivate(Excel.Workbook wb)
+        //{
+        //    current_workbook = wb;
+        //    if (!color_dict.ContainsKey(current_workbook))
+        //    {
+        //        color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+        //    }
+        //}
+
+        private FSharpOption<double> GetSignificance(string input, string label)
+        {
+            var errormsg = label + " must be a value between 0 and 100";
+            var significance = 0.95;
+
+            try
+            {
+                significance = (100.0 - Double.Parse(input)) / 100.0;
+            }
+            catch
+            {
+                System.Windows.Forms.MessageBox.Show(errormsg);
+            }
+
+            if (significance < 0 || significance > 100)
+            {
+                System.Windows.Forms.MessageBox.Show(errormsg);
+            }
+
+            return FSharpOption<double>.Some(significance);
+        }
+
+        
 
         private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
         {
@@ -374,26 +402,7 @@ namespace DataDebug
         }
 
         //This clears the outputs highlighted in yellow
-        private void RestoreOutputColors()
-        {
-            if (current_workbook != null)
-            {
-                RibbonHelper.RestoreColors2(color_dict[current_workbook], output_highlights);
-            }
-            output_highlights.Clear();
-        }
-
-        private void ResetTool()
-        {
-            if (current_workbook != null)
-            {
-                RibbonHelper.RestoreColors2(color_dict[current_workbook], tool_highlights);
-            }
-
-            known_good.Clear();
-            tool_highlights.Clear();
-            DeactivateTool();
-        }
+ 
 
         // Action for "Clear coloring" button
         private void clearColoringButton_Click(object sender, RibbonControlEventArgs e)
