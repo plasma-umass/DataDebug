@@ -20,12 +20,6 @@ namespace DataDebug
              * USER INTERACTION WILL BREAK AUTOMATION CODE THAT USES
              * THE PLUGIN!!!
              */
-
-            WorkbookOpen(this.Application.ActiveWorkbook);
-            ((Excel.AppEvents_Event)this.Application).NewWorkbook += WorkbookOpen;
-            this.Application.WorkbookOpen += WorkbookOpen;
-            this.Application.WorkbookActivate += WorkbookActivated;
-            this.Application.WorkbookDeactivate += WorkbookDeactivated;
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
@@ -35,21 +29,6 @@ namespace DataDebug
              * USER INTERACTION WILL BREAK AUTOMATION CODE THAT USES
              * THE PLUGIN!!!
              */
-        }
-
-        private void WorkbookOpen(Excel.Workbook workbook)
-        {
-            MessageBox.Show("Workbook added.");
-        }
-
-        private void WorkbookActivated(Excel.Workbook workbook)
-        {
-            MessageBox.Show("Workbook activated.");
-        }
-
-        private void WorkbookDeactivated(Excel.Workbook workbook)
-        {
-            MessageBox.Show("Workbook deactivated.");
         }
 
         #region VSTO generated code

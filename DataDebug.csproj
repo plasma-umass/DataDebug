@@ -238,6 +238,7 @@
       <DependentUpon>Ribbon.cs</DependentUpon>
     </Compile>
     <Compile Include="RibbonHelper.cs" />
+    <Compile Include="WorkbookState.cs" />
     <EmbeddedResource Include="CellFixForm.resx">
       <DependentUpon>CellFixForm.cs</DependentUpon>
     </EmbeddedResource>
