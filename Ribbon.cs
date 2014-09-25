@@ -62,7 +62,7 @@ namespace DataDebug
             this.MarkAsOK.Enabled = wbs.MarkAsOK_Enabled;
             this.FixError.Enabled = wbs.FixError_Enabled;
             this.clearColoringButton.Enabled = wbs.ClearColoringButton_Enabled;
-            this.TestNewProcedure.Enabled = wbs.TestNewProcedure_Enabled;
+            this.Analyze.Enabled = wbs.Analyze_Enabled;
         }
 
         
@@ -103,7 +103,7 @@ namespace DataDebug
         }
 
         #region BUTTON_HANDLERS
-        private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
+        private void Analyze_Click(object sender, RibbonControlEventArgs e)
         {
             System.Windows.Forms.MessageBox.Show("foo1");
             //var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);

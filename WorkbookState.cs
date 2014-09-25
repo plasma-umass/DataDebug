@@ -29,7 +29,7 @@ namespace DataDebug
         private AnalysisData data;
 
         #region BUTTON_STATE
-        private bool _button_TestNewProcedure_enabled = true;
+        private bool _button_Analyze_enabled = true;
         private bool _button_MarkAsOK_enabled = false;
         private bool _button_FixError_enabled = false;
         private bool _button_clearColoringButton_enabled = false;
@@ -48,10 +48,10 @@ namespace DataDebug
             set { _tool_significance = value; }
         }
 
-        public bool TestNewProcedure_Enabled
+        public bool Analyze_Enabled
         {
-            get { return _button_TestNewProcedure_enabled; }
-            set { _button_TestNewProcedure_enabled = value; }
+            get { return _button_Analyze_enabled; }
+            set { _button_Analyze_enabled = value; }
         }
 
         public bool MarkAsOK_Enabled
@@ -285,7 +285,7 @@ namespace DataDebug
             _button_MarkAsOK_enabled = active;
             _button_FixError_enabled = active;
             _button_clearColoringButton_enabled = active;
-            _button_TestNewProcedure_enabled = !active;
+            _button_Analyze_enabled = !active;
         }
 
         private static void RunSimulations(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
