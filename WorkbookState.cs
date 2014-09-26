@@ -71,7 +71,7 @@ namespace DataDebug
             set { _button_clearColoringButton_enabled = value; }
         }
 
-        private List<KeyValuePair<TreeNode, int>> Analyze(bool normal_cutoff, long max_duration_in_ms)
+        public void Analyze(bool normal_cutoff, long max_duration_in_ms)
         {
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
@@ -97,8 +97,7 @@ namespace DataDebug
                 {
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                     _app.ScreenUpdating = true;
-                    //return new List<Tuple<double, TreeNode>>();
-                    return new List<KeyValuePair<TreeNode, int>>();
+                    flaggable_list = new List<KeyValuePair<TreeNode, int>>();
                 }
 
                 // Get bootstraps
@@ -188,7 +187,7 @@ namespace DataDebug
 
                 sw.Stop();
 
-                return filtered_high_scores;
+                flaggable_list = filtered_high_scores;
             }
         }
 
@@ -212,7 +211,7 @@ namespace DataDebug
 
         }
 
-        private void Flag()
+        public void Flag()
         {
             //filter known_good
             flaggable_list = flaggable_list.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();

@@ -105,27 +105,26 @@ namespace DataDebug
         #region BUTTON_HANDLERS
         private void Analyze_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("foo1");
-            //var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
-            //if (sig == FSharpOption<double>.None)
-            //{
-            //    return;
-            //}
-            //else
-            //{
-            //    tool_significance = sig.Value;
-            //    try
-            //    {
-            //        flaggable_list = Analyze(false, MAX_DURATION_IN_MS);
-            //        Flag();
-            //    }
-            //    catch (ExcelParserUtility.ParseException ex)
-            //    {
-            //        System.Windows.Forms.Clipboard.SetText(ex.Message);
-            //        System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
-            //        return;
-            //    }
-            //}
+            var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
+            if (sig == FSharpOption<double>.None)
+            {
+                return;
+            }
+            else
+            {
+                current_workbook.ToolSignificance = sig.Value;
+                try
+                {
+                    current_workbook.Analyze(false, WorkbookState.MAX_DURATION_IN_MS);
+                    current_workbook.Flag();
+                }
+                catch (ExcelParserUtility.ParseException ex)
+                {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
+                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
+                    return;
+                }
+            }
         }
 
         //This clears the outputs highlighted in yellow
