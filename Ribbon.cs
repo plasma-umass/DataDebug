@@ -88,6 +88,7 @@ namespace DataDebug
         private void WorkbookActivated(Excel.Workbook workbook)
         {
             current_workbook = wbstates[workbook];
+            SetUIState(current_workbook);
         }
 
         // This even it called when Excel sends an opened workbook
@@ -115,7 +116,7 @@ namespace DataDebug
                 current_workbook.ToolSignificance = sig.Value;
                 try
                 {
-                    current_workbook.Analyze(false, WorkbookState.MAX_DURATION_IN_MS);
+                    current_workbook.Analyze(WorkbookState.MAX_DURATION_IN_MS);
                     current_workbook.Flag();
                 }
                 catch (ExcelParserUtility.ParseException ex)
@@ -127,14 +128,10 @@ namespace DataDebug
             }
         }
 
-        //This clears the outputs highlighted in yellow
- 
-
         // Action for "Clear coloring" button
         private void clearColoringButton_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("foo2");
-            //ResetTool();
+            current_workbook.ResetTool();
         }
 
         private void MarkAsOK_Click(object sender, RibbonControlEventArgs e)

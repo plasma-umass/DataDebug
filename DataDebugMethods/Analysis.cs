@@ -172,7 +172,7 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        public static TreeScore Bootstrap(int num_bootstraps,
+        public static TreeScore DataDebug(int num_bootstraps,
                                           AnalysisData data,
                                           Excel.Application app,
                                           bool weighted,
@@ -222,7 +222,7 @@ namespace DataDebugMethods
             #endregion RESAMPLE
 
             #region INFERENCE
-            return DataDebug(
+            return Inference(
                 num_bootstraps,
                 resamples,
                 initial_inputs,
@@ -308,7 +308,7 @@ namespace DataDebugMethods
             }
         }
 
-        public static TreeScore DataDebug(
+        public static TreeScore Inference(
             int num_bootstraps,
             InputSample[][] resamples,
             Dictionary<TreeNode, InputSample> initial_inputs,

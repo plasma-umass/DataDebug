@@ -8,6 +8,12 @@ using DataDebugMethods;
 
 namespace DataDebug
 {
+    public enum AnalysisState
+    {
+        UNANALYZED,
+        MIDANALYSIS
+    }
+
     public class WorkbookState
     {
         #region CONSTANTS
@@ -29,6 +35,7 @@ namespace DataDebug
         private AnalysisData data;
 
         #region BUTTON_STATE
+        private AnalysisState _state = AnalysisState.UNANALYZED;
         private bool _button_Analyze_enabled = true;
         private bool _button_MarkAsOK_enabled = false;
         private bool _button_FixError_enabled = false;
@@ -71,7 +78,7 @@ namespace DataDebug
             set { _button_clearColoringButton_enabled = value; }
         }
 
-        public void Analyze(bool normal_cutoff, long max_duration_in_ms)
+        public void Analyze(long max_duration_in_ms)
         {
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
@@ -98,90 +105,52 @@ namespace DataDebug
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                     _app.ScreenUpdating = true;
                     flaggable_list = new List<KeyValuePair<TreeNode, int>>();
+                    return;
                 }
 
                 // Get bootstraps
-                var scores = Analysis.Bootstrap(NBOOTS, data, _app, true, true, max_duration_in_ms, sw, _tool_significance);
+                var scores = Analysis.DataDebug(NBOOTS, data, _app, true, true, max_duration_in_ms, sw, _tool_significance);
                 var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
                 List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
+                
+                int start_ptr = 0;
+                int end_ptr = 0;
+                List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
 
-                //Using an outlier test for highlighting 
-                if (normal_cutoff)
+                while ((double)start_ptr / scores_list.Count < 1.0 - _tool_significance) //the start of this score region is before the cutoff
                 {
-                    //find mean:
-                    double sum = 0.0;
-                    foreach (double d in scores.Values)
+                    //while the scores at the start and end pointers are the same, bump the end pointer
+                    while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
                     {
-                        sum += d;
+                        end_ptr++;
                     }
-                    double mean = sum / scores.Values.Count;
-                    //find variance
-                    double distance_sum_sq = 0.0;
-                    foreach (double d in scores.Values)
+                    //Now the end_pointer points to the first index with a lower score
+                    //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
+                    //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
+                    //  To do this, we add (1 / total number of entries) to the cutoff
+                    //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
+                    //for more than 5% of the total.
+                    //      Note: tool_significance is along the lines of 0.95 (not 0.05).
+                    if ((double)end_ptr / scores_list.Count < 1.0 - _tool_significance + (double)1.0 / scores_list.Count)
                     {
-                        distance_sum_sq += Math.Pow(mean - d, 2);
+                        //add all values of the current score to high_scores list
+                        for (; start_ptr < end_ptr; start_ptr++)
+                        {
+                            high_scores.Add(scores_list[start_ptr]);
+                        }
+                        //Increment the start pointer to the start of the next score region
+                        start_ptr++;
                     }
-                    double variance = distance_sum_sq / scores.Values.Count;
-                    //find std. deviation
-                    double std_deviation = Math.Sqrt(variance);
-
-                    if (_tool_significance == 0.95)
+                    else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
                     {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
-                    }
-                    else if (_tool_significance == 0.9)   //10% cutoff 1.2815
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.2815).ToList();
-                    }
-                    else if (_tool_significance == 0.975) //2.5% cutoff 1.9599
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.9599).ToList();
-                    }
-                    else if (_tool_significance == 0.925) //7.5% cutoff 1.4395
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.4395).ToList();
+                        break;
                     }
                 }
-                else
-                {
-                    int start_ptr = 0;
-                    int end_ptr = 0;
-                    List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
 
-                    while ((double)start_ptr / scores_list.Count < 1.0 - _tool_significance) //the start of this score region is before the cutoff
-                    {
-                        //while the scores at the start and end pointers are the same, bump the end pointer
-                        while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
-                        {
-                            end_ptr++;
-                        }
-                        //Now the end_pointer points to the first index with a lower score
-                        //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
-                        //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
-                        //  To do this, we add (1 / total number of entries) to the cutoff
-                        //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
-                        //for more than 5% of the total.
-                        //      Note: tool_significance is along the lines of 0.95 (not 0.05).
-                        if ((double)end_ptr / scores_list.Count < 1.0 - _tool_significance + (double)1.0 / scores_list.Count)
-                        {
-                            //add all values of the current score to high_scores list
-                            for (; start_ptr < end_ptr; start_ptr++)
-                            {
-                                high_scores.Add(scores_list[start_ptr]);
-                            }
-                            //Increment the start pointer to the start of the next score region
-                            start_ptr++;
-                        }
-                        else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                        {
-                            break;
-                        }
-                    }
-
-                    // filter out cells marked as OK
-                    filtered_high_scores = high_scores.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();
-                }
+                // filter out cells marked as OK
+                filtered_high_scores = high_scores.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();
+                
                 // Enable screen updating when we're done
                 _app.ScreenUpdating = true;
 
@@ -267,7 +236,7 @@ namespace DataDebug
             _output_highlights.Clear();
         }
 
-        private void ResetTool()
+        public void ResetTool()
         {
             if (_workbook != null)
             {

@@ -37,7 +37,7 @@ namespace UserSimulation
             //      we just move on to the next thing in the list
             if (run_bootstrap)
             {
-                TreeScore scores = Analysis.Bootstrap(nboots, data, app, weighted, all_outputs, max_duration_in_ms, sw, significance);
+                TreeScore scores = Analysis.DataDebug(nboots, data, app, weighted, all_outputs, max_duration_in_ms, sw, significance);
 
                 // apply a threshold to the scores
                 filtered_high_scores = ck.applyCutoff(scores, known_good);
