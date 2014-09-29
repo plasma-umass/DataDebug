@@ -22,10 +22,10 @@ namespace UserSimulation
 
     public static class Prep
     {
-        public static PrepData PrepSimulation(Excel.Application app, Excel.Workbook wbh, ProgBar pb)
+        public static PrepData PrepSimulation(Excel.Application app, Excel.Workbook wbh, ProgBar pb, bool ignore_parse_errors)
         {
             // build graph
-            var graph = DataDebugMethods.ConstructTree.constructTree(wbh, app);
+            var graph = DataDebugMethods.ConstructTree.constructTree(wbh, app, ignore_parse_errors);
             if (graph.ContainsLoop())
             {
                 throw new DataDebugMethods.ContainsLoopException();

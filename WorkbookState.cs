@@ -12,9 +12,11 @@ namespace DataDebug
     {
         #region CONSTANTS
         // e * 1000
-        public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+        //public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
+        public readonly static int NBOOTS = 10;
         public readonly static long MAX_DURATION_IN_MS = 5L * 60L * 1000L;  // 5 minutes
         public readonly static System.Drawing.Color GREEN = System.Drawing.Color.Green;
+        public readonly static bool IGNORE_PARSE_ERRORS = true;
         #endregion CONSTANTS
 
         private Excel.Application _app;
@@ -84,7 +86,7 @@ namespace DataDebug
                 // Build dependency graph (modifies data)
                 try
                 {
-                    data = ConstructTree.constructTree(_app.ActiveWorkbook, _app, pb);
+                    data = ConstructTree.constructTree(_app.ActiveWorkbook, _app, pb, IGNORE_PARSE_ERRORS);
                 }
                 catch (ExcelParserUtility.ParseException e)
                 {
@@ -268,7 +270,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run simulations
-            UserSimulation.Config.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+            UserSimulation.Config.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb, IGNORE_PARSE_ERRORS);
 
             // enable screen updating
             app.ScreenUpdating = true;
@@ -297,7 +299,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run simulations
-            UserSimulation.Config.RunProportionExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
+            UserSimulation.Config.RunProportionExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb, IGNORE_PARSE_ERRORS);
 
             // enable screen updating
             app.ScreenUpdating = true;
@@ -326,7 +328,7 @@ namespace DataDebug
             app.ScreenUpdating = false;
 
             // run simulations
-            if (!UserSimulation.Config.RunSubletyExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb))
+            if (!UserSimulation.Config.RunSubletyExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb, IGNORE_PARSE_ERRORS))
             {
                 System.Windows.Forms.MessageBox.Show("This spreadsheet contains no numeric inputs.");
             }

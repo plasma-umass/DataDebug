@@ -34,6 +34,8 @@ namespace DataDebugMethods
 
         }
 
+        delegate void SetProgressCallback(int progress);
+
         public void SetProgress(int progress)
         {
             if (progress < Minimum || progress > Maximum)

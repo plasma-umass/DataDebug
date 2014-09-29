@@ -52,7 +52,7 @@ namespace CheckCellTests
                 Excel.Workbook wb = mwb.GetWorkbook();
                 Excel.Worksheet ws = mwb.GetWorksheet(1);
 
-                var ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws);
+                var ranges = ExcelParserUtility.GetReferencesFromFormula(formula, wb, ws, ignore_parse_errors: false);
 
                 return ranges.Count();
             }

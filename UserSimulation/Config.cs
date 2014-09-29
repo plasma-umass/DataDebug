@@ -13,10 +13,10 @@ namespace UserSimulation
 {
     public static class Config
     {
-        public static void RunSimulationPaperMain(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static void RunSimulationPaperMain(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
             // record intitial state of spreadsheet
-            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+            var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
             // generate errors
             CellDict errors = UserSimulation.Utility.GenImportantErrors(prepdata.terminal_formula_nodes,
@@ -30,10 +30,10 @@ namespace UserSimulation
             RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
         }
 
-        public static void RunProportionExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static void RunProportionExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
             // record intitial state of spreadsheet
-            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+            var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
             // init error generator
             var eg = new ErrorGenerator();
@@ -71,10 +71,10 @@ namespace UserSimulation
             }
         }
 
-        public static bool RunSubletyExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static bool RunSubletyExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
             // record intitial state of spreadsheet
-            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+            var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
             // init error generator
             var eg = new ErrorGenerator();

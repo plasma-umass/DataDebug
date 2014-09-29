@@ -16,13 +16,13 @@ namespace DataDebugMethods
 {
     public static class ConstructTree
     {
-        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app)
+        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, bool ignore_parse_errors)
         {
-            return constructTree(wb, app, null);
+            return constructTree(wb, app, null, ignore_parse_errors);
         }
 
         // This method constructs the dependency graph from the workbook.
-        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, ProgBar pb)
+        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, ProgBar pb, bool ignore_parse_errors)
         {
             //Start timing tree construction
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
@@ -46,12 +46,12 @@ namespace DataDebugMethods
                 // For each of the ranges found in the formula by the parser,
                 // 1. make a new TreeNode for the range
                 // 2. make TreeNodes for each of the cells in that range
-                foreach (Excel.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject()))
+                foreach (Excel.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject(), ignore_parse_errors))
                 {
                     // this function both creates a TreeNode and adds it to AnalysisData.input_ranges
                     TreeNode range_node = ConstructTree.MakeRangeTreeNode(data.input_ranges, input_range, formula_node);
                     // this function both creates cell TreeNodes for a range and adds it to AnalysisData.cell_nodes
-                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, data.formula_nodes, data.cell_nodes, wb);
+                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, data.formula_nodes, data.cell_nodes, wb, ignore_parse_errors);
                 }
 
                 // For each single-cell input found in the formula by the parser,
@@ -60,7 +60,7 @@ namespace DataDebugMethods
                 IEnumerable<AST.Address> input_addrs;
                 try
                 {
-                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject());
+                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject(), ignore_parse_errors);
                 }
                 catch (ExcelParserUtility.ParseException)
                 {
@@ -190,7 +190,7 @@ namespace DataDebugMethods
             return nodes;
         }
 
-        public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes, Excel.Workbook wb)
+        public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes, Excel.Workbook wb, bool ignore_parse_errors)
         {
             foreach (Excel.Range cell in input_range.getCOMObject())
             {
@@ -210,7 +210,7 @@ namespace DataDebugMethods
                 // Allow perturbation of every input_range that contains at least one value
                 // TODO: fix; the Workbook reference here is not correct in the case of cross-workbook reference;
                 // that said, having the wrong workbook doesn't actually have any bearing on the correctness of this call
-                if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb).Count() > 0)) //|| cell.Value2 != null)
+                if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb, ignore_parse_errors).Count() > 0)) //|| cell.Value2 != null)
                 {
                     input_range.DontPerturb();
                 }
