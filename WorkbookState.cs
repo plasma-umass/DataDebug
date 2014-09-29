@@ -30,8 +30,8 @@ namespace DataDebug
         private HashSet<AST.Address> _tool_highlights = new HashSet<AST.Address>();
         private HashSet<AST.Address> _output_highlights = new HashSet<AST.Address>();
         private HashSet<AST.Address> _known_good = new HashSet<AST.Address>();
-        private List<KeyValuePair<TreeNode, int>> flaggable_list;
-        private AST.Address flagged_cell;
+        private IEnumerable<KeyValuePair<TreeNode, int>> _flaggable;
+        private AST.Address _flagged_cell;
         private AnalysisData data;
 
         #region BUTTON_STATE
@@ -104,24 +104,22 @@ namespace DataDebug
                 {
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                     _app.ScreenUpdating = true;
-                    flaggable_list = new List<KeyValuePair<TreeNode, int>>();
+                    _flaggable = new KeyValuePair<TreeNode,int>[0];
                     return;
                 }
 
                 // Get bootstraps
-                var scores = Analysis.DataDebug(NBOOTS, data, _app, true, true, max_duration_in_ms, sw, _tool_significance);
-                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
+                var scores = Analysis.DataDebug(NBOOTS, data, _app, true, true, max_duration_in_ms, sw, _tool_significance)
+                                     .OrderByDescending(pair => pair.Value).ToArray();
 
-                List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
-                
                 int start_ptr = 0;
                 int end_ptr = 0;
                 List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
 
-                while ((double)start_ptr / scores_list.Count < 1.0 - _tool_significance) //the start of this score region is before the cutoff
+                while ((double)start_ptr / scores.Length < 1.0 - _tool_significance) //the start of this score region is before the cutoff
                 {
                     //while the scores at the start and end pointers are the same, bump the end pointer
-                    while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
+                    while (end_ptr < scores.Length && scores[start_ptr].Value == scores[end_ptr].Value)
                     {
                         end_ptr++;
                     }
@@ -132,12 +130,12 @@ namespace DataDebug
                     //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
                     //for more than 5% of the total.
                     //      Note: tool_significance is along the lines of 0.95 (not 0.05).
-                    if ((double)end_ptr / scores_list.Count < 1.0 - _tool_significance + (double)1.0 / scores_list.Count)
+                    if ((double)end_ptr / scores.Length < 1.0 - _tool_significance + (double)1.0 / scores.Length)
                     {
                         //add all values of the current score to high_scores list
                         for (; start_ptr < end_ptr; start_ptr++)
                         {
-                            high_scores.Add(scores_list[start_ptr]);
+                            high_scores.Add(scores[start_ptr]);
                         }
                         //Increment the start pointer to the start of the next score region
                         start_ptr++;
@@ -149,14 +147,12 @@ namespace DataDebug
                 }
 
                 // filter out cells marked as OK
-                filtered_high_scores = high_scores.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();
+                _flaggable = high_scores.ToArray().Where(kvp => !_known_good.Contains(kvp.Key.GetAddress()));
                 
                 // Enable screen updating when we're done
                 _app.ScreenUpdating = true;
 
                 sw.Stop();
-
-                flaggable_list = filtered_high_scores;
             }
         }
 
@@ -183,18 +179,18 @@ namespace DataDebug
         public void Flag()
         {
             //filter known_good
-            flaggable_list = flaggable_list.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress())).ToList();
-            if (flaggable_list.Count() != 0)
+            _flaggable = _flaggable.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress()));
+            if (_flaggable.Count() != 0)
             {
                 // get TreeNode corresponding to most unusual score
-                flagged_cell = flaggable_list[0].Key.GetAddress();
+                _flagged_cell = _flaggable.First().Key.GetAddress();
             }
             else
             {
-                flagged_cell = null;
+                _flagged_cell = null;
             }
 
-            if (flagged_cell == null)
+            if (_flagged_cell == null)
             {
                 System.Windows.Forms.MessageBox.Show("No bugs remain.");
                 ResetTool();
@@ -216,11 +212,11 @@ namespace DataDebug
                 //    }
                 //}
 
-                flagged_cell.GetCOMObject(_app).Interior.Color = System.Drawing.Color.Red;
-                _tool_highlights.Add(flagged_cell);
+                _flagged_cell.GetCOMObject(_app).Interior.Color = System.Drawing.Color.Red;
+                _tool_highlights.Add(_flagged_cell);
 
                 // go to highlighted cell
-                ActivateAndCenterOn(flagged_cell, _app);
+                ActivateAndCenterOn(_flagged_cell, _app);
 
                 // enable auditing buttons
                 SetTool(active: true);
