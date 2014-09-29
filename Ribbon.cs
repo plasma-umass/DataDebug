@@ -64,7 +64,6 @@ namespace DataDebug
             this.clearColoringButton.Enabled = wbs.ClearColoringButton_Enabled;
             this.Analyze.Enabled = wbs.Analyze_Enabled;
         }
-
         
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -118,6 +117,7 @@ namespace DataDebug
                 {
                     current_workbook.Analyze(WorkbookState.MAX_DURATION_IN_MS);
                     current_workbook.Flag();
+                    SetUIState(current_workbook);
                 }
                 catch (ExcelParserUtility.ParseException ex)
                 {
@@ -129,45 +129,24 @@ namespace DataDebug
         }
 
         // Action for "Clear coloring" button
-        private void clearColoringButton_Click(object sender, RibbonControlEventArgs e)
+        private void StartOver_Click(object sender, RibbonControlEventArgs e)
         {
             current_workbook.ResetTool();
+            SetUIState(current_workbook);
         }
 
         private void MarkAsOK_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("foo3");
-            //known_good.Add(flagged_cell);
-            //var cell = flagged_cell.GetCOMObject(app);
-            //cell.Interior.Color = GREEN;
-            //RestoreOutputColors();
-            //Flag();
+            current_workbook.MarkAsOK();
+            SetUIState(current_workbook);
         }
 
         private void FixError_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("foo4");
-            //var comcell = flagged_cell.GetCOMObject(app);
-            //System.Action callback = () => {
-            //    flagged_cell = null;
-            //    try
-            //    {
-            //        flaggable_list = Analyze(false, MAX_DURATION_IN_MS);
-            //        Flag();
-            //    }
-            //    catch (ExcelParserUtility.ParseException ex)
-            //    {
-            //        System.Windows.Forms.Clipboard.SetText(ex.Message);
-            //        System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
-            //        return;
-            //    }
-            //};
-            //var fixform = new CellFixForm(comcell, GREEN, callback);
-            //fixform.Show();
-            //RestoreOutputColors();
+            current_workbook.FixError(SetUIState);
         }
 
-        private void TestStuff_Click(object sender, RibbonControlEventArgs e)
+        private void RunAllBenchmarks_Click(object sender, RibbonControlEventArgs e)
         {
             System.Windows.Forms.MessageBox.Show("foo5");
             //// init a RNG

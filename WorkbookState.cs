@@ -8,12 +8,6 @@ using DataDebugMethods;
 
 namespace DataDebug
 {
-    public enum AnalysisState
-    {
-        UNANALYZED,
-        MIDANALYSIS
-    }
-
     public class WorkbookState
     {
         #region CONSTANTS
@@ -35,7 +29,6 @@ namespace DataDebug
         private AnalysisData data;
 
         #region BUTTON_STATE
-        private AnalysisState _state = AnalysisState.UNANALYZED;
         private bool _button_Analyze_enabled = true;
         private bool _button_MarkAsOK_enabled = false;
         private bool _button_FixError_enabled = false;
@@ -340,6 +333,57 @@ namespace DataDebug
 
             // enable screen updating
             app.ScreenUpdating = true;
+        }
+
+        internal void MarkAsOK()
+        {
+            // the user told us that the cell was OK
+            _known_good.Add(_flagged_cell);
+
+            // set the color of the cell to green
+            var cell = _flagged_cell.GetCOMObject(_app);
+            cell.Interior.Color = GREEN;
+
+            // restore output colors
+            RestoreOutputColors();
+
+            // flag another value
+            Flag();
+        }
+
+        internal void FixError(Action<WorkbookState> setUIState)
+        {
+            var cell = _flagged_cell.GetCOMObject(_app);
+            // this callback gets run when the user clicks "OK"
+            System.Action callback = () =>
+            {
+                // add the cell to the known good list
+                _known_good.Add(_flagged_cell);
+
+                // unflag the cell
+                _flagged_cell = null;
+                try
+                {
+                    // when a user fixes something, we need to re-run the analysis
+                    Analyze(MAX_DURATION_IN_MS);
+                    // and flag again
+                    Flag();
+                    // and then set the UI state
+                    setUIState(this);
+                }
+                catch (ExcelParserUtility.ParseException ex)
+                {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
+                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
+                    return;
+                }
+            };
+            // show the form
+            var fixform = new CellFixForm(cell, GREEN, callback);
+            fixform.Show();
+
+            // restore output colors
+            RestoreOutputColors();
         }
     }
 }
