@@ -48,6 +48,7 @@
     <Compile Include="AnalysisData.cs" />
     <Compile Include="BootMemo.cs" />
     <Compile Include="AddressCache.cs" />
+    <Compile Include="COMRef.cs" />
     <Compile Include="ConstructTree.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FunctionOutput.cs" />

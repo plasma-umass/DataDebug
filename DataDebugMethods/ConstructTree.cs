@@ -5,10 +5,6 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
-using TreeList = System.Collections.Generic.List<DataDebugMethods.TreeNode>;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
-using RangeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.TreeNode>;
 
 using Microsoft.FSharp.Core;
 
@@ -34,16 +30,10 @@ namespace DataDebugMethods
             // Use a fast array read to associate all cell references with their addresses
             var addrcache = new AddressCache(wb, app);
 
-            // Get a range representing the formula cells for each worksheet in each workbook
-            //ArrayList formulaRanges = ConstructTree.GetFormulaRanges(wb.Worksheets, app, addrcache);
-
-            //// Create nodes for every cell containing a formula
-            //data.formula_nodes = ConstructTree.CreateFormulaNodes(formulaRanges, wb, app);
-
             // Create a node for every cell containing a formula
-            data.formula_nodes = ConstructTree.CreateFormulaNodes(wb, app, addrcache);
+            data.formula_nodes = addrcache.MakeFormulaTreeNodes();
 
-            //Now we parse the formulas in nodes to extract any range and cell references
+            // Parse formula nodes to extract references
             foreach(TreeDictPair pair in data.formula_nodes)
             {
                 // This is a formula:
@@ -163,67 +153,6 @@ namespace DataDebugMethods
             return analysisRanges;
         }
 
-        private static TreeDict CreateFormulaNodes(Excel.Workbook wb, Excel.Application app, AddressCache addrcache)
-        {
-            // get sheets
-            var sheets = wb.Worksheets;
-
-            // init nodes
-            var nodes = new TreeDict();
-
-            foreach (Excel.Worksheet ws in sheets)
-            {
-                // get the used range
-                var rng = ws.UsedRange;
-
-                // get the formula cells from this worksheet
-                var formulas = rng.SpecialCells(Excel.XlCellType.xlCellTypeFormulas);
-
-                // for each formula, create a treenode
-                foreach (Excel.Range formula_cell in formulas) {
-                    TreeNode n = new TreeNode(formula_cell, ws, wb);
-                    AST.Address addr = addrcache.GetAddressOfCell(formula_cell);
-                    nodes.Add(addr, n);
-                }
-            }
-
-            return nodes;
-        }
-
-        //First we create nodes for every non-null cell; then we will operate on these node objects, connecting them in the tree, etc. 
-        //This includes cells that contain constants and formulas
-        //Go through every worksheet
-        public static TreeDict CreateFormulaNodes_old(ArrayList rs, Excel.Workbook wb, Excel.Application app)
-        {
-            // init nodes
-            var nodes = new TreeDict();
-
-            foreach (Excel.Range worksheet_range in rs)
-            {
-                foreach (Excel.Range cell in worksheet_range)
-                {
-                    if (cell.Value2 != null)
-                    {
-                        var addr = AST.Address.AddressFromCOMObject(cell, wb);
-                        var n = new TreeNode(cell, cell.Worksheet, wb);
-
-                        if (cell.HasFormula)
-                        {
-                            //n.setIsFormula();   // I believe that this is unnecessary
-                            n.DontPerturb();
-                            if (cell.Formula == null)
-                            {
-                                throw new Exception("null formula!!! argh!!!");
-                            }
-                            n.setFormula(cell.Formula);
-                            nodes.Add(addr, n);
-                        }
-                    }
-                }
-            }
-            return nodes;
-        }
-
         public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes, Excel.Workbook wb, bool ignore_parse_errors)
         {
             foreach (Excel.Range cell in input_range.getCOMObject())
@@ -246,7 +175,7 @@ namespace DataDebugMethods
                 // that said, having the wrong workbook doesn't actually have any bearing on the correctness of this call
                 if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb, ignore_parse_errors).Count() > 0)) //|| cell.Value2 != null)
                 {
-                    input_range.DontPerturb();
+                    input_range.SetDoNotPerturb();
                 }
 
                 // link cell, range, and formula inputs and outputs together
@@ -256,17 +185,19 @@ namespace DataDebugMethods
             }
         }
 
-        public static TreeNode MakeRangeTreeNode(RangeDict input_ranges, Excel.Range input_range, TreeNode parent)
+        public static TreeNode MakeRangeTreeNode(RangeDict input_ranges, Excel.Range com_range, TreeNode parent)
         {
-            // parse the address
-            //var addr = AST.Address.AddressFromCOMObject(input_range, parent.getWorkbookObject());
-            var addr = String.Intern(input_range.Address);
+            // get COMRef
+            
+
+            // parse the absolute address
+            var addr = String.Intern(com_range.get_Address(true, true));
 
             // get it from dictionary, or, if it does not exist, create it, add to dict, and return new ref
             TreeNode tn;
             if (!input_ranges.TryGetValue(addr, out tn))
             {
-                tn = new TreeNode(input_range, input_range.Worksheet, parent.getWorkbookObject());
+                tn = new TreeNode(com_range, com_range.Worksheet, parent.getWorkbookObject());
                 input_ranges.Add(addr, tn);
             }
             return tn;
