@@ -6,48 +6,41 @@ using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
 using Microsoft.FSharp.Core;
-using COMCellPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.COMRef>;
 
 namespace DataDebugMethods
 {
     public static class ConstructTree
     {
-        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, bool ignore_parse_errors)
+        public static AddressCache constructTree(Excel.Workbook wb, Excel.Application app, bool ignore_parse_errors)
         {
             return constructTree(wb, app, null, ignore_parse_errors);
         }
 
         // This method constructs the dependency graph from the workbook.
-        public static AnalysisData constructTree(Excel.Workbook wb, Excel.Application app, ProgBar pb, bool ignore_parse_errors)
+        public static AddressCache constructTree(Excel.Workbook wb, Excel.Application app, ProgBar pb, bool ignore_parse_errors)
         {
             //Start timing tree construction
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
-            // Make a new analysisData object
-            AnalysisData data = new AnalysisData(app, app.ActiveWorkbook, pb);
-
             // Use a fast array read to associate all cell references with their addresses
             var addrcache = new AddressCache(wb, app);
 
-            // Create a node for every cell containing a formula
-            data.formula_nodes = addrcache.GetFormulaDictionary();
-
             // Parse formula nodes to extract references
-            foreach(COMCellPair pair in data.formula_nodes)
+            foreach(AST.Address formula_addr in addrcache.GetFormulaAddrs())
             {
-                // This is a formula:
-                COMRef formula_node = pair.Value;
+                var formula_ref = addrcache.GetCOMObjectForAddress(formula_addr);
 
                 // For each of the ranges found in the formula by the parser,
                 // 1. make a new TreeNode for the range
                 // 2. make TreeNodes for each of the cells in that range
-                foreach (Excel.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject(), ignore_parse_errors))
+                foreach (AST.Range input_range in ExcelParserUtility.GetReferencesFromFormula(formula_ref, ignore_parse_errors))
                 {
-                    // this function both creates a TreeNode and adds it to AnalysisData.input_ranges
-                    TreeNode range_node = ConstructTree.MakeRangeTreeNode(data.input_ranges, input_range, formula_node);
+                    // Fetch/create COMRef, adding it to the cache, if necessary
+                    var range_ref = addrcache.MakeCOMRef(input_range, formula_ref);
+
                     // this function both creates cell TreeNodes for a range and adds it to AnalysisData.cell_nodes
-                    ConstructTree.CreateCellNodesFromRange(range_node, formula_node, data.formula_nodes, data.cell_nodes, wb, ignore_parse_errors);
+                    ConstructTree.CreateCellNodesFromRange(range_node, formula_addr, data.formula_nodes, data.cell_nodes, wb, ignore_parse_errors);
                 }
 
                 // For each single-cell input found in the formula by the parser,
@@ -56,7 +49,7 @@ namespace DataDebugMethods
                 IEnumerable<AST.Address> input_addrs;
                 try
                 {
-                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.Formula, formula_node.getWorkbookObject(), formula_node.getWorksheetObject(), ignore_parse_errors);
+                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_addr.Formula, formula_addr.getWorkbookObject(), formula_addr.getWorksheetObject(), ignore_parse_errors);
                 }
                 catch (ExcelParserUtility.ParseException)
                 {
@@ -74,8 +67,8 @@ namespace DataDebugMethods
                         if (tn.isFormula())
                         {
                             // link input to output formula node
-                            tn.addOutput(formula_node);
-                            formula_node.addInput(tn);
+                            tn.addOutput(formula_addr);
+                            formula_addr.addInput(tn);
                         }
                     }
                     else   //If it's not a formula, then it is a scalar value; we create a TreeNode for it and put it in data.cell_nodes
@@ -83,8 +76,8 @@ namespace DataDebugMethods
                         // if we have already created a TreeNode for this, add a connection to the formula that referenced it
                         if (data.cell_nodes.TryGetValue(input_addr, out tn))
                         {
-                            tn.addOutput(formula_node);
-                            formula_node.addInput(tn);
+                            tn.addOutput(formula_addr);
+                            formula_addr.addInput(tn);
                         }
                         //otherwise create a new TreeNode and connect it up to the formula
                         else
@@ -92,8 +85,8 @@ namespace DataDebugMethods
                             Excel.Range cell = input_addr.GetCOMObject(app);
                             tn = new TreeNode(cell, cell.Worksheet, (Excel.Workbook)cell.Worksheet.Parent);
                             data.cell_nodes.Add(input_addr, tn);
-                            tn.addOutput(formula_node);
-                            formula_node.addInput(tn);
+                            tn.addOutput(formula_addr);
+                            formula_addr.addInput(tn);
                         }
                     }
                 }
