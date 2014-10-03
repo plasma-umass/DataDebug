@@ -38,5 +38,4 @@ CheckCell can be uninstalled in the Windows Add/Remove Programs dialog.
 
 Read the Paper
 --------------
-
 "CheckCell: Data-Debugging for Spreadsheets" D. Barowy, D. Gochev, E. Berger.  To appear at OOPSLA 2014.  (ACM DL link will be posted here when it is available).
