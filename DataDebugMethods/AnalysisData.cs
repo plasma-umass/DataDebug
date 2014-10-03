@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
-using CellDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.COMRef>;
-using RangeDict = System.Collections.Generic.Dictionary<string, DataDebugMethods.COMRef>;
+using CellDict = System.Collections.Generic.Dictionary<AST.Address, AST.COMRef>;
+using RangeDict = System.Collections.Generic.Dictionary<string, AST.COMRef>;
 using System.Diagnostics;
 
 namespace DataDebugMethods
 {
     public class AnalysisData
     {
-        public List<COMRef> nodelist;
+        public List<AST.COMRef> nodelist;
         public RangeDict input_ranges;
         public CellDict formula_nodes;
         public CellDict cell_nodes;
@@ -25,7 +25,7 @@ namespace DataDebugMethods
         public AnalysisData(Excel.Application application, Excel.Workbook wb) 
         {
             charts = wb.Charts;
-            nodelist = new List<COMRef>();
+            nodelist = new List<AST.COMRef>();
             input_ranges = new RangeDict();
             cell_nodes = new CellDict();
         }
@@ -61,7 +61,7 @@ namespace DataDebugMethods
             if (pb != null) pb.Close();
         }
 
-        public COMRef[] TerminalFormulaNodes(bool all_outputs)
+        public AST.COMRef[] TerminalFormulaNodes(bool all_outputs)
         {
             // return only the formula nodes which do not provide
             // input to any other cell and which are also not

@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
-
 using Microsoft.FSharp.Core;
+using COMCellPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.COMRef>;
 
 namespace DataDebugMethods
 {
@@ -31,13 +31,13 @@ namespace DataDebugMethods
             var addrcache = new AddressCache(wb, app);
 
             // Create a node for every cell containing a formula
-            data.formula_nodes = addrcache.MakeFormulaTreeNodes();
+            data.formula_nodes = addrcache.GetFormulaDictionary();
 
             // Parse formula nodes to extract references
-            foreach(TreeDictPair pair in data.formula_nodes)
+            foreach(COMCellPair pair in data.formula_nodes)
             {
                 // This is a formula:
-                TreeNode formula_node = pair.Value;
+                COMRef formula_node = pair.Value;
 
                 // For each of the ranges found in the formula by the parser,
                 // 1. make a new TreeNode for the range
@@ -56,7 +56,7 @@ namespace DataDebugMethods
                 IEnumerable<AST.Address> input_addrs;
                 try
                 {
-                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.getFormula(), formula_node.getWorkbookObject(), formula_node.getWorksheetObject(), ignore_parse_errors);
+                    input_addrs = ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_node.Formula, formula_node.getWorkbookObject(), formula_node.getWorksheetObject(), ignore_parse_errors);
                 }
                 catch (ExcelParserUtility.ParseException)
                 {

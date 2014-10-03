@@ -6,10 +6,9 @@ using System.Text.RegularExpressions;
 using Excel = Microsoft.Office.Interop.Excel;
 using AddrDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Range, AST.Address>;
 using RangeDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Range, AST.Range>;
-using COMCellDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.COMRef>;
-using COMRangeDict = System.Collections.Generic.Dictionary<AST.Range, DataDebugMethods.COMRef>;
+using COMCellDict = System.Collections.Generic.Dictionary<AST.Address, AST.COMRef>;
+using COMRangeDict = System.Collections.Generic.Dictionary<AST.Range, AST.COMRef>;
 using FormulaDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 
 namespace DataDebugMethods
 {
@@ -95,7 +94,7 @@ namespace DataDebugMethods
 
                     var addr = AST.Address.NewFromR1C1(r, c, wsname_opt, wbname_opt, path_opt);
                     var formula = _formulas.ContainsKey(addr) ? new Microsoft.FSharp.Core.FSharpOption<string>(_formulas[addr]) : Microsoft.FSharp.Core.FSharpOption<string>.None;
-                    var cr = new COMRef(addr.A1FullyQualified(), wb, worksheet, cell, wbname, wsname, formula, 1, 1);
+                    var cr = new AST.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path, wbname, wsname, formula, 1, 1);
                     _addr_cache.Add(cell, addr);
                     _com_cell_cache.Add(addr, cr);
                 }
@@ -106,7 +105,7 @@ namespace DataDebugMethods
             return _addr_cache[cell];
         }
 
-        public COMRef GetCOMObjectForAddress(AST.Address addr)
+        public AST.COMRef GetCOMObjectForAddress(AST.Address addr)
         {
             return _com_cell_cache[addr];
         }
@@ -116,48 +115,12 @@ namespace DataDebugMethods
             return _formulas.Keys.ToArray();
         }
 
-        public COMRef[] GetFormulaCOMObjects()
+        public COMCellDict GetFormulaDictionary()
         {
-            return GetFormulaAddrs().Select(addr => _com_cell_cache[addr]).ToArray();
-        }
-
-        private TreeNode MakeFormulaTreeNode(AST.Address addr)
-        {
-            var c = _com_cell_cache[addr];
-            var n = new TreeNode(addr, c, true, true);
-            n.SetDoNotPerturb();
-            return n;
-        }
-
-        public TreeDict MakeFormulaTreeNodes()
-        {
-            return GetFormulaAddrs().ToDictionary(addr => addr, addr => MakeFormulaTreeNode(addr));
-        }
-
-        public TreeNode MakeRangeTreeNode(AST.Range range, TreeNode parent)
-        {
-            Excel.Range com = range.GetCOMObject(_app);
-            Excel.Worksheet ws = com.Worksheet;
-            Excel.Workbook wb = ws.Parent;
-
-            // create COMRef and add to cache
-            COMRef cr = new COMRef(range.getUniqueID(), wb, ws, com, wb.Name, ws.Name, Microsoft.FSharp.Core.FSharpOption<string>.None, com.Columns.Count, com.Rows.Count);
-
-            // add to caches
-            _range_cache.Add(com, range);
-            _com_range_cache.Add(range, cr);
-
-            // parse the absolute address
-            var addr = String.Intern(com_range.get_Address(true, true));
-
-            // get it from dictionary, or, if it does not exist, create it, add to dict, and return new ref
-            TreeNode tn;
-            if (!input_ranges.TryGetValue(addr, out tn))
-            {
-                tn = new TreeNode(com_range, com_range.Worksheet, parent.getWorkbookObject());
-                input_ranges.Add(addr, tn);
-            }
-            return tn;
+            return GetFormulaAddrs().ToDictionary(
+                addr => addr,
+                addr => _com_cell_cache[addr]
+            );
         }
     }
 }
