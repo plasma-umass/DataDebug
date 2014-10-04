@@ -6,7 +6,6 @@ using System.Text;
 using System.Numerics;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
 using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using Range = Microsoft.Office.Interop.Excel.Range;
@@ -173,7 +172,7 @@ namespace DataDebugMethods
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
         public static TreeScore DataDebug(int num_bootstraps,
-                                          AnalysisData data,
+                                          DAG dag,
                                           Excel.Application app,
                                           bool weighted,
                                           bool all_outputs,
@@ -182,12 +181,12 @@ namespace DataDebugMethods
                                           double significance)
         {
             // this modifies the weights of each node
-            PropagateWeights(data);
+            PropagateWeights(dag);
 
             // filter out non-terminal functions
-            var output_fns = data.TerminalFormulaNodes(all_outputs);
+            var output_fns = dag.terminalFormulaNodes(all_outputs);
             // filter out non-terminal inputs
-            var input_rngs = data.TerminalInputNodes();
+            var input_rngs = dag.TerminalInputNodes();
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
@@ -201,7 +200,7 @@ namespace DataDebugMethods
             var initial_outputs = StoreOutputs(output_fns);
 
             // Set progress bar max
-            data.SetPBMax(input_rngs.Length * 2);
+            dag.SetPBMax(input_rngs.Length * 2);
 
             #region RESAMPLE
 
@@ -216,7 +215,7 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
 
                 // update progress bar
-                data.PokePB();
+                dag.PokePB();
             }
 
             #endregion RESAMPLE
@@ -229,7 +228,7 @@ namespace DataDebugMethods
                 initial_outputs,
                 input_rngs,
                 output_fns,
-                data,
+                dag,
                 weighted,
                 significance);
             #endregion INFERENCE
@@ -722,30 +721,31 @@ namespace DataDebugMethods
         }
 
         // Propagate weights
-        private static void PropagateWeights(AnalysisData data)
+        private static void PropagateWeights(DAG dag)
         {
-            if (data.ContainsLoop())
+            if (dag.containsLoop())
             {
                 throw new ContainsLoopException();
             }
 
             // starting set of functions; roots in the forest
-            var functions = data.TerminalFormulaNodes(false);
+            var formulas = dag.terminalFormulaNodes(false);
 
             // for each forest
-            foreach (TreeNode fn in functions)
+            foreach (AST.Address f in formulas)
             {
-                fn.setWeight(PropagateTreeNodeWeight(fn));
+                dag.setWeight(f, PropagateTreeNodeWeight(f, dag));
             }
         }
 
-        private static int PropagateTreeNodeWeight(TreeNode t)
+        // TODO: alternate between formula and input
+        private static int PropagateTreeNodeWeight(AST.Address node, DAG dag)
         {
-            var inputs = t.getInputs();
+            var inputs = dag.getFormulaInputVectors(node);
             // if we have no inputs, then we ARE an input
-            if (inputs.Count() == 0)
+            if (inputs.Count == 0)
             {
-                t.setWeight(1);
+                dag.setWeight(node, 1);
                 return 1;
             }
             // otherwise we have inputs, recursively compute their weights
@@ -757,7 +757,7 @@ namespace DataDebugMethods
                 {
                     weight += PropagateTreeNodeWeight(input);
                 }
-                t.setWeight(weight);
+                node.setWeight(weight);
                 return weight;
             }
         }

@@ -23,38 +23,38 @@ namespace DataDebugMethods
             var dag = new DAG(wb, app);
 
             // extract references from formulas
-            foreach(AST.Address formula_addr in dag.GetFormulaAddrs())
+            foreach (AST.Address formula_addr in dag.getFormulaAddrs())
             {
                 // get COMRef read earlier
-                var formula_ref = dag.GetCOMRefForAddress(formula_addr);
+                var formula_ref = dag.getCOMRefForAddress(formula_addr);
 
                 foreach (AST.Range vector_rng in ExcelParserUtility.GetRangeReferencesFromFormula(formula_ref, ignore_parse_errors))
                 {
                     // fetch/create COMRef, as appropriate
-                    var vector_ref = dag.MakeInputVectorCOMRef(vector_rng);
+                    var vector_ref = dag.makeInputVectorCOMRef(vector_rng);
 
                     // link formula and input vector
-                    dag.LinkInputVector(formula_addr, vector_rng);
+                    dag.linkInputVector(formula_addr, vector_rng);
 
-                    foreach (AST.Address input_single in vector_rng.Addresses()) {
+                    foreach (AST.Address input_single in vector_rng.Addresses())
+                    {
                         // link input vector and single input
-                        
+                        dag.linkComponentInputCell(vector_rng, input_single);
                     }
 
                     // if num single inputs = num formulas,
                     // mark vector as non-perturbable
+                    dag.markPerturbability(vector_rng);
                 }
 
                 foreach (AST.Address input_single in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_ref, ignore_parse_errors))
                 {
                     // link formula and single input
+                    dag.linkSingleCellInput(formula_addr, input_single);
                 }
             }
 
             return dag;
         }
-
-       
-
-    } // ConstructTree class ends here
-} // namespace ends here
+    } // end DependenceAnalysis
+} // end DataDebugMethods
