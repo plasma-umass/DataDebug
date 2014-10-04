@@ -116,7 +116,7 @@ namespace CheckCellTests
             }
 
             // get the formulae; 1 formula per worksheet
-            ArrayList fs_rs = ConstructTree.GetFormulaRanges(mwb.GetWorksheets(), mwb.GetApplication());
+            ArrayList fs_rs = DependenceAnalysis.GetFormulaRanges(mwb.GetWorksheets(), mwb.GetApplication());
 
             // there should be e.Count + 3 entries
             // don't forget: workbooks have 3 blank worksheets by default

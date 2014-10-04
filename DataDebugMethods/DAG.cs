@@ -4,24 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Excel = Microsoft.Office.Interop.Excel;
-using AddrDict = System.Collections.Generic.Dictionary<AST.COMRef, AST.Address>;
-using RangeDict = System.Collections.Generic.Dictionary<AST.COMRef, AST.Range>;
-using COMCellDict = System.Collections.Generic.Dictionary<AST.Address, AST.COMRef>;
-using COMRangeDict = System.Collections.Generic.Dictionary<AST.Range, AST.COMRef>;
+using CellRefDict = DataDebugMethods.BiDictionary<AST.Address, AST.COMRef>;
+using VectorRefDict = DataDebugMethods.BiDictionary<AST.Range, AST.COMRef>;
 using FormulaDict = System.Collections.Generic.Dictionary<AST.Address, string>;
+using FormulaInputVectDict = DataDebugMethods.BiDictionary<AST.Address, AST.Range>;
+using FormulaInputCellDict = DataDebugMethods.BiDictionary<AST.Address, AST.Address>;
 
 namespace DataDebugMethods
 {
-    public class AddressCache
+    public class DAG
     {
         private Excel.Application _app;
-        private AddrDict _addr_cache = new AddrDict();
-        private RangeDict _range_cache = new RangeDict();
-        private COMCellDict _com_cell_cache = new COMCellDict();
-        private COMRangeDict _com_range_cache = new COMRangeDict();
+        private CellRefDict _all_cells = new CellRefDict();
+        private VectorRefDict _all_vectors = new VectorRefDict();
         private FormulaDict _formulas = new FormulaDict();
+        private FormulaInputVectDict _formula_vectors = new FormulaInputVectDict();
+        private FormulaInputCellDict _formula_cells = new FormulaInputCellDict();
 
-        public AddressCache(Excel.Workbook wb, Excel.Application app)
+        public DAG(Excel.Workbook wb, Excel.Application app)
         {
             // get names
             _app = app;
@@ -95,15 +95,14 @@ namespace DataDebugMethods
                     var addr = AST.Address.NewFromR1C1(r, c, wsname_opt, wbname_opt, path_opt);
                     var formula = _formulas.ContainsKey(addr) ? new Microsoft.FSharp.Core.FSharpOption<string>(_formulas[addr]) : Microsoft.FSharp.Core.FSharpOption<string>.None;
                     var cr = new AST.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path, wbname, wsname, formula, 1, 1);
-                    _addr_cache.Add(cr, addr);
-                    _com_cell_cache.Add(addr, cr);
+                    _all_cells.Add(addr, cr);
                 }
             }
         }
 
-        public AST.COMRef GetCOMObjectForAddress(AST.Address addr)
+        public AST.COMRef GetCOMRefForAddress(AST.Address addr)
         {
-            return _com_cell_cache[addr];
+            return _all_cells[addr];
         }
 
         public AST.Address[] GetFormulaAddrs()
@@ -111,19 +110,11 @@ namespace DataDebugMethods
             return _formulas.Keys.ToArray();
         }
 
-        public COMCellDict GetFormulaDictionary()
-        {
-            return GetFormulaAddrs().ToDictionary(
-                addr => addr,
-                addr => _com_cell_cache[addr]
-            );
-        }
-
-        public AST.COMRef MakeCOMRef(AST.Range rng, AST.COMRef parent)
+        public AST.COMRef MakeInputVectorCOMRef(AST.Range rng)
         {
             // check for the range in the dictionary
             AST.COMRef c;
-            if (!_com_range_cache.TryGetValue(rng, out c))
+            if (!_all_vectors.TryGetValue(rng, out c))
             {
                 // otherwise, create and cache it
                 Excel.Range com = rng.GetCOMObject(_app);
@@ -136,76 +127,18 @@ namespace DataDebugMethods
                 int height = com.Rows.Count;
 
                 c = new AST.COMRef(rng.getUniqueID(), wb, ws, com, path, wbname, wsname, Microsoft.FSharp.Core.FSharpOption<string>.None, width, height);
-                _com_range_cache.Add(rng, c);
-                _range_cache.Add(c, rng);
+                _all_vectors.Add(rng, c);
             }
             return c;
         }
 
-        //public static void CreateCellNodesFromRange(TreeNode input_range, TreeNode formula, TreeDict formula_nodes, TreeDict cell_nodes, Excel.Workbook wb, bool ignore_parse_errors)
-        //{
-        //    foreach (Excel.Range cell in input_range.getCOMObject())
-        //    {
-        //        var addr = AST.Address.AddressFromCOMObject(cell, formula.getWorkbookObject());
+        public void LinkInputVector(AST.Address formula_addr, AST.Range vector_rng) {
+            _formula_vectors.Add(formula_addr, vector_rng);
+        }
 
-        //        // cell might either be another formula or just a simple data cell;
-        //        var d = cell.HasFormula ? formula_nodes : cell_nodes;
-
-        //        // add to appropriate dictionary
-        //        TreeNode cell_node;
-        //        if (!d.TryGetValue(addr, out cell_node))
-        //        {
-        //            cell_node = new TreeNode(cell, cell.Worksheet, formula.getWorkbookObject());
-        //            d.Add(addr, cell_node);
-        //        }
-
-        //        // Allow perturbation of every input_range that contains at least one value
-        //        // TODO: fix; the Workbook reference here is not correct in the case of cross-workbook reference;
-        //        // that said, having the wrong workbook doesn't actually have any bearing on the correctness of this call
-        //        if ((cell.HasFormula && ExcelParserUtility.GetSCFormulaNames((string)cell.Formula, wb.FullName, cell.Worksheet, wb, ignore_parse_errors).Count() > 0)) //|| cell.Value2 != null)
-        //        {
-        //            input_range.SetDoNotPerturb();
-        //        }
-
-        //        // link cell, range, and formula inputs and outputs together
-        //        input_range.addInput(cell_node);
-        //        cell_node.addOutput(formula);
-        //        formula.addInput(cell_node);
-        //    }
-        //}
-
-        public void CreateCellRefsFromRange(AST.COMRef rng_ref)
+        public void LinkCell(AST.Address formula_addr, AST.Address input_addr)
         {
-            // generate input range addresses so that we do
-            // not need to ask COM for them
-            var com_rng = _range_cache[rng_ref];
-            var input_addrs = com_rng.Addresses();
-            foreach (AST.Address addr in input_addrs)
-            {
-                // look in cache before we try to create anything
-                AST.COMRef cell_ref;
-                if (!_com_cell_cache.TryGetValue(addr, out cell_ref))
-                {
-                    var com_cell = addr.GetCOMObject(_app);
-                    Excel.Worksheet ws = rng_ref.Worksheet;
-                    Excel.Workbook wb = rng_ref.Workbook;
-                    string wsname = rng_ref.WorksheetName;
-                    string wbname = rng_ref.WorkbookName;
-                    string path = rng_ref.Path;
-                    string fstr;
-                    Microsoft.FSharp.Core.FSharpOption<string> formula;
-                    if (_formulas.TryGetValue(addr, out fstr) {
-                        formula = new Microsoft.FSharp.Core.FSharpOption<string>(fstr);
-                    } else {
-                        formula = Microsoft.FSharp.Core.FSharpOption<string>.None;
-                    }
-
-                    cell_ref = new AST.COMRef(addr.A1FullyQualified(), wb, ws, com_cell, path, wbname, wsname, formula, 1, 1);
-
-                    // add to caches
-
-                }
-            }
+            _formula_cells.Add(formula_addr, input_addr);
         }
     }
 }
