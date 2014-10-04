@@ -221,9 +221,24 @@ namespace DataDebugMethods
             throw new NotImplementedException();
         }
 
-        public AST.Address[] terminalFormulaNodes(bool p)
+        public AST.Address[] terminalFormulaNodes(bool all_outputs)
         {
-            return getFormulaAddrs();
+            //// TODO: not correct; we want only TERMINAL formulas
+            //return getFormulaAddrs();
+
+
+            // return only the formula nodes that do not serve
+            // as input to another cell and that are also not
+            // in our list of excluded functions
+            if (all_outputs)
+            {
+                return getFormulaAddrs();
+            }
+            else
+            {
+                // TODO: pick up here
+                return getFormulaAddrs().Where(addr => _i2f[addr].Count == 0 && _v2f[_i2v[addr]].Count == 0).ToArray();
+            }
         }
 
         public void setWeight(AST.Address node, int weight)
@@ -248,6 +263,18 @@ namespace DataDebugMethods
             // no need to check for key existence; empty
             // HashSet initialized in DAG constructor
             return _f2v[f];
+        }
+
+        internal bool isFormula(AST.Address node)
+        {
+            return _formulas.ContainsKey(node);
+        }
+
+        internal HashSet<AST.Address> getFormulaSingleCellInputs(AST.Address node)
+        {
+            // no need to check for key existence; empty
+            // HashSet initialized in DAG constructor
+            return _f2i[node];
         }
     }
 }

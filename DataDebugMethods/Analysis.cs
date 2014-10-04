@@ -734,31 +734,36 @@ namespace DataDebugMethods
             // for each forest
             foreach (AST.Address f in formulas)
             {
-                dag.setWeight(f, PropagateTreeNodeWeight(f, dag));
+                dag.setWeight(f, PropagateNodeWeight(f, dag));
             }
         }
 
-        // TODO: alternate between formula and input
-        private static int PropagateTreeNodeWeight(AST.Address node, DAG dag)
+        private static int PropagateNodeWeight(AST.Address node, DAG dag)
         {
-            var inputs = dag.getFormulaInputVectors(node);
-            // if we have no inputs, then we ARE an input
-            if (inputs.Count == 0)
+            // if the node is a formula, recursively
+            // compute its weight
+            if (dag.isFormula(node))
             {
-                dag.setWeight(node, 1);
-                return 1;
-            }
-            // otherwise we have inputs, recursively compute their weights
-            // and add to this one
-            else
-            {
+                // get input nodes
+                var vector_rngs = dag.getFormulaInputVectors(node);
+                var scinputs = dag.getFormulaSingleCellInputs(node);
+                var inputs = vector_rngs.SelectMany(vrng => vrng.Addresses()).ToList();
+                inputs.AddRange(scinputs);
+
+                // call recursively and sum components
                 var weight = 0;
                 foreach (var input in inputs)
                 {
-                    weight += PropagateTreeNodeWeight(input);
+                    weight += PropagateNodeWeight(input, dag);
                 }
-                node.setWeight(weight);
+                dag.setWeight(node, weight);
                 return weight;
+            }
+            // node is an input
+            else
+            {
+                dag.setWeight(node, 1);
+                return 1;
             }
         }
     }
