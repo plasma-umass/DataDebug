@@ -223,10 +223,6 @@ namespace DataDebugMethods
 
         public AST.Address[] terminalFormulaNodes(bool all_outputs)
         {
-            //// TODO: not correct; we want only TERMINAL formulas
-            //return getFormulaAddrs();
-
-
             // return only the formula nodes that do not serve
             // as input to another cell and that are also not
             // in our list of excluded functions
@@ -236,8 +232,13 @@ namespace DataDebugMethods
             }
             else
             {
-                // TODO: pick up here
-                return getFormulaAddrs().Where(addr => _i2f[addr].Count == 0 && _v2f[_i2v[addr]].Count == 0).ToArray();
+                // start with an array of all formula addresses
+                return getFormulaAddrs().Where(addr =>
+                    _i2f[addr].Count == 0 &&        // only where the number of formulas consuming this formula == 0
+                    _i2v[addr].SelectMany(rng =>    // and where the number of formulas consuming a vector
+                        _v2f[rng])                  // containing this formula == 0
+                    .Count() == 0     
+                ).ToArray();
             }
         }
 
