@@ -40,7 +40,7 @@ namespace UserSimulation
 
             // get inputs as an array of addresses to facilitate random selection
             // DATA INPUTS ONLY
-            var inputs = prepdata.graph.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+            var inputs = prepdata.dag.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
 
             // sanity check: all of the inputs should also be in prepdata.original_inputs
             foreach (AST.Address addr in inputs)
@@ -81,7 +81,7 @@ namespace UserSimulation
 
             // get inputs as an array of addresses to facilitate random selection
             // DATA INPUTS ONLY
-            var inputs = prepdata.graph.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+            var inputs = prepdata.dag.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
 
             for (int i = 0; i < 100; i++)
             {
@@ -173,7 +173,7 @@ namespace UserSimulation
                                 UserSimulation.AnalysisType.CheckCell10,// analysis type
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
-                                prepdata.graph,                                 // AnalysisData
+                                prepdata.dag,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
                                 prepdata.terminal_input_nodes,                  // input range nodes
@@ -197,7 +197,7 @@ namespace UserSimulation
                                 UserSimulation.AnalysisType.NormalAllInputs,   // analysis type
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
-                                prepdata.graph,                                 // AnalysisData
+                                prepdata.dag,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
                                 prepdata.terminal_input_nodes,                  // input range nodes

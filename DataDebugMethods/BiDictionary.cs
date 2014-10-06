@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Collections.Generic;
 
 namespace DataDebugMethods
 {
-    public class BiDictionary<T,U> : IDictionary<T,U>
+    public class BiDictionary<T,U>
     {
         Dictionary<T, U> _dict1 = new Dictionary<T, U>();
         Dictionary<U, T> _dict2 = new Dictionary<U, T>();
@@ -25,16 +24,6 @@ namespace DataDebugMethods
         public bool ContainsKey(U key)
         {
             return _dict2.ContainsKey(key);
-        }
-
-        public System.Collections.Generic.ICollection<T> Keys
-        {
-            get { return _dict1.Keys; }
-        }
-
-        public System.Collections.Generic.ICollection<U> Keys
-        {
-            get { return _dict2.Keys; }
         }
 
         public bool Remove(T key)
@@ -57,16 +46,6 @@ namespace DataDebugMethods
         public bool TryGetValue(U key, out T value)
         {
             return _dict2.TryGetValue(key, out value);
-        }
-
-        public System.Collections.Generic.ICollection<U> Values
-        {
-            get { return _dict1.Values; }
-        }
-
-        public System.Collections.Generic.ICollection<T> Values
-        {
-            get { return _dict2.Values; }
         }
 
         public U this[T key]
@@ -123,16 +102,6 @@ namespace DataDebugMethods
             return _dict1.Contains(item) && _dict2.Contains(vkp);
         }
 
-        public void CopyTo(System.Collections.Generic.KeyValuePair<T, U>[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CopyTo(System.Collections.Generic.KeyValuePair<U, T>[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
-
         public int Count
         {
             get { return _dict1.Count; }
@@ -153,19 +122,14 @@ namespace DataDebugMethods
             return _dict1.Remove(item.Value) && _dict2.Remove(item.Key);
         }
 
-        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<T, U>> GetEnumerator()
+        public IEnumerable<KeyValuePair<T, U>> AsTUEnum()
         {
-            return _dict1.GetEnumerator();
+            return _dict1;
         }
 
-        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<U, T>> GetEnumerator()
+        public IEnumerable<KeyValuePair<U,T>> AsUTEnum()
         {
-            return _dict2.GetEnumerator();
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return _dict1.GetEnumerator();
+            return _dict2;
         }
     }
 }

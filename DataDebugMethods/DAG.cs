@@ -111,6 +111,20 @@ namespace DataDebugMethods
                 }
             }
         }
+        public string readCOMValueAtAddress(AST.Address addr)
+        {
+            // null values become the empty string
+            var s = System.Convert.ToString(this.getCOMRefForAddress(addr).Range.Value2);
+            if (s == null)
+            {
+                return "";
+            }
+            else
+            {
+                return s;
+            }
+        }
+
 
         public AST.COMRef getCOMRefForAddress(AST.Address addr)
         {
@@ -271,31 +285,43 @@ namespace DataDebugMethods
             return _f2v[f];
         }
 
-        internal bool isFormula(AST.Address node)
+        public bool isFormula(AST.Address node)
         {
             return _formulas.ContainsKey(node);
         }
 
-        internal HashSet<AST.Address> getFormulaSingleCellInputs(AST.Address node)
+        public HashSet<AST.Address> getFormulaSingleCellInputs(AST.Address node)
         {
             // no need to check for key existence; empty
             // HashSet initialized in DAG constructor
             return _f2i[node];
         }
 
-        internal AST.Range[] terminalInputNodes()
+        public AST.Range[] terminalInputNodes()
         {
             // this should filter out the following two cases:
             // 1. input range is intermediate (acts as input to a formula
             // and also contains a formula that consumes input from
             // another range).
             // 2. the range is actually a formula cell
-            return _all_vectors.Where( pair =>
+            return _all_vectors.AsTUEnum().Where( pair =>
                      !pair.Value.DoNotPerturb &&        // range is not marked Do Not Perturb
                      !pair.Key.Addresses().Any(addr =>  // and range does not contain a formula
                        _formulas.ContainsKey(addr)
                      )
                    ).Select(pair => pair.Key).ToArray();
+        }
+
+        public AST.Address[] allComputationCells()
+        {
+            // get all of the input ranges for all of the functions
+            var inputs = _f2v.Values.SelectMany(rngs => rngs.SelectMany(rng => rng.Addresses())).Distinct();
+
+            // get all of the single-cell inputs for all of the functions
+            var scinputs = _f2i.Values.SelectMany(rngs => rngs).Distinct();
+
+            // concat all together and return
+            return inputs.Concat(scinputs).Distinct().ToArray();
         }
     }
 }

@@ -6,8 +6,8 @@ using System.Text;
 using System.Numerics;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+//using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -168,7 +168,8 @@ namespace DataDebugMethods
                                           bool all_outputs,
                                           long max_duration_in_ms,
                                           Stopwatch sw,
-                                          double significance)
+                                          double significance,
+                                          ProgBar pb)
         {
             // this modifies the weights of each node
             PropagateWeights(dag);
@@ -190,7 +191,7 @@ namespace DataDebugMethods
             var initial_outputs = StoreOutputs(output_fns, dag);
 
             // Set progress bar max
-            dag.SetPBMax(input_rngs.Length * 2);
+            pb.setMax(input_rngs.Length * 2);
 
             #region RESAMPLE
 
@@ -205,7 +206,7 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
 
                 // update progress bar
-                dag.PokePB();
+                pb.pokePB();
             }
 
             #endregion RESAMPLE
@@ -220,30 +221,34 @@ namespace DataDebugMethods
                 output_fns,
                 dag,
                 weighted,
-                significance);
+                significance,
+                pb);
             #endregion INFERENCE
         }
 
         public class DataDebugJob
         {
+            private DAG _dag;
             private FunctionOutput<string>[][] _bs;
-            private Dictionary<TreeNode, string> _initial_outputs;
-            private TreeNode _input;
-            private TreeNode[] _outputs;
+            private Dictionary<AST.Address, string> _initial_outputs;
+            private AST.Range _input;
+            private AST.Address[] _outputs;
             private bool _weighted;
             private double _significance;
             private ManualResetEvent _mre;
             private TreeScore _score; // dict of exclusion scores for each input CELL TreeNode
 
             public DataDebugJob(
+                DAG dag,
                 FunctionOutput<String>[][] bs,
-                Dictionary<TreeNode, string> initial_outputs,
-                TreeNode input,
-                TreeNode[] output_arr,
+                Dictionary<AST.Address, string> initial_outputs,
+                AST.Range input,
+                AST.Address[] output_arr,
                 bool weighted,
                 double significance,
                 ManualResetEvent mre)
             {
+                _dag = dag;
                 _bs = bs;
                 _initial_outputs = initial_outputs;
                 _input = input;
@@ -263,18 +268,18 @@ namespace DataDebugMethods
             {
                 for (var f = 0; f < _outputs.Length; f++)
                 {
-                    TreeNode output = _outputs[f];
+                    AST.Address output = _outputs[f];
 
                     // do the hypothesis test and then merge
                     // the scores from previous tests
                     TreeScore s;
                     if (FunctionOutputsAreNumeric(_bs[f]))
                     {
-                        s = NumericHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
+                        s = NumericHypothesisTest(_dag, _input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
                     }
                     else
                     {
-                        s = StringHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
+                        s = StringHypothesisTest(_dag, _input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
                     }
                     _score = DictAdd(_score, s);
                 }
@@ -300,13 +305,14 @@ namespace DataDebugMethods
         public static TreeScore Inference(
             int num_bootstraps,
             InputSample[][] resamples,
-            Dictionary<TreeNode, InputSample> initial_inputs,
-            Dictionary<TreeNode, string> initial_outputs,
-            TreeNode[] input_arr,
-            TreeNode[] output_arr,
-            AnalysisData data,
+            Dictionary<AST.Range, InputSample> initial_inputs,
+            Dictionary<AST.Address, string> initial_outputs,
+            AST.Range[] input_arr,
+            AST.Address[] output_arr,
+            DAG dag,
             bool weighted,
-            double significance)
+            double significance,
+            ProgBar pb)
         {
             // synchronization token
             object lock_token = new Object();
@@ -343,7 +349,7 @@ namespace DataDebugMethods
                     var input = input_arr[i];
 
                     // fetch the input range COM object
-                    var com = input.getCOMObject();
+                    var com = dag.getCOMRefForRange(input).Range;
 
                     // compute outputs
                     // replace the values of the COM object with the jth bootstrap,
@@ -352,7 +358,7 @@ namespace DataDebugMethods
                     for (var b = 0; b < num_bootstraps; b++)
                     {
                         // lookup outputs from memo table; otherwise do replacement, compute outputs, store them in table, and return them
-                        FunctionOutput<string>[] fos = memo.FastReplace(com, initial_inputs[input], resamples[i][b], output_arr, false);
+                        FunctionOutput<string>[] fos = memo.FastReplace(com, dag, initial_inputs[input], resamples[i][b], output_arr, false);
                         for (var f = 0; f < output_arr.Length; f++)
                         {
                             bs[f][b] = fos[f];
@@ -362,15 +368,8 @@ namespace DataDebugMethods
                     // restore the original inputs; faster to do once, after bootstrapping is done
                     BootMemo.ReplaceExcelRange(com, initial_inputs[input]);
 
-                    // restore formulas
-                    foreach (TreeDictPair pair in data.formula_nodes)
-                    {
-                        TreeNode node = pair.Value;
-                        if (node.isFormula())
-                        {
-                            node.getCOMObject().Formula = node.getFormula();
-                        }
-                    }
+                    // TODO: restore formulas if it turns out that they were overwrittern
+                    //       this should never be the case
                     #endregion BOOTSTRAP
 
                     #region HYPOTHESIS_TEST
@@ -379,6 +378,7 @@ namespace DataDebugMethods
 
                     // set up job
                     ddjs[i] = new DataDebugJob(
+                                dag,
                                 bs,
                                 initial_outputs,
                                 input_arr[i],
@@ -393,7 +393,7 @@ namespace DataDebugMethods
                     #endregion HYPOTHESIS_TEST
 
                     // update progress bar
-                    data.PokePB();
+                    pb.pokePB();
                 }
                 catch (System.OutOfMemoryException)
                 {
@@ -421,14 +421,14 @@ namespace DataDebugMethods
             var d3 = new TreeScore();
             if (d1 != null)
             {
-                foreach (KeyValuePair<TreeNode, int> pair in d1)
+                foreach (KeyValuePair<AST.Address, int> pair in d1)
                 {
                     d3.Add(pair.Key, pair.Value);
                 }
             }
             if (d2 != null)
             {
-                foreach (KeyValuePair<TreeNode, int> pair in d2)
+                foreach (KeyValuePair<AST.Address, int> pair in d2)
                 {
                     int score;
                     if (d3.TryGetValue(pair.Key, out score))
@@ -445,10 +445,10 @@ namespace DataDebugMethods
             return d3;
         }
 
-        public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
+        public static TreeScore StringHypothesisTest(DAG dag, AST.Range rangeNode, AST.Address functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
-            var input_cells = rangeNode.getInputs();
+            var input_cells = rangeNode.Addresses();
 
             // scores
             var iexc_scores = new TreeScore();
@@ -462,11 +462,11 @@ namespace DataDebugMethods
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells.ElementAt(i);
+                AST.Address xtree = input_cells.ElementAt(i);
                 if (weighted)
                 {
                     // the weight of the function value of interest
-                    weight = (int)functionNode.getWeight();
+                    weight = dag.getWeight(functionNode);
                 }
 
                 if (RejectNullHypothesis(boots, initial_output, i, significance))
@@ -494,10 +494,10 @@ namespace DataDebugMethods
             return iexc_scores;
         }
 
-        public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
+        public static TreeScore NumericHypothesisTest(DAG dag, AST.Range rangeNode, AST.Address functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
-            var input_cells = rangeNode.getInputs();
+            var input_cells = rangeNode.Addresses();
 
             var inputs_sz = input_cells.Count();
 
@@ -518,13 +518,12 @@ namespace DataDebugMethods
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells.ElementAt(i);
-//  Decided not to use weighted scoring
-//                if (weighted)
-//                {
-//                    // the weight of the function value of interest
-//                    weight = (int)functionNode.getWeight();
-//                }
+                AST.Address xtree = input_cells[i];
+                if (weighted)
+                {
+                    // the weight of the function value of interest
+                    weight = dag.getWeight(functionNode);
+                }
 
                 double outlieriness = RejectNullHypothesis(sorted_num_boots, initial_output, i, significance);
 

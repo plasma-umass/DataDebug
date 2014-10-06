@@ -14,18 +14,19 @@ namespace DataDebugMethods
     /// </summary>
     public partial class ProgBar : Form
     {
-        int Maximum;
-        int Minimum;
-        int state;
+        int _maximum;
+        int _minimum;
+        int _state;
+        int _poke_count = 0;
 
         public ProgBar(int low, int high)
         {
-            Minimum = low;
-            Maximum = high;
-            state = Minimum;
+            _minimum = low;
+            _maximum = high;
+            _state = _minimum;
             InitializeComponent();
-            progressBar1.Minimum = Minimum;
-            progressBar1.Maximum = Maximum;
+            progressBar1.Minimum = _minimum;
+            progressBar1.Maximum = _maximum;
             this.Visible = true;
         }
 
@@ -38,33 +39,45 @@ namespace DataDebugMethods
 
         public void SetProgress(int progress)
         {
-            if (progress < Minimum || progress > Maximum)
+            if (progress < _minimum || progress > _maximum)
             {
                 throw new Exception("Progress bar error.");
             }
-            progressBar1.Value = progress;
+            _state = progress;
+            progressBar1.Value = _state;
         }
 
         public void IncrementProgress(int delta)
         {
-            if (state + delta < Minimum)
+            if (_state + delta < _minimum)
             {
-                state = Minimum;
+                _state = _minimum;
             }
-            else if (state + delta > Maximum)
+            else if (_state + delta > _maximum)
             {
-                state = Maximum;
+                _state = _maximum;
             }
             else
             {
-                state += delta;
+                _state += delta;
             }
-            progressBar1.Value = state;
+            progressBar1.Value = _state;
         }
 
         public int maxProgress()
         {
             return progressBar1.Maximum;
+        }
+
+        public void setMax(int m)
+        {
+            _maximum = m;
+        }
+
+        public void pokePB()
+        {
+            _poke_count += 1;
+            this.SetProgress(_poke_count * 100 / _maximum);
         }
     }
 }

@@ -4,20 +4,19 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 
 namespace UserSimulation
 {
     public struct PrepData
     {
-        public AnalysisData graph;
+        public DAG dag;
         public CellDict original_inputs;
         public CellDict correct_outputs;
-        public TreeNode[] terminal_input_nodes;
-        public TreeNode[] terminal_formula_nodes;
+        public AST.Range[] terminal_input_nodes;
+        public AST.Address[] terminal_formula_nodes;
     }
 
     public static class Prep
@@ -26,15 +25,15 @@ namespace UserSimulation
         {
             // build graph
             var graph = DataDebugMethods.DependenceAnalysis.constructDAG(wbh, app, ignore_parse_errors);
-            if (graph.ContainsLoop())
+            if (graph.containsLoop())
             {
                 throw new DataDebugMethods.ContainsLoopException();
             }
             pb.IncrementProgress(16);
 
             // get terminal input and terminal formula nodes once
-            var terminal_input_nodes = graph.TerminalInputNodes();
-            var terminal_formula_nodes = graph.TerminalFormulaNodes(true);  ///the boolean indicates whether to use all outputs or not
+            var terminal_input_nodes = graph.terminalInputNodes();
+            var terminal_formula_nodes = graph.terminalFormulaNodes(true);  ///the boolean indicates whether to use all outputs or not
 
             if (terminal_input_nodes.Length == 0)
             {
@@ -59,7 +58,7 @@ namespace UserSimulation
 
             return new PrepData()
             {
-                graph = graph,
+                dag = graph,
                 original_inputs = original_inputs,
                 correct_outputs = correct_outputs,
                 terminal_input_nodes = terminal_input_nodes,

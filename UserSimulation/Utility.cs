@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
 using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
@@ -242,7 +241,7 @@ namespace UserSimulation
 
         // save all of the values of the spreadsheet that
         // participate in any computation
-        public static CellDict SaveInputs(AnalysisData graph)
+        public static CellDict SaveInputs(DAG graph)
         {
             try
             {
