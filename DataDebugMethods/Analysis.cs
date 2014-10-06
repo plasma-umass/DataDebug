@@ -20,61 +20,54 @@ namespace DataDebugMethods
 
     public class Analysis
     {
-        private static Dictionary<TreeNode, InputSample> StoreInputs(TreeNode[] inputs)
+        private static Dictionary<AST.Range, InputSample> StoreInputs(AST.Range[] inputs, DAG dag)
         {
-            var d = new Dictionary<TreeNode, InputSample>();
-            foreach (TreeNode input_range in inputs)
+            var d = new Dictionary<AST.Range, InputSample>();
+            foreach (AST.Range input_range in inputs)
             {
-                var com = input_range.getCOMObject();
-                var s = new InputSample(input_range.Rows(), input_range.Columns());
+                var com = dag.getCOMRefForRange(input_range);
+                var s = new InputSample(com.Height, com.Width);
 
                 // store the entire COM array as a multiarray
                 // in one fell swoop.
-                s.AddArray(com.Value2);
+                s.AddArray(com.Range.Value2);
 
                 // add stored input to dict
                 d.Add(input_range, s);
 
                 // this is to force excel to recalculate its outputs
                 // exactly the same way that it will for our bootstraps
-                BootMemo.ReplaceExcelRange(com, s);
+                BootMemo.ReplaceExcelRange(com.Range, s);
             }
 
             return d;
         }
 
-        public static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
+        public static Dictionary<AST.Address, string> StoreOutputs(AST.Address[] outputs, DAG dag)
         {
-            // hash TreeNodes by their addresses
-            var fn_map = new Dictionary<AST.Address, TreeNode>();
-            foreach (TreeNode fn in outputs)
-            {
-                fn_map.Add(fn.GetAddress(), fn);
-            }
-
             // output dict
-            var d = new Dictionary<TreeNode, string>();
+            var d = new Dictionary<AST.Address, string>();
 
-            // partition all of the TreeNodes by their worksheet
-            var tree_groups = outputs.GroupBy(tn => tn.GetAddress().WorksheetName);
+            // partition all of the output addresses by their worksheet
+            var addr_groups = outputs.GroupBy(addr => dag.getCOMRefForAddress(addr).WorksheetName);
 
             // for each worksheet, do an array read of the formulas
-            foreach (IEnumerable<TreeNode> ws_fns in tree_groups)
+            foreach (IEnumerable<AST.Address> ws_fns in addr_groups)
             {
-                // get formulas in this worksheet
-                var rng = ws_fns.First().getWorksheetObject().UsedRange;
+                // get worksheet used range
+                var fstcr = dag.getCOMRefForAddress(ws_fns.First());
+                var rng = fstcr.Worksheet.UsedRange;
 
-                // get dimensions
+                // get used range dimensions
                 var left = rng.Column;
                 var right = rng.Columns.Count + left - 1;
                 var top = rng.Row;
                 var bottom = rng.Rows.Count + top - 1;
 
                 // get names
-                var fstaddr = ws_fns.First().GetAddress();
-                var wsname = fstaddr.WorksheetName;
-                var wbname = fstaddr.WorkbookName;
-                var path = fstaddr.Path;
+                var wsname = new FSharpOption<string>(fstcr.WorksheetName);
+                var wbname = new FSharpOption<string>(fstcr.WorkbookName);
+                var path = new FSharpOption<string>(fstcr.Path);
 
                 // sometimes the used range is a range
                 if (left != right || top != bottom)
@@ -86,10 +79,9 @@ namespace DataDebugMethods
                     var x_del = left - 1;
                     var y_del = top - 1;
 
-                    foreach (TreeNode tn in ws_fns)
+                    foreach (AST.Address addr in ws_fns)
                     {
                         // construct address in formulas array
-                        var addr = tn.GetAddress();
                         var x = addr.X - x_del;
                         var y = addr.Y - y_del;
 
@@ -97,11 +89,11 @@ namespace DataDebugMethods
                         String s = System.Convert.ToString(data[y, x]);
                         if (String.IsNullOrWhiteSpace(s))
                         {
-                            d.Add(tn, "");
+                            d.Add(addr, "");
                         }
                         else
                         {
-                            d.Add(tn, s);
+                            d.Add(addr, s);
                         }
                     }
                 }
@@ -111,19 +103,17 @@ namespace DataDebugMethods
                     // construct the appropriate AST.Address
                     AST.Address addr = AST.Address.NewFromR1C1(top, left, wsname, wbname, path);
 
-                    // check that the address belongs to one of our TreeNodes
-                    TreeNode tn;
-                    if (fn_map.TryGetValue(addr, out tn))
+                    // make certain that it is actually a string
+                    String s = System.Convert.ToString(rng.Value2);
+
+                    // add to dictionary, as appropriate
+                    if (String.IsNullOrWhiteSpace(s))
                     {
-                        String s = System.Convert.ToString(rng.Value2);
-                        if (String.IsNullOrWhiteSpace(s))
-                        {
-                            d.Add(tn, "");
-                        }
-                        else
-                        {
-                            d.Add(tn, s);
-                        }
+                        d.Add(addr, "");
+                    }
+                    else
+                    {
+                        d.Add(addr, s);
                     }
                 }
             }
@@ -196,8 +186,8 @@ namespace DataDebugMethods
             var rng = new Random();
 
             // we save initial inputs and outputs here
-            var initial_inputs = StoreInputs(input_rngs);
-            var initial_outputs = StoreOutputs(output_fns);
+            var initial_inputs = StoreInputs(input_rngs, dag);
+            var initial_outputs = StoreOutputs(output_fns, dag);
 
             // Set progress bar max
             dag.SetPBMax(input_rngs.Length * 2);

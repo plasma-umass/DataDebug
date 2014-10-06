@@ -23,7 +23,7 @@ namespace DataDebugMethods
             var dag = new DAG(wb, app);
 
             // extract references from formulas
-            foreach (AST.Address formula_addr in dag.getFormulaAddrs())
+            foreach (AST.Address formula_addr in dag.getAllFormulaAddrs())
             {
                 // get COMRef read earlier
                 var formula_ref = dag.getCOMRefForAddress(formula_addr);

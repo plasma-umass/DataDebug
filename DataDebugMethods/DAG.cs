@@ -117,7 +117,12 @@ namespace DataDebugMethods
             return _all_cells[addr];
         }
 
-        public AST.Address[] getFormulaAddrs()
+        public AST.COMRef getCOMRefForRange(AST.Range rng)
+        {
+            return _all_vectors[rng];
+        }
+
+        public AST.Address[] getAllFormulaAddrs()
         {
             return _formulas.Keys.ToArray();
         }
@@ -228,12 +233,12 @@ namespace DataDebugMethods
             // in our list of excluded functions
             if (all_outputs)
             {
-                return getFormulaAddrs();
+                return getAllFormulaAddrs();
             }
             else
             {
                 // start with an array of all formula addresses
-                return getFormulaAddrs().Where(addr =>
+                return getAllFormulaAddrs().Where(addr =>
                     _i2f[addr].Count == 0 &&        // only where the number of formulas consuming this formula == 0
                     _i2v[addr].SelectMany(rng =>    // and where the number of formulas consuming a vector
                         _v2f[rng])                  // containing this formula == 0
