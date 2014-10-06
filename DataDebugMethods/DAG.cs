@@ -277,5 +277,20 @@ namespace DataDebugMethods
             // HashSet initialized in DAG constructor
             return _f2i[node];
         }
+
+        internal AST.Range[] terminalInputNodes()
+        {
+            // this should filter out the following two cases:
+            // 1. input range is intermediate (acts as input to a formula
+            // and also contains a formula that consumes input from
+            // another range).
+            // 2. the range is actually a formula cell
+            return _all_vectors.Where( pair =>
+                     !pair.Value.DoNotPerturb &&        // range is not marked Do Not Perturb
+                     !pair.Key.Addresses().Any(addr =>  // and range does not contain a formula
+                       _formulas.ContainsKey(addr)
+                     )
+                   ).Select(pair => pair.Key).ToArray();
+        }
     }
 }

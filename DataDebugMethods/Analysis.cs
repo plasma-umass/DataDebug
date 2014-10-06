@@ -186,7 +186,7 @@ namespace DataDebugMethods
             // filter out non-terminal functions
             var output_fns = dag.terminalFormulaNodes(all_outputs);
             // filter out non-terminal inputs
-            var input_rngs = dag.TerminalInputNodes();
+            var input_rngs = dag.terminalInputNodes();
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
