@@ -4,10 +4,9 @@ using Microsoft.Office.Tools.Ribbon;
 using Microsoft.Office.Tools.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
-using TreeNode = DataDebugMethods.TreeNode;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
-using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
+using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<AST.Address>>;
+using TreeDict = System.Collections.Generic.Dictionary<AST.Address, AST.Address>;
 using Microsoft.FSharp.Core;
 using System.IO;
 using System.Linq;
@@ -17,37 +16,6 @@ namespace DataDebug
 {
     public partial class Ribbon
     {
-        #region OLDCODE
-        //Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
-        //Excel.Application app;
-        //Excel.Workbook current_workbook;
-        //double tool_significance = 0.95;
-        //HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
-        //HashSet<AST.Address> output_highlights = new HashSet<AST.Address>();
-        //HashSet<AST.Address> known_good = new HashSet<AST.Address>();
-        //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
-        //List<KeyValuePair<TreeNode, int>> flaggable_list = null;
-        //AST.Address flagged_cell = null;
-        //AnalysisData data;
-
-        ////Recursive method for highlighting the outputs reachable from a certain TreeNode
-        //private void exploreNode(TreeNode node)
-        //{
-        //    if (node.hasOutputs())
-        //    {
-        //        foreach (var o in node.getOutputs())
-        //        {
-        //            exploreNode(o);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
-        //        output_highlights.Add(node.GetAddress());
-        //    }
-        //}
-        #endregion OLDCODE
-
         // workbook state data
         Dictionary<Excel.Workbook, WorkbookState> wbstates = new Dictionary<Excel.Workbook, WorkbookState>();
         WorkbookState current_workbook;

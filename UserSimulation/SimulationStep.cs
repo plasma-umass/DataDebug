@@ -5,9 +5,8 @@ using System.Text;
 using System.Diagnostics;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 
 namespace UserSimulation
@@ -20,15 +19,16 @@ namespace UserSimulation
                                            double significance,
                                            CutoffKind ck,
                                            int nboots,
-                                           AnalysisData data,
+                                           DAG dag,
                                            Excel.Application app,
                                            bool weighted,
                                            bool all_outputs,
                                            bool run_bootstrap,
                                            HashSet<AST.Address> known_good,
-                                           ref List<KeyValuePair<TreeNode, int>> filtered_high_scores,
+                                           ref List<KeyValuePair<AST.Address, int>> filtered_high_scores,
                                            long max_duration_in_ms,
-                                           Stopwatch sw)
+                                           Stopwatch sw,
+                                           ProgBar pb)
         {
             // Get bootstraps
             // The bootstrap should only re-run if there is a correction made, 
@@ -37,7 +37,7 @@ namespace UserSimulation
             //      we just move on to the next thing in the list
             if (run_bootstrap)
             {
-                TreeScore scores = Analysis.DataDebug(nboots, data, app, weighted, all_outputs, max_duration_in_ms, sw, significance);
+                TreeScore scores = Analysis.DataDebug(nboots, dag, app, weighted, all_outputs, max_duration_in_ms, sw, significance, pb);
 
                 // apply a threshold to the scores
                 filtered_high_scores = ck.applyCutoff(scores, known_good);
@@ -45,13 +45,13 @@ namespace UserSimulation
             else  //if no corrections were made (a cell was marked as OK, not corrected)
             {
                 //re-filter out cells marked as OK
-                filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+                filtered_high_scores = filtered_high_scores.Where(kvp => !known_good.Contains(kvp.Key)).ToList();
             }
 
             if (filtered_high_scores.Count() != 0)
             {
-                // get TreeNode corresponding to most unusual score
-                return filtered_high_scores[0].Key.GetAddress();
+                // get AST.Address corresponding to most unusual score
+                return filtered_high_scores[0].Key;
             }
             else
             {
@@ -59,7 +59,7 @@ namespace UserSimulation
             }
         }
 
-        public static AST.Address NormalPerRange_Step(AnalysisData data,
+        public static AST.Address NormalPerRange_Step(DAG dag,
                                                       Excel.Workbook wb,
                                                       HashSet<AST.Address> known_good,
                                                       long max_duration_in_ms,
@@ -69,9 +69,9 @@ namespace UserSimulation
 
             //Generate normal distributions for every input range until an error is found
             //Then break out of the loop and report it.
-            foreach (var range in data.input_ranges.Values)
+            foreach (var vect_addr in dag.allVectors())
             {
-                var normal_dist = new DataDebugMethods.NormalDistribution(range.getCOMObject());
+                var normal_dist = new DataDebugMethods.NormalDistribution(dag.getCOMRefForRange(vect_addr).Range);
 
                 // Get top outlier which has not been inspected already
                 if (normal_dist.getErrorsCount() > 0)
@@ -85,7 +85,7 @@ namespace UserSimulation
                         }
 
                         var flagged_com = normal_dist.getErrorAtPosition(i);
-                        flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                        flagged_cell = AST.Address.AddressFromCOMObject(flagged_com, wb);
                         if (known_good.Contains(flagged_cell))
                         {
                             flagged_cell = null;
@@ -106,17 +106,17 @@ namespace UserSimulation
             return flagged_cell;
         }
 
-        public static AST.Address NormalAllOutputs_Step(AnalysisData data,
-                                                         Excel.Application app,
-                                                         Excel.Workbook wb,
-                                                         HashSet<AST.Address> known_good,
-                                                         long max_duration_in_ms,
-                                                         Stopwatch sw)
+        public static AST.Address NormalAllOutputs_Step(DAG dag,
+                                                        Excel.Application app,
+                                                        Excel.Workbook wb,
+                                                        HashSet<AST.Address> known_good,
+                                                        long max_duration_in_ms,
+                                                        Stopwatch sw)
         {
             AST.Address flagged_cell = null;
 
             //Generate a normal distribution for the entire set of inputs
-            var normal_dist = new DataDebugMethods.NormalDistribution(data.TerminalInputNodes(), app);
+            var normal_dist = new DataDebugMethods.NormalDistribution(dag.terminalInputVectors(), app);
 
             // Get top outlier
             if (normal_dist.getErrorsCount() > 0)
@@ -130,7 +130,7 @@ namespace UserSimulation
                     }
 
                     var flagged_com = normal_dist.getErrorAtPosition(i);
-                    flagged_cell = (new TreeNode(flagged_com, flagged_com.Worksheet, wb)).GetAddress();
+                    flagged_cell = AST.Address.AddressFromCOMObject(flagged_com, wb);
                     if (known_good.Contains(flagged_cell))
                     {
                         flagged_cell = null;

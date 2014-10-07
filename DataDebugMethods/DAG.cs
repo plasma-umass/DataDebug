@@ -19,7 +19,7 @@ namespace DataDebugMethods
     public class DAG
     {
         private Excel.Application _app;
-        private CellRefDict _all_cells = new CellRefDict();                 // maps every cell to its COMRef
+        private CellRefDict _all_cells = new CellRefDict();                 // maps every cell (including formulas) to its COMRef
         private VectorRefDict _all_vectors = new VectorRefDict();           // maps every vector to its COMRef
         private FormulaDict _formulas = new FormulaDict();                  // maps every formula to its formula expr
         private Formula2VectDict _f2v = new Formula2VectDict();             // maps every formula to its input vectors
@@ -30,9 +30,14 @@ namespace DataDebugMethods
         private InputCell2FormulaDict _i2f = new InputCell2FormulaDict();   // maps every single-cell input to its formulas
         private Dictionary<AST.Range, bool> _do_not_perturb = new Dictionary<AST.Range, bool>();    // vector perturbability
         private Dictionary<AST.Address, int> _weights = new Dictionary<AST.Address, int>();         // graph node weight
+        private readonly long _analysis_time;                               // amount of time to run dependence analysis
 
         public DAG(Excel.Workbook wb, Excel.Application app)
         {
+            // start stopwatch
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             // get names
             _app = app;
             var wbfullname = wb.FullName;
@@ -110,6 +115,10 @@ namespace DataDebugMethods
                     _all_cells.Add(addr, cr);
                 }
             }
+
+            // stop stopwatch
+            sw.Stop();
+            _analysis_time = sw.ElapsedMilliseconds;
         }
         public string readCOMValueAtAddress(AST.Address addr)
         {
@@ -125,6 +134,10 @@ namespace DataDebugMethods
             }
         }
 
+        public long AnalysisMilliseconds
+        {
+            get { return _analysis_time;  }
+        }
 
         public AST.COMRef getCOMRefForAddress(AST.Address addr)
         {
@@ -134,6 +147,11 @@ namespace DataDebugMethods
         public AST.COMRef getCOMRefForRange(AST.Range rng)
         {
             return _all_vectors[rng];
+        }
+
+        public string getFormulaAtAddress(AST.Address addr)
+        {
+            return _formulas[addr];
         }
 
         public AST.Address[] getAllFormulaAddrs()
@@ -297,7 +315,7 @@ namespace DataDebugMethods
             return _f2i[node];
         }
 
-        public AST.Range[] terminalInputNodes()
+        public AST.Range[] terminalInputVectors()
         {
             // this should filter out the following two cases:
             // 1. input range is intermediate (acts as input to a formula
@@ -322,6 +340,50 @@ namespace DataDebugMethods
 
             // concat all together and return
             return inputs.Concat(scinputs).Distinct().ToArray();
+        }
+
+        public AST.Address[] terminalInputCells()
+        {
+            // this folds all of the inputs for all of the
+            // outputs into a set of distinct data-containing cells
+            var iecells = terminalFormulaNodes(true).Aggregate(
+                              Enumerable.Empty<AST.Address>(),
+                              (acc, node) => acc.Union<AST.Address>(getChildCellsRec(node))
+                          );
+            return iecells.ToArray<AST.Address>();
+        }
+
+        private IEnumerable<AST.Address> getChildCellsRec(AST.Address cell_addr)
+        {
+            // recursive case
+            if (_formulas.ContainsKey(cell_addr)) {
+                // recursively get vector inputs
+                var vector_children = _f2v[cell_addr].SelectMany(rng => getVectorChildCellsRec(rng));
+
+                // recursively get single-cell inputs
+                var sc_children = _f2i[cell_addr].SelectMany(cell => getChildCellsRec(cell));
+
+                return vector_children.Concat(sc_children);
+            // base case
+            } else {
+                return new List<AST.Address> { cell_addr };
+            }
+        }
+
+        private IEnumerable<AST.Address> getVectorChildCellsRec(AST.Range vector_addr)
+        {
+            // get single-cell inputs (vectors only consist of single cells)
+            return _v2i[vector_addr].SelectMany(rng => getChildCellsRec(rng));
+        }
+
+        public AST.Range[] allVectors()
+        {
+            return _all_vectors.KeysT.ToArray();
+        }
+
+        public AST.Address[] allCells()
+        {
+            return _all_cells.KeysT.ToArray();
         }
     }
 }

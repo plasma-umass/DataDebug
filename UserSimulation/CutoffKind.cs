@@ -139,7 +139,7 @@ namespace UserSimulation
                 }
             }
             // filter out cells marked as OK
-            return high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            return high_scores.Where(kvp => !known_good.Contains(kvp.Key)).ToList();
         }
     }
 
@@ -165,7 +165,7 @@ namespace UserSimulation
 
             // return the n largest (and force eager evaluation)
             // excluding cells marked as OK
-            return scores_list.Take(_n).Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            return scores_list.Take(_n).Where(kvp => !known_good.Contains(kvp.Key)).ToList();
         }
     }
 }

@@ -131,5 +131,15 @@ namespace DataDebugMethods
         {
             return _dict2;
         }
+
+        public IEnumerable<T> KeysT
+        {
+            get { return _dict1.Keys; }
+        }
+
+        public IEnumerable<U> KeysU
+        {
+            get { return _dict2.Keys; }
+        }
     }
 }

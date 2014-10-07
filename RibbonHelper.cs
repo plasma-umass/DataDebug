@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using DataDebugMethods;
 using Excel = Microsoft.Office.Interop.Excel;
-using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
+using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<AST.Address>>;
 using OptString = Microsoft.FSharp.Core.FSharpOption<string>;
 using OptTuple = Microsoft.FSharp.Core.FSharpOption<System.Tuple<UserSimulation.Classification, string>>;
 

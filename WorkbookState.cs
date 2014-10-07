@@ -26,9 +26,9 @@ namespace DataDebug
         private HashSet<AST.Address> _tool_highlights = new HashSet<AST.Address>();
         private HashSet<AST.Address> _output_highlights = new HashSet<AST.Address>();
         private HashSet<AST.Address> _known_good = new HashSet<AST.Address>();
-        private IEnumerable<KeyValuePair<TreeNode, int>> _flaggable;
+        private IEnumerable<KeyValuePair<AST.Address, int>> _flaggable;
         private AST.Address _flagged_cell;
-        private AnalysisData data;
+        private DAG dag;
 
         #region BUTTON_STATE
         private bool _button_Analyze_enabled = true;
@@ -86,7 +86,7 @@ namespace DataDebug
                 // Build dependency graph (modifies data)
                 try
                 {
-                    data = DependenceAnalysis.constructDAG(_app.ActiveWorkbook, _app, pb, IGNORE_PARSE_ERRORS);
+                    dag = DependenceAnalysis.constructDAG(_app.ActiveWorkbook, _app, pb, IGNORE_PARSE_ERRORS);
                 }
                 catch (ExcelParserUtility.ParseException e)
                 {
@@ -95,21 +95,21 @@ namespace DataDebug
                     throw e;
                 }
 
-                if (data.TerminalInputNodes().Length == 0)
+                if (dag.terminalInputVectors().Length == 0)
                 {
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
                     _app.ScreenUpdating = true;
-                    _flaggable = new KeyValuePair<TreeNode,int>[0];
+                    _flaggable = new KeyValuePair<AST.Address,int>[0];
                     return;
                 }
 
                 // Get bootstraps
-                var scores = Analysis.DataDebug(NBOOTS, data, _app, true, true, max_duration_in_ms, sw, _tool_significance)
+                var scores = Analysis.DataDebug(NBOOTS, dag, _app, true, true, max_duration_in_ms, sw, _tool_significance, pb)
                                      .OrderByDescending(pair => pair.Value).ToArray();
 
                 int start_ptr = 0;
                 int end_ptr = 0;
-                List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
+                List<KeyValuePair<AST.Address, int>> high_scores = new List<KeyValuePair<AST.Address, int>>();
 
                 while ((double)start_ptr / scores.Length < 1.0 - _tool_significance) //the start of this score region is before the cutoff
                 {
@@ -142,7 +142,7 @@ namespace DataDebug
                 }
 
                 // filter out cells marked as OK
-                _flaggable = high_scores.ToArray().Where(kvp => !_known_good.Contains(kvp.Key.GetAddress()));
+                _flaggable = high_scores.ToArray().Where(kvp => !_known_good.Contains(kvp.Key));
                 
                 // Enable screen updating when we're done
                 _app.ScreenUpdating = true;
@@ -174,11 +174,11 @@ namespace DataDebug
         public void Flag()
         {
             //filter known_good
-            _flaggable = _flaggable.Where(kvp => !_known_good.Contains(kvp.Key.GetAddress()));
+            _flaggable = _flaggable.Where(kvp => !_known_good.Contains(kvp.Key));
             if (_flaggable.Count() != 0)
             {
                 // get TreeNode corresponding to most unusual score
-                _flagged_cell = _flaggable.First().Key.GetAddress();
+                _flagged_cell = _flaggable.First().Key;
             }
             else
             {

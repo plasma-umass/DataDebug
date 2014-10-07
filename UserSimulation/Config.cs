@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using DataDebugMethods;
 using Excel = Microsoft.Office.Interop.Excel;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 
 namespace UserSimulation
@@ -25,7 +24,8 @@ namespace UserSimulation
                                                                prepdata.correct_outputs,
                                                                app,
                                                                wbh,
-                                                               c);
+                                                               c,
+                                                               prepdata.dag);
             // run paper simulations
             RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
         }
@@ -40,7 +40,7 @@ namespace UserSimulation
 
             // get inputs as an array of addresses to facilitate random selection
             // DATA INPUTS ONLY
-            var inputs = prepdata.dag.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+            AST.Address[] inputs = prepdata.dag.terminalInputCells();
 
             // sanity check: all of the inputs should also be in prepdata.original_inputs
             foreach (AST.Address addr in inputs)
@@ -81,7 +81,7 @@ namespace UserSimulation
 
             // get inputs as an array of addresses to facilitate random selection
             // DATA INPUTS ONLY
-            var inputs = prepdata.dag.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+            AST.Address[] inputs = prepdata.dag.terminalInputCells();
 
             for (int i = 0; i < 100; i++)
             {
