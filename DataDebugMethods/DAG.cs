@@ -68,27 +68,45 @@ namespace DataDebugMethods
                 var wsname_opt = new Microsoft.FSharp.Core.FSharpOption<String>(wsname);
 
                 // init
-                int x_max = right - left;
-                int y_max = bottom - top;
+                int width = right - left + 1;
+                int height = bottom - top + 1;
                 int x = -1;
                 int y = 0;
 
-                // array read of formula cells
-                // note that this is a 1-based 2D multiarray
-                object[,] formulas = urng.Formula;
-
-                // for every cell that is actually a formula, add to 
-                // formula dictionary & init formula lookup dictionaries
-                for (int c = 1; c <= x_max; c++)
+                // if the used range is a single cell, Excel changes the type
+                if (left == right && top == bottom)
                 {
-                    for (int r = 1; r <= y_max; r++)
+                    var f = (string)urng.Formula;
+                    if (fn_filter.IsMatch(f))
                     {
-                        var f = (string)formulas[c,r];
-                        if (fn_filter.IsMatch(f)) {
-                            var addr = AST.Address.NewFromR1C1(r, c, wsname_opt, wbname_opt, path_opt);
-                            _formulas.Add(addr, f);
-                            _f2v.Add(addr, new HashSet<AST.Range>());
-                            _f2i.Add(addr, new HashSet<AST.Address>());
+                        var addr = AST.Address.NewFromR1C1(top, left, wsname_opt, wbname_opt, path_opt);
+                        _formulas.Add(addr, f);
+                        _f2v.Add(addr, new HashSet<AST.Range>());
+                        _f2i.Add(addr, new HashSet<AST.Address>());
+                    }
+                }
+                else
+                {
+                    // array read of formula cells
+                    // note that this is a 1-based 2D multiarray
+                    object[,] formulas = urng.Formula;
+
+                    // for every cell that is actually a formula, add to 
+                    // formula dictionary & init formula lookup dictionaries
+                    for (int c = left; c < left + width; c++)
+                    {
+                        for (int r = top; r < top + height; r++)
+                        {
+                            var f = (string)formulas[r, c];
+                            if (fn_filter.IsMatch(f))
+                            {
+                                var addr = AST.Address.NewFromR1C1(r + top - 1, c + left - 1, wsname_opt, wbname_opt, path_opt);
+                                var com = addr.GetCOMObject(_app);
+                                System.Diagnostics.Debug.Assert(r == com.Row && c == com.Column);
+                                _formulas.Add(addr, f);
+                                _f2v.Add(addr, new HashSet<AST.Range>());
+                                _f2i.Add(addr, new HashSet<AST.Address>());
+                            }
                         }
                     }
                 }
@@ -102,7 +120,7 @@ namespace DataDebugMethods
                     // Thus we can calculate the addresses of each COM cell reference without
                     // needing to incur the overhead of actually asking it for its address.
                     var x_old = x;
-                    x = (x + 1) % (x_max + 1);
+                    x = (x + 1) % (width + 1);
                     // increment y if x wrapped
                     y = x < x_old ? y + 1 : y;
 
