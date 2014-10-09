@@ -24,7 +24,7 @@ namespace UserSimulation
         public static PrepData PrepSimulation(Excel.Application app, Excel.Workbook wbh, ProgBar pb, bool ignore_parse_errors)
         {
             // build graph
-            var dag = DataDebugMethods.DependenceAnalysis.constructDAG(wbh, app, ignore_parse_errors);
+            var dag = new DAG(wbh, app, ignore_parse_errors);
             if (dag.containsLoop())
             {
                 throw new DataDebugMethods.ContainsLoopException();

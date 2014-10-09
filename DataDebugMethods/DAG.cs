@@ -32,14 +32,58 @@ namespace DataDebugMethods
         private Dictionary<AST.Address, int> _weights = new Dictionary<AST.Address, int>();         // graph node weight
         private readonly long _analysis_time;                               // amount of time to run dependence analysis
 
-        public DAG(Excel.Workbook wb, Excel.Application app)
+        public DAG(Excel.Workbook wb, Excel.Application app, bool ignore_parse_errors)
         {
             // start stopwatch
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
-            // get names
+            // get application reference
             _app = app;
+
+            // bulk read worksheets
+            fastFormulaRead(wb);
+
+            // extract references from formulas
+            foreach (AST.Address formula_addr in this.getAllFormulaAddrs())
+            {
+                // get COMRef read earlier
+                var formula_ref = this.getCOMRefForAddress(formula_addr);
+
+                foreach (AST.Range vector_rng in ExcelParserUtility.GetRangeReferencesFromFormula(formula_ref, ignore_parse_errors))
+                {
+                    // fetch/create COMRef, as appropriate
+                    var vector_ref = this.makeInputVectorCOMRef(vector_rng);
+
+                    // link formula and input vector
+                    this.linkInputVector(formula_addr, vector_rng);
+
+                    foreach (AST.Address input_single in vector_rng.Addresses())
+                    {
+                        // link input vector and single input
+                        this.linkComponentInputCell(vector_rng, input_single);
+                    }
+
+                    // if num single inputs = num formulas,
+                    // mark vector as non-perturbable
+                    this.markPerturbability(vector_rng);
+                }
+
+                foreach (AST.Address input_single in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_ref, ignore_parse_errors))
+                {
+                    // link formula and single input
+                    this.linkSingleCellInput(formula_addr, input_single);
+                }
+            }
+
+            // stop stopwatch
+            sw.Stop();
+            _analysis_time = sw.ElapsedMilliseconds;
+        }
+
+        private void fastFormulaRead(Excel.Workbook wb)
+        {
+            // get names once
             var wbfullname = wb.FullName;
             var wbname = wb.Name;
             var path = wb.Path;
@@ -133,11 +177,8 @@ namespace DataDebugMethods
                     _all_cells.Add(addr, cr);
                 }
             }
-
-            // stop stopwatch
-            sw.Stop();
-            _analysis_time = sw.ElapsedMilliseconds;
         }
+
         public string readCOMValueAtAddress(AST.Address addr)
         {
             // null values become the empty string

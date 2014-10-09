@@ -86,7 +86,7 @@ namespace DataDebug
                 // Build dependency graph (modifies data)
                 try
                 {
-                    dag = DependenceAnalysis.constructDAG(_app.ActiveWorkbook, _app, pb, IGNORE_PARSE_ERRORS);
+                    dag = new DAG(_app.ActiveWorkbook, _app, IGNORE_PARSE_ERRORS);
                 }
                 catch (ExcelParserUtility.ParseException e)
                 {
