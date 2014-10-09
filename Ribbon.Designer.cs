@@ -170,7 +170,6 @@ namespace DataDebug
             // 
             this.ToDOT.Label = "ToDOT";
             this.ToDOT.Name = "ToDOT";
-            this.ToDOT.Visible = false;
             this.ToDOT.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToDOT_Click);
             // 
             // LoopCheck

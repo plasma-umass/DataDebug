@@ -114,8 +114,6 @@ namespace DataDebugMethods
                 // init
                 int width = right - left + 1;
                 int height = bottom - top + 1;
-                int x = -1;
-                int y = 0;
 
                 // if the used range is a single cell, Excel changes the type
                 if (left == right && top == bottom)
@@ -157,6 +155,8 @@ namespace DataDebugMethods
 
                 // for each COM object in the used range, create an address object
                 // WITHOUT calling any methods on the COM object itself
+                int x = -1;
+                int y = 0;
                 foreach (Excel.Range cell in urng)
                 {
                     // The basic idea here is that we know how Excel iterates over collections
@@ -164,7 +164,7 @@ namespace DataDebugMethods
                     // Thus we can calculate the addresses of each COM cell reference without
                     // needing to incur the overhead of actually asking it for its address.
                     var x_old = x;
-                    x = (x + 1) % (width + 1);
+                    x = (x + 1) % width;
                     // increment y if x wrapped
                     y = x < x_old ? y + 1 : y;
 
@@ -315,15 +315,15 @@ namespace DataDebugMethods
         public bool containsLoop()
         {
             var OK = true;
+            var visited_from = new Dictionary<AST.Address, AST.Address>();
             foreach (AST.Address addr in _formulas.Keys)
             {
-                var visited_from = new Dictionary<AST.Address, AST.Address>();
                 OK = OK && !traversalHasLoop(addr, visited_from, null);
             }
             return !OK;
         }
 
-        public bool traversalHasLoop(AST.Address current_addr, Dictionary<AST.Address, AST.Address> visited, AST.Address from_addr)
+        private bool traversalHasLoop(AST.Address current_addr, Dictionary<AST.Address, AST.Address> visited, AST.Address from_addr)
         {
             // base case 1: loop check
             if (visited.ContainsKey(current_addr))
@@ -353,6 +353,57 @@ namespace DataDebugMethods
                 }
             }
             return !OK;
+        }
+
+        public string ToDOT()
+        {
+            var visited = new HashSet<AST.Address>();
+            String s = "digraph spreadsheet {\n";
+            foreach (AST.Address formula_addr in _formulas.Keys)
+            {
+                s += ToDOT(formula_addr, visited);
+            }
+            return s + "\n}";
+        }
+
+        private string DOTEscapedFormulaString(string formula)
+        {
+            return formula.Replace("\"", "\\\"");
+        }
+
+        private string DOTNodeName(AST.Address addr) {
+            return "\"" + addr.A1Local() + "[" + (_formulas.ContainsKey(addr) ? DOTEscapedFormulaString(_formulas[addr]) : readCOMValueAtAddress(addr)) + "]\"";
+        }
+
+        private string ToDOT(AST.Address current_addr, HashSet<AST.Address> visited)
+        {
+            // base case 1: loop protection
+            if (visited.Contains(current_addr))
+            {
+                return "";
+            }
+            // base case 2: an input
+            if (!_formulas.ContainsKey(current_addr))
+            {
+                return "";
+            }
+            // recursive case: we're a formula
+            String s = "";
+            HashSet<AST.Address> single_inputs = _f2i[current_addr];
+            HashSet<AST.Address> vector_inputs = new HashSet<AST.Address>(_f2v[current_addr].SelectMany(addrs => addrs.Addresses()));
+            foreach (AST.Address input_addr in vector_inputs.Union(single_inputs))
+            {
+                var ia_name = DOTNodeName(input_addr);
+                var ca_name = DOTNodeName(current_addr);
+
+                // print
+                s += ia_name + " -> " + ca_name + ";\n";
+                // mark visit
+                visited.Add(current_addr);
+                // recurse
+                s += ToDOT(input_addr, visited);
+            }
+            return s;
         }
 
         public AST.Address[] terminalFormulaNodes(bool all_outputs)

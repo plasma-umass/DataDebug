@@ -301,12 +301,10 @@ namespace DataDebug
 
         private void ToDOT_Click(object sender, RibbonControlEventArgs e)
         {
-            System.Windows.Forms.MessageBox.Show("foo8");
-
-            //var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-            //var graph = data.ToDOT();
-            //System.Windows.Forms.Clipboard.SetText(graph);
-            //System.Windows.Forms.MessageBox.Show("In clipboard");
+            var app = Globals.ThisAddIn.Application;
+            var dag = new DAG(app.ActiveWorkbook, app, true);
+            System.Windows.Forms.Clipboard.SetText(dag.ToDOT());
+            System.Windows.Forms.MessageBox.Show("In clipboard");
         }
 
         private void LoopCheck_Click(object sender, RibbonControlEventArgs e)
