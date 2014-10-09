@@ -9,24 +9,21 @@ using System.Windows.Forms;
 
 namespace DataDebugMethods
 {
+    public class ProgressMaxUnsetException : Exception { }
+
     /// <summary>
     /// This progress bar's lifecycle should be managed by the UI layer.
     /// </summary>
     public partial class ProgBar : Form
     {
-        int _maximum;
-        int _minimum;
-        int _state;
-        int _poke_count = 0;
+        private bool _max_set = false;
+        private int _count = 0;
 
-        public ProgBar(int low, int high)
+        public ProgBar()
         {
-            _minimum = low;
-            _maximum = high;
-            _state = _minimum;
             InitializeComponent();
-            progressBar1.Minimum = _minimum;
-            progressBar1.Maximum = _maximum;
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = 100;
             this.Visible = true;
         }
 
@@ -35,49 +32,43 @@ namespace DataDebugMethods
 
         }
 
-        delegate void SetProgressCallback(int progress);
-
-        public void SetProgress(int progress)
+        public void IncrementProgress()
         {
-            if (progress < _minimum || progress > _maximum)
+            if (!_max_set)
             {
-                throw new Exception("Progress bar error.");
+                throw new ProgressMaxUnsetException();
             }
-            _state = progress;
-            progressBar1.Value = _state;
-        }
 
-        public void IncrementProgress(int delta)
-        {
-            if (_state + delta < _minimum)
+            var iota = 1.0 / progressBar1.Maximum;
+
+            if (_count * iota < 0)
             {
-                _state = _minimum;
+                progressBar1.Value = 0;
             }
-            else if (_state + delta > _maximum)
+            else if (_count * iota > progressBar1.Maximum)
             {
-                _state = _maximum;
+                progressBar1.Value = progressBar1.Maximum;
             }
             else
             {
-                _state += delta;
+                progressBar1.Value = (int)(_count * iota);
             }
-            progressBar1.Value = _state;
+            _count++;
         }
 
         public int maxProgress()
         {
+            if (!_max_set)
+            {
+                throw new ProgressMaxUnsetException();
+            }
             return progressBar1.Maximum;
         }
 
-        public void setMax(int m)
+        public void setMax(int max_updates)
         {
-            _maximum = m;
-        }
-
-        public void pokePB()
-        {
-            _poke_count += 1;
-            this.SetProgress(_poke_count * 100 / _maximum);
+            progressBar1.Maximum = max_updates;
+            _max_set = true;
         }
     }
 }

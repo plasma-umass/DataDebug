@@ -206,7 +206,7 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
 
                 // update progress bar
-                pb.pokePB();
+                pb.IncrementProgress();
             }
 
             #endregion RESAMPLE
@@ -393,7 +393,7 @@ namespace DataDebugMethods
                     #endregion HYPOTHESIS_TEST
 
                     // update progress bar
-                    pb.pokePB();
+                    pb.IncrementProgress();
                 }
                 catch (System.OutOfMemoryException)
                 {

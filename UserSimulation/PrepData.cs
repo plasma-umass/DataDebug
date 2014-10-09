@@ -29,7 +29,7 @@ namespace UserSimulation
             {
                 throw new DataDebugMethods.ContainsLoopException();
             }
-            pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // get terminal input and terminal formula nodes once
             var terminal_input_nodes = dag.terminalInputVectors();

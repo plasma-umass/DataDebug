@@ -78,7 +78,7 @@ namespace DataDebug
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
-            using (var pb = new ProgBar(0, 100))
+            using (var pb = new ProgBar())
             {
                 // Disable screen updating during analysis to speed things up
                 _app.ScreenUpdating = false;

@@ -14,6 +14,8 @@ namespace UserSimulation
     {
         public static void RunSimulationPaperMain(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
+            pb.setMax(5);
+
             // record intitial state of spreadsheet
             var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
@@ -32,6 +34,8 @@ namespace UserSimulation
 
         public static void RunProportionExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
+            pb.setMax(5);
+
             // record intitial state of spreadsheet
             var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
@@ -73,6 +77,8 @@ namespace UserSimulation
 
         public static bool RunSubletyExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
+            pb.setMax(5);
+
             // record intitial state of spreadsheet
             var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
@@ -129,8 +135,6 @@ namespace UserSimulation
 
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)
         {
-            pb.IncrementProgress(16);
-
             // write header if needed
             if (!System.IO.File.Exists(outfile))
             {
@@ -159,7 +163,7 @@ namespace UserSimulation
             //                    max_duration_in_ms,                    // max duration of simulation 
             //                    logfile);
             //System.IO.File.AppendAllText(outfile, s_1.FormatResultsAsCSV());
-            //pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // CheckCell weighted, all outputs, quantile
             var s_4 = new UserSimulation.Simulation();
@@ -183,7 +187,7 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_4.FormatResultsAsCSV());
-            pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // Normal, all inputs
             var s_2 = new UserSimulation.Simulation();
@@ -207,7 +211,7 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_2.FormatResultsAsCSV());
-            pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // Normal, range inputs
             //var s_3 = new UserSimulation.Simulation();
@@ -231,7 +235,7 @@ namespace UserSimulation
             //                    max_duration_in_ms,                    // max duration of simulation 
             //                    logfile);
             //System.IO.File.AppendAllText(outfile, s_3.FormatResultsAsCSV());
-            //pb.IncrementProgress(20);
+            pb.IncrementProgress();
         }
     }
 }
