@@ -366,12 +366,12 @@ namespace DataDebugMethods
             }
             else
             {
-                // start with an array of all formula addresses
+                // get all formula addresses
                 return getAllFormulaAddrs().Where(addr =>
-                    _i2f[addr].Count == 0 &&        // only where the number of formulas consuming this formula == 0
-                    _i2v[addr].SelectMany(rng =>    // and where the number of formulas consuming a vector
-                        _v2f[rng])                  // containing this formula == 0
-                    .Count() == 0     
+                    // such that the number of formulas consuming this formula == 0
+                    (!_i2f.ContainsKey(addr) || _i2f[addr].Count == 0) &&
+                    // and the number of vectors containing this formula == 0
+                    (!_i2v.ContainsKey(addr) || _i2v[addr].Count == 0)
                 ).ToArray();
             }
         }
