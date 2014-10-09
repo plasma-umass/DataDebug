@@ -314,7 +314,45 @@ namespace DataDebugMethods
 
         public bool containsLoop()
         {
-            throw new NotImplementedException();
+            var OK = true;
+            foreach (AST.Address addr in _formulas.Keys)
+            {
+                var visited_from = new Dictionary<AST.Address, AST.Address>();
+                OK = OK && !traversalHasLoop(addr, visited_from, null);
+            }
+            return !OK;
+        }
+
+        public bool traversalHasLoop(AST.Address current_addr, Dictionary<AST.Address, AST.Address> visited, AST.Address from_addr)
+        {
+            // base case 1: loop check
+            if (visited.ContainsKey(current_addr))
+            {
+                return true;
+            }
+            // base case 2: an input cell
+            if (!_formulas.ContainsKey(current_addr))
+            {
+                return false;
+            }
+            // recursive case (it's a formula)
+            // check both single inputs and the inputs of any vector inputs
+            bool OK = true;
+            HashSet<AST.Address> single_inputs = _f2i[current_addr];
+            HashSet<AST.Address> vector_inputs = new HashSet<AST.Address>(_f2v[current_addr].SelectMany(addrs => addrs.Addresses()));
+            foreach (AST.Address input_addr in vector_inputs.Union(single_inputs))
+            {
+                if (OK)
+                {
+                    // new dict to mark visit
+                    var visited2 = new Dictionary<AST.Address, AST.Address>(visited);
+                    // mark visit
+                    visited2.Add(current_addr, from_addr);
+                    // recurse
+                    OK = OK && !traversalHasLoop(input_addr, visited2, from_addr);
+                }
+            }
+            return !OK;
         }
 
         public AST.Address[] terminalFormulaNodes(bool all_outputs)
