@@ -58,9 +58,9 @@ namespace DataDebugMethods
                     // link formula and input vector
                     this.linkInputVector(formula_addr, vector_rng);
 
+                    // link input vector to the vector's single inputs
                     foreach (AST.Address input_single in vector_rng.Addresses())
                     {
-                        // link input vector and single input
                         this.linkComponentInputCell(vector_rng, input_single);
                     }
 
