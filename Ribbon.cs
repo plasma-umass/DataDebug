@@ -5,7 +5,6 @@ using Microsoft.Office.Tools.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
 using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
-using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<AST.Address>>;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, AST.Address>;
 using Microsoft.FSharp.Core;
 using System.IO;

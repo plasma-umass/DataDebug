@@ -143,8 +143,6 @@ namespace DataDebugMethods
                             if (fn_filter.IsMatch(f))
                             {
                                 var addr = AST.Address.NewFromR1C1(r + top - 1, c + left - 1, wsname_opt, wbname_opt, path_opt);
-                                var com = addr.GetCOMObject(_app);
-                                System.Diagnostics.Debug.Assert(r == com.Row && c == com.Column);
                                 _formulas.Add(addr, f);
                                 _f2v.Add(addr, new HashSet<AST.Range>());
                                 _f2i.Add(addr, new HashSet<AST.Address>());

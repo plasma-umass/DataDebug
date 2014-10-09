@@ -41,7 +41,7 @@ namespace DataDebug
         {
             _app = app;
             _workbook = workbook;
-            _colors = RibbonHelper.SaveColors2(workbook);
+            _colors = RibbonHelper.SaveColors(workbook);
         }
 
         public double ToolSignificance
@@ -222,7 +222,7 @@ namespace DataDebug
         {
             if (_workbook != null)
             {
-                RibbonHelper.RestoreColors2(_colors, _output_highlights);
+                RibbonHelper.RestoreColors(_colors, _output_highlights);
             }
             _output_highlights.Clear();
         }
@@ -231,7 +231,7 @@ namespace DataDebug
         {
             if (_workbook != null)
             {
-                RibbonHelper.RestoreColors2(_colors, _tool_highlights);
+                RibbonHelper.RestoreColors(_colors, _tool_highlights);
             }
 
             _known_good.Clear();
