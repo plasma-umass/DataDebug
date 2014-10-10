@@ -22,7 +22,7 @@ namespace DataDebug
         private Excel.Application _app;
         private Excel.Workbook _workbook;
         private double _tool_significance = 0.95;
-        private List<RibbonHelper.CellColor> _colors;
+        private Dictionary<AST.Address,CellColor> _colors;
         private HashSet<AST.Address> _tool_highlights = new HashSet<AST.Address>();
         private HashSet<AST.Address> _output_highlights = new HashSet<AST.Address>();
         private HashSet<AST.Address> _known_good = new HashSet<AST.Address>();
@@ -41,7 +41,7 @@ namespace DataDebug
         {
             _app = app;
             _workbook = workbook;
-            _colors = RibbonHelper.SaveColors(workbook);
+            _colors = new Dictionary<AST.Address, CellColor>();
         }
 
         public double ToolSignificance
@@ -142,7 +142,7 @@ namespace DataDebug
                 }
 
                 // filter out cells marked as OK
-                _flaggable = high_scores.ToArray().Where(kvp => !_known_good.Contains(kvp.Key));
+                _flaggable = high_scores.Where(kvp => !_known_good.Contains(kvp.Key)).ToArray();
                 
                 // Enable screen updating when we're done
                 _app.ScreenUpdating = true;
@@ -192,7 +192,6 @@ namespace DataDebug
             }
             else
             {
-
                 // TODO: test after AEC; problematic when highlighted value is not data
                 //TreeNode flagged_node;
                 //if (data.cell_nodes.TryGetValue(flagged_cell, out flagged_node))
@@ -207,7 +206,22 @@ namespace DataDebug
                 //    }
                 //}
 
-                _flagged_cell.GetCOMObject(_app).Interior.Color = System.Drawing.Color.Red;
+                // get cell COM object
+                var com = _flagged_cell.GetCOMObject(_app);
+
+                // save old color
+                var cc = new CellColor(com.Interior.ColorIndex, com.Interior.Color);
+                if (_colors.ContainsKey(_flagged_cell))
+                {
+                    _colors[_flagged_cell] = cc;
+                }
+                else
+                {
+                    _colors.Add(_flagged_cell, cc);
+                }
+
+                // highlight cell
+                com.Interior.Color = System.Drawing.Color.Red;
                 _tool_highlights.Add(_flagged_cell);
 
                 // go to highlighted cell
@@ -222,20 +236,21 @@ namespace DataDebug
         {
             if (_workbook != null)
             {
-                RibbonHelper.RestoreColors(_colors, _output_highlights);
+                foreach (KeyValuePair<AST.Address, CellColor> pair in _colors)
+                {
+                    var com = pair.Key.GetCOMObject(_app);
+                    com.Interior.ColorIndex = pair.Value.ColorIndex;
+                    com.Interior.Color = pair.Value.Color;
+                }
+                _colors.Clear();
             }
             _output_highlights.Clear();
         }
 
         public void ResetTool()
         {
-            if (_workbook != null)
-            {
-                RibbonHelper.RestoreColors(_colors, _tool_highlights);
-            }
-
+            RestoreOutputColors();
             _known_good.Clear();
-            _tool_highlights.Clear();
             SetTool(active: false);
         }
 
