@@ -234,7 +234,7 @@ namespace DataDebugMethods
 
                 c = new AST.COMRef(rng.getUniqueID(), wb, ws, com, path, wbname, wsname, Microsoft.FSharp.Core.FSharpOption<string>.None, width, height);
                 _all_vectors.Add(rng, c);
-                _do_not_perturb.Add(rng, false);    // initially mark as perturbable
+                _do_not_perturb.Add(rng, true);    // initially mark as not perturbable
             }
             return c;
         }
@@ -302,11 +302,14 @@ namespace DataDebugMethods
             var inputs = _v2i[vector_rng];
 
             // count inputs that are formulas
-            int fcnt = inputs.Select(iaddr => _formulas.ContainsKey(iaddr)).Count(e => e == true);
+            int fcnt = inputs.Count(iaddr => _formulas.ContainsKey(iaddr));
 
-            if (fcnt == inputs.Count)
+            // If there is at least one input that is not a formula
+            // mark the whole vector as perturbable.
+            // Note: all vectors marked as non-perturbable by default.
+            if (fcnt != inputs.Count)
             {
-                _do_not_perturb[vector_rng] = true;
+                _do_not_perturb[vector_rng] = false;
             }
         }
 
@@ -385,22 +388,51 @@ namespace DataDebugMethods
             {
                 return "";
             }
-            // recursive case: we're a formula
+            // case 3: a formula
+
             String s = "";
+            var ca_name = DOTNodeName(current_addr);
+
+            // 3a. single-cell input 
             HashSet<AST.Address> single_inputs = _f2i[current_addr];
-            HashSet<AST.Address> vector_inputs = new HashSet<AST.Address>(_f2v[current_addr].SelectMany(addrs => addrs.Addresses()));
-            foreach (AST.Address input_addr in vector_inputs.Union(single_inputs))
+            foreach (AST.Address input_addr in single_inputs)
             {
                 var ia_name = DOTNodeName(input_addr);
-                var ca_name = DOTNodeName(current_addr);
 
                 // print
                 s += ia_name + " -> " + ca_name + ";\n";
+
                 // mark visit
-                visited.Add(current_addr);
+                visited.Add(input_addr);
+
                 // recurse
                 s += ToDOT(input_addr, visited);
             }
+
+            // 3b. vector input
+            HashSet<AST.Range> vector_inputs = _f2v[current_addr];
+            foreach (AST.Range v_addr in vector_inputs)
+            {
+                var rng_name = "\"" + v_addr.GetCOMObject(_app).Address + "\"";
+
+                // print
+                s += rng_name + " -> " + ca_name + ";\n";
+
+                // recurse
+                foreach (AST.Address input_addr in v_addr.Addresses())
+                {
+                    var ia_name = DOTNodeName(input_addr);
+
+                    // print
+                    s += ia_name + " -> " + rng_name + ";\n";
+
+                    // mark visit
+                    visited.Add(input_addr);
+
+                    s += ToDOT(input_addr, visited);
+                }
+            }
+
             return s;
         }
 
@@ -463,17 +495,21 @@ namespace DataDebugMethods
 
         public AST.Range[] terminalInputVectors()
         {
+            return _do_not_perturb.Where(pair => pair.Value == false).Select(pair => pair.Key).ToArray();
+
+            // TODO: it's not clear why the code below returns nothing.
+
             // this should filter out the following two cases:
             // 1. input range is intermediate (acts as input to a formula
             // and also contains a formula that consumes input from
             // another range).
             // 2. the range is actually a formula cell
-            return _all_vectors.AsTUEnum().Where( pair =>
-                     !pair.Value.DoNotPerturb &&        // range is not marked Do Not Perturb
-                     !pair.Key.Addresses().Any(addr =>  // and range does not contain a formula
-                       _formulas.ContainsKey(addr)
-                     )
-                   ).Select(pair => pair.Key).ToArray();
+            //return _all_vectors.AsTUEnum().Where( pair =>
+            //         !pair.Value.DoNotPerturb &&        // range is not marked Do Not Perturb
+            //         !pair.Key.Addresses().Any(addr =>  // and range does not contain a formula
+            //           _formulas.ContainsKey(addr)
+            //         )
+            //       ).Select(pair => pair.Key).ToArray();
         }
 
         public AST.Address[] allComputationCells()

@@ -97,7 +97,7 @@ namespace DataDebug
 
                 if (dag.terminalInputVectors().Length == 0)
                 {
-                    System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
+                    System.Windows.Forms.MessageBox.Show("This spreadsheet contains no vector-input functions.");
                     _app.ScreenUpdating = true;
                     _flaggable = new KeyValuePair<AST.Address,int>[0];
                     return;
