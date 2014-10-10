@@ -135,9 +135,9 @@ namespace DataDebugMethods
 
                     // for every cell that is actually a formula, add to 
                     // formula dictionary & init formula lookup dictionaries
-                    for (int c = left; c < left + width; c++)
+                    for (int c = 1; c <= width; c++)
                     {
-                        for (int r = top; r < top + height; r++)
+                        for (int r = 1; r <= height; r++)
                         {
                             var f = (string)formulas[r, c];
                             if (fn_filter.IsMatch(f))
