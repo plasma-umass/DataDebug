@@ -25,10 +25,10 @@ namespace DataDebugMethods
                 fo_arr = new FunctionOutput<string>[outputs.Length];
 
                 // grab all outputs
+                var fos = DAG.fastOutputRead(com.Worksheet.Parent, dag.getAllFormulaAddrsAsHashSet());
                 for (var k = 0; k < outputs.Length; k++)
                 {
-                    // save the output
-                    fo_arr[k] = new FunctionOutput<string>(dag.readCOMValueAtAddress(outputs[k]), sample.GetExcludes());
+                    fo_arr[k] = new FunctionOutput<string>(fos[outputs[k]], sample.GetExcludes());
                 }
 
                 // Add function values to cache

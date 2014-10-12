@@ -42,7 +42,7 @@ namespace DataDebugMethods
             _app = app;
 
             // bulk read worksheets
-            fastFormulaRead(wb);
+            initFormulas(wb);
 
             // extract references from formulas
             foreach (AST.Address formula_addr in this.getAllFormulaAddrs())
@@ -81,7 +81,78 @@ namespace DataDebugMethods
             _analysis_time = sw.ElapsedMilliseconds;
         }
 
-        private void fastFormulaRead(Excel.Workbook wb)
+        public static Dictionary<AST.Address, string> fastOutputRead(
+            Excel.Workbook wb,
+            HashSet<AST.Address> formula_addrs
+            )
+        {
+            // init output dictionary
+            var data = new Dictionary<AST.Address, string>();
+
+            // get names once
+            var wbfullname = wb.FullName;
+            var wbname = wb.Name;
+            var path = wb.Path;
+            var wbname_opt = new Microsoft.FSharp.Core.FSharpOption<String>(wbname);
+            var path_opt = new Microsoft.FSharp.Core.FSharpOption<String>(path);
+
+            foreach (Excel.Worksheet worksheet in wb.Worksheets)
+            {
+                // get used range
+                Excel.Range urng = worksheet.UsedRange;
+
+                // get dimensions
+                var left = urng.Column;                      // 1-based left-hand y coordinate
+                var right = urng.Columns.Count + left - 1;   // 1-based right-hand y coordinate
+                var top = urng.Row;                          // 1-based top x coordinate
+                var bottom = urng.Rows.Count + top - 1;      // 1-based bottom x coordinate
+
+                // get worksheet name
+                var wsname = worksheet.Name;
+                var wsname_opt = new Microsoft.FSharp.Core.FSharpOption<String>(wsname);
+
+                // init
+                int width = right - left + 1;
+                int height = bottom - top + 1;
+
+                // if the used range is a single cell, Excel changes the type
+                if (left == right && top == bottom)
+                {
+                    var output = System.Convert.ToString(urng.Value2);
+                    var addr = AST.Address.NewFromR1C1(top, left, wsname_opt, wbname_opt, path_opt);
+                    if (formula_addrs.Contains(addr))
+                    {
+                        data.Add(addr, output);
+                    }
+                }
+                else
+                {
+                    // array read of formula cells
+                    // note that this is a 1-based 2D multiarray
+                    object[,] formulas = urng.Value2;
+
+                    // for every cell that is actually a formula, add to 
+                    // formula dictionary & init formula lookup dictionaries
+                    for (int c = 1; c <= width; c++)
+                    {
+                        for (int r = 1; r <= height; r++)
+                        {
+                            var output = System.Convert.ToString(formulas[r, c]);
+                            var addr = AST.Address.NewFromR1C1(r + top - 1, c + left - 1, wsname_opt, wbname_opt, path_opt);
+
+                            if (formula_addrs.Contains(addr))
+                            {
+                                data.Add(addr, output);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return data;
+        }
+
+        private void initFormulas(Excel.Workbook wb)
         {
             // get names once
             var wbfullname = wb.FullName;
@@ -214,6 +285,11 @@ namespace DataDebugMethods
         public AST.Address[] getAllFormulaAddrs()
         {
             return _formulas.Keys.ToArray();
+        }
+
+        public HashSet<AST.Address> getAllFormulaAddrsAsHashSet()
+        {
+            return new HashSet<AST.Address>(_formulas.Keys);
         }
 
         public AST.COMRef makeInputVectorCOMRef(AST.Range rng)
