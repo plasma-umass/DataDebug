@@ -495,21 +495,9 @@ namespace DataDebugMethods
 
         public AST.Range[] terminalInputVectors()
         {
-            return _do_not_perturb.Where(pair => pair.Value == false).Select(pair => pair.Key).ToArray();
-
-            // TODO: it's not clear why the code below returns nothing.
-
-            // this should filter out the following two cases:
-            // 1. input range is intermediate (acts as input to a formula
-            // and also contains a formula that consumes input from
-            // another range).
-            // 2. the range is actually a formula cell
-            //return _all_vectors.AsTUEnum().Where( pair =>
-            //         !pair.Value.DoNotPerturb &&        // range is not marked Do Not Perturb
-            //         !pair.Key.Addresses().Any(addr =>  // and range does not contain a formula
-            //           _formulas.ContainsKey(addr)
-            //         )
-            //       ).Select(pair => pair.Key).ToArray();
+            return _do_not_perturb
+                .Where(pair => !pair.Value)
+                .Select(pair => pair.Key).ToArray();
         }
 
         public AST.Address[] allComputationCells()
