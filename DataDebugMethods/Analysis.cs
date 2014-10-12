@@ -6,9 +6,8 @@ using System.Text;
 using System.Numerics;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
-using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+//using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -21,61 +20,54 @@ namespace DataDebugMethods
 
     public class Analysis
     {
-        private static Dictionary<TreeNode, InputSample> StoreInputs(TreeNode[] inputs)
+        private static Dictionary<AST.Range, InputSample> StoreInputs(AST.Range[] inputs, DAG dag)
         {
-            var d = new Dictionary<TreeNode, InputSample>();
-            foreach (TreeNode input_range in inputs)
+            var d = new Dictionary<AST.Range, InputSample>();
+            foreach (AST.Range input_range in inputs)
             {
-                var com = input_range.getCOMObject();
-                var s = new InputSample(input_range.Rows(), input_range.Columns());
+                var com = dag.getCOMRefForRange(input_range);
+                var s = new InputSample(com.Height, com.Width);
 
                 // store the entire COM array as a multiarray
                 // in one fell swoop.
-                s.AddArray(com.Value2);
+                s.AddArray(com.Range.Value2);
 
                 // add stored input to dict
                 d.Add(input_range, s);
 
                 // this is to force excel to recalculate its outputs
                 // exactly the same way that it will for our bootstraps
-                BootMemo.ReplaceExcelRange(com, s);
+                BootMemo.ReplaceExcelRange(com.Range, s);
             }
 
             return d;
         }
 
-        public static Dictionary<TreeNode, string> StoreOutputs(TreeNode[] outputs)
+        public static Dictionary<AST.Address, string> StoreOutputs(AST.Address[] outputs, DAG dag)
         {
-            // hash TreeNodes by their addresses
-            var fn_map = new Dictionary<AST.Address, TreeNode>();
-            foreach (TreeNode fn in outputs)
-            {
-                fn_map.Add(fn.GetAddress(), fn);
-            }
-
             // output dict
-            var d = new Dictionary<TreeNode, string>();
+            var d = new Dictionary<AST.Address, string>();
 
-            // partition all of the TreeNodes by their worksheet
-            var tree_groups = outputs.GroupBy(tn => tn.GetAddress().WorksheetName);
+            // partition all of the output addresses by their worksheet
+            var addr_groups = outputs.GroupBy(addr => dag.getCOMRefForAddress(addr).WorksheetName);
 
             // for each worksheet, do an array read of the formulas
-            foreach (IEnumerable<TreeNode> ws_fns in tree_groups)
+            foreach (IEnumerable<AST.Address> ws_fns in addr_groups)
             {
-                // get formulas in this worksheet
-                var rng = ws_fns.First().getWorksheetObject().UsedRange;
+                // get worksheet used range
+                var fstcr = dag.getCOMRefForAddress(ws_fns.First());
+                var rng = fstcr.Worksheet.UsedRange;
 
-                // get dimensions
+                // get used range dimensions
                 var left = rng.Column;
                 var right = rng.Columns.Count + left - 1;
                 var top = rng.Row;
                 var bottom = rng.Rows.Count + top - 1;
 
                 // get names
-                var fstaddr = ws_fns.First().GetAddress();
-                var wsname = fstaddr.WorksheetName;
-                var wbname = fstaddr.WorkbookName;
-                var path = fstaddr.Path;
+                var wsname = new FSharpOption<string>(fstcr.WorksheetName);
+                var wbname = new FSharpOption<string>(fstcr.WorkbookName);
+                var path = new FSharpOption<string>(fstcr.Path);
 
                 // sometimes the used range is a range
                 if (left != right || top != bottom)
@@ -87,10 +79,9 @@ namespace DataDebugMethods
                     var x_del = left - 1;
                     var y_del = top - 1;
 
-                    foreach (TreeNode tn in ws_fns)
+                    foreach (AST.Address addr in ws_fns)
                     {
                         // construct address in formulas array
-                        var addr = tn.GetAddress();
                         var x = addr.X - x_del;
                         var y = addr.Y - y_del;
 
@@ -98,11 +89,11 @@ namespace DataDebugMethods
                         String s = System.Convert.ToString(data[y, x]);
                         if (String.IsNullOrWhiteSpace(s))
                         {
-                            d.Add(tn, "");
+                            d.Add(addr, "");
                         }
                         else
                         {
-                            d.Add(tn, s);
+                            d.Add(addr, s);
                         }
                     }
                 }
@@ -112,19 +103,17 @@ namespace DataDebugMethods
                     // construct the appropriate AST.Address
                     AST.Address addr = AST.Address.NewFromR1C1(top, left, wsname, wbname, path);
 
-                    // check that the address belongs to one of our TreeNodes
-                    TreeNode tn;
-                    if (fn_map.TryGetValue(addr, out tn))
+                    // make certain that it is actually a string
+                    String s = System.Convert.ToString(rng.Value2);
+
+                    // add to dictionary, as appropriate
+                    if (String.IsNullOrWhiteSpace(s))
                     {
-                        String s = System.Convert.ToString(rng.Value2);
-                        if (String.IsNullOrWhiteSpace(s))
-                        {
-                            d.Add(tn, "");
-                        }
-                        else
-                        {
-                            d.Add(tn, s);
-                        }
+                        d.Add(addr, "");
+                    }
+                    else
+                    {
+                        d.Add(addr, s);
                     }
                 }
             }
@@ -172,22 +161,23 @@ namespace DataDebugMethods
         // num_bootstraps: the number of bootstrap samples to get
         // inputs: a list of inputs; each TreeNode represents an entire input range
         // outputs: a list of outputs; each TreeNode represents a function
-        public static TreeScore Bootstrap(int num_bootstraps,
-                                          AnalysisData data,
+        public static TreeScore DataDebug(int num_bootstraps,
+                                          DAG dag,
                                           Excel.Application app,
                                           bool weighted,
                                           bool all_outputs,
                                           long max_duration_in_ms,
                                           Stopwatch sw,
-                                          double significance)
+                                          double significance,
+                                          ProgBar pb)
         {
             // this modifies the weights of each node
-            PropagateWeights(data);
+            PropagateWeights(dag);
 
             // filter out non-terminal functions
-            var output_fns = data.TerminalFormulaNodes(all_outputs);
+            var output_fns = dag.terminalFormulaNodes(all_outputs);
             // filter out non-terminal inputs
-            var input_rngs = data.TerminalInputNodes();
+            var input_rngs = dag.terminalInputVectors();
 
             // first idx: the index of the TreeNode in the "inputs" array
             // second idx: the ith bootstrap
@@ -197,11 +187,11 @@ namespace DataDebugMethods
             var rng = new Random();
 
             // we save initial inputs and outputs here
-            var initial_inputs = StoreInputs(input_rngs);
-            var initial_outputs = StoreOutputs(output_fns);
+            var initial_inputs = StoreInputs(input_rngs, dag);
+            var initial_outputs = StoreOutputs(output_fns, dag);
 
             // Set progress bar max
-            data.SetPBMax(input_rngs.Length * 2);
+            pb.setMax(input_rngs.Length * 2);
 
             #region RESAMPLE
 
@@ -216,45 +206,49 @@ namespace DataDebugMethods
                 resamples[i] = Resample(num_bootstraps, initial_inputs[t], rng);
 
                 // update progress bar
-                data.PokePB();
+                pb.IncrementProgress();
             }
 
             #endregion RESAMPLE
 
             #region INFERENCE
-            return DataDebug(
+            return Inference(
                 num_bootstraps,
                 resamples,
                 initial_inputs,
                 initial_outputs,
                 input_rngs,
                 output_fns,
-                data,
+                dag,
                 weighted,
-                significance);
+                significance,
+                pb);
             #endregion INFERENCE
         }
 
         public class DataDebugJob
         {
+            private DAG _dag;
             private FunctionOutput<string>[][] _bs;
-            private Dictionary<TreeNode, string> _initial_outputs;
-            private TreeNode _input;
-            private TreeNode[] _outputs;
+            private Dictionary<AST.Address, string> _initial_outputs;
+            private AST.Range _input;
+            private AST.Address[] _outputs;
             private bool _weighted;
             private double _significance;
             private ManualResetEvent _mre;
             private TreeScore _score; // dict of exclusion scores for each input CELL TreeNode
 
             public DataDebugJob(
+                DAG dag,
                 FunctionOutput<String>[][] bs,
-                Dictionary<TreeNode, string> initial_outputs,
-                TreeNode input,
-                TreeNode[] output_arr,
+                Dictionary<AST.Address, string> initial_outputs,
+                AST.Range input,
+                AST.Address[] output_arr,
                 bool weighted,
                 double significance,
                 ManualResetEvent mre)
             {
+                _dag = dag;
                 _bs = bs;
                 _initial_outputs = initial_outputs;
                 _input = input;
@@ -274,18 +268,18 @@ namespace DataDebugMethods
             {
                 for (var f = 0; f < _outputs.Length; f++)
                 {
-                    TreeNode output = _outputs[f];
+                    AST.Address output = _outputs[f];
 
                     // do the hypothesis test and then merge
                     // the scores from previous tests
                     TreeScore s;
                     if (FunctionOutputsAreNumeric(_bs[f]))
                     {
-                        s = NumericHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
+                        s = NumericHypothesisTest(_dag, _input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
                     }
                     else
                     {
-                        s = StringHypothesisTest(_input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
+                        s = StringHypothesisTest(_dag, _input, output, _bs[f], _initial_outputs[output], _weighted, _significance);
                     }
                     _score = DictAdd(_score, s);
                 }
@@ -308,16 +302,17 @@ namespace DataDebugMethods
             }
         }
 
-        public static TreeScore DataDebug(
+        public static TreeScore Inference(
             int num_bootstraps,
             InputSample[][] resamples,
-            Dictionary<TreeNode, InputSample> initial_inputs,
-            Dictionary<TreeNode, string> initial_outputs,
-            TreeNode[] input_arr,
-            TreeNode[] output_arr,
-            AnalysisData data,
+            Dictionary<AST.Range, InputSample> initial_inputs,
+            Dictionary<AST.Address, string> initial_outputs,
+            AST.Range[] input_arr,
+            AST.Address[] output_arr,
+            DAG dag,
             bool weighted,
-            double significance)
+            double significance,
+            ProgBar pb)
         {
             // synchronization token
             object lock_token = new Object();
@@ -354,7 +349,7 @@ namespace DataDebugMethods
                     var input = input_arr[i];
 
                     // fetch the input range COM object
-                    var com = input.getCOMObject();
+                    var com = dag.getCOMRefForRange(input).Range;
 
                     // compute outputs
                     // replace the values of the COM object with the jth bootstrap,
@@ -363,7 +358,7 @@ namespace DataDebugMethods
                     for (var b = 0; b < num_bootstraps; b++)
                     {
                         // lookup outputs from memo table; otherwise do replacement, compute outputs, store them in table, and return them
-                        FunctionOutput<string>[] fos = memo.FastReplace(com, initial_inputs[input], resamples[i][b], output_arr, false);
+                        FunctionOutput<string>[] fos = memo.FastReplace(com, dag, initial_inputs[input], resamples[i][b], output_arr, false);
                         for (var f = 0; f < output_arr.Length; f++)
                         {
                             bs[f][b] = fos[f];
@@ -373,15 +368,8 @@ namespace DataDebugMethods
                     // restore the original inputs; faster to do once, after bootstrapping is done
                     BootMemo.ReplaceExcelRange(com, initial_inputs[input]);
 
-                    // restore formulas
-                    foreach (TreeDictPair pair in data.formula_nodes)
-                    {
-                        TreeNode node = pair.Value;
-                        if (node.isFormula())
-                        {
-                            node.getCOMObject().Formula = node.getFormula();
-                        }
-                    }
+                    // TODO: restore formulas if it turns out that they were overwrittern
+                    //       this should never be the case
                     #endregion BOOTSTRAP
 
                     #region HYPOTHESIS_TEST
@@ -390,6 +378,7 @@ namespace DataDebugMethods
 
                     // set up job
                     ddjs[i] = new DataDebugJob(
+                                dag,
                                 bs,
                                 initial_outputs,
                                 input_arr[i],
@@ -404,7 +393,7 @@ namespace DataDebugMethods
                     #endregion HYPOTHESIS_TEST
 
                     // update progress bar
-                    data.PokePB();
+                    pb.IncrementProgress();
                 }
                 catch (System.OutOfMemoryException)
                 {
@@ -432,14 +421,14 @@ namespace DataDebugMethods
             var d3 = new TreeScore();
             if (d1 != null)
             {
-                foreach (KeyValuePair<TreeNode, int> pair in d1)
+                foreach (KeyValuePair<AST.Address, int> pair in d1)
                 {
                     d3.Add(pair.Key, pair.Value);
                 }
             }
             if (d2 != null)
             {
-                foreach (KeyValuePair<TreeNode, int> pair in d2)
+                foreach (KeyValuePair<AST.Address, int> pair in d2)
                 {
                     int score;
                     if (d3.TryGetValue(pair.Key, out score))
@@ -456,10 +445,10 @@ namespace DataDebugMethods
             return d3;
         }
 
-        public static TreeScore StringHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
+        public static TreeScore StringHypothesisTest(DAG dag, AST.Range rangeNode, AST.Address functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
-            var input_cells = rangeNode.getInputs();
+            var input_cells = rangeNode.Addresses();
 
             // scores
             var iexc_scores = new TreeScore();
@@ -473,11 +462,11 @@ namespace DataDebugMethods
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells.ElementAt(i);
+                AST.Address xtree = input_cells.ElementAt(i);
                 if (weighted)
                 {
                     // the weight of the function value of interest
-                    weight = (int)functionNode.getWeight();
+                    weight = dag.getWeight(functionNode);
                 }
 
                 if (RejectNullHypothesis(boots, initial_output, i, significance))
@@ -505,10 +494,10 @@ namespace DataDebugMethods
             return iexc_scores;
         }
 
-        public static TreeScore NumericHypothesisTest(TreeNode rangeNode, TreeNode functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
+        public static TreeScore NumericHypothesisTest(DAG dag, AST.Range rangeNode, AST.Address functionNode, FunctionOutput<string>[] boots, string initial_output, bool weighted, double significance)
         {
             // this function's input cells
-            var input_cells = rangeNode.getInputs();
+            var input_cells = rangeNode.Addresses();
 
             var inputs_sz = input_cells.Count();
 
@@ -529,13 +518,12 @@ namespace DataDebugMethods
                 int weight = 1;
 
                 // add weight to score if test fails
-                TreeNode xtree = input_cells.ElementAt(i);
-//  Decided not to use weighted scoring
-//                if (weighted)
-//                {
-//                    // the weight of the function value of interest
-//                    weight = (int)functionNode.getWeight();
-//                }
+                AST.Address xtree = input_cells[i];
+                if (weighted)
+                {
+                    // the weight of the function value of interest
+                    weight = dag.getWeight(functionNode);
+                }
 
                 double outlieriness = RejectNullHypothesis(sorted_num_boots, initial_output, i, significance);
 
@@ -722,43 +710,49 @@ namespace DataDebugMethods
         }
 
         // Propagate weights
-        private static void PropagateWeights(AnalysisData data)
+        private static void PropagateWeights(DAG dag)
         {
-            if (data.ContainsLoop())
+            if (dag.containsLoop())
             {
                 throw new ContainsLoopException();
             }
 
             // starting set of functions; roots in the forest
-            var functions = data.TerminalFormulaNodes(false);
+            var formulas = dag.terminalFormulaNodes(false);
 
             // for each forest
-            foreach (TreeNode fn in functions)
+            foreach (AST.Address f in formulas)
             {
-                fn.setWeight(PropagateTreeNodeWeight(fn));
+                dag.setWeight(f, PropagateNodeWeight(f, dag));
             }
         }
 
-        private static int PropagateTreeNodeWeight(TreeNode t)
+        private static int PropagateNodeWeight(AST.Address node, DAG dag)
         {
-            var inputs = t.getInputs();
-            // if we have no inputs, then we ARE an input
-            if (inputs.Count() == 0)
+            // if the node is a formula, recursively
+            // compute its weight
+            if (dag.isFormula(node))
             {
-                t.setWeight(1);
-                return 1;
-            }
-            // otherwise we have inputs, recursively compute their weights
-            // and add to this one
-            else
-            {
+                // get input nodes
+                var vector_rngs = dag.getFormulaInputVectors(node);
+                var scinputs = dag.getFormulaSingleCellInputs(node);
+                var inputs = vector_rngs.SelectMany(vrng => vrng.Addresses()).ToList();
+                inputs.AddRange(scinputs);
+
+                // call recursively and sum components
                 var weight = 0;
                 foreach (var input in inputs)
                 {
-                    weight += PropagateTreeNodeWeight(input);
+                    weight += PropagateNodeWeight(input, dag);
                 }
-                t.setWeight(weight);
+                dag.setWeight(node, weight);
                 return weight;
+            }
+            // node is an input
+            else
+            {
+                dag.setWeight(node, 1);
+                return 1;
             }
         }
     }

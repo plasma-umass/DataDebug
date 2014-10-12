@@ -13,7 +13,7 @@ namespace DataDebugMethods
     {
         private Dictionary<InputSample, FunctionOutput<string>[]> _d = new Dictionary<InputSample, FunctionOutput<string>[]>();
         
-        public FunctionOutput<string>[] FastReplace(Excel.Range com, InputSample original, InputSample sample, TreeNode[] outputs, bool replace_original)
+        public FunctionOutput<string>[] FastReplace(Excel.Range com, DAG dag, InputSample original, InputSample sample, AST.Address[] outputs, bool replace_original)
         {
             FunctionOutput<string>[] fo_arr;
             if (!_d.TryGetValue(sample, out fo_arr))
@@ -28,7 +28,7 @@ namespace DataDebugMethods
                 for (var k = 0; k < outputs.Length; k++)
                 {
                     // save the output
-                    fo_arr[k] = new FunctionOutput<string>(outputs[k].getCOMValueAsString(), sample.GetExcludes());
+                    fo_arr[k] = new FunctionOutput<string>(dag.readCOMValueAtAddress(outputs[k]), sample.GetExcludes());
                 }
 
                 // Add function values to cache

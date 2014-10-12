@@ -4,19 +4,20 @@ using System.Linq;
 using System.Text;
 using DataDebugMethods;
 using Excel = Microsoft.Office.Interop.Excel;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 
 namespace UserSimulation
 {
     public static class Config
     {
-        public static void RunSimulationPaperMain(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static void RunSimulationPaperMain(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
+            pb.setMax(5);
+
             // record intitial state of spreadsheet
-            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+            var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
             // generate errors
             CellDict errors = UserSimulation.Utility.GenImportantErrors(prepdata.terminal_formula_nodes,
@@ -25,22 +26,25 @@ namespace UserSimulation
                                                                prepdata.correct_outputs,
                                                                app,
                                                                wbh,
-                                                               c);
+                                                               c,
+                                                               prepdata.dag);
             // run paper simulations
             RunSimulation(app, wbh, nboots, significance, threshold, c, r, outfile, max_duration_in_ms, logfile, pb, prepdata, errors);
         }
 
-        public static void RunProportionExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static void RunProportionExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
+            pb.setMax(5);
+
             // record intitial state of spreadsheet
-            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+            var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
             // init error generator
             var eg = new ErrorGenerator();
 
             // get inputs as an array of addresses to facilitate random selection
             // DATA INPUTS ONLY
-            var inputs = prepdata.graph.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+            AST.Address[] inputs = prepdata.dag.terminalInputCells();
 
             // sanity check: all of the inputs should also be in prepdata.original_inputs
             foreach (AST.Address addr in inputs)
@@ -71,17 +75,19 @@ namespace UserSimulation
             }
         }
 
-        public static bool RunSubletyExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb)
+        public static bool RunSubletyExperiment(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, bool ignore_parse_errors)
         {
+            pb.setMax(5);
+
             // record intitial state of spreadsheet
-            var prepdata = Prep.PrepSimulation(app, wbh, pb);
+            var prepdata = Prep.PrepSimulation(app, wbh, pb, ignore_parse_errors);
 
             // init error generator
             var eg = new ErrorGenerator();
 
             // get inputs as an array of addresses to facilitate random selection
             // DATA INPUTS ONLY
-            var inputs = prepdata.graph.TerminalInputCells().Select(n => n.GetAddress()).ToArray<AST.Address>();
+            AST.Address[] inputs = prepdata.dag.terminalInputCells();
 
             for (int i = 0; i < 100; i++)
             {
@@ -129,8 +135,6 @@ namespace UserSimulation
 
         public static void RunSimulation(Excel.Application app, Excel.Workbook wbh, int nboots, double significance, double threshold, UserSimulation.Classification c, Random r, String outfile, long max_duration_in_ms, String logfile, ProgBar pb, PrepData prepdata, CellDict errors)
         {
-            pb.IncrementProgress(16);
-
             // write header if needed
             if (!System.IO.File.Exists(outfile))
             {
@@ -159,7 +163,7 @@ namespace UserSimulation
             //                    max_duration_in_ms,                    // max duration of simulation 
             //                    logfile);
             //System.IO.File.AppendAllText(outfile, s_1.FormatResultsAsCSV());
-            //pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // CheckCell weighted, all outputs, quantile
             var s_4 = new UserSimulation.Simulation();
@@ -173,7 +177,7 @@ namespace UserSimulation
                                 UserSimulation.AnalysisType.CheckCell10,// analysis type
                                 true,                                  // weighted analysis
                                 true,                                  // use all outputs for analysis
-                                prepdata.graph,                                 // AnalysisData
+                                prepdata.dag,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
                                 prepdata.terminal_input_nodes,                  // input range nodes
@@ -183,7 +187,7 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_4.FormatResultsAsCSV());
-            pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // Normal, all inputs
             var s_2 = new UserSimulation.Simulation();
@@ -197,7 +201,7 @@ namespace UserSimulation
                                 UserSimulation.AnalysisType.NormalAllInputs,   // analysis type
                                 true,                                  // irrelevant
                                 true,                                  // irrelevant
-                                prepdata.graph,                                 // AnalysisData
+                                prepdata.dag,                                 // AnalysisData
                                 wbh,                                   // Excel.Workbook
                                 errors,                                // pre-generated errors
                                 prepdata.terminal_input_nodes,                  // input range nodes
@@ -207,7 +211,7 @@ namespace UserSimulation
                                 max_duration_in_ms,                    // max duration of simulation 
                                 logfile);
             System.IO.File.AppendAllText(outfile, s_2.FormatResultsAsCSV());
-            pb.IncrementProgress(16);
+            pb.IncrementProgress();
 
             // Normal, range inputs
             //var s_3 = new UserSimulation.Simulation();
@@ -231,7 +235,7 @@ namespace UserSimulation
             //                    max_duration_in_ms,                    // max duration of simulation 
             //                    logfile);
             //System.IO.File.AppendAllText(outfile, s_3.FormatResultsAsCSV());
-            //pb.IncrementProgress(20);
+            pb.IncrementProgress();
         }
     }
 }

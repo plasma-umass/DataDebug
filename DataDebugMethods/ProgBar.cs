@@ -9,23 +9,21 @@ using System.Windows.Forms;
 
 namespace DataDebugMethods
 {
+    public class ProgressMaxUnsetException : Exception { }
+
     /// <summary>
     /// This progress bar's lifecycle should be managed by the UI layer.
     /// </summary>
     public partial class ProgBar : Form
     {
-        int Maximum;
-        int Minimum;
-        int state;
+        private bool _max_set = false;
+        private int _count = 0;
 
-        public ProgBar(int low, int high)
+        public ProgBar()
         {
-            Minimum = low;
-            Maximum = high;
-            state = Minimum;
             InitializeComponent();
-            progressBar1.Minimum = Minimum;
-            progressBar1.Maximum = Maximum;
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = 100;
             this.Visible = true;
         }
 
@@ -34,35 +32,43 @@ namespace DataDebugMethods
 
         }
 
-        public void SetProgress(int progress)
+        public void IncrementProgress()
         {
-            if (progress < Minimum || progress > Maximum)
+            if (!_max_set)
             {
-                throw new Exception("Progress bar error.");
+                throw new ProgressMaxUnsetException();
             }
-            progressBar1.Value = progress;
-        }
 
-        public void IncrementProgress(int delta)
-        {
-            if (state + delta < Minimum)
+            var iota = 1.0 / progressBar1.Maximum;
+
+            if (_count * iota < 0)
             {
-                state = Minimum;
+                progressBar1.Value = 0;
             }
-            else if (state + delta > Maximum)
+            else if (_count * iota > progressBar1.Maximum)
             {
-                state = Maximum;
+                progressBar1.Value = progressBar1.Maximum;
             }
             else
             {
-                state += delta;
+                progressBar1.Value = (int)(_count * iota);
             }
-            progressBar1.Value = state;
+            _count++;
         }
 
         public int maxProgress()
         {
+            if (!_max_set)
+            {
+                throw new ProgressMaxUnsetException();
+            }
             return progressBar1.Maximum;
+        }
+
+        public void setMax(int max_updates)
+        {
+            progressBar1.Maximum = max_updates;
+            _max_set = true;
         }
     }
 }

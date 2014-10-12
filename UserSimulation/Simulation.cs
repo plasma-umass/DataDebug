@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Excel = Microsoft.Office.Interop.Excel;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 using System.Diagnostics;
 using DataDebugMethods;
@@ -32,7 +31,6 @@ namespace UserSimulation
         private ErrorDict _error;
         private double _total_relative_error = 0;
         private int _max_effort = 1;
-        private int _cells_in_scope = 0;
         private int _effort = 0;
         private double _expended_effort = 0;
         private double _initial_total_relative_error = 0;
@@ -117,7 +115,7 @@ namespace UserSimulation
         }
 
         // Get dictionary of inputs and the error they produce
-        public Dictionary<AST.Address, Tuple<string, double>> TopOfKErrors(TreeNode[] terminal_formula_nodes, CellDict inputs, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb, string classification_file)
+        public Dictionary<AST.Address, Tuple<string, double>> TopOfKErrors(AST.Address[] terminal_formula_nodes, CellDict inputs, int k, CellDict correct_outputs, Excel.Application app, Excel.Workbook wb, string classification_file, DAG dag)
         {
             var eg = new ErrorGenerator();
             var c = Classification.Deserialize(classification_file);
@@ -143,7 +141,7 @@ namespace UserSimulation
                     Utility.InjectValues(app, wb, cd);
 
                     // save function outputs
-                    CellDict incorrect_outputs = Utility.SaveOutputs(terminal_formula_nodes);
+                    CellDict incorrect_outputs = Utility.SaveOutputs(terminal_formula_nodes, dag);
 
                     //remove the typo that was introduced
                     cd.Clear();
@@ -176,14 +174,15 @@ namespace UserSimulation
                         AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
-                        AnalysisData data,
+                        DAG dag,
                         Excel.Workbook wb,
-                        TreeNode[] terminal_formula_nodes,
-                        TreeNode[] terminal_input_nodes,
+                        AST.Address[] terminal_formula_cells,
+                        AST.Range[] terminal_input_vectors,
                         CellDict original_inputs,
                         CellDict correct_outputs,
                         long max_duration_in_ms,
-                        String logfile              //filename for the output log
+                        String logfile,              //filename for the output log
+                        ProgBar pb
                        )
         {
             //set wbname and path
@@ -198,21 +197,21 @@ namespace UserSimulation
             Utility.InjectValues(app, wb, _errors);
 
             // save function outputs
-            CellDict incorrect_outputs = Utility.SaveOutputs(terminal_formula_nodes);
+            CellDict incorrect_outputs = Utility.SaveOutputs(terminal_formula_cells, dag);
 
             //Time the removal of errors
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
             // remove errors until none remain; MODIFIES WORKBOOK
-            _user = SimulateUser(nboots, significance, ck, data, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, max_duration_in_ms, sw, logfile);
+            _user = SimulateUser(nboots, significance, ck, dag, original_inputs, _errors, correct_outputs, wb, app, analysisType, weighted, all_outputs, max_duration_in_ms, sw, logfile, pb);
 
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
             _analysis_time = elapsed.TotalSeconds;
 
             // save partially-corrected outputs
-            var partially_corrected_outputs = Utility.SaveOutputs(terminal_formula_nodes);
+            var partially_corrected_outputs = Utility.SaveOutputs(terminal_formula_cells, dag);
 
             // compute total relative error
             _error = Utility.CalculateNormalizedError(correct_outputs, partially_corrected_outputs, _user.max_errors);
@@ -223,20 +222,7 @@ namespace UserSimulation
             _initial_total_relative_error = Utility.TotalRelativeError(starting_error);
 
             // effort
-            _max_effort = data.cell_nodes.Count;
-            _cells_in_scope = 0;
-
-            foreach (TreeNode input_range in terminal_input_nodes)
-            {
-                foreach (TreeNode input_to_range in input_range.getInputs())
-                {
-                    if (input_to_range.isCell() && !input_to_range.isFormula()) //if this input is a cell and is not a formula, then it is perturbable, so it's in our scope
-                    {
-                        _cells_in_scope++;
-                    }
-                }
-            }
-
+            _max_effort = dag.allCells().Length;
             _effort = (_user.true_positives.Count + _user.false_positives.Count);
             _expended_effort = (double)_effort / (double)_max_effort;
 
@@ -249,7 +235,7 @@ namespace UserSimulation
             // restore original values
             Utility.InjectValues(app, wb, original_inputs);
 
-            _tree_construct_time = data.tree_construct_time;
+            _tree_construct_time = dag.AnalysisMilliseconds / 1000.0;
             // flag that we're done; safe to print output results
             _simulation_run = true;
 
@@ -269,18 +255,18 @@ namespace UserSimulation
                         AnalysisType analysisType,  // the type of analysis to run
                         bool weighted,              // should we weigh things?
                         bool all_outputs,           // if !all_outputs, we only consider terminal outputs
-                        AnalysisData data,          // the computation tree of the spreadsheet
+                        DAG dag,          // the computation tree of the spreadsheet
                         Excel.Workbook wb,          // the workbook being analyzed
                         CellDict errors,            // the errors that will be introduced in the spreadsheet
-                        TreeNode[] terminal_input_nodes,   // the inputs
-                        TreeNode[] terminal_formula_nodes, // the outputs
+                        AST.Range[] terminal_input_vectors,   // the inputs
+                        AST.Address[] terminal_formula_cells, // the outputs
                         CellDict original_inputs,          // original values of the inputs
                         CellDict correct_outputs,          // the correct outputs
                         long max_duration_in_ms,
                         String logfile              //filename for the output log
                        )
         {
-            if (terminal_input_nodes.Length == 0)
+            if (terminal_input_vectors.Length == 0)
             {
                 throw new NoRangeInputs();
             }
@@ -318,8 +304,8 @@ namespace UserSimulation
                 (KeyValuePair<AST.Address, string> pair) =>
                     Utility.StringMagnitudeChange(pair.Value, correct_outputs[pair.Key])
                     ).Max() : 0;
-                
-            return Run(nboots, xlfile, significance, ck, app, c, r, analysisType, weighted, all_outputs, data, wb, terminal_formula_nodes, terminal_input_nodes, original_inputs, correct_outputs, max_duration_in_ms, logfile);
+
+            return Run(nboots, xlfile, significance, ck, app, c, r, analysisType, weighted, all_outputs, dag, wb, terminal_formula_cells, terminal_input_vectors, original_inputs, correct_outputs, max_duration_in_ms, logfile, null);
         }
 
         public double RemainingError()
@@ -329,32 +315,30 @@ namespace UserSimulation
 
         public static String HeaderRowForCSV()
         {
-            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23}{24}",
+            return String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21}{22}",
                                  "workbook_name",                               //0
                                  "initial_total_relative_error",                //1
                                  "total_relative_error",                        //2
                                  "remaining_error",                             //3
                                  "effort",                                      //4
                                  "max_effort",                                  //5
-                                 "cells_in_scope",                              //6
-                                 "ratio_scope_out_of_total",                    //7
-                                 "expended_effort",                             //8
-                                 "number_of_errors",                            //9
-                                 "true_positives",                              //10
-                                 "false_positives",                             //11
-                                 "false_negatives",                             //12
-                                 "average_precision",                           //13
-                                 "graph_construct_seconds",                     //14
-                                 "analysis_seconds",                            //15
-                                 "analysis_type",                               //16
-                                 "significance",                                //17
-                                 "all_outputs",                                 //18
-                                 "weighted",                                    //19
-                                 "num_max_err_diff_mag",                        //20
-                                 "str_max_err_diff_mag",                        //21
-                                 "num_max_out_diff_mag",                        //22
-                                 "str_max_out_diff_mag",                        //23
-                                 Environment.NewLine                            //24
+                                 "expended_effort",                             //6
+                                 "number_of_errors",                            //7
+                                 "true_positives",                              //8
+                                 "false_positives",                             //9      
+                                 "false_negatives",                             //10
+                                 "average_precision",                           //11
+                                 "graph_construct_seconds",                     //12
+                                 "analysis_seconds",                            //13
+                                 "analysis_type",                               //14
+                                 "significance",                                //15
+                                 "all_outputs",                                 //16
+                                 "weighted",                                    //17
+                                 "num_max_err_diff_mag",                        //18
+                                 "str_max_err_diff_mag",                        //19
+                                 "num_max_out_diff_mag",                        //20
+                                 "str_max_out_diff_mag",                        //21
+                                 Environment.NewLine                            //22
                                  );                                 
         }
 
@@ -366,8 +350,6 @@ namespace UserSimulation
                     RemainingError() + "," +                // remaining error
                     _effort.ToString() + "," +              // effort
                     _max_effort + "," +                     // max effort
-                    _cells_in_scope + "," +                 // perturbable cells (these are in our scope)
-                    (double)_cells_in_scope / (double)_max_effort + "," +     // proportion of cells that are in scopes of our tool
                     _expended_effort + "," +                // expended effort
                     _errors.Count + "," +                   // number of errors
                     _user.true_positives.Count + "," +      // number of true positives
@@ -444,7 +426,7 @@ namespace UserSimulation
         private UserResults SimulateUser(int nboots,
                                          double significance,
                                          CutoffKind ck,
-                                         AnalysisData data,
+                                         DAG dag,
                                          CellDict original_inputs,
                                          CellDict errord,
                                          CellDict correct_outputs,
@@ -455,7 +437,8 @@ namespace UserSimulation
                                          bool all_outputs,
                                          long max_duration_in_ms,
                                          Stopwatch sw,
-                                         String logfile
+                                         String logfile,
+                                         ProgBar pb
                                         )
         {
             // init user results data structure
@@ -465,7 +448,7 @@ namespace UserSimulation
             // initialize procedure
             var errors_remain = true;
             var max_errors = new ErrorDict();
-            var incorrect_outputs = Utility.SaveOutputs(data.TerminalFormulaNodes(all_outputs));
+            var incorrect_outputs = Utility.SaveOutputs(dag.terminalFormulaNodes(all_outputs), dag);
             var errors_found = 0;
             var number_of_true_errors = errord.Count;
             Utility.UpdatePerFunctionMaxError(correct_outputs, incorrect_outputs, max_errors);
@@ -475,7 +458,7 @@ namespace UserSimulation
 
             // remove errors loop
             var cells_inspected = 0;
-            List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
+            List<KeyValuePair<AST.Address, int>> filtered_high_scores = null;
             bool correction_made = true;
             while (errors_remain)
             {
@@ -493,7 +476,7 @@ namespace UserSimulation
                                                   significance,
                                                   ck,
                                                   nboots,
-                                                  data,
+                                                  dag,
                                                   app,
                                                   weighted,
                                                   all_outputs,
@@ -501,14 +484,15 @@ namespace UserSimulation
                                                   known_good,
                                                   ref filtered_high_scores,
                                                   max_duration_in_ms,
-                                                  sw);
+                                                  sw,
+                                                  pb);
                 } else if (analysis_type == AnalysisType.NormalPerRange)
                 {
-                    flagged_cell = SimulationStep.NormalPerRange_Step(data, wb, known_good, max_duration_in_ms, sw);
+                    flagged_cell = SimulationStep.NormalPerRange_Step(dag, wb, known_good, max_duration_in_ms, sw);
                 }
                 else if (analysis_type == AnalysisType.NormalAllInputs)
                 {
-                    flagged_cell = SimulationStep.NormalAllOutputs_Step(data, app, wb, known_good, max_duration_in_ms, sw);
+                    flagged_cell = SimulationStep.NormalAllOutputs_Step(dag, app, wb, known_good, max_duration_in_ms, sw);
                 }
 
                 // stop if the test no longer returns anything or if
@@ -542,7 +526,7 @@ namespace UserSimulation
                         o.current_total_error.Add(current_total_error);
 
                         // save outputs
-                        partially_corrected_outputs = Utility.SaveOutputs(data.TerminalFormulaNodes(all_outputs));
+                        partially_corrected_outputs = Utility.SaveOutputs(dag.terminalFormulaNodes(all_outputs), dag);
                     }
                     else
                     {

@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TreeNode = DataDebugMethods.TreeNode;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 
 
 namespace UserSimulation
 {
     public abstract class CutoffKind {
-        public abstract List<KeyValuePair<TreeNode,int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good);
+        public abstract List<KeyValuePair<AST.Address,int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good);
         public abstract double Threshold
         {
             get;
@@ -31,7 +30,7 @@ namespace UserSimulation
         {
             get { return _t; }
         }
-        override public List<KeyValuePair<TreeNode, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
+        override public List<KeyValuePair<AST.Address, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
         {
             //Using an outlier test for highlighting 
             //scores that fall outside of two standard deviations from the others
@@ -39,7 +38,7 @@ namespace UserSimulation
 
             var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
-            List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
+            List<KeyValuePair<AST.Address, int>> filtered_high_scores = null;
 
             //Code for doing normal outlier analysis on the scores:
             //find mean:
@@ -96,14 +95,14 @@ namespace UserSimulation
         {
             get { return _t; }
         }
-        override public List<KeyValuePair<TreeNode, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
+        override public List<KeyValuePair<AST.Address, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
         {
             var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
             int start_ptr = 0;
             int end_ptr = 0;
 
-            List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
+            List<KeyValuePair<AST.Address, int>> high_scores = new List<KeyValuePair<AST.Address, int>>();
 
             while ((double)start_ptr / scores_list.Count < _t) //the start of this score region is before the cutoff
             {
@@ -140,7 +139,7 @@ namespace UserSimulation
                 }
             }
             // filter out cells marked as OK
-            return high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            return high_scores.Where(kvp => !known_good.Contains(kvp.Key)).ToList();
         }
     }
 
@@ -159,14 +158,14 @@ namespace UserSimulation
         {
             get { return true; }
         }
-        override public List<KeyValuePair<TreeNode, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
+        override public List<KeyValuePair<AST.Address, int>> applyCutoff(TreeScore scores, HashSet<AST.Address> known_good)
         {
             // sort scores, biggest first
             var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
 
             // return the n largest (and force eager evaluation)
             // excluding cells marked as OK
-            return scores_list.Take(_n).Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
+            return scores_list.Take(_n).Where(kvp => !known_good.Contains(kvp.Key)).ToList();
         }
     }
 }

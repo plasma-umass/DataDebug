@@ -4,10 +4,8 @@ using Microsoft.Office.Tools.Ribbon;
 using Microsoft.Office.Tools.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
-using TreeNode = DataDebugMethods.TreeNode;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
-using ColorDict = System.Collections.Generic.Dictionary<Microsoft.Office.Interop.Excel.Workbook, System.Collections.Generic.List<DataDebugMethods.TreeNode>>;
-using TreeDict = System.Collections.Generic.Dictionary<AST.Address, DataDebugMethods.TreeNode>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
+using TreeDict = System.Collections.Generic.Dictionary<AST.Address, AST.Address>;
 using Microsoft.FSharp.Core;
 using System.IO;
 using System.Linq;
@@ -17,127 +15,504 @@ namespace DataDebug
 {
     public partial class Ribbon
     {
-        // e * 1000
-        public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
-        public readonly static long MAX_DURATION_IN_MS = 5L * 60L * 1000L;  // 5 minutes
-
-        Dictionary<Excel.Workbook,List<RibbonHelper.CellColor>> color_dict; // list for storing colors
-        Excel.Application app;
-        Excel.Workbook current_workbook;
-        double tool_significance = 0.95;
-        HashSet<AST.Address> tool_highlights = new HashSet<AST.Address>();
-        HashSet<AST.Address> output_highlights = new HashSet<AST.Address>();
-        HashSet<AST.Address> known_good = new HashSet<AST.Address>();
-        //IEnumerable<Tuple<double, TreeNode>> analysis_results = null;
-        List<KeyValuePair<TreeNode, int>> flaggable_list = null;
-        AST.Address flagged_cell = null;
-        System.Drawing.Color GREEN = System.Drawing.Color.Green;
-        string classification_file;
-        AnalysisData data;
+        // workbook state data
+        Dictionary<Excel.Workbook, WorkbookState> wbstates = new Dictionary<Excel.Workbook, WorkbookState>();
+        WorkbookState current_workbook;
 
         // simulation files
+        string classification_file;
         String benchmark_dir;
         String simulation_output_dir;
         String simulation_classification_file;
 
-        private void ActivateTool()
-        {
-            this.MarkAsOK.Enabled = true;
-            this.FixError.Enabled = true;
-            this.clearColoringButton.Enabled = true;
-            this.TestNewProcedure.Enabled = false;
+        private void SetUIState(WorkbookState wbs) {
+            this.MarkAsOK.Enabled = wbs.MarkAsOK_Enabled;
+            this.FixError.Enabled = wbs.FixError_Enabled;
+            this.clearColoringButton.Enabled = wbs.ClearColoringButton_Enabled;
+            this.Analyze.Enabled = wbs.Analyze_Enabled;
         }
-
-        private void DeactivateTool()
-        {
-            this.TestNewProcedure.Enabled = true;
-            this.MarkAsOK.Enabled = false;
-            this.FixError.Enabled = false;
-            this.clearColoringButton.Enabled = false;
-        }
-
+        
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
-            ////Randomly select the version of the tool that should be shown;
-            //int tool_versions = 3;
-            //Random rand = new Random();
-            //int i = rand.Next(tool_versions);
-            //i = 0;
-
-            //if (i == 0)
-            //{
-            //    //CheckCell shown; others hidden
-            //    ccgroup.Visible = true;
-            //    group1.Visible = false;
-            //    group2.Visible = false;
-            //}
-            //else if (i == 1)
-            //{
-            //    //Normal per range shown; others hidden
-            //    ccgroup.Visible = false;
-            //    group1.Visible = true;
-            //    group2.Visible = false;
-            //}
-            //else
-            //{
-            //    //Normal on all inputs shown; others hidden
-            //    ccgroup.Visible = false;
-            //    group1.Visible = false;
-            //    group2.Visible = true;
-            //}
-
-            // start tool in deactivated state
-            DeactivateTool();
-
-            // init color storage
-            color_dict = new Dictionary<Excel.Workbook, List<RibbonHelper.CellColor>>();
-
-            // Get current app
-            app = Globals.ThisAddIn.Application;
-
-            // Get current workbook
-            current_workbook = app.ActiveWorkbook;
-
-            // save colors
-            if (current_workbook != null)
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
-
-            // register event handlers
-            app.WorkbookOpen += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookOpenEventHandler(app_WorkbookOpen);
-            app.WorkbookBeforeClose += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookBeforeCloseEventHandler(app_WorkbookBeforeClose);
-            app.WorkbookActivate += new Microsoft.Office.Interop.Excel.AppEvents_WorkbookActivateEventHandler(app_WorkbookActivate);
+            // Callbacks for handling workbook state objects
+            WorkbookOpen(Globals.ThisAddIn.Application.ActiveWorkbook);
+            ((Excel.AppEvents_Event)Globals.ThisAddIn.Application).NewWorkbook += WorkbookOpen;
+            Globals.ThisAddIn.Application.WorkbookOpen += WorkbookOpen;
+            Globals.ThisAddIn.Application.WorkbookActivate += WorkbookActivated;
+            Globals.ThisAddIn.Application.WorkbookDeactivate += WorkbookDeactivated;
+            Globals.ThisAddIn.Application.WorkbookBeforeClose += WorkbookClose;
         }
 
-        private void app_WorkbookOpen(Excel.Workbook wb)
+        // This event is called when Excel opens a workbook
+        private void WorkbookOpen(Excel.Workbook workbook)
         {
-            current_workbook = wb;
-            if (!color_dict.ContainsKey(current_workbook))
-            {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
-            }
+            wbstates.Add(workbook, new WorkbookState(Globals.ThisAddIn.Application, workbook));
         }
 
-        void app_WorkbookBeforeClose(Excel.Workbook wb, ref bool cancel)
+        // This event is called when Excel brings an opened workbook
+        // to the foreground
+        private void WorkbookActivated(Excel.Workbook workbook)
         {
-            color_dict.Remove(wb);
-            if (current_workbook == wb)
-            {
-                current_workbook = null;
-            }
+            current_workbook = wbstates[workbook];
+            SetUIState(current_workbook);
         }
 
-        void app_WorkbookActivate(Excel.Workbook wb)
+        // This even it called when Excel sends an opened workbook
+        // to the background
+        private void WorkbookDeactivated(Excel.Workbook workbook)
         {
-            current_workbook = wb;
-            if (!color_dict.ContainsKey(current_workbook))
+            current_workbook = null;
+        }
+
+        private void WorkbookClose(Excel.Workbook workbook, ref bool Cancel)
+        {
+            wbstates.Remove(workbook);
+        }
+
+        #region BUTTON_HANDLERS
+        private void Analyze_Click(object sender, RibbonControlEventArgs e)
+        {
+            var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
+            if (sig == FSharpOption<double>.None)
             {
-                color_dict.Add(current_workbook, RibbonHelper.SaveColors2(current_workbook));
+                return;
+            }
+            else
+            {
+                current_workbook.ToolSignificance = sig.Value;
+                try
+                {
+                    current_workbook.Analyze(WorkbookState.MAX_DURATION_IN_MS);
+                    current_workbook.Flag();
+                    SetUIState(current_workbook);
+                }
+                catch (ExcelParserUtility.ParseException ex)
+                {
+                    System.Windows.Forms.Clipboard.SetText(ex.Message);
+                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
+                    return;
+                }
             }
         }
 
-        private FSharpOption<double> GetSignificance(string input, string label)
+        // Action for "Clear coloring" button
+        private void StartOver_Click(object sender, RibbonControlEventArgs e)
+        {
+            current_workbook.ResetTool();
+            SetUIState(current_workbook);
+        }
+
+        private void MarkAsOK_Click(object sender, RibbonControlEventArgs e)
+        {
+            current_workbook.MarkAsOK();
+            SetUIState(current_workbook);
+        }
+
+        private void FixError_Click(object sender, RibbonControlEventArgs e)
+        {
+            current_workbook.FixError(SetUIState);
+        }
+
+        private void RunAllBenchmarks_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo5");
+            //// init a RNG
+            //var rng = new Random();
+
+            //// classification data
+            //UserSimulation.Classification c;
+
+            //// ask the user for the classification data
+            //if (simulation_classification_file == null)
+            //{
+            //    var ofd = new System.Windows.Forms.OpenFileDialog();
+            //    ofd.ShowHelp = true;
+            //    ofd.FileName = "ClassificationData-2013-11-14.bin";
+            //    ofd.Title = "Please select a classification data input file.";
+            //    if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+
+            //    simulation_classification_file = ofd.FileName;
+            //}
+
+            //// deserialize classification
+            //c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            //// ask the user where to find the input data
+            //if (benchmark_dir == null)
+            //{
+            //    var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            //    cdd.Description = "Please choose the folder containing the benchmark data.";
+            //    if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //    benchmark_dir = cdd.SelectedPath;
+            //}
+
+            //// enumerate files in benchmark_dir
+            //var benchmark_filenames = Directory.EnumerateFiles(benchmark_dir, "*.xls", SearchOption.AllDirectories);
+
+            //// ask the user where the output data should go
+            //if (simulation_output_dir == null)
+            //{
+            //    var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            //    cdd.Description = "Please choose an output folder.";
+            //    if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //    simulation_output_dir = cdd.SelectedPath;
+            //}
+
+            //// get sig values
+            //var thresh = 0.05;
+            //Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            //// calculate progress bar bounds
+            //var pb_min = 0;
+            //var pb_max = 100 * benchmark_filenames.Count();
+
+            //// show progress bar
+            //var pb = new ProgBar(pb_min, pb_max);
+            //pb.Show();
+
+            //foreach (string benchmark in benchmark_filenames)
+            //{
+            //    try
+            //    {
+            //        // open workbook
+            //        Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
+
+            //        // run simulation
+            //        RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
+
+            //        // close workbook
+            //        wb.Close();
+            //    }
+            //    catch (Exception)
+            //    {
+            //        // do nothing
+            //    }
+            //}
+
+            //// close progbar
+            //pb.Close();
+
+            //// inform user
+            //System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+        private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo6");
+            //// init a RNG
+            //var rng = new Random();
+
+            //// classification data
+            //UserSimulation.Classification c;
+
+            //// ask the user for the classification data
+            //if (simulation_classification_file == null)
+            //{
+            //    var ofd = new System.Windows.Forms.OpenFileDialog();
+            //    ofd.ShowHelp = true;
+            //    ofd.FileName = "ClassificationData-2013-11-14.bin";
+            //    ofd.Title = "Please select a classification data input file.";
+            //    if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+
+            //    simulation_classification_file = ofd.FileName;
+            //}
+
+            //// deserialize classification
+            //c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            //// ask the user where the output data should go
+            //if (simulation_output_dir == null)
+            //{
+            //    var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            //    cdd.Description = "Please choose an output folder.";
+            //    if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //    simulation_output_dir = cdd.SelectedPath;
+            //}
+
+            //// get sig values
+            //var thresh = 0.05;
+            //Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            //// show progress bar
+            //var pb = new ProgBar(0, 100);
+            //pb.Show();
+
+            //// run simulation
+            //RunSimulations(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
+
+            //// close progbar
+            //pb.Close();
+
+            //// inform user
+            //System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+
+
+        private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo7");
+
+            //// open classifier file
+            //if (classification_file == null)
+            //{
+            //    var ofd = new System.Windows.Forms.OpenFileDialog();
+            //    ofd.ShowHelp = true;
+            //    if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        classification_file = ofd.FileName;
+            //    }
+            //}
+
+            //if (classification_file != null)
+            //{
+            //    var c = UserSimulation.Classification.Deserialize(classification_file);
+            //    var egen = new UserSimulation.ErrorGenerator();
+
+            //    // get cursor
+            //    var cursor = app.ActiveCell;
+
+            //    // get string at current cursor
+            //    String data = System.Convert.ToString(cursor.Value2);
+
+            //    // get error string
+            //    String baddata = egen.GenerateErrorString(data, c);
+
+            //    // put string back into spreadsheet
+            //    cursor.Value2 = baddata;
+            //}
+        }
+
+        private void ToDOT_Click(object sender, RibbonControlEventArgs e)
+        {
+            var app = Globals.ThisAddIn.Application;
+            var dag = new DAG(app.ActiveWorkbook, app, true);
+            System.Windows.Forms.Clipboard.SetText(dag.ToDOT());
+            System.Windows.Forms.MessageBox.Show("In clipboard");
+        }
+
+        private void LoopCheck_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo9");
+
+            //try
+            //{
+            //    var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
+            //    var contains_loop = data.ContainsLoop();
+            //    System.Windows.Forms.MessageBox.Show("Contains loops: " + contains_loop);
+            //}
+            //catch (ExcelParserUtility.ParseException ex)
+            //{
+            //    System.Windows.Forms.Clipboard.SetText(ex.Message);
+            //    System.Windows.Forms.MessageBox.Show(String.Format("Parser exception for formula: {0}", ex.Message));
+            //}
+        }
+
+        private void RunReviewerExperiment_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo10");
+
+            //// init a RNG
+            //var rng = new Random();
+
+            //// classification data
+            //UserSimulation.Classification c;
+
+            //// ask the user for the classification data
+            //if (simulation_classification_file == null)
+            //{
+            //    var ofd = new System.Windows.Forms.OpenFileDialog();
+            //    ofd.ShowHelp = true;
+            //    ofd.FileName = "ClassificationData-2013-11-14.bin";
+            //    ofd.Title = "Please select a classification data input file.";
+            //    if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+
+            //    simulation_classification_file = ofd.FileName;
+            //}
+
+            //// deserialize classification
+            //c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            //// ask the user where the output data should go
+            //if (simulation_output_dir == null)
+            //{
+            //    var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            //    cdd.Description = "Please choose an output folder.";
+            //    if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //    simulation_output_dir = cdd.SelectedPath;
+            //}
+
+            //// get sig values
+            //var thresh = 0.05;
+            //Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            //// show progress bar
+            //var pb = new ProgBar(0, 100);
+            //pb.Show();
+
+            //// run simulation
+            //RunProportionExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
+
+            //// close progbar
+            //pb.Close();
+
+            //// inform user
+            //System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+        private void RunAllRevSim_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo11");
+
+            //// init a RNG
+            //var rng = new Random();
+
+            //// classification data
+            //UserSimulation.Classification c;
+
+            //// ask the user for the classification data
+            //if (simulation_classification_file == null)
+            //{
+            //    var ofd = new System.Windows.Forms.OpenFileDialog();
+            //    ofd.ShowHelp = true;
+            //    ofd.FileName = "ClassificationData-2013-11-14.bin";
+            //    ofd.Title = "Please select a classification data input file.";
+            //    if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+
+            //    simulation_classification_file = ofd.FileName;
+            //}
+
+            //// deserialize classification
+            //c = UserSimulation.Classification.Deserialize(simulation_classification_file);
+
+            //// ask the user where to find the input data
+            //if (benchmark_dir == null)
+            //{
+            //    var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            //    cdd.Description = "Please choose the folder containing the benchmark data.";
+            //    if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //    benchmark_dir = cdd.SelectedPath;
+            //}
+
+            //// enumerate files in benchmark_dir
+            //var benchmark_filenames = Directory.EnumerateFiles(benchmark_dir, "*.xls", SearchOption.AllDirectories);
+
+            //// ask the user where the output data should go
+            //if (simulation_output_dir == null)
+            //{
+            //    var cdd = new System.Windows.Forms.FolderBrowserDialog();
+            //    cdd.Description = "Please choose an output folder.";
+            //    if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //    simulation_output_dir = cdd.SelectedPath;
+            //}
+
+            //// get sig values
+            //var thresh = 0.05;
+            //Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            //// calculate progress bar bounds
+            //var pb_min = 0;
+            //var pb_max = 100 * benchmark_filenames.Count();
+
+            //// show progress bar
+            //var pb = new ProgBar(pb_min, pb_max);
+            //pb.Show();
+
+            //// filter to pick up where we left off
+            ////var files = benchmark_filenames.Where(fn => String.Compare(System.IO.Path.GetFileName(fn), "month") >= 0);
+            //var files = benchmark_filenames;
+
+            //foreach (string benchmark in files)
+            //{
+            //    try
+            //    {
+            //        // open workbook
+            //        Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
+
+            //        // run simulation
+            //        RunProportionExperiment(app, wb, rng, c, simulation_output_dir, thresh, pb);
+
+            //        // close workbook
+            //        wb.Close();
+            //    }
+            //    catch (Exception)
+            //    {
+            //        // do nothing
+            //    }
+            //}
+
+            //// close progbar
+            //pb.Close();
+
+            //// inform user
+            //System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+        }
+
+        private void SubtleErrSim_Click(object sender, RibbonControlEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("foo12");
+
+            //// init a RNG
+            //var rng = new Random();
+
+            //// get inputs
+            //var optinput = RibbonHelper.getExperimentInputs();
+            //if (OptTuple.get_IsSome(optinput)) {
+            //    var c = optinput.Value.Item1;
+            //    var simulation_output_dir = optinput.Value.Item2;
+
+            //    // get sig values
+            //    var thresh = 0.05;
+            //    Double.TryParse(this.SensitivityTextBox.Text, out thresh);
+
+            //    // show progress bar
+            //    var pb = new ProgBar(0, 100);
+            //    pb.Show();
+
+            //    // run simulation
+            //    RunSubletyExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
+
+            //    // close progbar
+            //    pb.Close();
+
+            //    // inform user
+            //    System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
+            //}
+        }
+#endregion BUTTON_HANDLERS
+
+        #region UTILITY_FUNCTIONS
+        private static FSharpOption<double> GetSignificance(string input, string label)
         {
             var errormsg = label + " must be a value between 0 and 100";
             var significance = 0.95;
@@ -158,768 +533,6 @@ namespace DataDebug
 
             return FSharpOption<double>.Some(significance);
         }
-
-        private List<KeyValuePair<TreeNode, int>> Analyze(bool normal_cutoff, long max_duration_in_ms)
-        {
-            var sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
-
-            using (var pb = new ProgBar(0, 100))
-            {
-                current_workbook = app.ActiveWorkbook;
-
-                // Disable screen updating during analysis to speed things up
-                app.ScreenUpdating = false;
-
-                // Build dependency graph (modifies data)
-                try
-                {
-                    data = ConstructTree.constructTree(app.ActiveWorkbook, app, pb);
-                }
-                catch (ExcelParserUtility.ParseException e)
-                {
-                    // cleanup UI and then rethrow
-                    app.ScreenUpdating = true;
-                    throw e;
-                }
-
-                if (data.TerminalInputNodes().Length == 0)
-                {
-                    System.Windows.Forms.MessageBox.Show("This spreadsheet contains no functions that take inputs.");
-                    app.ScreenUpdating = true;
-                    //return new List<Tuple<double, TreeNode>>();
-                    return new List<KeyValuePair<TreeNode, int>>();
-                }
-
-                // Get bootstraps
-                var scores = Analysis.Bootstrap(NBOOTS, data, app, true, true, max_duration_in_ms, sw, tool_significance);
-                var scores_list = scores.OrderByDescending(pair => pair.Value).ToList();
-
-                List<KeyValuePair<TreeNode, int>> filtered_high_scores = null;
-
-                //Using an outlier test for highlighting 
-                if (normal_cutoff)
-                {
-                    //find mean:
-                    double sum = 0.0;
-                    foreach (double d in scores.Values)
-                    {
-                        sum += d;
-                    }
-                    double mean = sum / scores.Values.Count;
-                    //find variance
-                    double distance_sum_sq = 0.0;
-                    foreach (double d in scores.Values)
-                    {
-                        distance_sum_sq += Math.Pow(mean - d, 2);
-                    }
-                    double variance = distance_sum_sq / scores.Values.Count;
-                    //find std. deviation
-                    double std_deviation = Math.Sqrt(variance);
-
-                    if (tool_significance == 0.95)
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.6448).ToList();
-                    }
-                    else if (tool_significance == 0.9)   //10% cutoff 1.2815
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.2815).ToList();
-                    }
-                    else if (tool_significance == 0.975) //2.5% cutoff 1.9599
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.9599).ToList();
-                    }
-                    else if (tool_significance == 0.925) //7.5% cutoff 1.4395
-                    {
-                        filtered_high_scores = scores_list.Where(kvp => kvp.Value > mean + std_deviation * 1.4395).ToList();
-                    }
-                }
-                else
-                {
-                    int start_ptr = 0;
-                    int end_ptr = 0;
-                    List<KeyValuePair<TreeNode, int>> high_scores = new List<KeyValuePair<TreeNode, int>>();
-
-                    while ((double)start_ptr / scores_list.Count < 1.0 - tool_significance) //the start of this score region is before the cutoff
-                    {
-                        //while the scores at the start and end pointers are the same, bump the end pointer
-                        while (end_ptr < scores_list.Count && scores_list[start_ptr].Value == scores_list[end_ptr].Value)
-                        {
-                            end_ptr++;
-                        }
-                        //Now the end_pointer points to the first index with a lower score
-                        //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
-                        //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
-                        //  To do this, we add (1 / total number of entries) to the cutoff
-                        //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
-                        //for more than 5% of the total.
-                        //      Note: tool_significance is along the lines of 0.95 (not 0.05).
-                        if ((double)end_ptr / scores_list.Count < 1.0 - tool_significance + (double)1.0 / scores_list.Count)
-                        {
-                            //add all values of the current score to high_scores list
-                            for (; start_ptr < end_ptr; start_ptr++)
-                            {
-                                high_scores.Add(scores_list[start_ptr]);
-                            }
-                            //Increment the start pointer to the start of the next score region
-                            start_ptr++;
-                        }
-                        else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                        {
-                            break;
-                        }
-                    }
-
-                    // filter out cells marked as OK
-                    filtered_high_scores = high_scores.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-                }
-                // Enable screen updating when we're done
-                app.ScreenUpdating = true;
-
-                sw.Stop();
-
-                return filtered_high_scores;
-            }
-        }
-
-        private void ActivateAndCenterOn(AST.Address cell, Excel.Application app)
-        {
-            // go to worksheet
-            RibbonHelper.GetWorksheetByName(cell.A1Worksheet(), current_workbook.Worksheets).Activate();
-
-            // COM object
-            var comobj = cell.GetCOMObject(app);
-
-            // center screen on cell
-            var visible_columns = app.ActiveWindow.VisibleRange.Columns.Count;
-            var visible_rows = app.ActiveWindow.VisibleRange.Rows.Count;
-            app.Goto(comobj, true);
-            app.ActiveWindow.SmallScroll(Type.Missing, visible_rows / 2, Type.Missing, visible_columns / 2);
-
-            // select highlighted cell
-            // center on highlighted cell
-            comobj.Select();
-
-        }
-
-        private void Flag()
-        {
-            //filter known_good
-            flaggable_list = flaggable_list.Where(kvp => !known_good.Contains(kvp.Key.GetAddress())).ToList();
-            if (flaggable_list.Count() != 0)
-            {
-                // get TreeNode corresponding to most unusual score
-                flagged_cell = flaggable_list[0].Key.GetAddress();
-            }
-            else
-            {
-                flagged_cell = null;
-            }
-
-            if (flagged_cell == null)
-            {
-                System.Windows.Forms.MessageBox.Show("No bugs remain.");
-                ResetTool();
-            }
-            else
-            {
-                
-                // TODO: test after AEC; problematic when highlighted value is not data
-                //TreeNode flagged_node;
-                //if (data.cell_nodes.TryGetValue(flagged_cell, out flagged_node))
-                //{
-                //    // only do the following if the cell is a data cell
-                //    if (flagged_node.hasOutputs())
-                //    {
-                //        foreach (var output in flagged_node.getOutputs())
-                //        {
-                //            exploreNode(output);
-                //        }
-                //    }
-                //}
-
-                flagged_cell.GetCOMObject(app).Interior.Color = System.Drawing.Color.Red;
-                tool_highlights.Add(flagged_cell);
-
-                // go to highlighted cell
-                ActivateAndCenterOn(flagged_cell, app);
-
-                // enable auditing buttons
-                ActivateTool();
-            }
-        }
-
-        private void TestNewProcedure_Click(object sender, RibbonControlEventArgs e)
-        {
-            var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
-            if (sig == FSharpOption<double>.None)
-            {
-                return;
-            }
-            else
-            {
-                tool_significance = sig.Value;
-                try
-                {
-                    flaggable_list = Analyze(false, MAX_DURATION_IN_MS);
-                    Flag();
-                }
-                catch (ExcelParserUtility.ParseException ex)
-                {
-                    System.Windows.Forms.Clipboard.SetText(ex.Message);
-                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
-                    return;
-                }
-            }
-        }
-
-        //This clears the outputs highlighted in yellow
-        private void RestoreOutputColors()
-        {
-            if (current_workbook != null)
-            {
-                RibbonHelper.RestoreColors2(color_dict[current_workbook], output_highlights);
-            }
-            output_highlights.Clear();
-        }
-
-        private void ResetTool()
-        {
-            if (current_workbook != null)
-            {
-                RibbonHelper.RestoreColors2(color_dict[current_workbook], tool_highlights);
-            }
-
-            known_good.Clear();
-            tool_highlights.Clear();
-            DeactivateTool();
-        }
-
-        // Action for "Clear coloring" button
-        private void clearColoringButton_Click(object sender, RibbonControlEventArgs e)
-        {
-            ResetTool();
-        }
-
-        private void MarkAsOK_Click(object sender, RibbonControlEventArgs e)
-        {
-            known_good.Add(flagged_cell);
-            var cell = flagged_cell.GetCOMObject(app);
-            cell.Interior.Color = GREEN;
-            RestoreOutputColors();
-            Flag();
-        }
-
-        private void FixError_Click(object sender, RibbonControlEventArgs e)
-        {
-            var comcell = flagged_cell.GetCOMObject(app);
-            System.Action callback = () => {
-                flagged_cell = null;
-                try
-                {
-                    flaggable_list = Analyze(false, MAX_DURATION_IN_MS);
-                    Flag();
-                }
-                catch (ExcelParserUtility.ParseException ex)
-                {
-                    System.Windows.Forms.Clipboard.SetText(ex.Message);
-                    System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
-                    return;
-                }
-            };
-            var fixform = new CellFixForm(comcell, GREEN, callback);
-            fixform.Show();
-            RestoreOutputColors();
-        }
-
-        //Recursive method for highlighting the outputs reachable from a certain TreeNode
-        private void exploreNode(TreeNode node)
-        {
-            if (node.hasOutputs())
-            {
-                foreach (var o in node.getOutputs())
-                {
-                    exploreNode(o);
-                }
-            }
-            else
-            {
-                node.getCOMObject().Interior.Color = System.Drawing.Color.Yellow;
-                output_highlights.Add(node.GetAddress());
-            }
-        }
-
-        private void TestStuff_Click(object sender, RibbonControlEventArgs e)
-        {
-            // init a RNG
-            var rng = new Random();
-
-            // classification data
-            UserSimulation.Classification c;
-
-            // ask the user for the classification data
-            if (simulation_classification_file == null)
-            {
-                var ofd = new System.Windows.Forms.OpenFileDialog();
-                ofd.ShowHelp = true;
-                ofd.FileName = "ClassificationData-2013-11-14.bin";
-                ofd.Title = "Please select a classification data input file.";
-                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-
-                simulation_classification_file = ofd.FileName;
-            }
-
-            // deserialize classification
-            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
-
-            // ask the user where to find the input data
-            if (benchmark_dir == null)
-            {
-                var cdd = new System.Windows.Forms.FolderBrowserDialog();
-                cdd.Description = "Please choose the folder containing the benchmark data.";
-                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-                benchmark_dir = cdd.SelectedPath;
-            }
-
-            // enumerate files in benchmark_dir
-            var benchmark_filenames = Directory.EnumerateFiles(benchmark_dir, "*.xls", SearchOption.AllDirectories);
-
-            // ask the user where the output data should go
-            if (simulation_output_dir == null)
-            {
-                var cdd = new System.Windows.Forms.FolderBrowserDialog();
-                cdd.Description = "Please choose an output folder.";
-                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-                simulation_output_dir = cdd.SelectedPath;
-            }
-
-            // get sig values
-            var thresh = 0.05;
-            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
-
-            // calculate progress bar bounds
-            var pb_min = 0;
-            var pb_max = 100 * benchmark_filenames.Count();
-
-            // show progress bar
-            var pb = new ProgBar(pb_min, pb_max);
-            pb.Show();
-
-            foreach (string benchmark in benchmark_filenames)
-            {
-                try
-                {
-                    // open workbook
-                    Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
-
-                    // run simulation
-                    RunSimulations(app, wb, rng, c, simulation_output_dir, thresh, pb);
-
-                    // close workbook
-                    wb.Close();
-                }
-                catch (Exception)
-                {
-                    // do nothing
-                }
-            }
-
-            // close progbar
-            pb.Close();
-
-            // inform user
-            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
-        }
-
-        private void RunSimulation_Click(object sender, RibbonControlEventArgs e)
-        {
-            // init a RNG
-            var rng = new Random();
-
-            // classification data
-            UserSimulation.Classification c;
-
-            // ask the user for the classification data
-            if (simulation_classification_file == null)
-            {
-                var ofd = new System.Windows.Forms.OpenFileDialog();
-                ofd.ShowHelp = true;
-                ofd.FileName = "ClassificationData-2013-11-14.bin";
-                ofd.Title = "Please select a classification data input file.";
-                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-
-                simulation_classification_file = ofd.FileName;
-            }
-
-            // deserialize classification
-            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
-
-            // ask the user where the output data should go
-            if (simulation_output_dir == null)
-            {
-                var cdd = new System.Windows.Forms.FolderBrowserDialog();
-                cdd.Description = "Please choose an output folder.";
-                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-                simulation_output_dir = cdd.SelectedPath;
-            }
-
-            // get sig values
-            var thresh = 0.05;
-            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
-
-            // show progress bar
-            var pb = new ProgBar(0, 100);
-            pb.Show();
-
-            // run simulation
-            RunSimulations(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
-
-            // close progbar
-            pb.Close();
-
-            // inform user
-            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
-        }
-
-        private static void RunSimulations(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
-        {
-            // number of bootstraps
-            var NBOOTS = 2700;
-
-            // the full path of this workbook
-            var filename = app.ActiveWorkbook.Name;
-
-            // the default output filename
-            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
-            var default_output_file = "simulation_results.csv";
-            var default_log_file = r.Match(filename).Groups[1].Value + ".iterlog.csv";
-
-            // save file location (will append for additional runs)
-            var savefile = System.IO.Path.Combine(output_dir, default_output_file);
-
-            // log file location (new file for each new workbook)
-            var logfile = System.IO.Path.Combine(output_dir, default_log_file);
-
-            // disable screen updating
-            app.ScreenUpdating = false;
-
-            // run simulations
-            UserSimulation.Config.RunSimulationPaperMain(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
-
-            // enable screen updating
-            app.ScreenUpdating = true;
-        }
-
-        private static void RunProportionExperiment(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
-        {
-            // number of bootstraps
-            var NBOOTS = 2700;
-
-            // the full path of this workbook
-            var filename = app.ActiveWorkbook.Name;
-
-            // the default output filename
-            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
-            var default_output_file = "simulation_results.csv";
-            var default_log_file = r.Match(filename).Groups[1].Value + ".iterlog.csv";
-
-            // save file location (will append for additional runs)
-            var savefile = System.IO.Path.Combine(output_dir, default_output_file);
-
-            // log file location (new file for each new workbook)
-            var logfile = System.IO.Path.Combine(output_dir, default_log_file);
-
-            // disable screen updating
-            app.ScreenUpdating = false;
-
-            // run simulations
-            UserSimulation.Config.RunProportionExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb);
-
-            // enable screen updating
-            app.ScreenUpdating = true;
-        }
-
-        private static void RunSubletyExperiment(Excel.Application app, Excel.Workbook wb, Random rng, UserSimulation.Classification c, string output_dir, double thresh, ProgBar pb)
-        {
-            // number of bootstraps
-            var NBOOTS = 2700;
-
-            // the full path of this workbook
-            var filename = app.ActiveWorkbook.Name;
-
-            // the default output filename
-            var r = new System.Text.RegularExpressions.Regex(@"(.+)\.xls|xlsx", System.Text.RegularExpressions.RegexOptions.Compiled);
-            var default_output_file = "simulation_results.csv";
-            var default_log_file = r.Match(filename).Groups[1].Value + ".iterlog.csv";
-
-            // save file location (will append for additional runs)
-            var savefile = System.IO.Path.Combine(output_dir, default_output_file);
-
-            // log file location (new file for each new workbook)
-            var logfile = System.IO.Path.Combine(output_dir, default_log_file);
-
-            // disable screen updating
-            app.ScreenUpdating = false;
-
-            // run simulations
-            if (!UserSimulation.Config.RunSubletyExperiment(app, wb, NBOOTS, 0.95, thresh, c, rng, savefile, MAX_DURATION_IN_MS, logfile, pb))
-            {
-                System.Windows.Forms.MessageBox.Show("This spreadsheet contains no numeric inputs.");
-            }
-
-            // enable screen updating
-            app.ScreenUpdating = true;
-        }
-
-        private void ErrorBtn_Click(object sender, RibbonControlEventArgs e)
-        {
-            // open classifier file
-            if (classification_file == null)
-            {
-                var ofd = new System.Windows.Forms.OpenFileDialog();
-                ofd.ShowHelp = true;
-                if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    classification_file = ofd.FileName;
-                }
-            }
-
-            if (classification_file != null)
-            {
-                var c = UserSimulation.Classification.Deserialize(classification_file);
-                var egen = new UserSimulation.ErrorGenerator();
-
-                // get cursor
-                var cursor = app.ActiveCell;
-
-                // get string at current cursor
-                String data = System.Convert.ToString(cursor.Value2);
-
-                // get error string
-                String baddata = egen.GenerateErrorString(data, c);
-
-                // put string back into spreadsheet
-                cursor.Value2 = baddata;
-            }
-        }
-
-        private void ToDOT_Click(object sender, RibbonControlEventArgs e)
-        {
-            var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-            var graph = data.ToDOT();
-            System.Windows.Forms.Clipboard.SetText(graph);
-            System.Windows.Forms.MessageBox.Show("In clipboard");
-        }
-
-        private void LoopCheck_Click(object sender, RibbonControlEventArgs e)
-        {
-            try
-            {
-                var data = ConstructTree.constructTree(app.ActiveWorkbook, app);
-                var contains_loop = data.ContainsLoop();
-                System.Windows.Forms.MessageBox.Show("Contains loops: " + contains_loop);
-            }
-            catch (ExcelParserUtility.ParseException ex)
-            {
-                System.Windows.Forms.Clipboard.SetText(ex.Message);
-                System.Windows.Forms.MessageBox.Show(String.Format("Parser exception for formula: {0}", ex.Message));
-            }
-        }
-
-        private void RunReviewerExperiment_Click(object sender, RibbonControlEventArgs e)
-        {
-            // init a RNG
-            var rng = new Random();
-
-            // classification data
-            UserSimulation.Classification c;
-
-            // ask the user for the classification data
-            if (simulation_classification_file == null)
-            {
-                var ofd = new System.Windows.Forms.OpenFileDialog();
-                ofd.ShowHelp = true;
-                ofd.FileName = "ClassificationData-2013-11-14.bin";
-                ofd.Title = "Please select a classification data input file.";
-                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-
-                simulation_classification_file = ofd.FileName;
-            }
-
-            // deserialize classification
-            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
-
-            // ask the user where the output data should go
-            if (simulation_output_dir == null)
-            {
-                var cdd = new System.Windows.Forms.FolderBrowserDialog();
-                cdd.Description = "Please choose an output folder.";
-                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-                simulation_output_dir = cdd.SelectedPath;
-            }
-
-            // get sig values
-            var thresh = 0.05;
-            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
-
-            // show progress bar
-            var pb = new ProgBar(0, 100);
-            pb.Show();
-
-            // run simulation
-            RunProportionExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
-
-            // close progbar
-            pb.Close();
-
-            // inform user
-            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
-        }
-
-        private void RunAllRevSim_Click(object sender, RibbonControlEventArgs e)
-        {
-            // init a RNG
-            var rng = new Random();
-
-            // classification data
-            UserSimulation.Classification c;
-
-            // ask the user for the classification data
-            if (simulation_classification_file == null)
-            {
-                var ofd = new System.Windows.Forms.OpenFileDialog();
-                ofd.ShowHelp = true;
-                ofd.FileName = "ClassificationData-2013-11-14.bin";
-                ofd.Title = "Please select a classification data input file.";
-                if (ofd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-
-                simulation_classification_file = ofd.FileName;
-            }
-
-            // deserialize classification
-            c = UserSimulation.Classification.Deserialize(simulation_classification_file);
-
-            // ask the user where to find the input data
-            if (benchmark_dir == null)
-            {
-                var cdd = new System.Windows.Forms.FolderBrowserDialog();
-                cdd.Description = "Please choose the folder containing the benchmark data.";
-                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-                benchmark_dir = cdd.SelectedPath;
-            }
-
-            // enumerate files in benchmark_dir
-            var benchmark_filenames = Directory.EnumerateFiles(benchmark_dir, "*.xls", SearchOption.AllDirectories);
-
-            // ask the user where the output data should go
-            if (simulation_output_dir == null)
-            {
-                var cdd = new System.Windows.Forms.FolderBrowserDialog();
-                cdd.Description = "Please choose an output folder.";
-                if (cdd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                {
-                    return;
-                }
-                simulation_output_dir = cdd.SelectedPath;
-            }
-
-            // get sig values
-            var thresh = 0.05;
-            Double.TryParse(this.SensitivityTextBox.Text, out thresh);
-
-            // calculate progress bar bounds
-            var pb_min = 0;
-            var pb_max = 100 * benchmark_filenames.Count();
-
-            // show progress bar
-            var pb = new ProgBar(pb_min, pb_max);
-            pb.Show();
-
-            // filter to pick up where we left off
-            //var files = benchmark_filenames.Where(fn => String.Compare(System.IO.Path.GetFileName(fn), "month") >= 0);
-            var files = benchmark_filenames;
-
-            foreach (string benchmark in files)
-            {
-                try
-                {
-                    // open workbook
-                    Excel.Workbook wb = Utility.OpenWorkbook(benchmark, app);
-
-                    // run simulation
-                    RunProportionExperiment(app, wb, rng, c, simulation_output_dir, thresh, pb);
-
-                    // close workbook
-                    wb.Close();
-                }
-                catch (Exception)
-                {
-                    // do nothing
-                }
-            }
-
-            // close progbar
-            pb.Close();
-
-            // inform user
-            System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
-        }
-
-        private void SubtleErrSim_Click(object sender, RibbonControlEventArgs e)
-        {
-            // init a RNG
-            var rng = new Random();
-
-            // get inputs
-            var optinput = RibbonHelper.getExperimentInputs();
-            if (OptTuple.get_IsSome(optinput)) {
-                var c = optinput.Value.Item1;
-                var simulation_output_dir = optinput.Value.Item2;
-
-                // get sig values
-                var thresh = 0.05;
-                Double.TryParse(this.SensitivityTextBox.Text, out thresh);
-
-                // show progress bar
-                var pb = new ProgBar(0, 100);
-                pb.Show();
-
-                // run simulation
-                RunSubletyExperiment(app, current_workbook, rng, c, simulation_output_dir, thresh, pb);
-
-                // close progbar
-                pb.Close();
-
-                // inform user
-                System.Windows.Forms.MessageBox.Show(String.Format("Analysis complete.  Results are in {0}", simulation_output_dir));
-            }
-        }
+        #endregion UTILITY_FUNCTIONS
     }
 }

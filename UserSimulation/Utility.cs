@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 using DataDebugMethods;
-using TreeNode = DataDebugMethods.TreeNode;
 using CellDict = System.Collections.Generic.Dictionary<AST.Address, string>;
-using TreeScore = System.Collections.Generic.Dictionary<DataDebugMethods.TreeNode, int>;
+using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using ErrorDict = System.Collections.Generic.Dictionary<AST.Address, double>;
 
 namespace UserSimulation
@@ -242,14 +241,14 @@ namespace UserSimulation
 
         // save all of the values of the spreadsheet that
         // participate in any computation
-        public static CellDict SaveInputs(AnalysisData graph)
+        public static CellDict SaveInputs(DAG dag)
         {
             try
             {
                 var cd = new CellDict();
-                foreach (var node in graph.allComputationCells())
+                foreach (var addr in dag.allComputationCells())
                 {
-                    cd.Add(node.GetAddress(), node.getCOMValueAsString());
+                    cd.Add(addr, dag.readCOMValueAtAddress(addr));
                 }
                 return cd;
             }
@@ -260,29 +259,28 @@ namespace UserSimulation
         }
 
         // save spreadsheet outputs to a CellDict
-        public static CellDict SaveOutputs(TreeNode[] formula_nodes)
+        public static CellDict SaveOutputs(AST.Address[] formula_nodes, DAG dag)
         {
             var cd = new CellDict();
-            foreach (TreeNode formula_cell in formula_nodes)
+            foreach (AST.Address formula_addr in formula_nodes)
             {
                 // throw an exception in debug mode, because this should never happen
-                if (!(bool)formula_cell.getCOMObject().HasFormula)
+                #if DEBUG
+                if (!(bool)(dag.getCOMRefForAddress(formula_addr).Range.HasFormula))
                 {
-                    String fstring = formula_cell.getCOMObject().Formula;
-                    throw new Exception("Formula TreeNode has no formula.");
+                    String fstring = dag.getFormulaAtAddress(formula_addr);
+                    throw new Exception("Formula address is not a formula.");
                 }
-
-                // get address
-                var addr = formula_cell.GetAddress();
+                #endif
 
                 // save value
-                if (cd.ContainsKey(addr))
+                if (cd.ContainsKey(formula_addr))
                 {
                     throw new Exception(String.Format("Failed in SaveOutputs."));
                 }
                 else
                 {
-                    cd.Add(addr, formula_cell.getCOMValueAsString());
+                    cd.Add(formula_addr, dag.readCOMValueAtAddress(formula_addr));
                 }
             }
             return cd;
@@ -307,13 +305,14 @@ namespace UserSimulation
         }
 
         // Get dictionary of inputs and the error they produce
-        public static CellDict GenImportantErrors(TreeNode[] output_nodes,
+        public static CellDict GenImportantErrors(AST.Address[] output_nodes,
                                                   CellDict inputs,
                                                   int k,         // number of alternatives to consider
                                                   CellDict correct_outputs,
                                                   Excel.Application app,
                                                   Excel.Workbook wb,
-                                                  Classification c)
+                                                  Classification c,
+                                                  DAG dag)
         {
             var eg = new ErrorGenerator();
             var max_error_produced_dictionary = new Dictionary<AST.Address, Tuple<string, double>>();
@@ -338,7 +337,7 @@ namespace UserSimulation
                     InjectValues(app, wb, cd);
 
                     // save function outputs
-                    CellDict incorrect_outputs = SaveOutputs(output_nodes);
+                    CellDict incorrect_outputs = SaveOutputs(output_nodes, dag);
 
                     //remove the typo that was introduced
                     cd.Clear();

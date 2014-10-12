@@ -40,7 +40,7 @@ namespace DataDebug
             this.tab1 = this.Factory.CreateRibbonTab();
             this.ccgroup = this.Factory.CreateRibbonGroup();
             this.buttonGroup1 = this.Factory.CreateRibbonButtonGroup();
-            this.TestNewProcedure = this.Factory.CreateRibbonButton();
+            this.Analyze = this.Factory.CreateRibbonButton();
             this.MarkAsOK = this.Factory.CreateRibbonButton();
             this.FixError = this.Factory.CreateRibbonButton();
             this.clearColoringButton = this.Factory.CreateRibbonButton();
@@ -85,19 +85,19 @@ namespace DataDebug
             // 
             // buttonGroup1
             // 
-            this.buttonGroup1.Items.Add(this.TestNewProcedure);
+            this.buttonGroup1.Items.Add(this.Analyze);
             this.buttonGroup1.Items.Add(this.MarkAsOK);
             this.buttonGroup1.Items.Add(this.FixError);
             this.buttonGroup1.Items.Add(this.clearColoringButton);
             this.buttonGroup1.Name = "buttonGroup1";
             // 
-            // TestNewProcedure
+            // Analyze
             // 
-            this.TestNewProcedure.Image = global::DataDebug.Properties.Resources.analyze_small;
-            this.TestNewProcedure.Label = "Analyze";
-            this.TestNewProcedure.Name = "TestNewProcedure";
-            this.TestNewProcedure.ShowImage = true;
-            this.TestNewProcedure.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestNewProcedure_Click);
+            this.Analyze.Image = global::DataDebug.Properties.Resources.analyze_small;
+            this.Analyze.Label = "Analyze";
+            this.Analyze.Name = "Analyze";
+            this.Analyze.ShowImage = true;
+            this.Analyze.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.Analyze_Click);
             // 
             // MarkAsOK
             // 
@@ -121,8 +121,7 @@ namespace DataDebug
             this.clearColoringButton.Label = "Start Over";
             this.clearColoringButton.Name = "clearColoringButton";
             this.clearColoringButton.ShowImage = true;
-            this.clearColoringButton.Visible = false;
-            this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.clearColoringButton_Click);
+            this.clearColoringButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.StartOver_Click);
             // 
             // SensitivityTextBox
             // 
@@ -150,6 +149,7 @@ namespace DataDebug
             // 
             this.RunSimulation.Label = "Run Simulation";
             this.RunSimulation.Name = "RunSimulation";
+            this.RunSimulation.Visible = false;
             this.RunSimulation.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunSimulation_Click);
             // 
             // ErrorBtn
@@ -163,7 +163,8 @@ namespace DataDebug
             // 
             this.TestStuff.Label = "Run All Benchmarks";
             this.TestStuff.Name = "TestStuff";
-            this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.TestStuff_Click);
+            this.TestStuff.Visible = false;
+            this.TestStuff.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunAllBenchmarks_Click);
             // 
             // ToDOT
             // 
@@ -183,18 +184,21 @@ namespace DataDebug
             // 
             this.RunReviewerExperiment.Label = "Run Rev. Simulation";
             this.RunReviewerExperiment.Name = "RunReviewerExperiment";
+            this.RunReviewerExperiment.Visible = false;
             this.RunReviewerExperiment.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunReviewerExperiment_Click);
             // 
             // RunAllRevSim
             // 
             this.RunAllRevSim.Label = "RunAllRevSim";
             this.RunAllRevSim.Name = "RunAllRevSim";
+            this.RunAllRevSim.Visible = false;
             this.RunAllRevSim.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.RunAllRevSim_Click);
             // 
             // SubtleErrSim
             // 
             this.SubtleErrSim.Label = "SubtleErrorSim";
             this.SubtleErrSim.Name = "SubtleErrSim";
+            this.SubtleErrSim.Visible = false;
             this.SubtleErrSim.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.SubtleErrSim_Click);
             // 
             // Ribbon
@@ -216,7 +220,7 @@ namespace DataDebug
 
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton clearColoringButton;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton TestNewProcedure;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton Analyze;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup ccgroup;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton MarkAsOK;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton FixError;

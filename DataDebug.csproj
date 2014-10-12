@@ -204,6 +204,7 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
@@ -238,6 +239,7 @@
       <DependentUpon>Ribbon.cs</DependentUpon>
     </Compile>
     <Compile Include="RibbonHelper.cs" />
+    <Compile Include="WorkbookState.cs" />
     <EmbeddedResource Include="CellFixForm.resx">
       <DependentUpon>CellFixForm.cs</DependentUpon>
     </EmbeddedResource>
