@@ -8,11 +8,11 @@ CheckCell is an implementation of data debugging for Excel spreadsheets.  CheckC
 Prerequisites
 --------------
 
-You will need Microsoft Excel 2010 or 2013 and Windows 7 or newer.
+You will need Microsoft Excel 2010 or 2013 and Windows 7 or newer.  We only recently added support for Excel 2013, thus there may be new bugs introduced by that version.  Please help us find them by reporting issues as you find them.
 
 Installing CheckCell
 --------------------
-Download the CheckCell installer (sorry... coming soon!) in the "Releases" section of the CheckCell GitHub page.  Double-click on the installer to install.  The installer should install all prerequisites for you.
+Download the [CheckCell installer](https://github.com/plasma-umass/DataDebug/releases/download/v1.0.0/CheckCellInstaller.exe).  Double-click on the file `CheckCellInstaller.exe` to install.  The installer should install all prerequisites for you (namely Microsoft .NET 4.0 and Visual Studio Tools for Office 2010).
 
 You will find CheckCell installed in Excel, under the "Add-Ins" tab in the ribbon.
 
