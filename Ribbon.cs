@@ -31,6 +31,14 @@ namespace DataDebug
             this.clearColoringButton.Enabled = wbs.ClearColoringButton_Enabled;
             this.Analyze.Enabled = wbs.Analyze_Enabled;
         }
+
+        private void SetUIStateNoWorkbooks()
+        {
+            this.MarkAsOK.Enabled = false;
+            this.FixError.Enabled = false;
+            this.clearColoringButton.Enabled = false;
+            this.Analyze.Enabled = false;
+        }
         
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
@@ -67,6 +75,10 @@ namespace DataDebug
         private void WorkbookClose(Excel.Workbook workbook, ref bool Cancel)
         {
             wbstates.Remove(workbook);
+            if (wbstates.Count == 0)
+            {
+                SetUIStateNoWorkbooks();
+            }
         }
 
         #region BUTTON_HANDLERS
