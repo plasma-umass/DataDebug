@@ -70,6 +70,21 @@ namespace DataDebug
         private void WorkbookDeactivated(Excel.Workbook workbook)
         {
             current_workbook = null;
+            // WorkbookBeforeClose event does not fire for default workbooks
+            // containing no data
+            var wbs = new List<Excel.Workbook>();
+            foreach(var wb in Globals.ThisAddIn.Application.Workbooks) {
+                if (wb != workbook)
+                {
+                    wbs.Add((Excel.Workbook)wb);
+                }
+            }
+
+            if (wbs.Count == 0)
+            {
+                wbstates.Clear();
+                SetUIStateNoWorkbooks();
+            }
         }
 
         private void WorkbookClose(Excel.Workbook workbook, ref bool Cancel)
