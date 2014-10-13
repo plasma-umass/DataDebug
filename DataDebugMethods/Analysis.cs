@@ -323,6 +323,9 @@ namespace DataDebugMethods
             // init job storage
             var ddjs = new DataDebugJob[input_arr.Length];
 
+            // init completed jobs count
+            var cjobs = 0;
+
             // init score storage
             var scores = new TreeScore();
 
@@ -395,8 +398,21 @@ namespace DataDebugMethods
                     // update progress bar
                     pb.IncrementProgress();
                 }
-                catch (System.OutOfMemoryException)
+                catch (System.OutOfMemoryException e)
                 {
+                    // Count completed jobs; if this number
+                    // is the same in a subsequent OOM exception
+                    // then we have not made progress.  This means
+                    // that we simply do not have enough memory
+                    // to perform the calculation, period.
+                    var j = mres.Count(mre => mre.WaitOne(0));
+                    if (j != cjobs)
+                    {
+                        // rethrow
+                        throw e;
+                    }
+                    cjobs = j;
+
                     // wait for any of the 0..i-1 work items
                     // to complete and try again
                     WaitHandle.WaitAny(mres.Take(i).ToArray());
