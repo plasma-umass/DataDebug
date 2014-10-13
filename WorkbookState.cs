@@ -12,8 +12,7 @@ namespace DataDebug
     {
         #region CONSTANTS
         // e * 1000
-        //public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
-        public readonly static int NBOOTS = 10;
+        public readonly static int NBOOTS = (int)(Math.Ceiling(1000 * Math.Exp(1.0)));
         public readonly static long MAX_DURATION_IN_MS = 5L * 60L * 1000L;  // 5 minutes
         public readonly static System.Drawing.Color GREEN = System.Drawing.Color.Green;
         public readonly static bool IGNORE_PARSE_ERRORS = true;
