@@ -34,24 +34,30 @@ namespace DataDebugMethods
 
         public void IncrementProgress()
         {
+            // if this method is called from any thread other than
+            // the GUI thread, call the method on the correct thread
+            if (progressBar1.InvokeRequired)
+            {
+                progressBar1.Invoke(new MethodInvoker(() => IncrementProgress()));
+                return;
+            }
+
             if (!_max_set)
             {
                 throw new ProgressMaxUnsetException();
             }
 
-            var iota = 1.0 / progressBar1.Maximum;
-
-            if (_count * iota < 0)
+            if (_count < 0)
             {
                 progressBar1.Value = 0;
             }
-            else if (_count * iota > progressBar1.Maximum)
+            else if (_count > progressBar1.Maximum)
             {
                 progressBar1.Value = progressBar1.Maximum;
             }
             else
             {
-                progressBar1.Value = (int)(_count * iota);
+                progressBar1.Value = (int)(_count);
             }
             _count++;
         }
