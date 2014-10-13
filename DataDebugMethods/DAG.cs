@@ -88,7 +88,7 @@ namespace DataDebugMethods
             var wbname = wb.Name;
             var path = wb.Path;
             var wbname_opt = new Microsoft.FSharp.Core.FSharpOption<String>(wbname);
-            var path_opt = new Microsoft.FSharp.Core.FSharpOption<String>(path);
+            var path_opt = String.IsNullOrEmpty(path) ? Microsoft.FSharp.Core.FSharpOption<string>.None : new Microsoft.FSharp.Core.FSharpOption<String>(path);
 
             // init R1C1 extractor
             var regex = new Regex("^R([0-9]+)C([0-9]+)$");
@@ -171,7 +171,7 @@ namespace DataDebugMethods
 
                     var addr = AST.Address.NewFromR1C1(r, c, wsname_opt, wbname_opt, path_opt);
                     var formula = _formulas.ContainsKey(addr) ? new Microsoft.FSharp.Core.FSharpOption<string>(_formulas[addr]) : Microsoft.FSharp.Core.FSharpOption<string>.None;
-                    var cr = new AST.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path, wbname, wsname, formula, 1, 1);
+                    var cr = new AST.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path_opt, wbname, wsname, formula, 1, 1);
                     _all_cells.Add(addr, cr);
                 }
             }
@@ -228,7 +228,7 @@ namespace DataDebugMethods
                 Excel.Workbook wb = ws.Parent;
                 string wsname = ws.Name;
                 string wbname = wb.Name;
-                string path = wb.Path;
+                var path = new Microsoft.FSharp.Core.FSharpOption<string>(wb.Path);
                 int width = com.Columns.Count;
                 int height = com.Rows.Count;
 

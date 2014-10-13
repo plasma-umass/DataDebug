@@ -67,7 +67,7 @@ namespace DataDebugMethods
                 // get names
                 var wsname = new FSharpOption<string>(fstcr.WorksheetName);
                 var wbname = new FSharpOption<string>(fstcr.WorkbookName);
-                var path = new FSharpOption<string>(fstcr.Path);
+                var path = fstcr.Path;
 
                 // sometimes the used range is a range
                 if (left != right || top != bottom)
