@@ -27,7 +27,8 @@ namespace DataDebug
         private HashSet<AST.Address> _known_good = new HashSet<AST.Address>();
         private IEnumerable<KeyValuePair<AST.Address, int>> _flaggable;
         private AST.Address _flagged_cell;
-        private DAG dag;
+        private DAG _dag;
+        private bool _debug_mode = false;
 
         #region BUTTON_STATE
         private bool _button_Analyze_enabled = true;
@@ -72,6 +73,12 @@ namespace DataDebug
             set { _button_clearColoringButton_enabled = value; }
         }
 
+        public bool DebugMode
+        {
+            get { return _debug_mode; }
+            set { _debug_mode = value; }
+        }
+
         public void Analyze(long max_duration_in_ms)
         {
             var sw = new System.Diagnostics.Stopwatch();
@@ -85,7 +92,7 @@ namespace DataDebug
                 // Build dependency graph (modifies data)
                 try
                 {
-                    dag = new DAG(_app.ActiveWorkbook, _app, IGNORE_PARSE_ERRORS);
+                    _dag = new DAG(_app.ActiveWorkbook, _app, IGNORE_PARSE_ERRORS);
                 }
                 catch (ExcelParserUtility.ParseException e)
                 {
@@ -94,7 +101,7 @@ namespace DataDebug
                     throw e;
                 }
 
-                if (dag.terminalInputVectors().Length == 0)
+                if (_dag.terminalInputVectors().Length == 0)
                 {
                     System.Windows.Forms.MessageBox.Show("This spreadsheet contains no vector-input functions.");
                     _app.ScreenUpdating = true;
@@ -103,42 +110,31 @@ namespace DataDebug
                 }
 
                 // Get bootstraps
-                var scores = Analysis.DataDebug(NBOOTS, dag, _app, true, true, max_duration_in_ms, sw, _tool_significance, pb)
+                var scores = Analysis.DataDebug(NBOOTS,
+                                                _dag,
+                                                _app,
+                                                weighted: true,
+                                                all_outputs: true,
+                                                max_duration_in_ms: max_duration_in_ms,
+                                                sw: sw,
+                                                significance: _tool_significance,
+                                                pb: pb)
                                      .OrderByDescending(pair => pair.Value).ToArray();
 
-                int start_ptr = 0;
-                int end_ptr = 0;
+                if (_debug_mode)
+                {
+                    var score_str = String.Join("\n", scores.Take(10).Select(score => score.Key.A1FullyQualified() + " -> " + score.Value.ToString()));
+                    System.Windows.Forms.MessageBox.Show(score_str);
+                    System.Windows.Forms.Clipboard.SetText(score_str);
+                }
+
                 List<KeyValuePair<AST.Address, int>> high_scores = new List<KeyValuePair<AST.Address, int>>();
 
-                while ((double)start_ptr / scores.Length < 1.0 - _tool_significance) //the start of this score region is before the cutoff
-                {
-                    //while the scores at the start and end pointers are the same, bump the end pointer
-                    while (end_ptr < scores.Length && scores[start_ptr].Value == scores[end_ptr].Value)
-                    {
-                        end_ptr++;
-                    }
-                    //Now the end_pointer points to the first index with a lower score
-                    //If the number of entries with the current value is fewer than the significance cutoff, add all values of this score to the high_scores list; the number of entries is equal to the end_ptr since end_ptr is zero-based
-                    //There is some added "wiggle room" to the cutoff, so that the last entry is allowed to straddle the cutoff bound.
-                    //  To do this, we add (1 / total number of entries) to the cutoff
-                    //The purpose of the wiggle room is to allow us to deal with small ranges (less than 20 entries), since a single entry accounts
-                    //for more than 5% of the total.
-                    //      Note: tool_significance is along the lines of 0.95 (not 0.05).
-                    if ((double)end_ptr / scores.Length < 1.0 - _tool_significance + (double)1.0 / scores.Length)
-                    {
-                        //add all values of the current score to high_scores list
-                        for (; start_ptr < end_ptr; start_ptr++)
-                        {
-                            high_scores.Add(scores[start_ptr]);
-                        }
-                        //Increment the start pointer to the start of the next score region
-                        start_ptr++;
-                    }
-                    else    //if this score region extends past the cutoff, we don't add any of its values to the high_scores list, and stop
-                    {
-                        break;
-                    }
-                }
+                // calculate cutoff idnex
+                int thresh = scores.Length - Convert.ToInt32(scores.Length * _tool_significance);
+
+                // get all scores at cutoff value or higher
+                high_scores.AddRange(scores.Where(pair => pair.Value >= scores[thresh].Value));
 
                 // filter out cells marked as OK
                 _flaggable = high_scores.Where(kvp => !_known_good.Contains(kvp.Key)).ToArray();
@@ -191,20 +187,6 @@ namespace DataDebug
             }
             else
             {
-                // TODO: test after AEC; problematic when highlighted value is not data
-                //TreeNode flagged_node;
-                //if (data.cell_nodes.TryGetValue(flagged_cell, out flagged_node))
-                //{
-                //    // only do the following if the cell is a data cell
-                //    if (flagged_node.hasOutputs())
-                //    {
-                //        foreach (var output in flagged_node.getOutputs())
-                //        {
-                //            exploreNode(output);
-                //        }
-                //    }
-                //}
-
                 // get cell COM object
                 var com = _flagged_cell.GetCOMObject(_app);
 
@@ -393,6 +375,12 @@ namespace DataDebug
                     System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
                     return;
                 }
+                catch (System.OutOfMemoryException ex)
+                {
+                    System.Windows.Forms.MessageBox.Show("Insufficient memory to perform analysis.");
+                    return;
+                }
+
             };
             // show the form
             var fixform = new CellFixForm(cell, GREEN, callback);

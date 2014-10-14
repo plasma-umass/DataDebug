@@ -6,7 +6,6 @@ using System.Text;
 using System.Numerics;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
-//using TreeDictPair = System.Collections.Generic.KeyValuePair<AST.Address, DataDebugMethods.TreeNode>;
 using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using Range = Microsoft.Office.Interop.Excel.Range;
 using System.Diagnostics;
@@ -323,8 +322,14 @@ namespace DataDebugMethods
             // init job storage
             var ddjs = new DataDebugJob[input_arr.Length];
 
+            // init started jobs count
+            var sjobs = 0;
+
             // init completed jobs count
             var cjobs = 0;
+
+            // last-ditch effort flag
+            bool last_try = false;
 
             // init score storage
             var scores = new TreeScore();
@@ -391,6 +396,8 @@ namespace DataDebugMethods
                                 mres[i]
                                 );
 
+                    sjobs++;
+
                     // hand job to thread pool
                     ThreadPool.QueueUserWorkItem(ddjs[i].threadPoolCallback, i);
                     #endregion HYPOTHESIS_TEST
@@ -400,18 +407,23 @@ namespace DataDebugMethods
                 }
                 catch (System.OutOfMemoryException e)
                 {
-                    // Count completed jobs; if this number
-                    // is the same in a subsequent OOM exception
-                    // then we have not made progress.  This means
-                    // that we simply do not have enough memory
-                    // to perform the calculation, period.
-                    var j = mres.Count(mre => mre.WaitOne(0));
-                    if (j != cjobs)
+                    if (!last_try)
                     {
-                        // rethrow
+                        // If there are no more jobs running, but
+                        // we still can't allocate memory, try invoking
+                        // GC and then trying again
+                        cjobs = mres.Count(mre => mre.WaitOne(0));
+                        if (sjobs - cjobs == 0)
+                        {
+                            GC.Collect();
+                            last_try = true;
+                        }
+                    }
+                    else
+                    {
+                        // we just don't have enough memory
                         throw e;
                     }
-                    cjobs = j;
 
                     // wait for any of the 0..i-1 work items
                     // to complete and try again
@@ -478,7 +490,7 @@ namespace DataDebugMethods
                 int weight = 1;
 
                 // add weight to score if test fails
-                AST.Address xtree = input_cells.ElementAt(i);
+                AST.Address xtree = input_cells[i];
                 if (weighted)
                 {
                     // the weight of the function value of interest

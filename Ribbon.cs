@@ -99,6 +99,12 @@ namespace DataDebug
         #region BUTTON_HANDLERS
         private void Analyze_Click(object sender, RibbonControlEventArgs e)
         {
+            // check for debug easter egg
+            if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Alt) > 0)
+            {
+                current_workbook.DebugMode = true;
+            }
+
             var sig = GetSignificance(this.SensitivityTextBox.Text, this.SensitivityTextBox.Label);
             if (sig == FSharpOption<double>.None)
             {
@@ -117,6 +123,11 @@ namespace DataDebug
                 {
                     System.Windows.Forms.Clipboard.SetText(ex.Message);
                     System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);
+                    return;
+                }
+                catch (System.OutOfMemoryException ex)
+                {
+                    System.Windows.Forms.MessageBox.Show("Insufficient memory to perform analysis.");
                     return;
                 }
             }
