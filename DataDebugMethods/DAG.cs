@@ -81,6 +81,15 @@ namespace DataDebugMethods
             _analysis_time = sw.ElapsedMilliseconds;
         }
 
+        // this is mostly for diagnostic purposes
+        public int numberOfInputCells()
+        {
+            var v_cells = new HashSet<AST.Address>(_all_vectors.KeysT.SelectMany(rng => rng.Addresses()));
+            var sc_cells = new HashSet<AST.Address>(_i2f.Values.SelectMany(addr => addr));
+            var all = v_cells.Union(sc_cells);
+            return all.Count();
+        }
+
         private void fastFormulaRead(Excel.Workbook wb)
         {
             // get names once

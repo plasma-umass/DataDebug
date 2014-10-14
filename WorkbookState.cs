@@ -16,6 +16,8 @@ namespace DataDebug
         public readonly static long MAX_DURATION_IN_MS = 5L * 60L * 1000L;  // 5 minutes
         public readonly static System.Drawing.Color GREEN = System.Drawing.Color.Green;
         public readonly static bool IGNORE_PARSE_ERRORS = true;
+        public readonly static bool USE_WEIGHTS = true;
+        public readonly static bool CONSIDER_ALL_OUTPUTS = true;
         #endregion CONSTANTS
 
         private Excel.Application _app;
@@ -93,6 +95,7 @@ namespace DataDebug
                 try
                 {
                     _dag = new DAG(_app.ActiveWorkbook, _app, IGNORE_PARSE_ERRORS);
+                    var num_input_cells = _dag.numberOfInputCells();
                 }
                 catch (ExcelParserUtility.ParseException e)
                 {
@@ -113,8 +116,8 @@ namespace DataDebug
                 var scores = Analysis.DataDebug(NBOOTS,
                                                 _dag,
                                                 _app,
-                                                weighted: true,
-                                                all_outputs: true,
+                                                weighted: USE_WEIGHTS,
+                                                all_outputs: CONSIDER_ALL_OUTPUTS,
                                                 max_duration_in_ms: max_duration_in_ms,
                                                 sw: sw,
                                                 significance: _tool_significance,
@@ -133,12 +136,12 @@ namespace DataDebug
                 // calculate cutoff idnex
                 int thresh = scores.Length - Convert.ToInt32(scores.Length * _tool_significance);
 
-                // get all scores at cutoff value or higher
-                high_scores.AddRange(scores.Where(pair => pair.Value >= scores[thresh].Value));
 
-                // filter out cells marked as OK
-                _flaggable = high_scores.Where(kvp => !_known_good.Contains(kvp.Key)).ToArray();
-                
+                // filter out cells that are...
+                _flaggable = scores.Where(pair => pair.Value >= scores[thresh].Value)   // below threshold
+                                   .Where(pair => !_known_good.Contains(pair.Key))      // known to be good
+                                   .Where(pair => pair.Value != 0).ToArray();           // score == 0
+
                 // Enable screen updating when we're done
                 _app.ScreenUpdating = true;
 
