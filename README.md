@@ -12,7 +12,7 @@ You will need Microsoft Excel 2010 or 2013 and Windows 7 or newer.  We only rece
 
 Installing CheckCell
 --------------------
-Download the [CheckCell installer](https://github.com/plasma-umass/DataDebug/releases/download/v1.0.0/CheckCellInstaller.exe).  Double-click on the file `CheckCellInstaller.exe` to install.  The installer should install all prerequisites for you (namely Microsoft .NET 4.0 and Visual Studio Tools for Office 2010).
+Download the [CheckCell installer](https://github.com/plasma-umass/DataDebug/releases/latest).  Double-click on the file `CheckCellInstaller.exe` to install.  The installer should install all prerequisites for you (namely Microsoft .NET 4.0 and Visual Studio Tools for Office 2010).
 
 You will find CheckCell installed in Excel, under the "Add-Ins" tab in the ribbon.
 
