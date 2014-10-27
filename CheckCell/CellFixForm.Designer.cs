@@ -1,4 +1,4 @@
-﻿namespace DataDebug
+﻿namespace CheckCell
 {
     partial class CellFixForm
     {

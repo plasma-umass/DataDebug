@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-namespace DataDebug
+namespace CheckCell
 {
     public partial class CellFixForm : Form
     {
