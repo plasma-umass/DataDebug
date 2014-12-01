@@ -8,7 +8,7 @@ CheckCell is an implementation of data debugging for Excel spreadsheets.  CheckC
 Prerequisites
 --------------
 
-You will need Microsoft Excel 2010 and Windows 7 or newer.
+You will need Microsoft Excel 2010 and Windows 7 or newer.  CheckCell now supports Excel 2013!
 
 Installing CheckCell
 --------------------
