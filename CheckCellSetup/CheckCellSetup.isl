@@ -3991,8 +3991,8 @@
 		<col def="S0">Value</col>
 		<row><td>ActiveLanguage</td><td>1033</td></row>
 		<row><td>Comments</td><td/></row>
-		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="de9f554a3bc05c12be9c31b998217995">
-UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
+		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="6d78a46bf2c52ee27034bbcad20f7f95">
+QwBEAF8AUgBPAE0AAQBFAHgAcAByAGUAcwBzAA==
 			</td></row>
 		<row><td>DefaultProductConfiguration</td><td>Express</td></row>
 		<row><td>EnableSwidtag</td><td>1</td></row>
@@ -4009,7 +4009,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ISTheme</td><td>InstallShield Blue.theme</td></row>
 		<row><td>ISUSLock</td><td>{1AB3E6E6-073E-4322-B43D-C7ECAA097397}</td></row>
 		<row><td>ISUSSignature</td><td>{B94E14F3-04D4-410F-9132-6C68AB279B90}</td></row>
-		<row><td>ISVisitedViews</td><td>viewAssistant,viewProject,viewUpdateService,viewRelease,viewISToday,viewAppV,viewShortcuts,viewInstallScriptStd,viewSystemSearch,viewObjects,viewRealSetupDesign,viewAppFiles,viewFeatureFiles,viewDependencies</td></row>
+		<row><td>ISVisitedViews</td><td>viewAssistant,viewProject,viewUpdateService,viewRelease,viewISToday,viewAppV,viewShortcuts,viewInstallScriptStd,viewSystemSearch,viewObjects,viewRealSetupDesign,viewAppFiles,viewFeatureFiles,viewDependencies,viewCustomActions,viewSupportFiles</td></row>
 		<row><td>Limited</td><td>1</td></row>
 		<row><td>LockPermissionMode</td><td>1</td></row>
 		<row><td>MsiExecCmdLineOptions</td><td/></row>
@@ -4456,7 +4456,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>Registry2</td><td>1</td><td>Software\Microsoft\Office\Excel\Addins\CheckCell.ExcelAddIn</td><td>Description</td><td>CheckCell Add-In</td><td>ISX_DEFAULTCOMPONENT</td><td>0</td></row>
 		<row><td>Registry3</td><td>1</td><td>Software\Microsoft\Office\Excel\Addins\CheckCell.ExcelAddIn</td><td>FriendlyName</td><td>CheckCell Add-In</td><td>ISX_DEFAULTCOMPONENT</td><td>0</td></row>
 		<row><td>Registry4</td><td>1</td><td>Software\Microsoft\Office\Excel\Addins\CheckCell.ExcelAddIn</td><td>LoadBehavior</td><td>#3</td><td>ISX_DEFAULTCOMPONENT</td><td>0</td></row>
-		<row><td>Registry5</td><td>1</td><td>Software\Microsoft\Office\Excel\Addins\CheckCell.ExcelAddIn</td><td>Manifest</td><td> file:///[INSTALLDIR]DataDebug.vsto|vstolocal</td><td>ISX_DEFAULTCOMPONENT</td><td>0</td></row>
+		<row><td>Registry5</td><td>1</td><td>Software\Microsoft\Office\Excel\Addins\CheckCell.ExcelAddIn</td><td>Manifest</td><td> file:///[INSTALLDIR]CheckCell.vsto|vstolocal</td><td>ISX_DEFAULTCOMPONENT</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
