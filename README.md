@@ -8,13 +8,13 @@ CheckCell is an implementation of data debugging for Excel spreadsheets.  CheckC
 Prerequisites
 --------------
 
-You will need Microsoft Excel 2010 and Windows 7 or newer.  We are currently working on adding support for Excel 2013; stay tuned!
+You will need Microsoft Excel 2010 and Windows 7 or newer.
 
 Installing CheckCell
 --------------------
 Download the [CheckCell installer](https://github.com/plasma-umass/DataDebug/releases/latest).  Double-click on the file `CheckCellInstaller.exe` to install.  The installer should install all prerequisites for you (namely Microsoft .NET 4.0 and Visual Studio Tools for Office 2010).
 
-You will find CheckCell installed in Excel, under the "Add-Ins" tab in the ribbon.
+You will find CheckCell installed in Excel, under the "CheckCell" tab in the ribbon.
 
 Getting CheckCell Source
 ------------------------
@@ -28,7 +28,7 @@ You will need Visual Studio 2013 in order to build the CheckCell plugin.
 
 Using CheckCell
 ---------------
-To use CheckCell, open the spreadsheet you would like to audit, and click CheckCell's "Analyze" button. (It is located in the "Add-Ins" tab in the ribbon.) CheckCell will perform its analysis, and if any potential errors are found, they will be highlighted one at a time in decreasing order of importance. For each highlighted cell, you will have to decide if it is actually an error. If so, click on the "Fix Error" button and enter the correct value in the box that comes up. Otherwise, click the "Mark as OK" button. After each correction, CheckCell will re-run its analysis using the corrected value.
+To use CheckCell, open the spreadsheet you would like to audit, and click CheckCell's "Analyze" button (look for the "CheckCell" tab in the ribbon.) CheckCell will perform its analysis, and if any potential errors are found, they will be highlighted one at a time in decreasing order of importance. For each highlighted cell, you will have to decide if it is actually an error. If so, click on the "Fix Error" button and enter the correct value in the box that comes up. Otherwise, click the "Mark as OK" button. After each correction, CheckCell will re-run its analysis using the corrected value.
 
 CheckCell's sensitivity level is adjustable. By default it is set to display the top 5% most unusual values, but you may change it by entering a different value in the box labeled "% Most Unusual to Show".  Note that CheckCell may report that no values warrant special attention.
 
