@@ -162,6 +162,7 @@ namespace DataDebugMethods
 
                 // for each COM object in the used range, create an address object
                 // WITHOUT calling any methods on the COM object itself
+                int x_old = -1;
                 int x = -1;
                 int y = 0;
                 foreach (Excel.Range cell in urng)
@@ -170,10 +171,9 @@ namespace DataDebugMethods
                     // of cells.  The Excel.Range returned by UsedRange is always rectangular.
                     // Thus we can calculate the addresses of each COM cell reference without
                     // needing to incur the overhead of actually asking it for its address.
-                    var x_old = x;
                     x = (x + 1) % width;
-                    // increment y if x wrapped
-                    y = x < x_old ? y + 1 : y;
+                    // increment y if x wrapped (x < x_old or x == x_old when width == 1)
+                    y = x <= x_old ? y + 1 : y;
 
                     int c = x + left;
                     int r = y + top;
@@ -182,6 +182,8 @@ namespace DataDebugMethods
                     var formula = _formulas.ContainsKey(addr) ? new Microsoft.FSharp.Core.FSharpOption<string>(_formulas[addr]) : Microsoft.FSharp.Core.FSharpOption<string>.None;
                     var cr = new AST.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path_opt, wbname, wsname, formula, 1, 1);
                     _all_cells.Add(addr, cr);
+
+                    x_old = x;
                 }
             }
         }
