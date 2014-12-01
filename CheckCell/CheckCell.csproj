@@ -164,11 +164,19 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="CellFixForm.Designer.cs" />
+    <Compile Include="CellFixForm1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CellFixForm.resx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="WorkbookState.cs" />
-    <EmbeddedResource Include="CellFixForm.resx" />
+    <EmbeddedResource Include="CellFixForm.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>CellFixForm1.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -177,6 +185,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="Ribbon.resx">
       <DependentUpon>Ribbon.cs</DependentUpon>
@@ -222,6 +231,18 @@
       <Project>{cb1aade6-ad72-4ae5-aaa8-351cebc61236}</Project>
       <Name>UserSimulation</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analyze_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\clear_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\correct_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\mark_as_ok_small.png" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

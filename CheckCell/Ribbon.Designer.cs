@@ -78,26 +78,38 @@
             // 
             // AnalyzeButton
             // 
+            this.AnalyzeButton.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.AnalyzeButton.Image = global::CheckCell.Properties.Resources.analyze_small;
             this.AnalyzeButton.Label = "Analyze";
             this.AnalyzeButton.Name = "AnalyzeButton";
+            this.AnalyzeButton.ShowImage = true;
             this.AnalyzeButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AnalyzeButton_Click);
             // 
             // MarkAsOKButton
             // 
+            this.MarkAsOKButton.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.MarkAsOKButton.Image = global::CheckCell.Properties.Resources.mark_as_ok_small;
             this.MarkAsOKButton.Label = "Mark as OK";
             this.MarkAsOKButton.Name = "MarkAsOKButton";
+            this.MarkAsOKButton.ShowImage = true;
             this.MarkAsOKButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.MarkAsOKButton_Click);
             // 
             // FixErrorButton
             // 
+            this.FixErrorButton.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.FixErrorButton.Image = global::CheckCell.Properties.Resources.correct_small;
             this.FixErrorButton.Label = "Fix Error";
             this.FixErrorButton.Name = "FixErrorButton";
+            this.FixErrorButton.ShowImage = true;
             this.FixErrorButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.FixErrorButton_Click);
             // 
             // StartOverButton
             // 
+            this.StartOverButton.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.StartOverButton.Image = global::CheckCell.Properties.Resources.clear_small;
             this.StartOverButton.Label = "Start Over";
             this.StartOverButton.Name = "StartOverButton";
+            this.StartOverButton.ShowImage = true;
             this.StartOverButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.StartOverButton_Click);
             // 
             // ToDOTButton

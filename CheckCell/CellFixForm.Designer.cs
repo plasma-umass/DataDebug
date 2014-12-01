@@ -1,6 +1,6 @@
 ﻿namespace CheckCell
 {
-    partial class CellFixForm
+    public partial class CellFixForm
     {
         /// <summary>
         /// Required designer variable.
