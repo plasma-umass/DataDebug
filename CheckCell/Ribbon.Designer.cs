@@ -86,22 +86,26 @@
             // 
             this.MarkAsOKButton.Label = "Mark as OK";
             this.MarkAsOKButton.Name = "MarkAsOKButton";
+            this.MarkAsOKButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.MarkAsOKButton_Click);
             // 
             // FixErrorButton
             // 
             this.FixErrorButton.Label = "Fix Error";
             this.FixErrorButton.Name = "FixErrorButton";
+            this.FixErrorButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.FixErrorButton_Click);
             // 
             // StartOverButton
             // 
             this.StartOverButton.Label = "Start Over";
             this.StartOverButton.Name = "StartOverButton";
+            this.StartOverButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.StartOverButton_Click);
             // 
             // ToDOTButton
             // 
             this.ToDOTButton.Label = "To DOT";
             this.ToDOTButton.Name = "ToDOTButton";
             this.ToDOTButton.Visible = false;
+            this.ToDOTButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToDOTButton_Click);
             // 
             // SensitivityTextBox
             // 
