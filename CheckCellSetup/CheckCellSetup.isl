@@ -340,8 +340,11 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
-		<row><td>DataDebug.Primary_output</td><td>{FAED5D23-8565-49FB-9550-CC7A56205901}</td><td>INSTALLDIR</td><td>2</td><td/><td>datadebug.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CheckCell.Primary_output</td><td>{CDCC3B6A-3261-40B7-8472-213EAAEA1478}</td><td>INSTALLDIR</td><td>2</td><td/><td>checkcell.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISO19770_LocalTag</td><td>{964FDB2C-582D-476C-AF0D-C1A9D36A8345}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISO19770_SystemTag</td><td>{41E79800-460F-405B-ADD5-DFC4A2D90D71}</td><td>CommonAppDataFolder</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td>{2EA307C7-ED44-42A0-A390-E38C4EFAC19D}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISX_DEFAULTCOMPONENT1</td><td>{C6F6CA21-8205-48F4-ACC0-724E20A8CCC5}</td><td>ProgramFiles64Folder</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -1050,6 +1053,9 @@
 	<table name="CreateFolder">
 		<col key="yes" def="s72">Directory_</col>
 		<col key="yes" def="s72">Component_</col>
+		<row><td>CommonAppDataFolder</td><td>ISO19770_SystemTag</td></row>
+		<row><td>INSTALLDIR</td><td>ISO19770_LocalTag</td></row>
+		<row><td>ProgramFiles64Folder</td><td>ISX_DEFAULTCOMPONENT1</td></row>
 	</table>
 
 	<table name="CustomAction">
@@ -1861,8 +1867,11 @@
 	<table name="FeatureComponents">
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s72">Component_</col>
-		<row><td>AlwaysInstall</td><td>DataDebug.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>CheckCell.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>ISO19770_LocalTag</td></row>
+		<row><td>AlwaysInstall</td><td>ISO19770_SystemTag</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT</td></row>
+		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT1</td></row>
 	</table>
 
 	<table name="File">
@@ -1877,9 +1886,9 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
-		<row><td>datadebug.dll.manifest</td><td>ISX_DEFAULTCOMPONENT</td><td>DATADE~1.MAN|DataDebug.dll.manifest</td><td>0</td><td/><td/><td/><td>1</td><td>C:\Users\Dan Barowy\Documents\Visual Studio 2013\Projects\DataDebug\bin\Release\DataDebug.dll.manifest</td><td>1</td><td/></row>
-		<row><td>datadebug.primary_output</td><td>DataDebug.Primary_output</td><td>DataDebug.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;DataDebug&gt;|Built</td><td>3</td><td/></row>
-		<row><td>datadebug.vsto</td><td>ISX_DEFAULTCOMPONENT</td><td>DATADE~1.VST|DataDebug.vsto</td><td>0</td><td/><td/><td/><td>1</td><td>C:\Users\Dan Barowy\Documents\Visual Studio 2013\Projects\DataDebug\bin\Release\DataDebug.vsto</td><td>1</td><td/></row>
+		<row><td>checkcell.dll.manifest</td><td>ISX_DEFAULTCOMPONENT</td><td>CHECKC~1.MAN|CheckCell.dll.manifest</td><td>0</td><td/><td/><td/><td>1</td><td>C:\Users\Dan Barowy\Documents\Visual Studio 2013\Projects\DataDebug\CheckCell\bin\Release\CheckCell.dll.manifest</td><td>1</td><td/></row>
+		<row><td>checkcell.primary_output</td><td>CheckCell.Primary_output</td><td>CheckCell.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;CheckCell&gt;|Built</td><td>3</td><td/></row>
+		<row><td>checkcell.vsto</td><td>ISX_DEFAULTCOMPONENT</td><td>CHECKC~1.VST|CheckCell.vsto</td><td>0</td><td/><td/><td/><td>1</td><td>C:\Users\Dan Barowy\Documents\Visual Studio 2013\Projects\DataDebug\CheckCell\bin\Release\CheckCell.vsto</td><td>1</td><td/></row>
 	</table>
 
 	<table name="FileSFPCatalog">
@@ -2024,8 +2033,11 @@
 		<col def="S0">FTPLocation</col>
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
-		<row><td>DataDebug.Primary_output</td><td/><td/><td>_B8289D37_A593_4C6A_A7F4_C23733FB8485_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>CheckCell.Primary_output</td><td/><td/><td>_009B76EE_F4F4_4314_8A14_57898A604204_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>ISO19770_LocalTag</td><td/><td/><td>_CAC27093_9705_49FF_87E3_A2FD344504C5_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>ISO19770_SystemTag</td><td/><td/><td>_FDE4DB9A_0513_4BD0_B5CC_5A9FB27D7672_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td/><td/><td>_0185E5EB_D497_4533_9F17_DEFEA2B5542A_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>ISX_DEFAULTCOMPONENT1</td><td/><td/><td>_FD9464BA_C1FA_47F0_8428_541B54A2D47E_FILTER</td><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="ISCustomActionReference">
@@ -2326,6 +2338,7 @@
 		<col def="S255">Value</col>
 		<col def="S255">TestValue</col>
 		<col def="i4">Type</col>
+		<row><td>CheckCell</td><td>CheckCell\CheckCell.csproj</td><td/><td>2</td></row>
 		<row><td>CommonFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>DataDebug</td><td>DataDebug.csproj</td><td/><td>2</td></row>
 		<row><td>DataDebugMethods</td><td>DataDebugMethods\DataDebugMethods.csproj</td><td/><td>2</td></row>
@@ -3760,6 +3773,8 @@
 	<table name="ISSwidtagProperty">
 		<col key="yes" def="s72">Name</col>
 		<col def="s0">Value</col>
+		<row><td>TagCreatorName</td><td>University of Massachusetts Amherst</td></row>
+		<row><td>TagCreatorRegid</td><td>regid.2014-11.edu.umass.cs.plasma</td></row>
 		<row><td>UniqueId</td><td>7E810B1B-7B1C-41E5-9BEB-019483E720EA</td></row>
 	</table>
 
@@ -4007,6 +4022,8 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>SccEnabled</td><td>0</td></row>
 		<row><td>SccPath</td><td/></row>
 		<row><td>SchemaVersion</td><td>774</td></row>
+		<row><td>SwidtagLocalComponent</td><td>ISO19770_LocalTag</td></row>
+		<row><td>SwidtagSystemComponent</td><td>ISO19770_SystemTag</td></row>
 		<row><td>Type</td><td>MSIE</td></row>
 	</table>
 
@@ -4368,7 +4385,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
 		<row><td>ProductCode</td><td>{EA753CFF-39CC-482D-9EA8-CC9104B7EE04}</td><td/></row>
 		<row><td>ProductName</td><td>CheckCell</td><td/></row>
-		<row><td>ProductVersion</td><td>1.00.0000</td><td/></row>
+		<row><td>ProductVersion</td><td>1.03.0000</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>

@@ -28,10 +28,11 @@
 		</TaggedOutputs> -->
 	</ItemGroup>
 	<Import Project="$(MSBuildExtensionsPath32)\InstallShield\2013Limited\InstallShield.targets"/>
+	<ItemGroup/>
 	<ItemGroup>
-		<ProjectReference Include="..\DataDebug.csproj">
-			<Name>DataDebug</Name>
-			<Project>{226CD70A-A5EF-4006-B915-004A75EA41A4}</Project>
+		<ProjectReference Include="..\CheckCell\CheckCell.csproj">
+			<Name>CheckCell</Name>
+			<Project>{7E0E09D4-1A64-4827-8D63-FACD5D9D9C80}</Project>
 		</ProjectReference>
 	</ItemGroup>
 </Project>
