@@ -62,6 +62,11 @@ namespace CheckCell
         // to the foreground
         private void WorkbookActivated(Excel.Workbook workbook)
         {
+            // when opening a blank sheet, Excel does not emit
+            // a WorkbookOpen event, so we need to call it manually
+            if (!wbstates.ContainsKey(workbook)) {
+                WorkbookOpen(workbook);
+            }
             current_workbook = wbstates[workbook];
             SetUIState(current_workbook);
         }
