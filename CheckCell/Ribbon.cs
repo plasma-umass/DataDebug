@@ -164,6 +164,13 @@ namespace CheckCell
             System.Windows.Forms.Clipboard.SetText(dag.ToDOT());
             System.Windows.Forms.MessageBox.Show("In clipboard");
         }
+
+        private void AboutCheckCell_Click(object sender, RibbonControlEventArgs e)
+        {
+            var ab = new AboutBox();
+            ab.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            ab.Show();
+        }
         #endregion BUTTON_HANDLERS
 
         #region UTILITY_FUNCTIONS

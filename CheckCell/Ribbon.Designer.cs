@@ -34,16 +34,18 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Ribbon));
             this.tab1 = this.Factory.CreateRibbonTab();
             this.CheckCellTab = this.Factory.CreateRibbonTab();
             this.CheckCellGroup = this.Factory.CreateRibbonGroup();
             this.box1 = this.Factory.CreateRibbonBox();
+            this.ToDOTButton = this.Factory.CreateRibbonButton();
+            this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
+            this.AboutCheckCell = this.Factory.CreateRibbonButton();
             this.AnalyzeButton = this.Factory.CreateRibbonButton();
             this.MarkAsOKButton = this.Factory.CreateRibbonButton();
             this.FixErrorButton = this.Factory.CreateRibbonButton();
             this.StartOverButton = this.Factory.CreateRibbonButton();
-            this.ToDOTButton = this.Factory.CreateRibbonButton();
-            this.SensitivityTextBox = this.Factory.CreateRibbonEditBox();
             this.tab1.SuspendLayout();
             this.CheckCellTab.SuspendLayout();
             this.CheckCellGroup.SuspendLayout();
@@ -65,6 +67,7 @@
             // 
             this.CheckCellGroup.Items.Add(this.box1);
             this.CheckCellGroup.Items.Add(this.SensitivityTextBox);
+            this.CheckCellGroup.Items.Add(this.AboutCheckCell);
             this.CheckCellGroup.Name = "CheckCellGroup";
             // 
             // box1
@@ -75,6 +78,28 @@
             this.box1.Items.Add(this.StartOverButton);
             this.box1.Items.Add(this.ToDOTButton);
             this.box1.Name = "box1";
+            // 
+            // ToDOTButton
+            // 
+            this.ToDOTButton.Label = "To DOT";
+            this.ToDOTButton.Name = "ToDOTButton";
+            this.ToDOTButton.Visible = false;
+            this.ToDOTButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToDOTButton_Click);
+            // 
+            // SensitivityTextBox
+            // 
+            this.SensitivityTextBox.Label = "% Most Unusual to Show";
+            this.SensitivityTextBox.Name = "SensitivityTextBox";
+            this.SensitivityTextBox.SizeString = "100.0";
+            this.SensitivityTextBox.Text = "5.0";
+            // 
+            // AboutCheckCell
+            // 
+            this.AboutCheckCell.Image = ((System.Drawing.Image)(resources.GetObject("AboutCheckCell.Image")));
+            this.AboutCheckCell.Label = "About";
+            this.AboutCheckCell.Name = "AboutCheckCell";
+            this.AboutCheckCell.ShowImage = true;
+            this.AboutCheckCell.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AboutCheckCell_Click);
             // 
             // AnalyzeButton
             // 
@@ -112,20 +137,6 @@
             this.StartOverButton.ShowImage = true;
             this.StartOverButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.StartOverButton_Click);
             // 
-            // ToDOTButton
-            // 
-            this.ToDOTButton.Label = "To DOT";
-            this.ToDOTButton.Name = "ToDOTButton";
-            this.ToDOTButton.Visible = false;
-            this.ToDOTButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToDOTButton_Click);
-            // 
-            // SensitivityTextBox
-            // 
-            this.SensitivityTextBox.Label = "% Most Unusual to Show";
-            this.SensitivityTextBox.Name = "SensitivityTextBox";
-            this.SensitivityTextBox.SizeString = "100.0";
-            this.SensitivityTextBox.Text = "5.0";
-            // 
             // Ribbon
             // 
             this.Name = "Ribbon";
@@ -156,6 +167,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton StartOverButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton ToDOTButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonEditBox SensitivityTextBox;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton AboutCheckCell;
     }
 
     partial class ThisRibbonCollection
