@@ -19,3 +19,4 @@ obj
 AgentRestart.dat
 TestResults
 CheckCellTests/.gitignore
+CheckCellSetup/CheckCellSetup/Express
