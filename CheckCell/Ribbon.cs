@@ -15,7 +15,6 @@ namespace CheckCell
 {
     public partial class Ribbon
     {
-        // workbook state data
         Dictionary<Excel.Workbook, WorkbookState> wbstates = new Dictionary<Excel.Workbook, WorkbookState>();
         WorkbookState current_workbook;
 
@@ -50,6 +49,20 @@ namespace CheckCell
             Globals.ThisAddIn.Application.WorkbookActivate += WorkbookActivated;
             Globals.ThisAddIn.Application.WorkbookDeactivate += WorkbookDeactivated;
             Globals.ThisAddIn.Application.WorkbookBeforeClose += WorkbookClose;
+
+            // sometimes the default blank workbook opens *before* the CheckCell
+            // add-in is loaded so we have to handle sheet state specially.
+            if (current_workbook == null)
+            {
+                var wb = Globals.ThisAddIn.Application.ActiveWorkbook;
+                if (wb == null)
+                {
+                    // the plugin loaded first; there's no active workbook
+                    return;
+                }
+                WorkbookOpen(wb);
+                WorkbookActivated(wb);
+            }
         }
 
         // This event is called when Excel opens a workbook
