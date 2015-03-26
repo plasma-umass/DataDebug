@@ -23,7 +23,7 @@ You will find CheckCell installed in Excel, under the "CheckCell" tab in the rib
 
 Getting CheckCell Source
 ------------------------
-CheckCell depends on an Excel parsing library called "Parcel", also available on GitHub.  Parcel is a git submodule for CheckCell.  This means that you should recursively clone the CheckCell repository if you plan to work the source:
+CheckCell depends on an Excel parsing library called "Parcel", also available on GitHub.  Parcel is a git submodule for CheckCell.  This means that you should recursively clone the CheckCell repository if you plan to work with the source:
 
 ```
 git clone --recursive https://github.com/plasma-umass/DataDebug.git
