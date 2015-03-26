@@ -8,7 +8,7 @@ CheckCell is an implementation of data debugging for Excel spreadsheets.  CheckC
 License
 -------
 
-CheckCell is licensed under the GPLv2, Copyright (C) 2011-2015 The University of Massachusetts, Amherst.
+CheckCell is licensed under the GPLv2, Copyright (C) 2011-2015 The University of Massachusetts Amherst.
 
 Prerequisites
 --------------
