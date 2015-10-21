@@ -5,6 +5,11 @@ Testing and static analysis can help root out bugs in programs, but not in data.
 
 CheckCell is an implementation of data debugging for Excel spreadsheets.  CheckCell highlights suspected errors in red, one cell at a time.  After inspecting a cell, the user can correct the data or marked the cell as 'OK'. CheckCell is efficient; its algorithms are asymptotically optimal, and the current prototype runs in seconds for most spreadsheets.
 
+License
+-------
+
+CheckCell is licensed under the GPLv2, Copyright (C) 2011-2015 The University of Massachusetts Amherst.
+
 Prerequisites
 --------------
 
@@ -18,7 +23,7 @@ You will find CheckCell installed in Excel, under the "CheckCell" tab in the rib
 
 Getting CheckCell Source
 ------------------------
-CheckCell depends on an Excel parsing library called "Parcel", also available on GitHub.  Parcel is a git submodule for CheckCell.  This means that you should recursively clone the CheckCell repository if you plan to work the source:
+CheckCell depends on an Excel parsing library called "Parcel", also available on GitHub.  Parcel is a git submodule for CheckCell.  This means that you should recursively clone the CheckCell repository if you plan to work with the source:
 
 ```
 git clone --recursive https://github.com/plasma-umass/DataDebug.git
