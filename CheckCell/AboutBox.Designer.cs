@@ -46,7 +46,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(150, 13);
             this.label1.TabIndex = 0;
-            this.label1.Text = "CheckCell 1.0.5 (Dec 7, 2014)";
+            this.label1.Text = "CheckCell 1.0.5 (Dec 8, 2014)";
             // 
             // label2
             // 
@@ -62,9 +62,9 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(29, 41);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(223, 13);
+            this.label3.Size = new System.Drawing.Size(244, 13);
             this.label3.TabIndex = 2;
-            this.label3.Text = "Written by Daniel Barowy and Dimitar Gochev";
+            this.label3.Text = "Daniel Barowy, Dimitar Gochev, and Emery Berger";
             // 
             // label4
             // 
