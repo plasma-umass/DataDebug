@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Numerics;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
-using Range = Microsoft.Office.Interop.Excel.Range;
-using System.Diagnostics;
 using Stopwatch = System.Diagnostics.Stopwatch;
 using Microsoft.FSharp.Core;
-using ExtensionMethods;
 
 namespace DataDebugMethods
 {
