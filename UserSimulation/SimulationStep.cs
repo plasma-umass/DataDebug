@@ -85,7 +85,7 @@ namespace UserSimulation
                         }
 
                         var flagged_com = normal_dist.getErrorAtPosition(i);
-                        flagged_cell = AST.Address.AddressFromCOMObject(flagged_com, wb);
+                        flagged_cell = ParcelCOMShim.Address.AddressFromCOMObject(flagged_com, wb);
                         if (known_good.Contains(flagged_cell))
                         {
                             flagged_cell = null;
@@ -130,7 +130,7 @@ namespace UserSimulation
                     }
 
                     var flagged_com = normal_dist.getErrorAtPosition(i);
-                    flagged_cell = AST.Address.AddressFromCOMObject(flagged_com, wb);
+                    flagged_cell = ParcelCOMShim.Address.AddressFromCOMObject(flagged_com, wb);
                     if (known_good.Contains(flagged_cell))
                     {
                         flagged_cell = null;

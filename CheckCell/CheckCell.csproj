@@ -231,6 +231,10 @@
       <Project>{64dbf1b4-b0b7-4490-8c7c-2deea22cb25a}</Project>
       <Name>DataDebugMethods</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ParcelCOMShim\ParcelCOMShim.fsproj">
+      <Project>{c505f34e-96d8-4bee-9b8a-e8ed4c6c8b22}</Project>
+      <Name>ParcelCOMShim</Name>
+    </ProjectReference>
     <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
       <Project>{6de2a2b9-c029-4bdb-8992-d16276471d9f}</Project>
       <Name>ExcelParser</Name>

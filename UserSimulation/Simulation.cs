@@ -517,7 +517,7 @@ namespace UserSimulation
                         o.true_positives.Add(flagged_cell);
 
                         // correct flagged cell
-                        flagged_cell.GetCOMObject(app).Value2 = original_inputs[flagged_cell];
+                        ParcelCOMShim.Address.GetCOMObject(flagged_cell, app).Value2 = original_inputs[flagged_cell];
 
                         Utility.UpdatePerFunctionMaxError(correct_outputs, partially_corrected_outputs, max_errors);
                         

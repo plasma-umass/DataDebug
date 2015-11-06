@@ -59,8 +59,8 @@ namespace DataDebugMethods
                 var bottom = rng.Rows.Count + top - 1;
 
                 // get names
-                var wsname = new FSharpOption<string>(fstcr.WorksheetName);
-                var wbname = new FSharpOption<string>(fstcr.WorkbookName);
+                var wsname = fstcr.WorksheetName;
+                var wbname = fstcr.WorkbookName;
                 var path = fstcr.Path;
 
                 // sometimes the used range is a range
@@ -95,7 +95,7 @@ namespace DataDebugMethods
                 else
                 {
                     // construct the appropriate AST.Address
-                    AST.Address addr = AST.Address.NewFromR1C1(top, left, wsname, wbname, path);
+                    AST.Address addr = AST.Address.fromR1C1(top, left, wsname, wbname, path);
 
                     // make certain that it is actually a string
                     String s = System.Convert.ToString(rng.Value2);

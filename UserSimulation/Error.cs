@@ -62,7 +62,7 @@ namespace UserSimulation
         public string value;
         public AST.Address GetAddress()
         {
-            return AST.Address.FromR1C1(row, col, worksheet, workbook, path);
+            return AST.Address.fromR1C1(row, col, worksheet, workbook, path);
         }
     }
 }

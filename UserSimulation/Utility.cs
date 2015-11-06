@@ -31,7 +31,7 @@ namespace UserSimulation
                 var correct_value = correct_outputs[addr];
                 var incorrect_value = incorrect_outputs[addr];
                 // numeric
-                if (ExcelParser.isNumeric(correct_value) && ExcelParser.isNumeric(incorrect_value))
+                if (Parcel.isNumeric(correct_value) && Parcel.isNumeric(incorrect_value))
                 {
                     var error = Math.Abs(System.Convert.ToDouble(correct_value) - System.Convert.ToDouble(incorrect_value));
                     if (max_errors.ContainsKey(addr))
@@ -75,7 +75,7 @@ namespace UserSimulation
                 var addr = kvp.Key;
                 var correct_value = correct_outputs[addr];
                 var incorrect_value = incorrect_outputs[addr];
-                if (ExcelParser.isNumeric(correct_value) && ExcelParser.isNumeric(incorrect_value))
+                if (Parcel.isNumeric(correct_value) && Parcel.isNumeric(incorrect_value))
                 {
                     total_error += Math.Abs(System.Convert.ToDouble(correct_value) - System.Convert.ToDouble(incorrect_value));
                 }
@@ -105,8 +105,8 @@ namespace UserSimulation
                 string correct_value = orig.Value;
                 string partially_corrected_value = System.Convert.ToString(partially_corrected_outputs[addr]);
                 // if the function produces numeric outputs, calculate distance
-                if (ExcelParser.isNumeric(correct_value) &&
-                    ExcelParser.isNumeric(partially_corrected_value))
+                if (Parcel.isNumeric(correct_value) &&
+                    Parcel.isNumeric(partially_corrected_value))
                 {
                     ed.Add(addr, RelativeNumericError(System.Convert.ToDouble(correct_value),
                                                       System.Convert.ToDouble(partially_corrected_value),
@@ -293,7 +293,7 @@ namespace UserSimulation
             {
                 var addr = pair.Key;
                 var errorstr = pair.Value;
-                var comcell = addr.GetCOMObject(app);
+                var comcell = ParcelCOMShim.Address.GetCOMObject(addr, app);
 
                 // never perturb formulae
                 if (!comcell.HasFormula)

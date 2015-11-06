@@ -139,7 +139,7 @@ namespace CheckCell
                     current_workbook.Flag();
                     SetUIState(current_workbook);
                 }
-                catch (ExcelParserUtility.ParseException ex)
+                catch (Parcel.ParseException ex)
                 {
                     System.Windows.Forms.Clipboard.SetText(ex.Message);
                     System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);

@@ -110,12 +110,12 @@ namespace DataDebugMethods
         public NormalDistribution(AST.Range[] range_nodes, Excel.Application app)
         {
             //turn the dictionary into an Excel.Range
-            Excel.Range r1 = range_nodes[0].GetCOMObject(app);
+            Excel.Range r1 = ParcelCOMShim.Range.GetCOMObject(range_nodes[0], app);
             foreach (AST.Range range_node in range_nodes)
             {
                 try  //in a try-catch because Union malfunctioned in one observed case
                 {
-                    r1 = app.Union(r1, range_node.GetCOMObject(app));
+                    r1 = app.Union(r1, ParcelCOMShim.Range.GetCOMObject(range_node, app));
                 } catch { }
             }
             _cells = r1;

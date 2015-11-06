@@ -45,15 +45,16 @@ namespace CheckCellTests
             public Excel.Workbook GetWorkbook() { return wb; }
             public Excel.Sheets GetWorksheets() { return ws; }
             public Excel.Worksheet GetWorksheet(int idx) { return (Excel.Worksheet)ws[idx]; }
+            public string GetPath() { return System.IO.Directory.GetCurrentDirectory(); }
             public static int TestGetRanges(string formula)
             {
                 // mock workbook object
                 var mwb = new MockWorkbook();
                 Excel.Workbook wb = mwb.GetWorkbook();
                 Excel.Worksheet ws = mwb.GetWorksheet(1);
-                var path = Microsoft.FSharp.Core.FSharpOption<string>.None;
+                var path = mwb.GetPath();
 
-                var ranges = ExcelParserUtility.GetRangeReferencesFromFormulaRaw(formula, path, wb, ws, ignore_parse_errors: false);
+                var ranges = Parcel.rangeReferencesFromFormula(formula, path, wb.Name, ws.Name, ignore_parse_errors: false);
 
                 return ranges.Count();
             }
@@ -134,7 +135,7 @@ namespace CheckCellTests
             bool all_ok = true;
 
             // make sure that each worksheet's range has the formulas that it should
-            var f_wsgroups = formulas.GroupBy(f => f.GetCOMObject(mwb.GetApplication()).Worksheet);
+            var f_wsgroups = formulas.GroupBy(f => ParcelCOMShim.Address.GetCOMObject(f, mwb.GetApplication()).Worksheet);
 
             foreach (var pair in f_wsgroups)
             {

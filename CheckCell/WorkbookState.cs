@@ -97,7 +97,7 @@ namespace CheckCell
                     _dag = new DAG(_app.ActiveWorkbook, _app, IGNORE_PARSE_ERRORS);
                     var num_input_cells = _dag.numberOfInputCells();
                 }
-                catch (ExcelParserUtility.ParseException e)
+                catch (Parcel.ParseException e)
                 {
                     // cleanup UI and then rethrow
                     _app.ScreenUpdating = true;
@@ -155,7 +155,7 @@ namespace CheckCell
             RibbonHelper.GetWorksheetByName(cell.A1Worksheet(), _workbook.Worksheets).Activate();
 
             // COM object
-            var comobj = cell.GetCOMObject(app);
+            var comobj = ParcelCOMShim.Address.GetCOMObject(cell, app);
 
             // center screen on cell
             var visible_columns = app.ActiveWindow.VisibleRange.Columns.Count;
@@ -191,7 +191,7 @@ namespace CheckCell
             else
             {
                 // get cell COM object
-                var com = _flagged_cell.GetCOMObject(_app);
+                var com = ParcelCOMShim.Address.GetCOMObject(_flagged_cell, _app);
 
                 // save old color
                 var cc = new CellColor(com.Interior.ColorIndex, com.Interior.Color);
@@ -222,7 +222,7 @@ namespace CheckCell
             {
                 foreach (KeyValuePair<AST.Address, CellColor> pair in _colors)
                 {
-                    var com = pair.Key.GetCOMObject(_app);
+                    var com = ParcelCOMShim.Address.GetCOMObject(pair.Key, _app);
                     com.Interior.ColorIndex = pair.Value.ColorIndex;
                     com.Interior.Color = pair.Value.Color;
                 }
@@ -342,7 +342,7 @@ namespace CheckCell
             _known_good.Add(_flagged_cell);
 
             // set the color of the cell to green
-            var cell = _flagged_cell.GetCOMObject(_app);
+            var cell = ParcelCOMShim.Address.GetCOMObject(_flagged_cell, _app);
             cell.Interior.Color = GREEN;
 
             // restore output colors
@@ -354,7 +354,7 @@ namespace CheckCell
 
         internal void FixError(Action<WorkbookState> setUIState)
         {
-            var cell = _flagged_cell.GetCOMObject(_app);
+            var cell = ParcelCOMShim.Address.GetCOMObject(_flagged_cell, _app);
             // this callback gets run when the user clicks "OK"
             System.Action callback = () =>
             {
@@ -372,7 +372,7 @@ namespace CheckCell
                     // and then set the UI state
                     setUIState(this);
                 }
-                catch (ExcelParserUtility.ParseException ex)
+                catch (Parcel.ParseException ex)
                 {
                     System.Windows.Forms.Clipboard.SetText(ex.Message);
                     System.Windows.Forms.MessageBox.Show("Could not parse the formula string:\n" + ex.Message);

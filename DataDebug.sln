@@ -23,6 +23,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LongestCommonSubsequence", 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MTurkParser", "MTurkParser\MTurkParser.fsproj", "{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ParcelCOMShim", "ParcelCOMShim\ParcelCOMShim.fsproj", "{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Any CPU = CD_ROM|Any CPU
@@ -102,6 +104,16 @@ Global
 		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
 		{5C2DEF3E-A805-49A2-B88A-8EB59F6974DC}.SingleImage|Any CPU.Build.0 = Release|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
+		{C505F34E-96D8-4BEE-9B8A-E8ED4C6C8B22}.SingleImage|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

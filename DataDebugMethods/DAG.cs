@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Excel = Microsoft.Office.Interop.Excel;
-using CellRefDict = DataDebugMethods.BiDictionary<AST.Address, AST.COMRef>;
-using VectorRefDict = DataDebugMethods.BiDictionary<AST.Range, AST.COMRef>;
+using CellRefDict = DataDebugMethods.BiDictionary<AST.Address, ParcelCOMShim.COMRef>;
+using VectorRefDict = DataDebugMethods.BiDictionary<AST.Range, ParcelCOMShim.COMRef>;
 using FormulaDict = System.Collections.Generic.Dictionary<AST.Address, string>;
 using Formula2VectDict = System.Collections.Generic.Dictionary<AST.Address, System.Collections.Generic.HashSet<AST.Range>>;
 using Vect2FormulaDict = System.Collections.Generic.Dictionary<AST.Range, System.Collections.Generic.HashSet<AST.Address>>;
@@ -48,9 +48,9 @@ namespace DataDebugMethods
             foreach (AST.Address formula_addr in this.getAllFormulaAddrs())
             {
                 // get COMRef read earlier
-                var formula_ref = this.getCOMRefForAddress(formula_addr);
+                var cr = this.getCOMRefForAddress(formula_addr);
 
-                foreach (AST.Range vector_rng in ExcelParserUtility.GetRangeReferencesFromFormula(formula_ref, ignore_parse_errors))
+                foreach (AST.Range vector_rng in Parcel.rangeReferencesFromFormula(cr.Formula, cr.Path, cr.WorkbookName, cr.WorksheetName, ignore_parse_errors))
                 {
                     // fetch/create COMRef, as appropriate
                     var vector_ref = this.makeInputVectorCOMRef(vector_rng);
@@ -69,7 +69,7 @@ namespace DataDebugMethods
                     this.markPerturbability(vector_rng);
                 }
 
-                foreach (AST.Address input_single in ExcelParserUtility.GetSingleCellReferencesFromFormula(formula_ref, ignore_parse_errors))
+                foreach (AST.Address input_single in Parcel.addrReferencesFromFormula(cr.Formula, cr.Path, cr.WorkbookName, cr.WorksheetName, ignore_parse_errors))
                 {
                     // link formula and single input
                     this.linkSingleCellInput(formula_addr, input_single);
@@ -96,8 +96,6 @@ namespace DataDebugMethods
             var wbfullname = wb.FullName;
             var wbname = wb.Name;
             var path = wb.Path;
-            var wbname_opt = new Microsoft.FSharp.Core.FSharpOption<String>(wbname);
-            var path_opt = String.IsNullOrEmpty(path) ? Microsoft.FSharp.Core.FSharpOption<string>.None : new Microsoft.FSharp.Core.FSharpOption<String>(path);
 
             // init R1C1 extractor
             var regex = new Regex("^R([0-9]+)C([0-9]+)$");
@@ -118,7 +116,6 @@ namespace DataDebugMethods
 
                 // get worksheet name
                 var wsname = worksheet.Name;
-                var wsname_opt = new Microsoft.FSharp.Core.FSharpOption<String>(wsname);
 
                 // init
                 int width = right - left + 1;
@@ -130,7 +127,7 @@ namespace DataDebugMethods
                     var f = (string)urng.Formula;
                     if (fn_filter.IsMatch(f))
                     {
-                        var addr = AST.Address.NewFromR1C1(top, left, wsname_opt, wbname_opt, path_opt);
+                        var addr = AST.Address.fromR1C1(top, left, wsname, wbname, path);
                         _formulas.Add(addr, f);
                         _f2v.Add(addr, new HashSet<AST.Range>());
                         _f2i.Add(addr, new HashSet<AST.Address>());
@@ -151,7 +148,7 @@ namespace DataDebugMethods
                             var f = (string)formulas[r, c];
                             if (fn_filter.IsMatch(f))
                             {
-                                var addr = AST.Address.NewFromR1C1(r + top - 1, c + left - 1, wsname_opt, wbname_opt, path_opt);
+                                var addr = AST.Address.fromR1C1(r + top - 1, c + left - 1, wsname, wbname, path);
                                 _formulas.Add(addr, f);
                                 _f2v.Add(addr, new HashSet<AST.Range>());
                                 _f2i.Add(addr, new HashSet<AST.Address>());
@@ -178,9 +175,9 @@ namespace DataDebugMethods
                     int c = x + left;
                     int r = y + top;
 
-                    var addr = AST.Address.NewFromR1C1(r, c, wsname_opt, wbname_opt, path_opt);
+                    var addr = AST.Address.fromR1C1(r, c, wsname, wbname, path);
                     var formula = _formulas.ContainsKey(addr) ? new Microsoft.FSharp.Core.FSharpOption<string>(_formulas[addr]) : Microsoft.FSharp.Core.FSharpOption<string>.None;
-                    var cr = new AST.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path_opt, wbname, wsname, formula, 1, 1);
+                    var cr = new ParcelCOMShim.COMRef(addr.A1FullyQualified(), wb, worksheet, cell, path, wbname, wsname, formula, 1, 1);
                     _all_cells.Add(addr, cr);
 
                     x_old = x;
@@ -207,12 +204,12 @@ namespace DataDebugMethods
             get { return _analysis_time;  }
         }
 
-        public AST.COMRef getCOMRefForAddress(AST.Address addr)
+        public ParcelCOMShim.COMRef getCOMRefForAddress(AST.Address addr)
         {
             return _all_cells[addr];
         }
 
-        public AST.COMRef getCOMRefForRange(AST.Range rng)
+        public ParcelCOMShim.COMRef getCOMRefForRange(AST.Range rng)
         {
             return _all_vectors[rng];
         }
@@ -227,23 +224,23 @@ namespace DataDebugMethods
             return _formulas.Keys.ToArray();
         }
 
-        public AST.COMRef makeInputVectorCOMRef(AST.Range rng)
+        public ParcelCOMShim.COMRef makeInputVectorCOMRef(AST.Range rng)
         {
             // check for the range in the dictionary
-            AST.COMRef c;
+            ParcelCOMShim.COMRef c;
             if (!_all_vectors.TryGetValue(rng, out c))
             {
                 // otherwise, create and cache it
-                Excel.Range com = rng.GetCOMObject(_app);
+                Excel.Range com = ParcelCOMShim.Range.GetCOMObject(rng, _app);
                 Excel.Worksheet ws = com.Worksheet;
                 Excel.Workbook wb = ws.Parent;
                 string wsname = ws.Name;
                 string wbname = wb.Name;
-                var path = new Microsoft.FSharp.Core.FSharpOption<string>(wb.Path);
+                var path = wb.Path;
                 int width = com.Columns.Count;
                 int height = com.Rows.Count;
 
-                c = new AST.COMRef(rng.getUniqueID(), wb, ws, com, path, wbname, wsname, Microsoft.FSharp.Core.FSharpOption<string>.None, width, height);
+                c = new ParcelCOMShim.COMRef(rng.getUniqueID(), wb, ws, com, path, wbname, wsname, Microsoft.FSharp.Core.FSharpOption<string>.None, width, height);
                 _all_vectors.Add(rng, c);
                 _do_not_perturb.Add(rng, true);    // initially mark as not perturbable
             }
@@ -424,7 +421,7 @@ namespace DataDebugMethods
             HashSet<AST.Range> vector_inputs = _f2v[current_addr];
             foreach (AST.Range v_addr in vector_inputs)
             {
-                var rng_name = "\"" + v_addr.GetCOMObject(_app).Address + "\"";
+                var rng_name = "\"" + ParcelCOMShim.Range.GetCOMObject(v_addr, _app).Address + "\"";
 
                 // print
                 s += rng_name + " -> " + ca_name + ";\n";

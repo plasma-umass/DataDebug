@@ -42,9 +42,7 @@
     <Compile Include="FunctionOutput.cs" />
     <Compile Include="InputSample.cs" />
     <Compile Include="NormalDistribution.cs" />
-    <Compile Include="ProgBar.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="ProgBar.cs" />
     <Compile Include="ProgBar.Designer.cs">
       <DependentUpon>ProgBar.cs</DependentUpon>
     </Compile>
@@ -72,6 +70,10 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ParcelCOMShim\ParcelCOMShim.fsproj">
+      <Project>{c505f34e-96d8-4bee-9b8a-e8ed4c6c8b22}</Project>
+      <Name>ParcelCOMShim</Name>
+    </ProjectReference>
     <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
       <Project>{6de2a2b9-c029-4bdb-8992-d16276471d9f}</Project>
       <Name>ExcelParser</Name>

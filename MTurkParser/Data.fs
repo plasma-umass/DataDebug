@@ -60,7 +60,7 @@ type Data() =
                 let retyped_string = csvdata.[i].[Offsets.OFFSET_ANSWERS(inputs_per_hit) + j]
 
                 // get address object
-                let addr = AST.Address.FromR1C1(addr_r, addr_c, worksheet, workbook, path)
+                let addr = AST.Address.fromR1C1(addr_r, addr_c, worksheet, workbook, path)
 
                 // add address to address hashset
                 addresses.Add(addr) |> ignore

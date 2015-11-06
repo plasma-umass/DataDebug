@@ -43,6 +43,10 @@
       <Project>{5c2def3e-a805-49a2-b88a-8eb59f6974dc}</Project>
       <Name>MTurkParser</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ParcelCOMShim\ParcelCOMShim.fsproj">
+      <Project>{c505f34e-96d8-4bee-9b8a-e8ed4c6c8b22}</Project>
+      <Name>ParcelCOMShim</Name>
+    </ProjectReference>
     <ProjectReference Include="..\parcel\Parcel\ExcelParser.fsproj">
       <Project>{6de2a2b9-c029-4bdb-8992-d16276471d9f}</Project>
       <Name>ExcelParser</Name>
