@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using Depends;
+using ParcelCOMShim;
 using Excel = Microsoft.Office.Interop.Excel;
 using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using Stopwatch = System.Diagnostics.Stopwatch;

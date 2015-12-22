@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Office.Tools.Ribbon;
 using Microsoft.Office.Tools.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
+using Depends;
 using DataDebugMethods;
 using TreeScore = System.Collections.Generic.Dictionary<AST.Address, int>;
 using TreeDict = System.Collections.Generic.Dictionary<AST.Address, AST.Address>;

@@ -1,3 +1,6 @@
 [submodule "parcel"]
 	path = parcel
 	url = https://github.com/plasma-umass/parcel.git
+[submodule "Depends"]
+	path = Depends
+	url = git@github.com:dbarowy/Depends.git

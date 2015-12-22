@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Windows.Forms;
 using DataDebugMethods;
+using Depends;
 using System.Runtime.InteropServices;
 
 namespace CheckCellTests
